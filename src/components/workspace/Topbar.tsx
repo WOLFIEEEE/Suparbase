@@ -46,7 +46,7 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
 
   return (
     <>
-      <header className="flex h-14 items-center justify-between border-b hairline bg-bg px-4 sm:px-6">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b hairline bg-bg/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-bg/70 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"

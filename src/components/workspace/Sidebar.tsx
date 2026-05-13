@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Database, LayoutDashboard, Settings, Sparkles, Table2 } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
+import { Wordmark } from "@/components/brand/Logo";
 import type { AiSettingsSummary } from "@/lib/types/analysis";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
@@ -54,14 +55,14 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
   return (
     <div className={cn("flex h-full w-60 flex-col border-r hairline bg-bg", className)}>
       {showBrand && (
-        <div className="flex h-14 items-center gap-2 border-b hairline px-5">
-          <span className="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden />
+        <div className="flex h-14 items-center border-b hairline px-5">
           <Link
             href="/connections"
-            className="font-display text-lg tracking-tight hover:text-accent"
+            className="inline-flex items-center transition-colors hover:text-accent"
             onClick={onNavigate}
+            aria-label="Suparbase home"
           >
-            suparbase
+            <Wordmark size="md" />
           </Link>
         </div>
       )}
@@ -138,7 +139,7 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
 
 export function Sidebar({ connectionId }: { connectionId: string }) {
   return (
-    <aside className="hidden shrink-0 md:flex">
+    <aside className="sticky top-0 hidden h-screen shrink-0 self-start md:flex">
       <SidebarNav connectionId={connectionId} />
     </aside>
   );

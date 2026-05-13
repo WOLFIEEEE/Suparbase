@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isGithubEnabled } from "@/server/auth";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { Wordmark } from "@/components/brand/Logo";
 
 interface SignInPageProps {
   searchParams: Promise<{ next?: string; error?: string }>;
@@ -24,9 +25,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-12">
       <div className="surface w-full max-w-md space-y-6 rounded p-8">
-        <div className="space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs text-fg-muted hover:text-fg">
-            ← back
+        <div className="space-y-3">
+          <Link href="/" aria-label="Suparbase home" className="inline-flex transition-colors hover:text-accent">
+            <Wordmark size="sm" />
           </Link>
           <h1 className="font-display text-display-md">Sign in</h1>
           <p className="text-sm text-fg-muted">

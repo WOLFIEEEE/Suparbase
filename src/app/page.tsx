@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/server/auth";
 import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/LandingHero";
+import { Wordmark } from "@/components/brand/Logo";
 
 export default async function HomePage() {
   const session = await auth();
@@ -29,10 +30,9 @@ export default async function HomePage() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6">
         <header className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden />
-            <span className="font-display text-xl tracking-tight">suparbase</span>
-          </div>
+          <Link href="/" aria-label="Suparbase home" className="inline-flex transition-colors hover:text-accent">
+            <Wordmark size="lg" />
+          </Link>
           <nav className="flex items-center gap-2 text-sm">
             <Link
               href="/signin"
