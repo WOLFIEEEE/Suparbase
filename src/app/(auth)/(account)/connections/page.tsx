@@ -15,9 +15,9 @@ export default async function ConnectionsPage() {
   const connections = await listConnections(session.user.id);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-12">
-      <header className="mb-8 flex items-end justify-between gap-3">
-        <div>
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-1">
           <h1 className="font-display text-display-md">Connections</h1>
           <p className="text-sm text-fg-muted">
             Saved Supabase projects. Click one to open its admin workspace.

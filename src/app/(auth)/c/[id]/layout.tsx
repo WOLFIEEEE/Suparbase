@@ -3,6 +3,7 @@ import { auth } from "@/server/auth";
 import { getConnectionForUser, toSummary } from "@/server/connections/repo";
 import { Sidebar } from "@/components/workspace/Sidebar";
 import { Topbar } from "@/components/workspace/Topbar";
+import { AppFooter } from "@/components/workspace/AppFooter";
 import { CommandPalette } from "@/components/workspace/CommandPalette";
 import { CurrentConnectionProvider } from "@/lib/contexts/CurrentConnection";
 
@@ -28,6 +29,7 @@ export default async function ConnectionLayout({ children, params }: Props) {
           <main className="flex-1">
             <div className="mx-auto w-full max-w-7xl px-6 py-8">{children}</div>
           </main>
+          <AppFooter width="wide" />
         </div>
       </div>
       <CommandPalette />
