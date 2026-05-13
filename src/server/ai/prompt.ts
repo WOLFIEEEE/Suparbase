@@ -4,27 +4,60 @@ import type { Schema, Table } from "@/lib/types/schema";
 const SYSTEM_PROMPT = `You analyze database schemas for an admin dashboard.
 
 For each table I provide, classify it into ONE category:
-- "users":   the table represents end users / accounts / profiles / members.
-             Look for email/username/handle columns, password hashes, role,
-             avatar URLs, last_sign_in_at, etc.
-- "content": the table represents user-authored content like posts, articles,
-             pages, stories, documents. Look for title, slug, body/content/
-             markdown, published_at, status (draft/published).
-- "logs":    the table represents append-only events / activity / audit
-             trails. Look for created_at + event_type or verb, jsonb payload
-             columns, absence of update timestamps.
+- "users":   end users / accounts / profiles / members. Email/username/
+             handle columns, password hashes, role, avatar URLs,
+             last_sign_in_at, etc.
+- "content": user-authored content like posts, articles, pages, docs.
+             Title, slug, body/content/markdown, published_at, status
+             (draft/published).
+- "logs":    append-only events / activity / audit trails. created_at +
+             event_type/verb, jsonb payload, no update timestamps.
 - "generic": none of the above.
 
-For each table also:
-- displayName: a clean Title Case label derived from the table name.
-- listColumns: up to 6 column names that should appear in a list view, in
-  priority order. Prefer the primary key first, then identity columns
-  (name, title, email), then status/category, then created_at.
-- statusColumn: a column that holds a small enumerated state, if any
-  (e.g. "status", "state", "kind"). null otherwise.
-- titleColumn: the "headline" column for a row in a list view, if any
-  (e.g. "title" for content, "name" for users). null otherwise.
-- notes: at most one short sentence stating the reason.
+Then for each table also produce:
+
+- displayName: clean Title Case label derived from the table name.
+- listColumns: up to 6 columns to render in a list view, ordered by
+  importance. Always lead with the primary key, then identity columns
+  (name/title/email), then status/category, then created_at. Skip
+  password hashes, raw jsonb metadata, and FK id columns when the FK
+  target has a better label column.
+- statusColumn: column that holds an enumerated state (status/state/
+  kind/type). null if none.
+- titleColumn: legacy "headline" column for a row (deprecated by primary
+  below). null if none.
+- notes: at most one short sentence stating the reason for the category.
+
+- primary: the identity of a single row, used in row cards and detail
+  pages. An object with these fields (each nullable, omit if not
+  applicable):
+    titleColumn:    the strongest single label column (e.g. display_name
+                    for users, title for content, order_number for an
+                    order). REQUIRED if you can find one.
+    subtitleColumn: a secondary identifier shown under the title (e.g.
+                    email under a user's display name, slug under a
+                    post's title).
+    avatarColumn:   a column that holds an image URL (avatar_url,
+                    image, photo_url, picture).
+    badgeColumn:    the column to render as a chip — usually the
+                    statusColumn or a role/tier column.
+
+- hiddenColumns: columns to hide by default in list and detail views.
+  Always hide: password_hash, password_digest, encrypted_*, salt,
+  mfa_secret, raw_app_meta_data, raw_user_meta_data, *_token,
+  refresh_token, confirmation_token. Also hide any column whose name
+  suggests internal bookkeeping (instance_id, aud, banned_until_*,
+  reauthentication_*, providers, identity_data) and large jsonb payload
+  columns that are not the bodyColumn.
+
+- relations: for each foreign-key column on this table, emit an entry
+  describing how to surface it on the row detail page:
+    { fkColumn: <string>, label: <string>, showOnDetail: <boolean> }
+  - label is the singular noun for the referenced table ("Author",
+    "Customer", "Post").
+  - showOnDetail = true for FKs that meaningfully describe the row
+    (a comment's post, an order's customer); false for bookkeeping FKs
+    (created_by_id on a row that has many "made by user" relations).
 
 Respond with JSON ONLY in this shape:
 {
@@ -37,13 +70,24 @@ Respond with JSON ONLY in this shape:
       "listColumns": string[],
       "statusColumn": string | null,
       "titleColumn": string | null,
-      "notes": string
+      "notes": string,
+      "primary": {
+        "titleColumn":    string | null,
+        "subtitleColumn": string | null,
+        "avatarColumn":   string | null,
+        "badgeColumn":    string | null
+      },
+      "hiddenColumns": string[],
+      "relations": [
+        { "fkColumn": string, "label": string, "showOnDetail": boolean }
+      ]
     }
   ]
 }
 
-Do not include any tables not present in the input. Do not include
-explanations outside the JSON.`;
+Use exact column names as they appear in the input. Do not include any
+tables not present in the input. Do not include explanations outside the
+JSON.`;
 
 function formatTable(t: Table): string {
   const cols = t.columns

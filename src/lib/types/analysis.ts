@@ -1,5 +1,18 @@
 export type TableCategory = "users" | "content" | "logs" | "generic";
 
+export interface TableAnalysisPrimary {
+  titleColumn?: string | null;
+  subtitleColumn?: string | null;
+  avatarColumn?: string | null;
+  badgeColumn?: string | null;
+}
+
+export interface TableAnalysisRelation {
+  fkColumn: string;
+  label: string;
+  showOnDetail: boolean;
+}
+
 export interface TableAnalysis {
   schema: string;
   name: string;
@@ -9,6 +22,9 @@ export interface TableAnalysis {
   statusColumn?: string | null;
   titleColumn?: string | null;
   notes?: string;
+  primary?: TableAnalysisPrimary;
+  hiddenColumns?: string[];
+  relations?: TableAnalysisRelation[];
 }
 
 export interface SchemaAnalysisResult {

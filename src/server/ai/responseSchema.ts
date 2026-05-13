@@ -3,6 +3,21 @@ import { z } from "zod";
 
 const CategoryEnum = z.enum(["users", "content", "logs", "generic"]);
 
+const PrimarySchema = z
+  .object({
+    titleColumn: z.string().nullable().optional(),
+    subtitleColumn: z.string().nullable().optional(),
+    avatarColumn: z.string().nullable().optional(),
+    badgeColumn: z.string().nullable().optional(),
+  })
+  .optional();
+
+const RelationSchema = z.object({
+  fkColumn: z.string().min(1),
+  label: z.string().min(1).max(40),
+  showOnDetail: z.boolean(),
+});
+
 export const TableAnalysisSchema = z.object({
   schema: z.string().min(1),
   name: z.string().min(1),
@@ -12,6 +27,9 @@ export const TableAnalysisSchema = z.object({
   statusColumn: z.string().nullable().optional(),
   titleColumn: z.string().nullable().optional(),
   notes: z.string().max(200).optional(),
+  primary: PrimarySchema,
+  hiddenColumns: z.array(z.string()).max(20).optional(),
+  relations: z.array(RelationSchema).max(12).optional(),
 });
 
 export const AnalysisResponseSchema = z.object({

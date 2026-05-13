@@ -1,4 +1,4 @@
-import { TableRowView } from "@/components/workspace/TableRowView";
+import { RowPresetRouter } from "@/components/workspace/RowPresetRouter";
 
 interface Props {
   params: Promise<{ name: string; pk: string }>;
@@ -6,5 +6,5 @@ interface Props {
 
 export default async function TableRowPage({ params }: Props) {
   const { name, pk } = await params;
-  return <TableRowView tableName={decodeURIComponent(name)} pkSegment={pk} />;
+  return <RowPresetRouter tableName={decodeURIComponent(name)} pkSegment={pk} />;
 }
