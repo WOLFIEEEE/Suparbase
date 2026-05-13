@@ -8,6 +8,9 @@ const LABELS: Record<PresetId, string> = {
   users: "Users",
   content: "Content",
   logs: "Logs",
+  commerce: "Orders",
+  tasks: "Tasks",
+  messages: "Messages",
   generic: "Generic",
 };
 

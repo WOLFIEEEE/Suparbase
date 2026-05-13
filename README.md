@@ -5,12 +5,47 @@
 > rest and proxied — it never reaches the browser.
 
 [![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v1.0.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
 [![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
 [![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
 [![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
 [![OpenRouter](https://img.shields.io/badge/ai-OpenRouter-0A0A0B?labelColor=B6FF3C)](#)
+
+## What's new in v1.1
+
+The archetype taxonomy widens. v1.0 shipped four categories
+(Users / Content / Logs / Generic); v1.1 adds three more — each with a
+list view + a dedicated detail view, each automatically applied to any
+matching table from the AI analysis or the heuristic fallback.
+
+- **Commerce** for orders / invoices / transactions / payments / charges
+  / receipts / carts / checkouts. Money columns are formatted via
+  `Intl.NumberFormat` (currency picked up from a `currency` column when
+  present; `_cents` columns divided by 100 automatically); detail page
+  shows the total at display size with a four-step pipeline (Placed →
+  Paid → Shipped → Delivered) driven from the canonical status
+  vocabulary, with terminal states (refunded / cancelled / failed)
+  collapsed to a single note.
+- **Tasks** for tickets / issues / todos / cards / jobs / reminders.
+  List view groups rows by canonical status bucket (To do / In progress
+  / Done / Blocked / Other), collapsing synonyms like `in_progress` /
+  `doing` / `active` / `started` / `review`; detail page surfaces
+  assignee (linked when the FK is set) + priority chip + overdue badge.
+- **Messages** for comments / threads / conversations / replies / notes.
+  List rows render as compact chat cards (author + body snippet + reply
+  badge); detail page is a single chat bubble with an "in reply to"
+  pointer for replies. Distinguished from Content by the absence of a
+  slug column.
+
+The OpenRouter prompt + Zod response schema teach the model the new
+categories with concrete signals; the heuristic fallback matches the
+same shapes so first paint never waits on the model. No new
+dependencies. Largest authenticated route stays at 186 KB First Load
+JS — well under the 520 KB gz budget.
+
+Spec: [`specs/010-more-archetypes/`](specs/010-more-archetypes/). Full
+notes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## What's new in v1.0
 
@@ -425,21 +460,24 @@ context.
 
 ## Status
 
-**v1.0.0** — GA. Every workspace surface uses the same opinionated
-visual language; unified Inter typography; bulk operations + CSV/JSON
-export + import + saved views + filter chips. Self-host with zero
-env vars on Coolify or any docker-compose host.
+**v1.1.0** — Archetype taxonomy widened to seven categories — Users,
+Content, Logs, Commerce, Tasks, Messages, Generic — each with list +
+detail views automatically applied from the AI analysis (heuristic
+fallback when offline). Builds on v1.0's unified visual language;
+bulk operations + CSV/JSON export + import + saved views + filter chips
+all carry over. Self-host with zero env vars on Coolify or any
+docker-compose host.
 
 **Planned next** (see [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to
 help):
 
-- **v1.1 "Inline editing"** — click-to-edit cells in the data grid
-  with type-appropriate editors, the only piece of the v0.7 backlog
+- **v1.2 "Inline editing"** — click-to-edit cells in the data grid
+  with type-appropriate editors, the last piece of the v0.7 backlog
   deferred from v1.0.
-- **v1.2 "Postgres-native parity"** — SQL editor (read-only first),
+- **v1.3 "Postgres-native parity"** — SQL editor (read-only first),
   RLS policy viewer, `auth.users` dedicated admin, Supabase Storage
   browser.
-- **v1.3 "Operate-able for real"** — email verification, password
+- **v1.4 "Operate-able for real"** — email verification, password
   reset, audit-log UI, 2FA, health / metrics endpoints.
 
 **Out of scope for v1.x**: team workspaces / shared connections,

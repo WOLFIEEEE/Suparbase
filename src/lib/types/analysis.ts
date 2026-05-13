@@ -1,4 +1,11 @@
-export type TableCategory = "users" | "content" | "logs" | "generic";
+export type TableCategory =
+  | "users"
+  | "content"
+  | "logs"
+  | "commerce"
+  | "tasks"
+  | "messages"
+  | "generic";
 
 export interface TableAnalysisPrimary {
   titleColumn?: string | null;
