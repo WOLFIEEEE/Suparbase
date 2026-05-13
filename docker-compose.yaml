@@ -34,23 +34,29 @@ services:
       - /bin/sh
       - -c
       - |
-        set -e
-        umask 077
+        set -eu
+        echo "[bootstrap] starting (uid=$$(id -u))"
         mkdir -p /secrets
-        chmod 700 /secrets
+        # Dir traversable + readable by everyone so non-root containers
+        # (postgres, nextjs) can read the files inside.
+        chmod 755 /secrets
         gen() {
           target="/secrets/$$1"
           if [ ! -s "$$target" ]; then
             head -c 32 /dev/urandom | base64 | tr -d '\n=+/' | head -c 44 > "$$target"
-            chmod 600 "$$target"
-            echo "[bootstrap] generated /secrets/$$1"
+            echo "[bootstrap] generated $$target"
           else
-            echo "[bootstrap] /secrets/$$1 already present"
+            echo "[bootstrap] $$target already present"
           fi
+          # World-readable: the security boundary lives at the volume
+          # mount layer; inside the volume there is no second tenant.
+          chmod 444 "$$target"
         }
         gen postgres_password
         gen auth_secret
         gen encryption_key
+        echo "[bootstrap] final listing of /secrets:"
+        ls -la /secrets
         echo "[bootstrap] done"
 
   db:
