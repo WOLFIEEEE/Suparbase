@@ -1,11 +1,10 @@
 <!-- SPECKIT START -->
-**Current**: v0.6.0 on `006-product-workspace` (awaiting merge to `main`).
-Workspace UX overhaul: archetype-grouped Dashboard, archetype-grouped Tables
-list, Content + Logs presets rebuilt to the Users-archetype standard,
-Cmd+K command palette, light/dark theme toggle with no-flash SSR cookie,
-sidebar polish. Plus the v0.5.1 AI prompt extension (`primary` / `hiddenColumns` /
-`relations`) shipping as part of v0.6.
-Active spec: [specs/006-product-workspace/](specs/006-product-workspace/).
+**Current**: v0.6.0 on `main` (tagged `v0.6.0`). Workspace UX overhaul:
+archetype-grouped Dashboard, archetype-grouped Tables list, Content + Logs
+presets rebuilt to the Users-archetype standard, Cmd+K command palette,
+light/dark theme toggle with no-flash SSR cookie, sidebar polish. Includes
+the AI prompt extension (`primary` / `hiddenColumns` / `relations`) that
+every preset reads.
 
 Read for stack, structure, constraints, and budgets before editing:
 
