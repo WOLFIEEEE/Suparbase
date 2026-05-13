@@ -12,6 +12,8 @@ const TITLES: Record<AppError["category"], string> = {
   rate_limited: "Rate-limited",
   server: "Server error",
   client_bug: "Something went wrong",
+  validation: "Invalid request",
+  no_key: "AI key missing",
 };
 
 const HINTS: Record<AppError["category"], string> = {
@@ -23,6 +25,8 @@ const HINTS: Record<AppError["category"], string> = {
   rate_limited: "Wait a moment and try again.",
   server: "Try again in a moment.",
   client_bug: "We logged the issue. Try again.",
+  validation: "Check the request and try again.",
+  no_key: "Add an OpenRouter API key in Settings → AI.",
 };
 
 export function ErrorBanner({ error }: { error: AppError }) {

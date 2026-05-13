@@ -8,7 +8,9 @@ export type ErrorCategory =
   | "constraint"
   | "rate_limited"
   | "server"
-  | "client_bug";
+  | "client_bug"
+  | "validation"
+  | "no_key";
 
 export interface AppErrorOptions {
   cause?: unknown;

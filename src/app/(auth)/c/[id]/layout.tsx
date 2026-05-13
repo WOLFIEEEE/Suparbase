@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/workspace/Sidebar";
 import { Topbar } from "@/components/workspace/Topbar";
 import { AppFooter } from "@/components/workspace/AppFooter";
 import { CommandPalette } from "@/components/workspace/CommandPalette";
+import { AiChat } from "@/components/workspace/AiChat";
 import { CurrentConnectionProvider } from "@/lib/contexts/CurrentConnection";
 
 interface Props {
@@ -33,6 +34,7 @@ export default async function ConnectionLayout({ children, params }: Props) {
         </div>
       </div>
       <CommandPalette />
+      <AiChat />
     </CurrentConnectionProvider>
   );
 }
