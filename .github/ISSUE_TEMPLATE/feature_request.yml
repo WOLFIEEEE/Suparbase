@@ -1,0 +1,63 @@
+name: Feature request
+description: Propose a new feature or improvement.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Significant features ship via the Spec-Kit workflow (see
+        [`CONTRIBUTING.md`](https://github.com/WOLFIEEEE/Suparbase/blob/main/CONTRIBUTING.md)).
+        This issue is the *first step* — we'll triage it and decide whether
+        it becomes a `specs/NNN-…` cycle.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What user problem are you solving?
+      description: |
+        State the problem in user terms, not solution terms. "I can't
+        delete 50 rows at once" is a problem; "add a bulk delete button"
+        is a solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution (if you have one)
+      description: |
+        Optional. Describe the smallest change that would solve the
+        problem. We may suggest a different shape.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Rough scope
+      description: How big do you think this is?
+      options:
+        - Polish / fix (no spec required)
+        - One Spec-Kit feature (under a week)
+        - Multi-spec direction (rethink an existing principle)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: constitution
+    attributes:
+      label: Constitution principles this touches (if any)
+      description: |
+        Reference any of the nine principles in
+        [`./.specify/memory/constitution.md`](https://github.com/WOLFIEEEE/Suparbase/blob/main/.specify/memory/constitution.md)
+        that your idea would interact with (perf, accessibility, vault, etc.).
+    validations:
+      required: false

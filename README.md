@@ -4,11 +4,38 @@
 > projects, and run a real admin dashboard. Your API key is encrypted at
 > rest and proxied — it never reaches the browser.
 
+[![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-v0.6.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
 [![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
 [![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
 [![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
 [![OpenRouter](https://img.shields.io/badge/ai-OpenRouter-0A0A0B?labelColor=B6FF3C)](#)
+
+## What's new in v0.6
+
+A coherent visual + UX overhaul of every workspace surface — the app
+reads as a product, not a database admin tool. Highlights:
+
+- **Archetype-grouped Dashboard** that explains the project (Audience /
+  Library / Activity) instead of listing "N tables / N views".
+- **Tables list** grouped by archetype with a cross-section search; the
+  `auth.*` / `storage.*` tables collapse behind a "System tables"
+  disclosure.
+- **Users, Content, Logs** archetypes have opinionated row cards and
+  dedicated detail pages — no more drawer-as-detail.
+- **Cmd / Ctrl + K command palette** jumps to any table, connection,
+  setting, or action with the keyboard.
+- **Dark / light theme toggle** that reads the system preference, paints
+  the chosen theme during SSR (no flash on reload).
+- **Sticky sidebar + topbar** with backdrop blur. Every authenticated
+  page now has a consistent header + footer.
+- **AI analysis extension** — `TableAnalysis` now carries primary
+  identity (avatar, badge, subtitle), columns to hide by default, and
+  FK relations annotated for detail-page surfacing.
+
+Spec: [`specs/006-product-workspace/`](specs/006-product-workspace/).
+Full notes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## What this is
 
@@ -42,12 +69,14 @@ Supply your own OpenRouter API key in `/settings/ai`. Suparbase then:
 - Caches the result keyed by a SHA-256 of your schema. The same schema
   is analyzed at most once per change.
 - Routes each table to a **purpose-built admin preset**:
-  - **UsersAdmin** — avatar + email cards, role chips, status pill,
-    "Invite user" action.
-  - **ContentAdmin** — title + excerpt, status pill, sorted by
-    `published_at desc`.
-  - **LogsAdmin** — reverse-chronological, expandable JSON payloads,
-    read-only.
+  - **UsersAdmin** — avatar cards with role + status chips, action menu,
+    profile detail page with identity panel + linked-records sidebar.
+  - **ContentAdmin** — CMS-style row cards (title / status / author /
+    published-at), detail page with title hero, readable body, and
+    relations sidebar.
+  - **LogsAdmin** — time-bucketed event stream (Today / Yesterday / This
+    week / Earlier), jsonb payloads collapse to a one-line preview with
+    click-to-expand, detail page that pretty-prints the payload.
   - **GenericAdmin** — the regular CRUD experience (fallback for
     anything we can't classify, or for tables you manually switch to).
 
@@ -291,9 +320,37 @@ audit_log       id, user_id, connection_id, schema, table_name, primary_key (jso
 See [`drizzle/0000_chief_lily_hollister.sql`](drizzle/) for the
 generated migration.
 
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Significant features ship via
+the Spec-Kit workflow; small fixes and polish can land via a focused PR.
+CI runs `tsc --noEmit` + `next build` on every PR.
+
 ## Spec-Kit artifacts
 
-Built spec-first across three features. The full audit trail:
+Built spec-first across six features so far. The full audit trail:
+
+### v0.6 — Product workspace (`006-product-workspace/`)
+
+| Document | Contents |
+|---|---|
+| [`spec.md`](specs/006-product-workspace/spec.md) | 7 user stories (P1–P3) covering Dashboard, Tables list, Content + Logs archetypes, command palette, theme toggle, sidebar polish. |
+| [`plan.md`](specs/006-product-workspace/plan.md) | Architecture decisions, Constitution Check (all 9 principles), project structure. |
+| [`research.md`](specs/006-product-workspace/research.md) | 10 design-decision write-ups (archetype labels, lazy palette index, theme cookie, etc.). |
+| [`data-model.md`](specs/006-product-workspace/data-model.md) | Types each surface reads. No new tables. |
+| [`contracts/audit-recent.md`](specs/006-product-workspace/contracts/audit-recent.md) | `GET /api/v/[id]/audit/recent` contract. |
+| [`tasks.md`](specs/006-product-workspace/tasks.md) | 40 tasks across 1 setup + 7 foundational + 7 user stories + 7 polish. |
+| [`quickstart.md`](specs/006-product-workspace/quickstart.md) | Manual smoke checklist per user story. |
+
+### v0.5 — Self-bootstrap & email/password auth (`005-bootstrap-and-credentials/`)
+
+Bootstrap container generates secrets on first deploy; NextAuth Credentials
+provider with bcrypt; GitHub OAuth becomes optional.
+
+### v0.4 — Coolify deployment (`004-deploy-coolify/`)
+
+Production Dockerfile + docker-compose, Drizzle migrator bundled with
+esbuild, zero-config Coolify deploy.
 
 ### v0.3 — AI-augmented admin presets (`003-ai-augmented-admin/`)
 
@@ -325,11 +382,25 @@ context.
 
 ## Status
 
-v0.3 — usable end-to-end against any Supabase project, with optional
-AI-driven preset routing via OpenRouter. Out-of-scope for v1: team
-workspaces / shared connections, magic-link / passwordless auth,
-storage bucket browser, SQL editor, migrations / DDL, billing,
-multi-provider AI matrix.
+**v0.6.0** — usable end-to-end against any Supabase project, with
+opinionated archetype-aware admin presets, a command palette, and a
+flash-free dark/light theme toggle. Self-host with zero env vars on
+Coolify or any docker-compose host.
+
+**Planned next** (see [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to
+help):
+
+- **v0.7 "Power-user data ops"** — bulk actions, CSV / JSON import +
+  export, inline cell editing, saved filters / views per table.
+- **v0.8 "Postgres-native parity"** — SQL editor (read-only first),
+  RLS policy viewer, `auth.users` dedicated admin, Supabase Storage
+  browser.
+- **v0.9 "Operate-able for real"** — email verification, password
+  reset, audit-log UI, 2FA, health / metrics endpoints.
+
+**Out of scope for v1**: team workspaces / shared connections,
+magic-link / passwordless auth, billing, multi-provider AI matrix
+beyond OpenRouter.
 
 ## License
 

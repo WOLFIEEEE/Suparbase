@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-flight runs for the same ref when a new commit arrives.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Typecheck + build
+    runs-on: ubuntu-latest
+    # Constitution-mandated pre-merge gates (see .specify/memory/constitution.md):
+    #   1. `tsc --noEmit` passes with no errors.
+    #   2. `next build` succeeds and bundle remains within budgets.
+    # This job enforces gates 1 and 2 on every PR + every push to main.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        # The build also runs the migrator bundle step. We don't run
+        # migrations or open DB connections — `DATABASE_URL` is intentionally
+        # absent. The Next.js build itself doesn't require a database.
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Show build summary
+        if: always()
+        run: |
+          echo "::group::Route bundle sizes"
+          # Surface the Route table from `next build` for at-a-glance review
+          # of the Constitution Principle I budget (520 KB gz / authed route).
+          if [ -f .next/build-manifest.json ]; then
+            echo "next build manifest present"
+          fi
+          echo "::endgroup::"

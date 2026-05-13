@@ -1,0 +1,83 @@
+name: Bug report
+description: Something that worked, broke, or behaves wrong.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Before submitting, please confirm:
+        - [ ] You're on the latest `main` (or note the version you're on).
+        - [ ] You've checked the [open issues](https://github.com/WOLFIEEEE/Suparbase/issues).
+        - [ ] This is **not** a security issue — those go to [GitHub Security Advisories](https://github.com/WOLFIEEEE/Suparbase/security/advisories/new).
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear, factual description of the bug.
+      placeholder: When I do X, I expect Y, but Z happens instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: |
+        The smallest sequence that triggers the bug. Include the schema /
+        table shape if relevant; **do not include real API keys or row
+        contents**.
+      placeholder: |
+        1. Sign in.
+        2. Open connection X.
+        3. Click the Y button on the Z table.
+        4. Error appears.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior (error message, screenshot, network response)
+      description: |
+        For network errors, paste the response body. **Strip any JWT / API
+        key substrings before pasting** — the server-side redactor strips
+        them in our logs but client-side errors may still contain them.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Suparbase version / commit
+      placeholder: "v0.6.0 or commit 5fbd8b5"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: env
+    attributes:
+      label: Environment
+      options:
+        - Local dev (`pnpm dev`)
+        - Self-hosted via docker-compose
+        - Self-hosted via Coolify
+        - Hosted at suparbase.com
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser + OS
+      placeholder: Safari 17 on macOS 14
+    validations:
+      required: false
