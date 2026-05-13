@@ -136,6 +136,122 @@ export function useReferenceLabels(
   });
 }
 
+export interface BulkDeleteResponse {
+  deleted: number;
+  snapshots?: Row[];
+}
+
+async function postBulkDelete(
+  connectionId: string,
+  tableName: string,
+  primaryKeys: PrimaryKeyValue[],
+  returnSnapshots: boolean,
+): Promise<BulkDeleteResponse> {
+  const res = await fetch(
+    `/api/v/${encodeURIComponent(connectionId)}/rest/${encodeURIComponent(tableName)}/bulk-delete`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ primaryKeys, returnSnapshots }),
+    },
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => null);
+    throw new AppError((e?.category as AppError["category"]) ?? "server", e?.message ?? "Bulk delete failed.");
+  }
+  return res.json();
+}
+
+export function useBulkDelete(
+  connectionId: string | undefined,
+  table: Table | undefined,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      primaryKeys,
+      returnSnapshots = true,
+    }: {
+      primaryKeys: PrimaryKeyValue[];
+      returnSnapshots?: boolean;
+    }) => {
+      if (!connectionId || !table) throw new Error("Connection or table is not loaded yet.");
+      return postBulkDelete(connectionId, table.name, primaryKeys, returnSnapshots);
+    },
+    onSuccess: () => {
+      if (!connectionId || !table) return;
+      qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] });
+      qc.invalidateQueries({ queryKey: ["rowCount", connectionId, table.schema, table.name] });
+    },
+  });
+}
+
+async function postBulkUpdate(
+  connectionId: string,
+  tableName: string,
+  primaryKeys: PrimaryKeyValue[],
+  patch: Row,
+): Promise<{ updated: number }> {
+  const res = await fetch(
+    `/api/v/${encodeURIComponent(connectionId)}/rest/${encodeURIComponent(tableName)}/bulk-update`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ primaryKeys, patch }),
+    },
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => null);
+    throw new AppError((e?.category as AppError["category"]) ?? "server", e?.message ?? "Bulk update failed.");
+  }
+  return res.json();
+}
+
+export function useBulkUpdate(
+  connectionId: string | undefined,
+  table: Table | undefined,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ primaryKeys, patch }: { primaryKeys: PrimaryKeyValue[]; patch: Row }) => {
+      if (!connectionId || !table) throw new Error("Connection or table is not loaded yet.");
+      return postBulkUpdate(connectionId, table.name, primaryKeys, patch);
+    },
+    onSuccess: () => {
+      if (!connectionId || !table) return;
+      qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] });
+      qc.invalidateQueries({ queryKey: ["rowCount", connectionId, table.schema, table.name] });
+    },
+  });
+}
+
+export interface ImportChunkResponse {
+  imported: number;
+  skipped: number;
+  errors: Array<{ index: number; column?: string; reason: string }>;
+}
+
+export async function postImportChunk(
+  connectionId: string,
+  tableName: string,
+  rows: Record<string, unknown>[],
+  onError: "skip" | "abort",
+): Promise<ImportChunkResponse> {
+  const res = await fetch(
+    `/api/v/${encodeURIComponent(connectionId)}/rest/${encodeURIComponent(tableName)}/import`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows, onError }),
+    },
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => null);
+    throw new AppError((e?.category as AppError["category"]) ?? "server", e?.message ?? "Import failed.");
+  }
+  return res.json();
+}
+
 export interface RecentAuditEntry {
   id: string;
   verb: "insert" | "update" | "delete";

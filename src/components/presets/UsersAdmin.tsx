@@ -3,8 +3,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Mail, MoreHorizontal, Plus, RefreshCw, Search, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Mail, MoreHorizontal, Plus, RefreshCw, Search, ShieldCheck, Sparkles, Upload, X } from "lucide-react";
 import { useRows, useRowCount } from "@/lib/api/hooks";
+import { SelectionProvider, useSelection } from "@/components/data/SelectionContext";
+import { BulkBar } from "@/components/data/BulkBar";
+import { ExportMenu } from "@/components/data/ExportMenu";
+import { ImportPanel } from "@/components/data/ImportPanel";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { ListParams } from "@/lib/pgrest/rows";
 import { encodePkSegment } from "@/lib/table/pk";
@@ -63,7 +67,17 @@ function pkFor(row: Row, primaryKey: string[]): string | null {
   return encodePkSegment(pk);
 }
 
-export default function UsersAdmin({ connectionId, table, analysis }: PresetProps) {
+export default function UsersAdmin(props: PresetProps) {
+  // Selection state lives in a context so the BulkBar + row checkboxes share
+  // it. Scoped to this component so navigating away resets it.
+  return (
+    <SelectionProvider>
+      <UsersAdminBody {...props} />
+    </SelectionProvider>
+  );
+}
+
+function UsersAdminBody({ connectionId, table, analysis }: PresetProps) {
   const router = useRouter();
   const sp = useSearchParams();
   const qc = useQueryClient();
@@ -116,9 +130,26 @@ export default function UsersAdmin({ connectionId, table, analysis }: PresetProp
     { label: displayName },
   ];
 
+  const visibleCols = (analysis?.listColumns?.length ? analysis.listColumns : table.columns.map((c) => c.name)).filter(
+    (c) => !(analysis?.hiddenColumns ?? []).includes(c),
+  );
+  const [openImport, setOpenImport] = useState(false);
+
   const headerActions = (
     <>
       <PresetSwitcher active="users" />
+      <ExportMenu
+        connectionId={connectionId}
+        table={table}
+        visibleColumns={visibleCols}
+        hiddenColumns={analysis?.hiddenColumns ?? []}
+      />
+      {table.kind === "table" && table.primaryKey.length > 0 && (
+        <Button variant="secondary" size="md" onClick={() => setOpenImport(true)}>
+          <Upload className="h-3.5 w-3.5" aria-hidden />
+          <span className="hidden sm:inline">Import</span>
+        </Button>
+      )}
       <Button
         variant="secondary"
         size="md"
@@ -169,6 +200,15 @@ export default function UsersAdmin({ connectionId, table, analysis }: PresetProp
     const v = r[statusCol];
     if (v != null) visibleStatuses.add(String(v));
   }
+
+  const selection = useSelection();
+  const pageKeys: string[] = [];
+  for (const r of rows) {
+    const seg = pkFor(r, table.primaryKey);
+    if (seg) pageKeys.push(seg);
+  }
+  const allPageSelected =
+    pageKeys.length > 0 && pageKeys.every((k) => selection.isSelected(k));
 
   return (
     <div className="space-y-6">
@@ -221,6 +261,16 @@ export default function UsersAdmin({ connectionId, table, analysis }: PresetProp
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex items-center gap-2 rounded border hairline bg-bg-raised px-3 py-2 text-xs text-fg-muted">
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 cursor-pointer accent-accent"
+            checked={allPageSelected}
+            onChange={() => selection.toggleMany(pageKeys, allPageSelected)}
+            aria-label="Select all on this page"
+          />
+          <span className="hidden sm:inline">page</span>
+        </label>
         <div className="relative min-w-[16rem] flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-faint" aria-hidden />
           <Input
@@ -267,29 +317,35 @@ export default function UsersAdmin({ connectionId, table, analysis }: PresetProp
             )}
           </li>
         ) : (
-          rows.map((row, idx) => (
-            <UserRow
-              key={`u-${idx}`}
-              row={row}
-              connectionId={connectionId}
-              tableName={table.name}
-              primaryKey={table.primaryKey}
-              tableHref={tableHref}
-              cols={{
-                name: nameCol,
-                email: emailCol,
-                handle: handleCol,
-                avatar: avatarCol,
-                role: roleCol,
-                status: statusCol,
-                lastSeen: lastSeenCol,
-                created: createdCol,
-              }}
-              onView={(pk) => {
-                router.push(`${tableHref}/${pk}`);
-              }}
-            />
-          ))
+          rows.map((row, idx) => {
+            const pkSegment = pkFor(row, table.primaryKey);
+            return (
+              <UserRow
+                key={`u-${idx}`}
+                row={row}
+                connectionId={connectionId}
+                tableName={table.name}
+                primaryKey={table.primaryKey}
+                tableHref={tableHref}
+                cols={{
+                  name: nameCol,
+                  email: emailCol,
+                  handle: handleCol,
+                  avatar: avatarCol,
+                  role: roleCol,
+                  status: statusCol,
+                  lastSeen: lastSeenCol,
+                  created: createdCol,
+                }}
+                selectionKey={pkSegment}
+                isSelected={pkSegment ? selection.isSelected(pkSegment) : false}
+                onSelectionToggle={pkSegment ? () => selection.toggle(pkSegment) : undefined}
+                onView={(pk) => {
+                  router.push(`${tableHref}/${pk}`);
+                }}
+              />
+            );
+          })
         )}
       </ul>
 
@@ -307,6 +363,20 @@ export default function UsersAdmin({ connectionId, table, analysis }: PresetProp
       <p className="text-[11px] text-fg-faint">
         {analysis?.notes ? `AI: ${analysis.notes}` : "Heuristic: users table"}
       </p>
+
+      <BulkBar
+        connectionId={connectionId}
+        table={table}
+        visibleColumns={visibleCols}
+        hiddenColumns={analysis?.hiddenColumns ?? []}
+      />
+
+      <ImportPanel
+        open={openImport}
+        onClose={() => setOpenImport(false)}
+        connectionId={connectionId}
+        table={table}
+      />
     </div>
   );
 }
@@ -327,10 +397,13 @@ interface UserRowProps {
     lastSeen: string | null;
     created: string | null;
   };
+  selectionKey: string | null;
+  isSelected: boolean;
+  onSelectionToggle?: () => void;
   onView: (pkSegment: string) => void;
 }
 
-function UserRow({ row, primaryKey, tableHref, cols, onView }: UserRowProps) {
+function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionToggle, onView }: UserRowProps) {
   const name = cols.name ? (row[cols.name] as string | null | undefined) : null;
   const email = cols.email ? (row[cols.email] as string | null | undefined) : null;
   const handle = cols.handle ? (row[cols.handle] as string | null | undefined) : null;
@@ -352,10 +425,33 @@ function UserRow({ row, primaryKey, tableHref, cols, onView }: UserRowProps) {
 
   return (
     <li>
-      <div className="group relative flex items-center gap-3 rounded-md border hairline bg-bg-raised p-3 transition-colors hover:border-line-strong hover:bg-bg-raised/80">
+      <div className={cn(
+        "group relative flex items-center gap-3 rounded-md border hairline bg-bg-raised p-3 transition-colors hover:border-line-strong hover:bg-bg-raised/80",
+        isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-bg",
+      )}>
+        {/* Checkbox column — outside the Link overlay's hit zone (see /speckit-analyze F1). */}
+        {onSelectionToggle && (
+          <label
+            className="relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              className="h-4 w-4 cursor-pointer accent-accent"
+              checked={isSelected}
+              onChange={onSelectionToggle}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Select ${display}`}
+            />
+          </label>
+        )}
+        {/* Link overlay covers the card EXCEPT the leftmost ~44px reserved for the checkbox. */}
         <Wrapper
           {...wrapperProps}
-          className="absolute inset-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className={cn(
+            "absolute right-0 top-0 bottom-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+            onSelectionToggle ? "left-11" : "left-0",
+          )}
           aria-label={`Open ${display}`}
         />
         <div className="relative z-10 h-10 w-10 shrink-0 overflow-hidden rounded-full bg-bg-sunken">
