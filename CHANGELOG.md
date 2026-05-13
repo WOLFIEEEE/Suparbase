@@ -3,6 +3,74 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v0.6.0 — 2026-05-13 — Product workspace
+
+Tag: `v0.6.0` · Spec: [`specs/006-product-workspace/`](specs/006-product-workspace/)
+
+A coherent visual + UX overhaul: every workspace surface now matches the
+Users archetype shipped in v0.5.1. The app reads as a product, not a
+database admin. No schema changes; no new dependencies.
+
+- **Dashboard rewrite** ([src/components/workspace/Dashboard.tsx](src/components/workspace/Dashboard.tsx)).
+  Title is the connection's friendly name; hostname is demoted to subtitle.
+  Hero stat strip with archetype-derived tiles (Audience / Library /
+  Activity / Other tables). Archetype-grouped table sections. A "Recent
+  activity" sidebar reads from `audit_log` via a new authenticated route.
+  System tables collapse behind a disclosure.
+- **Tables list rewrite** ([TablesList.tsx](src/components/workspace/TablesList.tsx)).
+  Archetype groups (People / Library / Activity / Everything else); a
+  search input filters every section at once; system tables behind a
+  disclosure; uses the same `PageHeader` chrome as every other page.
+- **Content archetype rebuilt** ([ContentAdmin.tsx](src/components/presets/ContentAdmin.tsx),
+  [ContentDetail.tsx](src/components/presets/ContentDetail.tsx)). CMS-style
+  row cards (title / status pill / author / published-at). Click → real
+  detail page with title hero, body rendered as wrapped readable text,
+  and a Linked-records sidebar. Drawer-as-detail pattern removed.
+- **Logs archetype rebuilt** ([LogsAdmin.tsx](src/components/presets/LogsAdmin.tsx),
+  [LogDetail.tsx](src/components/presets/LogDetail.tsx)). Time-bucketed
+  event stream (Today / Yesterday / This week / Earlier). jsonb payloads
+  collapse to one-line previews, click-to-expand. Detail page leads with
+  the timestamp and pretty-prints the payload.
+- **Command palette** ([CommandPalette.tsx](src/components/workspace/CommandPalette.tsx)).
+  Cmd/Ctrl+K from anywhere in the workspace. Indexes connections,
+  tables (with AI display names), pages, settings, and global actions
+  (Toggle theme, Run AI analysis, Sign out). Lazy-loads its index on
+  first open — the dialog appears instantly. Built on the existing
+  cmdk + Radix Dialog primitives, no new deps.
+- **Theme toggle** ([ThemeToggle.tsx](src/components/workspace/ThemeToggle.tsx),
+  [src/lib/theme/](src/lib/theme/)). Topbar button switches between
+  light and dark; preference persists in a `suparbase-theme` cookie
+  readable by the server in [`app/layout.tsx`](src/app/layout.tsx) so
+  initial paint matches — no flash on reload. Defaults to OS
+  `prefers-color-scheme` when no preference is set. Full WCAG-AA light
+  palette added to [globals.css](src/app/globals.css).
+- **Sidebar polish** ([Sidebar.tsx](src/components/workspace/Sidebar.tsx)).
+  Inline counts on Tables and Schema, accent-tinted active state with a
+  left-edge indicator, AI footer link shows last-used model + token
+  total when an analysis is cached.
+- **New API route**: `GET /api/v/[id]/audit/recent?limit=10` — reads
+  the user's own recent writes for a single connection. Connection
+  ownership verified before any DB read; rate-limited under a new
+  `checkReadRate` bucket (240/min/user). Contract:
+  [audit-recent.md](specs/006-product-workspace/contracts/audit-recent.md).
+- **AI analysis extended in v0.5.1** (pulled into the v0.6 release):
+  `TableAnalysis` now carries `primary { titleColumn, subtitleColumn,
+  avatarColumn, badgeColumn }`, `hiddenColumns`, and `relations`. The
+  AI prompt asks for these explicitly; heuristic fallback fills them
+  too. Every preset in this release reads them.
+- `RowPresetRouter` dispatches `users` → `UserDetail`, `content` →
+  `ContentDetail`, `logs` → `LogDetail`; everything else falls through
+  to the existing `TableRowView`. The drawer-as-detail pattern is gone
+  from every archetype (the drawer module still exists for the generic
+  grid fallback).
+- Bundle measurement: largest authenticated first-paint payload is
+  `/c/[id]/tables/[name]/[pk]` at 189 KB First Load JS — well under
+  the Constitution's 520 KB gz budget.
+- Deletes the now-unused `src/components/presets/shared/PresetHeader.tsx`
+  in favour of the shared `PageHeader` (Principle VI — no abstraction
+  without a second caller).
+- Constitution **v3.2.0 unchanged**: no new principle needed.
+
 ## v0.5.0 — 2026-05-13 — Self-bootstrap & email/password auth
 
 Tag: `v0.5.0` · Spec: [`specs/005-bootstrap-and-credentials/`](specs/005-bootstrap-and-credentials/)

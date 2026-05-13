@@ -7,6 +7,9 @@
 @tailwind utilities;
 
 @layer base {
+  /* Dark is the default. Light kicks in either via `[data-theme="light"]`
+     (explicit user choice) or `prefers-color-scheme: light` when the user
+     has not chosen yet. */
   :root {
     --bg: 10 10 11;
     --bg-raised: 18 18 20;
@@ -22,6 +25,44 @@
     --danger-fg: 255 255 255;
     --warn: 255 198 88;
     --warn-fg: 10 10 11;
+  }
+
+  /* Explicit light theme (via cookie/toggle) — wins regardless of OS preference. */
+  [data-theme="light"] {
+    --bg: 252 252 250;
+    --bg-raised: 255 255 255;
+    --bg-sunken: 244 244 240;
+    --fg: 17 17 19;
+    --fg-muted: 78 78 84;
+    --fg-faint: 130 130 134;
+    --line: 222 222 218;
+    --line-strong: 192 192 188;
+    --accent: 74 110 23;
+    --accent-fg: 255 255 255;
+    --danger: 200 38 38;
+    --danger-fg: 255 255 255;
+    --warn: 158 105 0;
+    --warn-fg: 255 255 255;
+  }
+
+  /* Fallback to OS preference only when no explicit cookie was set. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) {
+      --bg: 252 252 250;
+      --bg-raised: 255 255 255;
+      --bg-sunken: 244 244 240;
+      --fg: 17 17 19;
+      --fg-muted: 78 78 84;
+      --fg-faint: 130 130 134;
+      --line: 222 222 218;
+      --line-strong: 192 192 188;
+      --accent: 74 110 23;
+      --accent-fg: 255 255 255;
+      --danger: 200 38 38;
+      --danger-fg: 255 255 255;
+      --warn: 158 105 0;
+      --warn-fg: 255 255 255;
+    }
   }
 
   html, body {

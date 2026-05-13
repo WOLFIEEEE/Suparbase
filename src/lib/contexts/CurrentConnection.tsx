@@ -1,28 +1,33 @@
 "use client";
 import { createContext, useContext, type ReactNode } from "react";
+import type { ConnectionSummary } from "@/lib/types/connection";
 
-const CurrentConnectionContext = createContext<string | null>(null);
+const CurrentConnectionContext = createContext<ConnectionSummary | null>(null);
 
 export function CurrentConnectionProvider({
-  connectionId,
+  connection,
   children,
 }: {
-  connectionId: string;
+  connection: ConnectionSummary;
   children: ReactNode;
 }) {
   return (
-    <CurrentConnectionContext.Provider value={connectionId}>
+    <CurrentConnectionContext.Provider value={connection}>
       {children}
     </CurrentConnectionContext.Provider>
   );
 }
 
+export function useCurrentConnection(): ConnectionSummary {
+  const c = useContext(CurrentConnectionContext);
+  if (!c) throw new Error("useCurrentConnection must be used inside a workspace layout.");
+  return c;
+}
+
 export function useCurrentConnectionId(): string {
-  const id = useContext(CurrentConnectionContext);
-  if (!id) throw new Error("useCurrentConnectionId must be used inside a workspace layout.");
-  return id;
+  return useCurrentConnection().id;
 }
 
 export function useOptionalConnectionId(): string | null {
-  return useContext(CurrentConnectionContext);
+  return useContext(CurrentConnectionContext)?.id ?? null;
 }

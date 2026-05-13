@@ -1,15 +1,32 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Database, LayoutDashboard, Settings, Sparkles, Table2 } from "lucide-react";
+import { useSchema } from "@/lib/api/hooks";
+import type { AiSettingsSummary } from "@/lib/types/analysis";
+import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 
-const items = [
+interface NavItem {
+  sub: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  getCount?: (schemaTables: number, schemaColumns: number) => number | null;
+}
+
+const items: NavItem[] = [
   { sub: "", label: "Dashboard", icon: LayoutDashboard },
-  { sub: "tables", label: "Tables", icon: Table2 },
-  { sub: "schema", label: "Schema", icon: Database },
+  { sub: "tables", label: "Tables", icon: Table2, getCount: (t) => t },
+  { sub: "schema", label: "Schema", icon: Database, getCount: (_, c) => c },
   { sub: "settings", label: "Connection", icon: Settings },
 ];
+
+async function fetchAiSettings(): Promise<AiSettingsSummary> {
+  const res = await fetch("/api/settings/ai");
+  if (!res.ok) throw new AppError("server", "Failed to load AI settings.");
+  return res.json();
+}
 
 interface SidebarProps {
   connectionId: string;
@@ -22,12 +39,28 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
   const pathname = usePathname();
   const base = `/c/${connectionId}`;
 
+  const { data: schema } = useSchema(connectionId);
+  const { data: aiSettings } = useQuery({
+    queryKey: ["settings", "ai"],
+    queryFn: fetchAiSettings,
+    staleTime: 60_000,
+  });
+
+  const tableCount = schema ? schema.tables.filter((t) => t.schema !== "auth" && t.schema !== "storage").length : null;
+  const columnCount = schema
+    ? schema.tables.reduce((n, t) => n + t.columns.length, 0)
+    : null;
+
   return (
     <div className={cn("flex h-full w-60 flex-col border-r hairline bg-bg", className)}>
       {showBrand && (
         <div className="flex h-14 items-center gap-2 border-b hairline px-5">
           <span className="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden />
-          <Link href="/connections" className="font-display text-lg tracking-tight hover:text-accent" onClick={onNavigate}>
+          <Link
+            href="/connections"
+            className="font-display text-lg tracking-tight hover:text-accent"
+            onClick={onNavigate}
+          >
             suparbase
           </Link>
         </div>
@@ -44,18 +77,35 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
         {items.map((it) => {
           const href = it.sub ? `${base}/${it.sub}` : base;
           const isActive = it.sub ? pathname?.startsWith(href) : pathname === base;
+          const count = it.getCount ? it.getCount(tableCount ?? 0, columnCount ?? 0) : null;
           return (
             <Link
               key={href}
               href={href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded px-3 py-2 text-sm transition-colors",
-                isActive ? "bg-bg-raised text-fg" : "text-fg-muted hover:bg-bg-raised hover:text-fg",
+                "relative flex items-center gap-3 rounded px-3 py-2 text-sm transition-colors",
+                isActive
+                  ? "bg-accent/10 text-fg before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-accent before:content-['']"
+                  : "text-fg-muted hover:bg-bg-raised hover:text-fg",
               )}
+              aria-current={isActive ? "page" : undefined}
             >
-              <it.icon className="h-4 w-4" aria-hidden />
-              <span>{it.label}</span>
+              <it.icon
+                className={cn("h-4 w-4", isActive ? "text-accent" : undefined)}
+                aria-hidden
+              />
+              <span className="flex-1">{it.label}</span>
+              {count != null && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0 text-[10px] tabular-nums",
+                    isActive ? "text-accent" : "text-fg-faint",
+                  )}
+                >
+                  {count.toLocaleString()}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -64,12 +114,23 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
         <Link
           href="/settings/ai"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
+          className="flex items-start gap-3 rounded px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
         >
-          <Sparkles className="h-4 w-4 text-accent" aria-hidden />
-          <span>AI assistance</span>
+          <Sparkles className="mt-0.5 h-4 w-4 text-accent" aria-hidden />
+          <div className="min-w-0 flex-1 leading-tight">
+            <div>AI assistance</div>
+            {aiSettings?.lastAnalysisModel && aiSettings.lastTotalTokens ? (
+              <div className="mt-0.5 truncate text-[10px] text-fg-faint">
+                {aiSettings.lastAnalysisModel} · {aiSettings.lastTotalTokens.toLocaleString()} tok
+              </div>
+            ) : (
+              <div className="mt-0.5 text-[10px] text-fg-faint">not run yet</div>
+            )}
+          </div>
         </Link>
-        <div className="px-3 text-[10px] uppercase tracking-wider text-fg-faint">v0.3 · proxied · AI</div>
+        <div className="px-3 text-[10px] uppercase tracking-wider text-fg-faint">
+          v0.6 · proxied · AI
+        </div>
       </div>
     </div>
   );

@@ -48,6 +48,11 @@ export function checkWriteRate(userId: string): RateLimitResult {
   return check("w", userId, WRITE_BUDGET, WINDOW_MS);
 }
 
+const READ_BUDGET = 240;       // generic authed reads per minute (audit panel, dashboard)
+export function checkReadRate(userId: string): RateLimitResult {
+  return check("r", userId, READ_BUDGET, WINDOW_MS);
+}
+
 const AI_BUDGET = 10;          // analyses per hour per user
 const AI_WINDOW_MS = 60 * 60_000;
 

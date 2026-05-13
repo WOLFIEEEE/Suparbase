@@ -1,26 +1,31 @@
 "use client";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Activity, RefreshCw, Search, X } from "lucide-react";
-import { useRows } from "@/lib/api/hooks";
+import { AlertCircle, ChevronDown, ChevronRight, RefreshCw, Search, Sparkles, X } from "lucide-react";
+import { useRows, useRowCount } from "@/lib/api/hooks";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { ListParams } from "@/lib/pgrest/rows";
+import type { Row } from "@/lib/types/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { PaginationBar } from "@/components/data/PaginationBar";
-import { PresetHeader } from "./shared/PresetHeader";
+import { PageHeader, StatTile } from "@/components/workspace/PageHeader";
 import { PresetSwitcher } from "@/components/workspace/PresetSwitcher";
+import { StatusPill } from "./shared/StatusPill";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
+import { encodePkSegment } from "@/lib/table/pk";
+import { relativeFromNow } from "@/lib/ui/time";
 import type { PresetProps } from "./types";
 
-const TIMESTAMP_PATTERNS = ["created_at", "inserted_at", "occurred_at", "happened_at", "ts"];
+const TIMESTAMP_PATTERNS = ["created_at", "inserted_at", "occurred_at", "happened_at", "ts", "logged_at"];
 const EVENT_PATTERNS = ["event", "event_type", "action", "verb", "operation", "kind", "type"];
 const PAYLOAD_PATTERNS = ["payload", "data", "metadata", "details", "body"];
-const ACTOR_PATTERNS = ["user_id", "actor_id", "owner_id", "principal_id"];
+const ACTOR_PATTERNS = ["user_id", "actor_id", "owner_id", "principal_id", "by_user_id"];
 
 function find(table: PresetProps["table"], names: readonly string[]): string | null {
   for (const n of names) {
@@ -30,7 +35,48 @@ function find(table: PresetProps["table"], names: readonly string[]): string | n
   return null;
 }
 
-function tryPretty(value: unknown): string {
+function pkFor(row: Row, primaryKey: string[]): string | null {
+  if (primaryKey.length === 0) return null;
+  const pk: Record<string, unknown> = {};
+  for (const col of primaryKey) {
+    if (row[col] == null) return null;
+    pk[col] = row[col];
+  }
+  return encodePkSegment(pk);
+}
+
+type Bucket = "today" | "yesterday" | "thisWeek" | "earlier";
+
+function bucketOf(d: Date, now: Date): Bucket {
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(d, now)) return "today";
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  if (sameDay(d, y)) return "yesterday";
+  const sixDaysAgo = new Date(now);
+  sixDaysAgo.setDate(now.getDate() - 6);
+  if (d >= sixDaysAgo) return "thisWeek";
+  return "earlier";
+}
+
+const BUCKET_LABEL: Record<Bucket, string> = {
+  today: "Today",
+  yesterday: "Yesterday",
+  thisWeek: "This week",
+  earlier: "Earlier",
+};
+
+function previewJson(value: unknown, max = 80): string {
+  try {
+    const s = typeof value === "string" ? value : JSON.stringify(value);
+    return s.length > max ? s.slice(0, max) + "…" : s;
+  } catch {
+    return String(value);
+  }
+}
+
+function prettyJson(value: unknown): string {
   if (value == null) return "—";
   if (typeof value === "string") {
     try {
@@ -51,15 +97,18 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
   const sp = useSearchParams();
   const qc = useQueryClient();
 
+  const primary = analysis?.primary;
   const tsCol = find(table, TIMESTAMP_PATTERNS);
-  const eventCol = analysis?.statusColumn ?? find(table, EVENT_PATTERNS);
+  const eventCol = primary?.titleColumn ?? primary?.badgeColumn ?? analysis?.statusColumn ?? find(table, EVENT_PATTERNS);
   const payloadCol = find(table, PAYLOAD_PATTERNS);
   const actorCol = find(table, ACTOR_PATTERNS);
 
   const [searchInput, setSearchInput] = useState(sp.get("q") ?? "");
   const debouncedSearch = useDebouncedValue(searchInput, 300);
+
   const page = Math.max(1, Number(sp.get("page") ?? 1) || 1);
   const pageSize = 50 as const;
+
   const listParams: ListParams = useMemo(
     () => ({
       page,
@@ -71,55 +120,136 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
   );
 
   const { data, isLoading, isFetching, error } = useRows(connectionId, table, listParams);
+  const { data: totalCountResult } = useRowCount(connectionId, table);
+  const totalCount = totalCountResult?.count ?? null;
   const rows = data?.rows ?? [];
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
-  const displayName = analysis?.displayName ?? "Logs";
+  const displayName = analysis?.displayName ?? "Activity";
+  const breadcrumbs = [
+    { label: "Tables", href: `/c/${connectionId}/tables` },
+    { label: displayName },
+  ];
 
-  function toggleExpand(idx: number) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
-  }
+  // Group rows by day bucket (only if we have a timestamp column).
+  const bucketed = useMemo(() => {
+    if (!tsCol) return null;
+    const now = new Date();
+    const out: Record<Bucket, Row[]> = { today: [], yesterday: [], thisWeek: [], earlier: [] };
+    let last24 = 0;
+    let last7d = 0;
+    const distinctEvents = new Set<string>();
+    for (const r of rows) {
+      const raw = r[tsCol];
+      const d = raw ? new Date(String(raw)) : null;
+      if (!d || Number.isNaN(d.getTime())) {
+        out.earlier.push(r);
+        continue;
+      }
+      out[bucketOf(d, now)].push(r);
+      const diff = now.getTime() - d.getTime();
+      if (diff < 24 * 60 * 60 * 1000) last24 += 1;
+      if (diff < 7 * 24 * 60 * 60 * 1000) last7d += 1;
+      if (eventCol && r[eventCol] != null) distinctEvents.add(String(r[eventCol]));
+    }
+    return { groups: out, last24, last7d, distinct: distinctEvents.size };
+  }, [rows, tsCol, eventCol]);
+
+  const headerActions = (
+    <>
+      <PresetSwitcher active="logs" />
+      <Button
+        variant="secondary"
+        size="md"
+        onClick={() =>
+          qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] })
+        }
+        disabled={isFetching}
+        aria-label="Refresh"
+      >
+        <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} aria-hidden />
+        <span className="hidden sm:inline">Refresh</span>
+      </Button>
+    </>
+  );
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <PresetHeader
-          connectionId={connectionId}
-          tableName={table.name}
-          displayName={displayName}
-          analysis={analysis}
+      <div className="space-y-6">
+        <PageHeader
+          breadcrumbs={breadcrumbs}
+          title={displayName}
+          subtitle={<span className="font-mono">{table.schema}.{table.name}</span>}
+          eyebrow={analysis && <><Sparkles className="h-3 w-3 text-accent" aria-hidden /> AI · {analysis.category}</>}
+          actions={headerActions}
         />
         <ErrorBanner
-          error={error instanceof AppError ? error : new AppError("client_bug", String((error as Error).message ?? error))}
+          error={
+            error instanceof AppError
+              ? error
+              : new AppError("client_bug", String((error as Error).message ?? error))
+          }
         />
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      <PresetHeader
-        connectionId={connectionId}
-        tableName={table.name}
-        displayName={displayName}
-        analysis={analysis}
-        actions={<PresetSwitcher active="logs" />}
+    <div className="space-y-6">
+      <PageHeader
+        breadcrumbs={breadcrumbs}
+        title={displayName}
+        subtitle={
+          <span className="inline-flex items-center gap-2 font-mono text-xs">
+            {table.schema}.{table.name}
+            {table.kind === "view" && (
+              <span className="rounded-full bg-warn/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-warn">
+                view
+              </span>
+            )}
+          </span>
+        }
+        eyebrow={
+          analysis ? (
+            <>
+              <Sparkles className="h-3 w-3 text-accent" aria-hidden /> AI · {analysis.category}
+            </>
+          ) : null
+        }
+        actions={headerActions}
       />
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile
+          label="Total events"
+          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          hint={tsCol ? "newest first" : "no timestamp"}
+        />
+        <StatTile
+          label="Last 24h"
+          value={bucketed ? bucketed.last24 : "—"}
+          hint="on this page"
+        />
+        <StatTile
+          label="Last 7 days"
+          value={bucketed ? bucketed.last7d : "—"}
+          hint="on this page"
+        />
+        <StatTile
+          label="Event types"
+          value={bucketed ? bucketed.distinct : "—"}
+          hint={eventCol ? `column: ${eventCol}` : "no event column"}
+        />
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[16rem] flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-faint" aria-hidden />
           <Input
-            placeholder={eventCol ? `Filter by ${eventCol}…` : "Search events…"}
+            placeholder="Search events…"
             className="pl-9 pr-9"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            aria-label={`Search events in ${table.name}`}
+            aria-label={`Search activity in ${table.name}`}
           />
           {searchInput && (
             <button
@@ -132,96 +262,82 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
             </button>
           )}
         </div>
-        <Button
-          variant="secondary"
-          size="md"
-          onClick={() => qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] })}
-          disabled={isFetching}
-        >
-          <RefreshCw className={isFetching ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} aria-hidden />
-          <span className="sr-only">Refresh</span>
-        </Button>
       </div>
 
-      <div className="overflow-hidden rounded border hairline">
-        {isLoading && rows.length === 0 ? (
-          <div className="space-y-2 p-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : rows.length === 0 ? (
-          <div className="py-12 text-center text-sm text-fg-muted">
-            {debouncedSearch ? "No events match this search." : "No events yet."}
-          </div>
-        ) : (
-          <ul className="divide-y divide-line/60">
-            {rows.map((row, idx) => {
-              const ts = tsCol ? row[tsCol] : null;
-              const event = eventCol ? row[eventCol] : null;
-              const payload = payloadCol ? row[payloadCol] : null;
-              const actor = actorCol ? row[actorCol] : null;
-              const isOpen = expanded.has(idx);
-              return (
-                <li key={`l-${idx}`} className="bg-bg-sunken/40">
-                  <button
-                    type="button"
-                    onClick={() => toggleExpand(idx)}
-                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-xs hover:bg-bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  >
-                    <span className="font-mono tabular-nums text-fg-faint shrink-0 w-44 truncate">
-                      {ts != null ? new Date(String(ts)).toLocaleString() : "—"}
-                    </span>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-bg-raised px-2 py-0.5 font-mono text-[10px] text-fg">
-                      <Activity className="h-3 w-3 text-accent" aria-hidden />
-                      {event != null ? String(event) : table.name}
-                    </span>
-                    {actor != null && (
-                      <span className="truncate font-mono text-[10px] text-fg-faint">
-                        actor: {String(actor).slice(0, 8)}…
-                      </span>
-                    )}
-                    {payload != null && (
-                      <span className="ml-auto shrink-0 text-[10px] text-fg-faint">
-                        {isOpen ? "hide payload" : "show payload"}
-                      </span>
-                    )}
-                  </button>
-                  <div
-                    className={cn(
-                      "overflow-hidden border-t hairline px-3 transition-all",
-                      isOpen ? "max-h-96 py-2" : "max-h-0 py-0",
-                    )}
-                    aria-hidden={!isOpen}
-                  >
-                    {payload != null ? (
-                      <pre className="max-h-80 overflow-auto rounded surface-sunken p-2 font-mono text-[11px] leading-relaxed">
-                        {tryPretty(payload)}
-                      </pre>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-1 text-[11px] sm:grid-cols-2">
-                        {table.columns.map((c) => (
-                          <div key={c.name} className="flex gap-2">
-                            <span className="font-mono text-fg-muted">{c.name}:</span>
-                            <span className="truncate font-mono text-fg-faint">
-                              {row[c.name] == null ? "—" : String(row[c.name])}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      {!tsCol && (
+        <div className="flex items-start gap-3 rounded-md border hairline bg-warn/5 p-4 text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0 text-warn" aria-hidden />
+          <p className="text-fg-muted">
+            No timestamp column found on this table — events are shown in primary-key order, not
+            time-ordered.
+          </p>
+        </div>
+      )}
+
+      {isLoading && rows.length === 0 ? (
+        <ul className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i}>
+              <Skeleton className="h-16 w-full rounded-md" />
+            </li>
+          ))}
+        </ul>
+      ) : rows.length === 0 ? (
+        <div className="surface rounded-md px-6 py-16 text-center text-sm text-fg-muted">
+          {debouncedSearch ? <>Nothing matches.</> : <>No events yet.</>}
+        </div>
+      ) : !tsCol || !bucketed ? (
+        <ul className="space-y-1.5">
+          {rows.map((r, i) => (
+            <EventRow
+              key={`e-${i}`}
+              row={r}
+              connectionId={connectionId}
+              tableName={table.name}
+              primaryKey={table.primaryKey}
+              tsCol={tsCol}
+              eventCol={eventCol}
+              payloadCol={payloadCol}
+              actorCol={actorCol}
+            />
+          ))}
+        </ul>
+      ) : (
+        <div className="space-y-6">
+          {(["today", "yesterday", "thisWeek", "earlier"] as const).map((bucket) => {
+            const groupRows = bucketed.groups[bucket];
+            if (groupRows.length === 0) return null;
+            return (
+              <section key={bucket}>
+                <h2 className="mb-2 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
+                  {BUCKET_LABEL[bucket]}{" "}
+                  <span className="text-fg-faint">· {groupRows.length}</span>
+                </h2>
+                <ul className="space-y-1.5">
+                  {groupRows.map((r, i) => (
+                    <EventRow
+                      key={`${bucket}-${i}`}
+                      row={r}
+                      connectionId={connectionId}
+                      tableName={table.name}
+                      primaryKey={table.primaryKey}
+                      tsCol={tsCol}
+                      eventCol={eventCol}
+                      payloadCol={payloadCol}
+                      actorCol={actorCol}
+                    />
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      )}
 
       <PaginationBar
         page={page}
         pageSize={pageSize}
-        totalCount={data?.totalCount ?? null}
+        totalCount={data?.totalCount ?? totalCount ?? null}
         onPageChange={(p) => {
           const url = new URLSearchParams(sp.toString());
           url.set("page", String(Math.max(1, p)));
@@ -230,8 +346,89 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
       />
 
       <p className="text-[11px] text-fg-faint">
-        {analysis?.notes ? `AI: ${analysis.notes}` : "Heuristic: append-only log"}
+        {analysis?.notes ? `AI: ${analysis.notes}` : "Heuristic: activity stream"}
       </p>
     </div>
+  );
+}
+
+interface EventRowProps {
+  row: Row;
+  connectionId: string;
+  tableName: string;
+  primaryKey: string[];
+  tsCol: string | null;
+  eventCol: string | null;
+  payloadCol: string | null;
+  actorCol: string | null;
+}
+
+function EventRow({ row, connectionId, tableName, primaryKey, tsCol, eventCol, payloadCol, actorCol }: EventRowProps) {
+  const [expanded, setExpanded] = useState(false);
+  const event = eventCol ? row[eventCol] : null;
+  const actor = actorCol ? row[actorCol] : null;
+  const ts = tsCol ? row[tsCol] : null;
+  const payload = payloadCol ? row[payloadCol] : null;
+  const rel = ts ? relativeFromNow(ts as string) : null;
+  const abs = ts ? new Date(String(ts)).toLocaleString() : null;
+  const pkSegment = pkFor(row, primaryKey);
+  const detailHref = pkSegment
+    ? `/c/${connectionId}/tables/${encodeURIComponent(tableName)}/${pkSegment}`
+    : null;
+
+  return (
+    <li>
+      <div className="surface rounded-md p-3 transition-colors hover:border-line-strong">
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-0.5 shrink-0 rounded p-0.5 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label={expanded ? "Collapse payload" : "Expand payload"}
+            aria-expanded={expanded}
+          >
+            {expanded ? (
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            )}
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-sm">
+              {event != null && (
+                <StatusPill value={String(event)} />
+              )}
+              {actor != null && (
+                <span className="truncate text-xs text-fg-muted">
+                  by {String(actor).slice(0, 24)}
+                </span>
+              )}
+              {payload != null && !expanded && (
+                <span className="min-w-0 truncate font-mono text-[11px] text-fg-faint">
+                  {previewJson(payload)}
+                </span>
+              )}
+            </div>
+            {expanded && payload != null && (
+              <pre className="mt-2 max-h-96 overflow-auto rounded surface-sunken p-2 text-[11px] leading-relaxed">
+                {prettyJson(payload)}
+              </pre>
+            )}
+          </div>
+          <div className="shrink-0 text-right text-[11px] text-fg-faint" title={abs ?? undefined}>
+            {rel ?? (ts ? String(ts) : "")}
+          </div>
+          {detailHref && (
+            <Link
+              href={detailHref}
+              className="shrink-0 rounded p-1 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              aria-label="Open event"
+            >
+              <span aria-hidden>→</span>
+            </Link>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }

@@ -3,6 +3,7 @@ import { auth } from "@/server/auth";
 import { getConnectionForUser, toSummary } from "@/server/connections/repo";
 import { Sidebar } from "@/components/workspace/Sidebar";
 import { Topbar } from "@/components/workspace/Topbar";
+import { CommandPalette } from "@/components/workspace/CommandPalette";
 import { CurrentConnectionProvider } from "@/lib/contexts/CurrentConnection";
 
 interface Props {
@@ -19,7 +20,7 @@ export default async function ConnectionLayout({ children, params }: Props) {
   const connection = toSummary(row);
 
   return (
-    <CurrentConnectionProvider connectionId={connection.id}>
+    <CurrentConnectionProvider connection={connection}>
       <div className="flex min-h-screen bg-bg text-fg">
         <Sidebar connectionId={connection.id} />
         <div className="flex min-h-screen flex-1 flex-col">
@@ -29,6 +30,7 @@ export default async function ConnectionLayout({ children, params }: Props) {
           </main>
         </div>
       </div>
+      <CommandPalette />
     </CurrentConnectionProvider>
   );
 }

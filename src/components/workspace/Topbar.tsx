@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarNav } from "./Sidebar";
+import { ThemeToggle } from "./ThemeToggle";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
 
 const ROLE_TONE: Record<KeyRole, "neutral" | "accent" | "warn" | "danger"> = {
@@ -69,6 +70,7 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
           <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="secondary" size="sm" onClick={refreshSchema}>
             <RefreshCw className="h-3.5 w-3.5" aria-hidden />
             <span className="hidden sm:inline">Refresh schema</span>

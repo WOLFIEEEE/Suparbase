@@ -136,5 +136,37 @@ export function useReferenceLabels(
   });
 }
 
+export interface RecentAuditEntry {
+  id: string;
+  verb: "insert" | "update" | "delete";
+  tableSchema: string;
+  tableName: string;
+  primaryKey: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+async function fetchRecentAuditEntries(connectionId: string, limit: number): Promise<RecentAuditEntry[]> {
+  const res = await fetch(
+    `/api/v/${encodeURIComponent(connectionId)}/audit/recent?limit=${limit}`,
+    { method: "GET" },
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => null);
+    throw new AppError((e?.category as AppError["category"]) ?? "server", e?.message ?? "Failed to load audit log.");
+  }
+  const data = (await res.json()) as { entries: RecentAuditEntry[] };
+  return data.entries ?? [];
+}
+
+export function useRecentAudit(connectionId: string | undefined, limit = 10) {
+  return useQuery<RecentAuditEntry[]>({
+    queryKey: ["auditRecent", connectionId, limit],
+    queryFn: () => fetchRecentAuditEntries(connectionId!, limit),
+    enabled: !!connectionId,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+  });
+}
+
 // re-export `pgrest` so callers from components can drop in usage without an extra import path
 export { pgrest };

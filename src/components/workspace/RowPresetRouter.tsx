@@ -11,6 +11,8 @@ import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
 import { findAnalysis, pickPreset } from "@/lib/presets/pick";
 
 const UserDetail = dynamic(() => import("@/components/presets/UserDetail"));
+const ContentDetail = dynamic(() => import("@/components/presets/ContentDetail"));
+const LogDetail = dynamic(() => import("@/components/presets/LogDetail"));
 
 interface Props {
   tableName: string;
@@ -48,6 +50,28 @@ export function RowPresetRouter({ tableName, pkSegment }: Props) {
   if (preset === "users") {
     return (
       <UserDetail
+        connectionId={connectionId}
+        table={table}
+        schema={schema!}
+        analysis={analysis}
+        pkSegment={pkSegment}
+      />
+    );
+  }
+  if (preset === "content") {
+    return (
+      <ContentDetail
+        connectionId={connectionId}
+        table={table}
+        schema={schema!}
+        analysis={analysis}
+        pkSegment={pkSegment}
+      />
+    );
+  }
+  if (preset === "logs") {
+    return (
+      <LogDetail
         connectionId={connectionId}
         table={table}
         schema={schema!}
