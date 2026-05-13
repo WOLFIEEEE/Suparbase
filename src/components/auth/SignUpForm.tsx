@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Eye, EyeOff, Github, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ interface SignupError {
 }
 
 export function SignUpForm({ githubEnabled }: Props) {
-  const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") ?? "/connections";
 
@@ -51,21 +50,28 @@ export function SignUpForm({ githubEnabled }: Props) {
         const msg = data?.message ?? "Could not create account.";
         if (data?.field) setFieldError({ field: data.field, message: msg });
         else setFormError(msg);
+        setSubmitting(false);
         return;
       }
-      // On success, immediately sign in via the Credentials provider.
+      // Account created. Immediately sign in via Credentials so the
+      // user lands inside the workspace, not on /signin.
       const signin = await signIn("credentials", {
         email: email.trim(),
         password,
         redirect: false,
       });
       if (!signin || signin.error) {
-        setFormError("Account created. Please sign in.");
-        router.push("/signin");
+        // Surfacing as an error so they can manually sign in.
+        setFormError("Account created — sign in to continue.");
+        setSubmitting(false);
+        window.location.assign(`/signin?next=${encodeURIComponent(next)}`);
         return;
       }
-      router.replace(next);
-    } finally {
+      // Full nav: lets the server re-render the protected route with
+      // the freshly-set session cookie.
+      window.location.assign(next);
+    } catch {
+      setFormError("Could not create account. Try again.");
       setSubmitting(false);
     }
   }

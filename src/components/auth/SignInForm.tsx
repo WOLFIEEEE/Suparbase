@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ArrowRight, Eye, EyeOff, Github, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ interface Props {
 }
 
 export function SignInForm({ githubEnabled, error }: Props) {
-  const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") ?? "/connections";
 
@@ -36,10 +35,15 @@ export function SignInForm({ githubEnabled, error }: Props) {
       });
       if (!res || res.error) {
         setFormError("Invalid email or password.");
+        setSubmitting(false);
         return;
       }
-      router.replace(next);
-    } finally {
+      // Full navigation forces the server to re-render the protected
+      // route with the freshly-set session cookie. router.replace would
+      // race against Next's prefetch cache and bounce us back to /signin.
+      window.location.assign(next);
+    } catch {
+      setFormError("Sign-in failed. Try again.");
       setSubmitting(false);
     }
   }
