@@ -6,6 +6,9 @@ export interface ArchetypeGroups {
   users: Table[];
   content: Table[];
   logs: Table[];
+  commerce: Table[];
+  tasks: Table[];
+  messages: Table[];
   generic: Table[];
   /** Tables in the `auth` or `storage` schemas — hidden by default behind a disclosure. */
   system: Table[];
@@ -25,7 +28,7 @@ export function categoryOf(
 /**
  * Group an entire schema's tables into archetype buckets using the AI analysis
  * (with heuristic fallback). System tables live in their own bucket; everything
- * else falls into users/content/logs/generic.
+ * else falls into one of the seven archetypes.
  */
 export function groupTablesByArchetype(
   tables: Table[],
@@ -35,6 +38,9 @@ export function groupTablesByArchetype(
     users: [],
     content: [],
     logs: [],
+    commerce: [],
+    tasks: [],
+    messages: [],
     generic: [],
     system: [],
   };
@@ -53,6 +59,9 @@ export const ARCHETYPE_LABEL: Record<TableCategory | "system", string> = {
   users: "People",
   content: "Library",
   logs: "Activity",
+  commerce: "Commerce",
+  tasks: "Workflow",
+  messages: "Conversations",
   generic: "Everything else",
   system: "System tables",
 };
@@ -62,6 +71,9 @@ export const ARCHETYPE_HINT: Record<TableCategory | "system", string> = {
   users: "Accounts, profiles, members",
   content: "Posts, articles, documents",
   logs: "Events, audit trails, activity",
+  commerce: "Orders, invoices, transactions",
+  tasks: "Tickets, issues, todos with a workflow",
+  messages: "Comments, threads, conversations",
   generic: "Tables that don't fit a clean archetype",
   system: "Postgres / Supabase internals",
 };

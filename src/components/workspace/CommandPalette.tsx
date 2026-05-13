@@ -8,9 +8,12 @@ import {
   Database,
   FileText,
   Home,
+  Kanban,
   LogOut,
+  MessageSquare,
   Plus,
   Settings as SettingsIcon,
+  ShoppingCart,
   SunMoon,
   Sparkles,
   Table2,
@@ -55,6 +58,9 @@ const CATEGORY_ICON: Record<TableCategory, typeof UsersIcon> = {
   users: UsersIcon,
   content: FileText,
   logs: Activity,
+  commerce: ShoppingCart,
+  tasks: Kanban,
+  messages: MessageSquare,
   generic: Table2,
 };
 

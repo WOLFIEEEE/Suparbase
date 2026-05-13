@@ -12,12 +12,18 @@ import Link from "next/link";
 const UsersAdmin = dynamic(() => import("@/components/presets/UsersAdmin"));
 const ContentAdmin = dynamic(() => import("@/components/presets/ContentAdmin"));
 const LogsAdmin = dynamic(() => import("@/components/presets/LogsAdmin"));
+const CommerceAdmin = dynamic(() => import("@/components/presets/CommerceAdmin"));
+const TasksAdmin = dynamic(() => import("@/components/presets/TasksAdmin"));
+const MessagesAdmin = dynamic(() => import("@/components/presets/MessagesAdmin"));
 const GenericAdmin = dynamic(() => import("@/components/presets/GenericAdmin"));
 
 const MAP: Record<PresetId, typeof GenericAdmin> = {
   users: UsersAdmin,
   content: ContentAdmin,
   logs: LogsAdmin,
+  commerce: CommerceAdmin,
+  tasks: TasksAdmin,
+  messages: MessagesAdmin,
   generic: GenericAdmin,
 };
 

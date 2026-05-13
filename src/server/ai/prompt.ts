@@ -3,16 +3,32 @@ import type { Schema, Table } from "@/lib/types/schema";
 
 const SYSTEM_PROMPT = `You analyze database schemas for an admin dashboard.
 
-For each table I provide, classify it into ONE category:
-- "users":   end users / accounts / profiles / members. Email/username/
-             handle columns, password hashes, role, avatar URLs,
-             last_sign_in_at, etc.
-- "content": user-authored content like posts, articles, pages, docs.
-             Title, slug, body/content/markdown, published_at, status
-             (draft/published).
-- "logs":    append-only events / activity / audit trails. created_at +
-             event_type/verb, jsonb payload, no update timestamps.
-- "generic": none of the above.
+For each table I provide, classify it into EXACTLY ONE category. When
+two could apply, pick the one that drives the dominant UI need:
+- "users":    end users / accounts / profiles / members. Email/username/
+              handle columns, password hashes, role, avatar URLs,
+              last_sign_in_at, etc.
+- "content":  user-authored content like posts, articles, pages, docs.
+              Title, slug, body/content/markdown, published_at, status
+              (draft/published).
+- "logs":     append-only events / activity / audit trails. created_at +
+              event_type/verb, jsonb payload, no update timestamps.
+- "commerce": money-moving records — orders, invoices, transactions,
+              payments, charges, line_items. Look for total/amount/
+              price/subtotal/fee/tax columns, currency, customer or
+              buyer FK, order_number, status in {pending, paid,
+              shipped, delivered, refunded, cancelled}.
+- "tasks":    workflow items — tasks, tickets, issues, todos. Look for
+              a status column with workflow values ({todo, in_progress,
+              done, blocked, ...}), assignee/reporter FK, priority,
+              due_date.
+- "messages": conversation records — comments, messages, threads,
+              conversations, posts-on-a-post. Look for body/text +
+              author/sender FK + (thread_id|conversation_id|parent_id).
+              Distinguished from "content" by the presence of a thread
+              parent and the absence of a slug/title (messages have
+              author + body but no slug).
+- "generic":  none of the above.
 
 Then for each table also produce:
 
@@ -65,7 +81,7 @@ Respond with JSON ONLY in this shape:
     {
       "schema": string,
       "name": string,
-      "category": "users" | "content" | "logs" | "generic",
+      "category": "users" | "content" | "logs" | "commerce" | "tasks" | "messages" | "generic",
       "displayName": string,
       "listColumns": string[],
       "statusColumn": string | null,

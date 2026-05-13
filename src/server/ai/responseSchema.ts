@@ -1,7 +1,15 @@
 import "server-only";
 import { z } from "zod";
 
-const CategoryEnum = z.enum(["users", "content", "logs", "generic"]);
+const CategoryEnum = z.enum([
+  "users",
+  "content",
+  "logs",
+  "commerce",
+  "tasks",
+  "messages",
+  "generic",
+]);
 
 const PrimarySchema = z
   .object({

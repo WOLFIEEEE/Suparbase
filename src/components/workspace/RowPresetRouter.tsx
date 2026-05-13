@@ -12,6 +12,9 @@ import { findAnalysis, pickPreset } from "@/lib/presets/pick";
 const UserDetail = dynamic(() => import("@/components/presets/UserDetail"));
 const ContentDetail = dynamic(() => import("@/components/presets/ContentDetail"));
 const LogDetail = dynamic(() => import("@/components/presets/LogDetail"));
+const CommerceDetail = dynamic(() => import("@/components/presets/CommerceDetail"));
+const TaskDetail = dynamic(() => import("@/components/presets/TaskDetail"));
+const MessageDetail = dynamic(() => import("@/components/presets/MessageDetail"));
 const GenericDetail = dynamic(() => import("@/components/presets/GenericDetail"));
 
 interface Props {
@@ -58,5 +61,8 @@ export function RowPresetRouter({ tableName, pkSegment }: Props) {
   if (preset === "users") return <UserDetail {...sharedProps} />;
   if (preset === "content") return <ContentDetail {...sharedProps} />;
   if (preset === "logs") return <LogDetail {...sharedProps} />;
+  if (preset === "commerce") return <CommerceDetail {...sharedProps} />;
+  if (preset === "tasks") return <TaskDetail {...sharedProps} />;
+  if (preset === "messages") return <MessageDetail {...sharedProps} />;
   return <GenericDetail {...sharedProps} />;
 }

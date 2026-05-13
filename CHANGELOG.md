@@ -3,6 +3,58 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.1.0 — 2026-05-14 — More archetypes
+
+Tag: `v1.1.0` · Spec: [`specs/010-more-archetypes/`](specs/010-more-archetypes/)
+
+The archetype system was deliberately narrow in v1.0 — Users, Content, Logs,
+and a Generic fallback. v1.1 widens the taxonomy without changing the
+mechanism: three new categories, each with a dedicated list + detail view,
+each automatically applied to any matching table from the AI analysis (or
+heuristic fallback) — no per-schema configuration required.
+
+- **Commerce archetype.** Orders, invoices, transactions, payments,
+  charges, receipts, carts, checkouts. List view (`CommerceAdmin`)
+  surfaces order number + customer + status pill + money column at the
+  end of the row, with an on-page revenue tally in the stat strip.
+  Detail view (`CommerceDetail`) renders the total at display size in a
+  hero card alongside a four-step pipeline (Placed → Paid → Shipped →
+  Delivered) driven from the canonical status vocabulary; terminal
+  states (refunded / cancelled / failed) collapse the pipeline to a
+  single note. Money columns are formatted via `Intl.NumberFormat` with
+  the table's `currency` column when present; `_cents` columns divide
+  by 100 automatically.
+- **Tasks archetype.** Tickets, issues, todos, cards, jobs, reminders.
+  List view (`TasksAdmin`) groups rows by canonical status bucket
+  (To do / In progress / Done / Blocked / Other) collapsing synonyms
+  like `in_progress` / `doing` / `active` / `started` / `review` into a
+  single column; each row shows title + assignee + priority + due date
+  with overdue surfaced in red on the detail page. Detail view
+  (`TaskDetail`) renders the title with bucket icon, status pill,
+  priority chip, assignee (linkable when the FK is set), and a body
+  block from `description` / `details` / `notes`.
+- **Messages archetype.** Comments, threads, conversations, replies,
+  notes. List view (`MessagesAdmin`) renders each row as a compact chat
+  card with author + body snippet + reply badge (when a thread/parent FK
+  is set), with on-page reply count + unique author count in the stat
+  strip. Detail view (`MessageDetail`) is a single chat bubble with
+  author link (when the FK is set) + relative time + "in reply to"
+  pointer when applicable.
+- **Classifier extensions.** `TableCategory` enum widened to seven
+  values; OpenRouter prompt + Zod response schema both teach the model
+  the new categories with concrete signals (money + status →
+  `commerce`; status + assignee FK → `tasks`; body + author FK +
+  thread FK + no slug → `messages`). Heuristic fallback updated to
+  match the same shapes so first paint never waits on the model.
+- **Workspace surfaces.** `TableTile`, `CommandPalette`, and
+  `PresetSwitcher` all carry icons + labels for the three new
+  categories. `groupTablesByArchetype` emits the new buckets so the
+  Tables page renders them as their own sections ("Commerce",
+  "Workflow", "Conversations") under the existing disclosure pattern.
+- No new dependencies. Bundle: largest authenticated route
+  (`/c/[id]/tables/[name]/new`) stays at 186 KB First Load JS — well
+  under the 520 KB gz budget. Typecheck + `next build` both green.
+
 ## v1.0.1 — 2026-05-14 — Landing polish
 
 Tag: `v1.0.1`

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowUpRight, Eye, Key, Link2, Sparkles, Users, FileText, Activity, Table2 } from "lucide-react";
+import { ArrowUpRight, Eye, Key, Link2, Sparkles, Users, FileText, Activity, ShoppingCart, Kanban, MessageSquare, Table2 } from "lucide-react";
 import { useRowCount } from "@/lib/api/hooks";
 import { useAnalysis, analysisOrNull } from "@/hooks/useAnalysis";
 import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
@@ -24,6 +24,9 @@ const CATEGORY_ICON: Record<TableCategory, typeof Users> = {
   users: Users,
   content: FileText,
   logs: Activity,
+  commerce: ShoppingCart,
+  tasks: Kanban,
+  messages: MessageSquare,
   generic: Table2,
 };
 
@@ -31,6 +34,9 @@ const CATEGORY_LABEL: Record<TableCategory, string> = {
   users: "Users",
   content: "Content",
   logs: "Logs",
+  commerce: "Orders",
+  tasks: "Tasks",
+  messages: "Messages",
   generic: "Table",
 };
 
