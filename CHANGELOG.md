@@ -3,6 +3,37 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.0.1 — 2026-05-14 — Landing polish
+
+Tag: `v1.0.1`
+
+A focused polish pass on the unauthenticated landing page. Everything in
+v1.0.0 unchanged; this is `/` only.
+
+- **Hero animation rewrite.** Word-by-word mask-reveal on the headline
+  (proper translate-from-below clip, not just opacity fade). Each word
+  starts at `yPercent: 115` and rises into its `overflow-hidden` mask
+  with `power4.out` easing + stagger; the accent line ("Supabase
+  project.") is followed by a terminal caret that blinks — visual cue
+  that this is software, not a brochure.
+- **Product preview cards** dealt in below the CTAs with a `back.out`
+  ease + slight rotation that settles. The three cards mirror the
+  actual archetypes from the product (Users / Content / Logs) so the
+  user sees exactly what they'll get the moment they sign in — bridges
+  marketing → product without screenshots. Each carries one subtle
+  live signal: the Users status pulses; the Logs timestamp ticks
+  "12s → 13s → … → 59s → 12s" in real time. Both honour
+  `prefers-reduced-motion`.
+- **Surrounding layout.** Replaced the forbidden "three-card hero
+  grid" (Constitution Principle III) with a numbered vertical list
+  paired with a sticky-feeling headline column. The "Why server-side"
+  block becomes a single surface card with five concrete promises and
+  a Try-it / Self-host CTA pair. Header gains a GitHub link; footer
+  shows `v1.0`.
+- No new dependencies. Landing bundle: 135 KB → 144 KB First Load JS
+  (+9 KB), entirely from the new product preview cards. Well under
+  the 520 KB gz budget.
+
 ## v1.0.0 — 2026-05-14 — Polished release
 
 Tag: `v1.0.0` · Spec: [`specs/008-v1-polish/`](specs/008-v1-polish/)
