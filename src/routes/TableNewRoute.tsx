@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { RowForm } from "@/components/row/RowForm";
 import { useSchema } from "@/lib/api/hooks";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 export function TableNewRoute() {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const { data: schema, isLoading } = useSchema();
+  useDocumentTitle(name ? `New row · ${name}` : "New row");
 
   if (isLoading) return null;
   const table = schema?.tables.find((t) => t.name === name);

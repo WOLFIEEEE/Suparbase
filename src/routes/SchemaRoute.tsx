@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Eye, Key, Link2, Search } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +14,7 @@ import { Link } from "react-router-dom";
 export function SchemaRoute() {
   const { data: schema, isLoading, error } = useSchema();
   const [filter, setFilter] = useState("");
+  useDocumentTitle("Schema · Suparbase");
 
   const filtered = useMemo(() => {
     const tables = schema?.tables ?? [];

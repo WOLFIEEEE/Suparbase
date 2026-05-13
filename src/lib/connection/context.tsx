@@ -1,7 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type Connection, clear, load, save } from "./store";
 import { createSupabaseClient } from "@/lib/supabase/client";
+import { pingConnection } from "./healthcheck";
 
 interface ConnectionContextValue {
   connection: Connection | null;
@@ -24,6 +26,31 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Health-check a persisted connection once on mount. If the key has been
+  // revoked since last visit, clear it so the user lands back on the connect
+  // screen instead of a dashboard full of 401s.
+  const checkedRef = useRef(false);
+  useEffect(() => {
+    if (checkedRef.current) return;
+    if (!connection) return;
+    checkedRef.current = true;
+    let cancelled = false;
+    pingConnection(connection).then((result) => {
+      if (cancelled) return;
+      if (result.status === "unauthorized") {
+        clear();
+        setConnectionState(null);
+        toast.error("Your saved credentials were rejected. Please reconnect.");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // We deliberately only run this for the initial connection; setConnection
+    // afterwards (post-connect) has already been validated by introspection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const client = useMemo<SupabaseClient | null>(() => {

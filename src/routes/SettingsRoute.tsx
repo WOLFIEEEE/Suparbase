@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Shield, Calendar, KeyRound } from "lucide-react";
 import { useConnection } from "@/lib/connection/context";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,6 +40,7 @@ export function SettingsRoute() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [confirming, setConfirming] = useState(false);
+  useDocumentTitle("Settings · Suparbase");
 
   if (!connection) return null;
 

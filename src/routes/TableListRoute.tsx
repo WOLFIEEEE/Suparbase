@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { useRows, useSchema } from "@/lib/api/hooks";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import type { ListParams } from "@/lib/api/rows";
 import type { Row } from "@/lib/schema/types";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,8 @@ export function TableListRoute() {
     () => schema?.tables.find((t) => t.name === name),
     [schema, name],
   );
+
+  useDocumentTitle(name ? `${name} · Suparbase` : "Suparbase");
 
   const page = Math.max(1, Number(params.get("page") ?? 1) || 1);
   const pageSize = parsePageSize(params.get("size"));
@@ -80,10 +83,7 @@ export function TableListRoute() {
     [page, pageSize, sort, searchUrl],
   );
 
-  const { data, isLoading, isFetching, error } = useRows(
-    table ?? { schema: "public", name: "", columns: [], kind: "table", primaryKey: [], labelColumn: null },
-    listParams,
-  );
+  const { data, isLoading, isFetching, error } = useRows(table, listParams);
 
   const setPage = useCallback(
     (newPage: number) => {

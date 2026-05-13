@@ -10,6 +10,7 @@ import { RowForm } from "@/components/row/RowForm";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { ErrorBanner } from "@/components/connect/ErrorBanner";
 import { useDeleteRow, useInsertRow, useRow, useSchema } from "@/lib/api/hooks";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { decodePkSegment } from "@/lib/table/pk";
 import { formatCellValue } from "@/lib/table/cellFormat";
 import { cn } from "@/lib/ui/cn";
@@ -20,18 +21,16 @@ export function TableRowRoute() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const editMode = params.get("edit") === "1";
+  useDocumentTitle(name ? `${name} · row · Suparbase` : "Row");
 
   const { data: schema, isLoading: schemaLoading } = useSchema();
   const table = useMemo(() => schema?.tables.find((t) => t.name === name), [schema, name]);
   const pkValue = useMemo(() => (table && pk ? decodePkSegment(table, pk) : null), [table, pk]);
 
-  const { data: row, isLoading, error } = useRow(
-    table ?? { schema: "public", name: "", columns: [], kind: "table", primaryKey: [], labelColumn: null },
-    pkValue,
-  );
+  const { data: row, isLoading, error } = useRow(table, pkValue);
 
-  const deleteRow = useDeleteRow(table ?? { schema: "public", name: "", columns: [], kind: "table", primaryKey: [], labelColumn: null });
-  const insertRow = useInsertRow(table ?? { schema: "public", name: "", columns: [], kind: "table", primaryKey: [], labelColumn: null });
+  const deleteRow = useDeleteRow(table);
+  const insertRow = useInsertRow(table);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (schemaLoading) return null;

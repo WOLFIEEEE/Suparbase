@@ -36,7 +36,12 @@ function buildTable(name: string, def: OpenAPIDefinition, pathItem: OpenAPIPathI
   }
 
   const kind = inferKind(pathItem);
-  const primaryKey = columns.filter((c) => c.isPrimaryKey).map((c) => c.name);
+  const primaryKey = derivePrimaryKey(columns);
+  // After PK derivation, sync each column's isPrimaryKey flag so downstream UI is consistent.
+  const pkSet = new Set(primaryKey);
+  for (const col of columns) {
+    if (pkSet.has(col.name)) col.isPrimaryKey = true;
+  }
   const labelColumn = pickLabelColumn(columns);
 
   return {
@@ -47,6 +52,33 @@ function buildTable(name: string, def: OpenAPIDefinition, pathItem: OpenAPIPathI
     primaryKey,
     labelColumn,
   };
+}
+
+/**
+ * Determine the primary key, preferring PostgREST's explicit <pk/> tag, then
+ * falling back to conventions used by Supabase-shaped schemas.
+ */
+function derivePrimaryKey(columns: Column[]): string[] {
+  const tagged = columns.filter((c) => c.isPrimaryKey).map((c) => c.name);
+  if (tagged.length > 0) return tagged;
+
+  // Fallback 1: a column literally named `id` (case-insensitive).
+  const idCol = columns.find((c) => c.name.toLowerCase() === "id");
+  if (idCol) return [idCol.name];
+
+  // Fallback 2: a single uuid column with a generated default — almost certainly the PK.
+  const generatedUuid = columns.filter(
+    (c) => c.category === "uuid" && c.isGenerated,
+  );
+  if (generatedUuid.length === 1) return [generatedUuid[0]!.name];
+
+  // Fallback 3: a single integer column with a nextval default (legacy serial).
+  const generatedInts = columns.filter(
+    (c) => c.category === "integer" && c.isGenerated,
+  );
+  if (generatedInts.length === 1) return [generatedInts[0]!.name];
+
+  return [];
 }
 
 function buildColumn(name: string, prop: OpenAPIProperty, isRequired: boolean): Column {

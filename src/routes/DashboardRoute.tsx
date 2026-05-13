@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import { ArrowUpRight, Database, Eye, Table2 } from "lucide-react";
+import { Database, Eye, Table2 } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
 import { useConnection } from "@/lib/connection/context";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/workspace/EmptyState";
@@ -14,6 +14,7 @@ import { TableTile } from "@/components/data/TableTile";
 export function DashboardRoute() {
   const { connection } = useConnection();
   const { data: schema, isLoading, error } = useSchema();
+  useDocumentTitle(connection ? `Dashboard · ${connection.hostname}` : "Dashboard");
 
   const { tables, views } = useMemo(() => {
     const tt: Table[] = [];
@@ -112,6 +113,3 @@ function TileSkeletons() {
   );
 }
 
-// keep arrow icon import warning at bay if tree-shaking gets confused
-void ArrowUpRight;
-void Link;

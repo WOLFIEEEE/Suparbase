@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 import { TableTile } from "@/components/data/TableTile";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { AppError } from "@/lib/api/errors";
 export function TablesRoute() {
   const { data: schema, isLoading, error } = useSchema();
   const [filter, setFilter] = useState("");
+  useDocumentTitle("Tables · Suparbase");
 
   const filtered = useMemo(() => {
     const all = schema?.tables ?? [];

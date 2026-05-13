@@ -1,12 +1,14 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ConnectionProvider } from "@/lib/connection/context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RequireConnection } from "@/routes/RequireConnection";
 import { ConnectRoute } from "@/routes/ConnectRoute";
+import { NotFoundRoute } from "@/routes/NotFoundRoute";
 import { RouteLoader } from "@/components/workspace/RouteLoader";
+import { ErrorBoundary } from "@/components/workspace/ErrorBoundary";
 
 const WorkspaceLayout = lazy(() =>
   import("@/routes/WorkspaceLayout").then((m) => ({ default: m.WorkspaceLayout })),
@@ -52,27 +54,7 @@ export function App() {
       <ConnectionProvider>
         <TooltipProvider delayDuration={200}>
           <BrowserRouter>
-            <Suspense fallback={<RouteLoader />}>
-              <Routes>
-                <Route path="/" element={<ConnectRoute />} />
-                <Route
-                  element={
-                    <RequireConnection>
-                      <WorkspaceLayout />
-                    </RequireConnection>
-                  }
-                >
-                  <Route path="/dashboard" element={<DashboardRoute />} />
-                  <Route path="/tables" element={<TablesRoute />} />
-                  <Route path="/tables/:name" element={<TableListRoute />} />
-                  <Route path="/tables/:name/new" element={<TableNewRoute />} />
-                  <Route path="/tables/:name/:pk" element={<TableRowRoute />} />
-                  <Route path="/schema" element={<SchemaRoute />} />
-                  <Route path="/settings" element={<SettingsRoute />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
+            <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>
         <Toaster
@@ -88,5 +70,34 @@ export function App() {
         />
       </ConnectionProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  return (
+    <ErrorBoundary resetKey={location.pathname}>
+      <Suspense fallback={<RouteLoader />}>
+        <Routes>
+          <Route path="/" element={<ConnectRoute />} />
+          <Route
+            element={
+              <RequireConnection>
+                <WorkspaceLayout />
+              </RequireConnection>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardRoute />} />
+            <Route path="/tables" element={<TablesRoute />} />
+            <Route path="/tables/:name" element={<TableListRoute />} />
+            <Route path="/tables/:name/new" element={<TableNewRoute />} />
+            <Route path="/tables/:name/:pk" element={<TableRowRoute />} />
+            <Route path="/schema" element={<SchemaRoute />} />
+            <Route path="/settings" element={<SettingsRoute />} />
+            <Route path="*" element={<NotFoundRoute />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
