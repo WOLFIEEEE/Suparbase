@@ -1,30 +1,70 @@
 # Suparbase — Coolify deployment
 #
-# Two services: `db` (Supabase Postgres image) and `app` (this Next.js app).
-# Coolify's reverse proxy routes the public domain to `app:3000`.
-# DATABASE_URL is composed below; the operator never types a connection string.
+# Three services:
+#   bootstrap  — runs ONCE on first deploy. Generates strong random secrets
+#                into a shared docker volume (suparbase_secrets). On every
+#                subsequent boot, it is a no-op: existing secrets are reused.
+#   db         — supabase/postgres. Reads its password from the secrets volume
+#                via POSTGRES_PASSWORD_FILE.
+#   app        — this Next.js app. Reads AUTH_SECRET, SUPARBASE_ENCRYPTION_KEY,
+#                and POSTGRES_PASSWORD from the volume via *_FILE env vars.
+#                The entrypoint composes DATABASE_URL at runtime.
 #
-# Required env vars (set in the Coolify UI):
-#   POSTGRES_PASSWORD             — generate random (use Coolify's "Generate")
-#   AUTH_SECRET                   — generate random
-#   SUPARBASE_ENCRYPTION_KEY      — base64-encoded 32 bytes; openssl rand -base64 32
-#   AUTH_URL                      — your public origin, e.g. https://suparbase.example
-#   AUTH_GITHUB_ID                — from a GitHub OAuth app
-#   AUTH_GITHUB_SECRET            — from a GitHub OAuth app
+# Required env vars to type in Coolify: NONE.
+# Operator-supplied env values always win over the auto-generated secrets.
 #
-# Optional:
-#   SUPARBASE_AI_DEFAULT_MODEL    — default model for new users (default below)
-#   SUPARBASE_ENCRYPTION_KEY_OLD  — only needed during key rotation
+# Optional env vars you'll likely want to set in Coolify:
+#   AUTH_URL                — your public origin (defaults to https://suparbase.com)
+#   AUTH_GITHUB_ID          — only if you want GitHub OAuth available
+#   AUTH_GITHUB_SECRET      — only if you want GitHub OAuth available
+#   SUPARBASE_AI_DEFAULT_MODEL  — default OpenRouter model for new users
+#
+# ⚠ Losing the `suparbase_secrets` volume destroys your encryption key
+#   and every encrypted Supabase / OpenRouter credential stored in this
+#   deploy. Use Coolify's volume snapshot feature.
 
 services:
+  bootstrap:
+    image: alpine:3.20
+    user: root
+    restart: "no"
+    volumes:
+      - suparbase_secrets:/secrets
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        umask 077
+        mkdir -p /secrets
+        chmod 700 /secrets
+        gen() {
+          target="/secrets/$$1"
+          if [ ! -s "$$target" ]; then
+            head -c 32 /dev/urandom | base64 | tr -d '\n=+/' | head -c 44 > "$$target"
+            chmod 600 "$$target"
+            echo "[bootstrap] generated /secrets/$$1"
+          else
+            echo "[bootstrap] /secrets/$$1 already present"
+          fi
+        }
+        gen postgres_password
+        gen auth_secret
+        gen encryption_key
+        echo "[bootstrap] done"
+
   db:
     image: supabase/postgres:15.1.1.78
     restart: unless-stopped
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: suparbase
     volumes:
+      - suparbase_secrets:/run/secrets:ro
       - suparbase_db_data:/var/lib/postgresql/data
     expose:
       - "5432"
@@ -43,16 +83,31 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - suparbase_secrets:/secrets:ro
     environment:
       NODE_ENV: production
       PORT: "3000"
-      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/suparbase
-      AUTH_SECRET: ${AUTH_SECRET}
-      AUTH_URL: ${AUTH_URL}
-      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID}
-      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET}
-      SUPARBASE_ENCRYPTION_KEY: ${SUPARBASE_ENCRYPTION_KEY}
+      # Operator may override any of these in Coolify. When blank, the
+      # entrypoint loads the corresponding *_FILE.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_PASSWORD_FILE: /secrets/postgres_password
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_DB: suparbase
+
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_SECRET_FILE: /secrets/auth_secret
+      AUTH_URL: ${AUTH_URL:-https://suparbase.com}
+
+      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID:-}
+      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET:-}
+
+      SUPARBASE_ENCRYPTION_KEY: ${SUPARBASE_ENCRYPTION_KEY:-}
+      SUPARBASE_ENCRYPTION_KEY_FILE: /secrets/encryption_key
       SUPARBASE_ENCRYPTION_KEY_OLD: ${SUPARBASE_ENCRYPTION_KEY_OLD:-}
+
       SUPARBASE_AI_DEFAULT_MODEL: ${SUPARBASE_AI_DEFAULT_MODEL:-anthropic/claude-3.5-haiku}
     expose:
       - "3000"
@@ -65,3 +120,4 @@ services:
 
 volumes:
   suparbase_db_data:
+  suparbase_secrets:

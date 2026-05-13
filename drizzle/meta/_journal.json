@@ -15,6 +15,13 @@
       "when": 1778655600869,
       "tag": "0001_massive_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778657508340,
+      "tag": "0002_minor_magus",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,19 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 3.1.0 → 3.2.0
+Reason for MINOR bump: clarified that vault keys MAY be auto-generated
+at first deploy iff they persist with the data they encrypt and the
+operator is warned in the README. No principle removed; no
+NON-NEGOTIABLE relaxed.
+
+Modified principles:
+  - VII. Data & Security → clarifier added on auto-generated keys
+Added: none.
+Removed: none.
+
+PREVIOUS SYNC IMPACT REPORT (3.1.0)
+====================================
 Version change: 3.0.0 → 3.1.0
 Reason for MINOR bump: added Principle IX (AI Assistance) and
 expanded Data & Security to cover the OpenRouter API key as a vaulted
@@ -117,6 +130,15 @@ boundary errors are the leading source of incidents in Next.js apps;
 treat the line as a hard contract.
 
 ### VII. Data & Security (NON-NEGOTIABLE)
+
+**Auto-generated vault keys**: deployment tooling MAY generate the
+operator's vault key on first start (e.g. via a bootstrap container
+into a persistent Docker volume) ONLY IF (a) the generated key
+persists with the data it encrypts in the same backup unit, AND (b)
+the README clearly states that losing that storage destroys all
+encrypted credentials. Operator-provided env values MUST always
+override any auto-generated value.
+
 Every user-supplied secret (Supabase API key, OpenRouter API key, any
 future third-party credential) is sensitive. The app MUST:
 - Encrypt every secret at rest with AES-256-GCM via the shared vault;
@@ -251,4 +273,4 @@ with explicit justification.
 **Runtime guidance**: agent-specific files MAY exist for tooling
 preferences but MUST NOT contradict this constitution.
 
-**Version**: 3.1.0 | **Ratified**: 2026-05-13 | **Last Amended**: 2026-05-13
+**Version**: 3.2.0 | **Ratified**: 2026-05-13 | **Last Amended**: 2026-05-13

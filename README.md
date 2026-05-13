@@ -94,44 +94,64 @@ The compose file declares two services:
 - **`app`** — this Next.js app, built as a standalone Node 20 image.
   Runs Drizzle migrations at startup, then `next start`.
 
-### One-time GitHub OAuth setup
-
-1. Go to <https://github.com/settings/developers> → **OAuth Apps** →
-   **New OAuth App**.
-2. Homepage URL: your Coolify-assigned domain
-   (e.g. `https://suparbase.example.com`).
-3. Authorization callback URL:
-   `https://suparbase.example.com/api/auth/callback/github`.
-4. Save the **Client ID** and **Client Secret** — you'll paste these
-   into Coolify next.
-
-### In Coolify
+### In Coolify (zero env vars required)
 
 1. **Create resource** → **Docker Compose** → point at this repo.
-2. Coolify reads `docker-compose.yaml` and surfaces the env vars it
-   declares. Fill them in (click **Generate** on the random ones):
+2. **Deploy**. That's it.
 
-   | Variable | What it is | How to set |
-   |---|---|---|
-   | `POSTGRES_PASSWORD` | DB password — internal-only | **Generate** |
-   | `AUTH_SECRET` | NextAuth cookie signing key | **Generate** |
-   | `SUPARBASE_ENCRYPTION_KEY` | Vault key (AES-256-GCM, 32 bytes base64) | **Generate** (base64) |
-   | `AUTH_URL` | Public origin of this deploy | Paste your Coolify domain |
-   | `AUTH_GITHUB_ID` | GitHub OAuth Client ID | From your OAuth app |
-   | `AUTH_GITHUB_SECRET` | GitHub OAuth Client Secret | From your OAuth app |
+The compose file declares three services that boot in order:
 
-   That's it. `DATABASE_URL` is composed inside the compose file —
-   you never type a connection string.
+- **`bootstrap`** (Alpine, runs once) — writes three strong random
+  secrets into a `suparbase_secrets` Docker volume:
+  `postgres_password`, `auth_secret`, `encryption_key`. On every
+  subsequent deploy this is a no-op — the existing secrets are
+  reused.
+- **`db`** — `supabase/postgres`. Reads its password from
+  `POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`.
+- **`app`** — this Next.js app. Entrypoint reads each secret file,
+  composes `DATABASE_URL` at runtime, runs Drizzle migrations, then
+  starts the server.
 
-3. **Deploy**. Coolify will:
-   - Build the image (`docker compose build`).
-   - Start `db`, wait for `pg_isready`.
-   - Start `app`. The entrypoint runs `node scripts/migrate.mjs`
-     against the empty DB, applying every SQL file under `drizzle/`,
-     then exec's `node server.js`.
-   - Coolify's Traefik proxy routes your domain to `app:3000`.
+> ⚠ The `suparbase_secrets` Docker volume is now load-bearing.
+> Losing it destroys your encryption key, which means every
+> encrypted Supabase + OpenRouter credential becomes unrecoverable
+> garbage. **Use Coolify's volume snapshot feature.**
 
-4. Visit your domain → landing page → **Sign in with GitHub**.
+### Optional env vars in Coolify
+
+| Variable | Default | When to set it |
+|---|---|---|
+| `AUTH_URL` | `https://suparbase.com` | Set to whatever domain Coolify assigned. |
+| `AUTH_GITHUB_ID` | (empty) | Set to enable "Continue with GitHub" on the signin page. |
+| `AUTH_GITHUB_SECRET` | (empty) | Pair with `AUTH_GITHUB_ID`. |
+| `SUPARBASE_AI_DEFAULT_MODEL` | `anthropic/claude-3.5-haiku` | Default OpenRouter model for new accounts. |
+| `POSTGRES_PASSWORD` / `AUTH_SECRET` / `SUPARBASE_ENCRYPTION_KEY` | auto-generated | Override the bootstrap if you bring your own. |
+
+### Optional: enable GitHub OAuth
+
+1. <https://github.com/settings/developers> → **OAuth Apps** →
+   **New OAuth App**.
+2. Homepage URL: your domain (e.g. `https://suparbase.com`).
+3. Authorization callback URL: `${AUTH_URL}/api/auth/callback/github`.
+4. Save the Client ID and Client Secret and set them in Coolify as
+   `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
+5. Restart the app. The Sign in page now shows a "Continue with
+   GitHub" button.
+
+Without these env vars, Suparbase still works fine — users sign up
+and sign in with email + password (bcrypt-hashed at cost 12 in the
+same `users` table).
+
+### What happens on first deploy
+
+1. `bootstrap` writes secrets to the volume → exits 0.
+2. `db` starts with `POSTGRES_PASSWORD_FILE` → healthy when
+   `pg_isready` returns 0.
+3. `app` starts: entrypoint loads `*_FILE` secrets → composes
+   `DATABASE_URL` → runs `node scripts/migrate.mjs` → applies every
+   SQL file under `drizzle/` → exec `node server.js`.
+4. Coolify's Traefik proxy routes your domain to `app:3000`.
+5. Visit your domain → landing page → **Create account**.
 
 ### Data persistence
 

@@ -54,3 +54,10 @@ const AI_WINDOW_MS = 60 * 60_000;
 export function checkAiRate(userId: string): RateLimitResult {
   return check("ai", userId, AI_BUDGET, AI_WINDOW_MS);
 }
+
+const SIGNUP_BUDGET = 5;
+const SIGNUP_WINDOW_MS = 60 * 60_000;
+
+export function checkSignupRate(clientKey: string): RateLimitResult {
+  return check("signup", clientKey, SIGNUP_BUDGET, SIGNUP_WINDOW_MS);
+}

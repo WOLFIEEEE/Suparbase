@@ -1,22 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth, signIn } from "@/server/auth";
-import { Github } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { auth, isGithubEnabled } from "@/server/auth";
+import { SignInForm } from "@/components/auth/SignInForm";
 
 interface SignInPageProps {
   searchParams: Promise<{ next?: string; error?: string }>;
+}
+
+function mapError(error: string | undefined): string | null {
+  if (!error) return null;
+  if (error === "OAuthAccountNotLinked") {
+    return "An account with this email already exists with a different sign-in method.";
+  }
+  if (error === "CredentialsSignin") return "Invalid email or password.";
+  return "Sign-in failed.";
 }
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const session = await auth();
   const { next, error } = await searchParams;
   if (session?.user) redirect(next ?? "/connections");
-
-  async function signInGitHub() {
-    "use server";
-    await signIn("github", { redirectTo: next ?? "/connections" });
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-12">
@@ -27,27 +30,15 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           </Link>
           <h1 className="font-display text-display-md">Sign in</h1>
           <p className="text-sm text-fg-muted">
-            Suparbase uses GitHub for authentication. Your saved Supabase keys
-            stay encrypted on our servers — they never touch a browser.
+            Your saved Supabase keys stay encrypted on our servers — they never touch a browser.
           </p>
         </div>
 
-        {error && (
-          <div className="rounded border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-            Sign-in failed. {error === "OAuthAccountNotLinked" && "An account with this email already exists with a different sign-in method."}
-          </div>
-        )}
-
-        <form action={signInGitHub} className="space-y-2">
-          <Button type="submit" className="w-full" size="lg">
-            <Github className="h-4 w-4" aria-hidden />
-            Continue with GitHub
-          </Button>
-        </form>
+        <SignInForm githubEnabled={isGithubEnabled()} error={mapError(error)} />
 
         <p className="text-[11px] text-fg-faint">
-          By signing in you agree to a basic operator-side audit log of writes
-          performed through your connections.
+          By signing in you agree to a basic operator-side audit log of writes performed through your
+          connections.
         </p>
       </div>
     </div>
