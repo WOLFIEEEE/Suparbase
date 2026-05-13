@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, ChevronDown, ChevronRight, RefreshCw, Search, Sparkles, X } from "lucide-react";
 import { useRows, useRowCount } from "@/lib/api/hooks";
+import { SelectionProvider, useSelection } from "@/components/data/SelectionContext";
+import { BulkBar } from "@/components/data/BulkBar";
+import { ExportMenu } from "@/components/data/ExportMenu";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { ListParams } from "@/lib/pgrest/rows";
 import type { Row } from "@/lib/types/schema";
@@ -92,7 +95,15 @@ function prettyJson(value: unknown): string {
   }
 }
 
-export default function LogsAdmin({ connectionId, table, analysis }: PresetProps) {
+export default function LogsAdmin(props: PresetProps) {
+  return (
+    <SelectionProvider>
+      <LogsAdminBody {...props} />
+    </SelectionProvider>
+  );
+}
+
+function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
   const router = useRouter();
   const sp = useSearchParams();
   const qc = useQueryClient();
@@ -154,9 +165,37 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
     return { groups: out, last24, last7d, distinct: distinctEvents.size };
   }, [rows, tsCol, eventCol]);
 
+  const selection = useSelection();
+  const pageKeys: string[] = [];
+  for (const r of rows) {
+    const seg = pkFor(r, table.primaryKey);
+    if (seg) pageKeys.push(seg);
+  }
+  const allPageSelected =
+    pageKeys.length > 0 && pageKeys.every((k) => selection.isSelected(k));
+
+  const eventSelectionProps = (r: Row) => {
+    const seg = pkFor(r, table.primaryKey);
+    return {
+      selectionKey: seg,
+      isSelected: seg ? selection.isSelected(seg) : false,
+      onSelectionToggle: seg ? () => selection.toggle(seg) : undefined,
+    };
+  };
+
+  const visibleCols = (analysis?.listColumns?.length ? analysis.listColumns : table.columns.map((c) => c.name)).filter(
+    (c) => !(analysis?.hiddenColumns ?? []).includes(c),
+  );
+
   const headerActions = (
     <>
       <PresetSwitcher active="logs" />
+      <ExportMenu
+        connectionId={connectionId}
+        table={table}
+        visibleColumns={visibleCols}
+        hiddenColumns={analysis?.hiddenColumns ?? []}
+      />
       <Button
         variant="secondary"
         size="md"
@@ -242,6 +281,16 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex items-center gap-2 rounded border hairline bg-bg-raised px-3 py-2 text-xs text-fg-muted">
+          <input
+            type="checkbox"
+            className="h-3.5 w-3.5 cursor-pointer accent-accent"
+            checked={allPageSelected}
+            onChange={() => selection.toggleMany(pageKeys, allPageSelected)}
+            aria-label="Select all on this page"
+          />
+          <span className="hidden sm:inline">page</span>
+        </label>
         <div className="relative min-w-[16rem] flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-faint" aria-hidden />
           <Input
@@ -299,6 +348,7 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
               eventCol={eventCol}
               payloadCol={payloadCol}
               actorCol={actorCol}
+              {...eventSelectionProps(r)}
             />
           ))}
         </ul>
@@ -325,6 +375,7 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
                       eventCol={eventCol}
                       payloadCol={payloadCol}
                       actorCol={actorCol}
+                      {...eventSelectionProps(r)}
                     />
                   ))}
                 </ul>
@@ -348,6 +399,13 @@ export default function LogsAdmin({ connectionId, table, analysis }: PresetProps
       <p className="text-[11px] text-fg-faint">
         {analysis?.notes ? `AI: ${analysis.notes}` : "Heuristic: activity stream"}
       </p>
+
+      <BulkBar
+        connectionId={connectionId}
+        table={table}
+        visibleColumns={visibleCols}
+        hiddenColumns={analysis?.hiddenColumns ?? []}
+      />
     </div>
   );
 }
@@ -361,9 +419,12 @@ interface EventRowProps {
   eventCol: string | null;
   payloadCol: string | null;
   actorCol: string | null;
+  selectionKey: string | null;
+  isSelected: boolean;
+  onSelectionToggle?: () => void;
 }
 
-function EventRow({ row, connectionId, tableName, primaryKey, tsCol, eventCol, payloadCol, actorCol }: EventRowProps) {
+function EventRow({ row, connectionId, tableName, primaryKey, tsCol, eventCol, payloadCol, actorCol, isSelected, onSelectionToggle }: EventRowProps) {
   const [expanded, setExpanded] = useState(false);
   const event = eventCol ? row[eventCol] : null;
   const actor = actorCol ? row[actorCol] : null;
@@ -378,8 +439,25 @@ function EventRow({ row, connectionId, tableName, primaryKey, tsCol, eventCol, p
 
   return (
     <li>
-      <div className="surface rounded-md p-3 transition-colors hover:border-line-strong">
+      <div className={cn(
+        "surface rounded-md p-3 transition-colors hover:border-line-strong",
+        isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-bg",
+      )}>
         <div className="flex items-start gap-3">
+          {onSelectionToggle && (
+            <label
+              className="mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 cursor-pointer accent-accent"
+                checked={isSelected}
+                onChange={onSelectionToggle}
+                aria-label="Select event"
+              />
+            </label>
+          )}
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}

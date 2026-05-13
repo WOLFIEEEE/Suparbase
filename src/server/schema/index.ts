@@ -3,3 +3,4 @@ export * from "./connections";
 export * from "./audit";
 export * from "./user-settings";
 export * from "./schema-analysis";
+export * from "../views/schema";

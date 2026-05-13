@@ -1,4 +1,6 @@
 import type { PrimaryKeyValue, Row, Table } from "@/lib/types/schema";
+import type { ChipSpec } from "@/lib/filters/types";
+import { chipToPostgrest } from "@/lib/filters/operators";
 import { AppError } from "@/lib/errors";
 import { pgrest } from "./client";
 
@@ -7,6 +9,8 @@ export interface ListParams {
   pageSize: 10 | 25 | 50 | 100;
   sort?: { column: string; direction: "asc" | "desc" };
   search?: string;
+  /** Filter chips from the column-header popover. Multiple chips combine with AND. */
+  filters?: ChipSpec[];
 }
 
 export interface ListResult {
@@ -44,6 +48,13 @@ export async function listRows(connectionId: string, table: Table, params: ListP
     const cols = textSearchColumns(table);
     if (cols.length > 0) {
       query.set("or", `(${cols.map((c) => `${c}.ilike.*${term}*`).join(",")})`);
+    }
+  }
+  if (params.filters && params.filters.length > 0) {
+    // PostgREST defaults to AND across multiple filter params, which is
+    // exactly what we want. Each chip becomes `?col=op.value`.
+    for (const chip of params.filters) {
+      query.append(chip.column, chipToPostgrest(chip));
     }
   }
 

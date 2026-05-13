@@ -53,6 +53,11 @@ export function checkReadRate(userId: string): RateLimitResult {
   return check("r", userId, READ_BUDGET, WINDOW_MS);
 }
 
+const BULK_BUDGET = 5;         // bulk batches per minute (bulk-delete, bulk-update, import chunks)
+export function checkBulkRate(userId: string): RateLimitResult {
+  return check("bulk", userId, BULK_BUDGET, WINDOW_MS);
+}
+
 const AI_BUDGET = 10;          // analyses per hour per user
 const AI_WINDOW_MS = 60 * 60_000;
 
