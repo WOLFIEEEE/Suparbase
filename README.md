@@ -84,7 +84,81 @@ This is the core promise:
   rotate the encryption key without downtime — see
   `src/server/crypto/vault.ts`.
 
-## Quickstart
+## Deploy on Coolify (recommended)
+
+This repo ships a production-ready `Dockerfile` and `docker-compose.yaml`.
+The compose file declares two services:
+
+- **`db`** — `supabase/postgres:15.1.1.78` (Postgres + the extensions
+  Supabase ships).
+- **`app`** — this Next.js app, built as a standalone Node 20 image.
+  Runs Drizzle migrations at startup, then `next start`.
+
+### One-time GitHub OAuth setup
+
+1. Go to <https://github.com/settings/developers> → **OAuth Apps** →
+   **New OAuth App**.
+2. Homepage URL: your Coolify-assigned domain
+   (e.g. `https://suparbase.example.com`).
+3. Authorization callback URL:
+   `https://suparbase.example.com/api/auth/callback/github`.
+4. Save the **Client ID** and **Client Secret** — you'll paste these
+   into Coolify next.
+
+### In Coolify
+
+1. **Create resource** → **Docker Compose** → point at this repo.
+2. Coolify reads `docker-compose.yaml` and surfaces the env vars it
+   declares. Fill them in (click **Generate** on the random ones):
+
+   | Variable | What it is | How to set |
+   |---|---|---|
+   | `POSTGRES_PASSWORD` | DB password — internal-only | **Generate** |
+   | `AUTH_SECRET` | NextAuth cookie signing key | **Generate** |
+   | `SUPARBASE_ENCRYPTION_KEY` | Vault key (AES-256-GCM, 32 bytes base64) | **Generate** (base64) |
+   | `AUTH_URL` | Public origin of this deploy | Paste your Coolify domain |
+   | `AUTH_GITHUB_ID` | GitHub OAuth Client ID | From your OAuth app |
+   | `AUTH_GITHUB_SECRET` | GitHub OAuth Client Secret | From your OAuth app |
+
+   That's it. `DATABASE_URL` is composed inside the compose file —
+   you never type a connection string.
+
+3. **Deploy**. Coolify will:
+   - Build the image (`docker compose build`).
+   - Start `db`, wait for `pg_isready`.
+   - Start `app`. The entrypoint runs `node scripts/migrate.mjs`
+     against the empty DB, applying every SQL file under `drizzle/`,
+     then exec's `node server.js`.
+   - Coolify's Traefik proxy routes your domain to `app:3000`.
+
+4. Visit your domain → landing page → **Sign in with GitHub**.
+
+### Data persistence
+
+The Postgres data directory lives on a named volume
+(`suparbase_db_data`). Redeploys, app restarts, and image rebuilds do
+not touch it. Use Coolify's snapshot feature for backups.
+
+### Updating
+
+A `git push` to the connected branch triggers a fresh
+`docker compose build`. New migrations under `drizzle/` are applied
+automatically on the next container start.
+
+### Smoke check after deploy
+
+```bash
+curl -fsSL https://your-domain.example/api/health
+# → {"status":"ok"}
+```
+
+If the app container exits during startup, check Coolify's logs view —
+the most likely culprits are a missing required env var or a DNS issue
+preventing `app` from reaching `db`.
+
+---
+
+## Local development
 
 ### Prerequisites
 

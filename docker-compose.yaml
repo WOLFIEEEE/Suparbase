@@ -1,0 +1,67 @@
+# Suparbase — Coolify deployment
+#
+# Two services: `db` (Supabase Postgres image) and `app` (this Next.js app).
+# Coolify's reverse proxy routes the public domain to `app:3000`.
+# DATABASE_URL is composed below; the operator never types a connection string.
+#
+# Required env vars (set in the Coolify UI):
+#   POSTGRES_PASSWORD             — generate random (use Coolify's "Generate")
+#   AUTH_SECRET                   — generate random
+#   SUPARBASE_ENCRYPTION_KEY      — base64-encoded 32 bytes; openssl rand -base64 32
+#   AUTH_URL                      — your public origin, e.g. https://suparbase.example
+#   AUTH_GITHUB_ID                — from a GitHub OAuth app
+#   AUTH_GITHUB_SECRET            — from a GitHub OAuth app
+#
+# Optional:
+#   SUPARBASE_AI_DEFAULT_MODEL    — default model for new users (default below)
+#   SUPARBASE_ENCRYPTION_KEY_OLD  — only needed during key rotation
+
+services:
+  db:
+    image: supabase/postgres:15.1.1.78
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: suparbase
+    volumes:
+      - suparbase_db_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d suparbase"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/suparbase
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: ${AUTH_URL}
+      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID}
+      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET}
+      SUPARBASE_ENCRYPTION_KEY: ${SUPARBASE_ENCRYPTION_KEY}
+      SUPARBASE_ENCRYPTION_KEY_OLD: ${SUPARBASE_ENCRYPTION_KEY_OLD:-}
+      SUPARBASE_AI_DEFAULT_MODEL: ${SUPARBASE_AI_DEFAULT_MODEL:-anthropic/claude-3.5-haiku}
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  suparbase_db_data:

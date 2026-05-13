@@ -1,0 +1,29 @@
+# Source-only ignore: everything not needed inside the build context.
+.git
+.gitignore
+.gitattributes
+.github
+.next
+.next-build
+node_modules
+dist
+out
+coverage
+
+.env
+.env.*
+.env.local
+.env.*.local
+!.env.example
+
+specs
+docs
+
+.vscode
+.idea
+.DS_Store
+*.log
+
+# Drizzle files we DO want in the image are explicitly in `drizzle/` —
+# don't ignore them here. We only ignore extra noise:
+.drizzle-tmp

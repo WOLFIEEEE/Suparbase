@@ -21,6 +21,9 @@ const securityHeaders = [
 ];
 
 const config: NextConfig = {
+  // Produce a self-contained .next/standalone output so the runtime image
+  // only needs the minimal node_modules subset Next.js actually uses.
+  output: "standalone",
   reactStrictMode: true,
   images: {
     remotePatterns: [{ protocol: "https", hostname: "avatars.githubusercontent.com" }],
