@@ -100,6 +100,10 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
                 <DropdownMenuItem asChild>
                   <Link href="/connections">All connections</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/ai">AI assistance</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
                   <LogOut className="mr-2 h-3.5 w-3.5" aria-hidden />
                   Sign out

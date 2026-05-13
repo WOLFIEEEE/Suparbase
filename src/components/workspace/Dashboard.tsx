@@ -6,6 +6,7 @@ import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/workspace/EmptyState";
+import { AnalysisBanner } from "@/components/workspace/AnalysisBanner";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { AppError } from "@/lib/errors";
 import type { Table } from "@/lib/types/schema";
@@ -53,6 +54,8 @@ export function Dashboard() {
           )}
         </p>
       </header>
+
+      <AnalysisBanner />
 
       <section>
         <SectionHeader icon={Table2} label="Tables" count={tables.length} />

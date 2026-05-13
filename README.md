@@ -8,6 +8,7 @@
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
 [![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
 [![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
+[![OpenRouter](https://img.shields.io/badge/ai-OpenRouter-0A0A0B?labelColor=B6FF3C)](#)
 
 ## What this is
 
@@ -27,6 +28,38 @@ project URL + API key, and you get:
   delete, service-role warnings.
 - **Audit log of every write** — keyed to user, connection, table, PK,
   verb, status. Indefinite retention in v1.
+
+## AI assistance (optional)
+
+Supply your own OpenRouter API key in `/settings/ai`. Suparbase then:
+
+- Sends the **introspected schema** (table names, column names, types,
+  foreign-key targets) to a model of your choice via OpenRouter.
+  **Row data is never sent.**
+- Receives a strict JSON classification per table — one of `users`,
+  `content`, `logs`, `generic` — plus a display name and the columns
+  worth showing in a list view.
+- Caches the result keyed by a SHA-256 of your schema. The same schema
+  is analyzed at most once per change.
+- Routes each table to a **purpose-built admin preset**:
+  - **UsersAdmin** — avatar + email cards, role chips, status pill,
+    "Invite user" action.
+  - **ContentAdmin** — title + excerpt, status pill, sorted by
+    `published_at desc`.
+  - **LogsAdmin** — reverse-chronological, expandable JSON payloads,
+    read-only.
+  - **GenericAdmin** — the regular CRUD experience (fallback for
+    anything we can't classify, or for tables you manually switch to).
+
+A `?view=generic` URL param overrides the preset per session. If you
+don't provide an OpenRouter key, a built-in **heuristic classifier**
+still routes obvious tables to the right preset — the AI step is
+strictly additive, never load-bearing.
+
+Your OpenRouter key is encrypted at rest in the same AES-256-GCM
+vault used for Supabase keys; it never reaches the browser; LLM calls
+run server-side from `src/server/ai/`. Token usage of the last
+analysis is shown in `/settings/ai`.
 
 ## Security model
 
@@ -166,7 +199,20 @@ generated migration.
 
 ## Spec-Kit artifacts
 
-Built spec-first. The full audit trail of decisions:
+Built spec-first across three features. The full audit trail:
+
+### v0.3 — AI-augmented admin presets (`003-ai-augmented-admin/`)
+
+| Document                                                          | Contents                              |
+|-------------------------------------------------------------------|---------------------------------------|
+| [`spec.md`](specs/003-ai-augmented-admin/spec.md)                 | User stories around OpenRouter and presets. |
+| [`plan.md`](specs/003-ai-augmented-admin/plan.md)                 | New schema tables, lazy preset loading.     |
+| [`research.md`](specs/003-ai-augmented-admin/research.md)         | OpenRouter, prompt design, fingerprinting.  |
+| [`data-model.md`](specs/003-ai-augmented-admin/data-model.md)     | `user_settings`, `schema_analysis`.         |
+| [`contracts/`](specs/003-ai-augmented-admin/contracts/)           | AI APIs + preset selector contract.         |
+| [`tasks.md`](specs/003-ai-augmented-admin/tasks.md)               | Phase-by-phase task list.                   |
+
+### v0.2 — Authenticated SaaS (`002-suparbase-saas/`)
 
 | Document                                                          | Contents                              |
 |-------------------------------------------------------------------|---------------------------------------|
@@ -185,9 +231,11 @@ context.
 
 ## Status
 
-v0.2 — usable end-to-end against any Supabase project. Out-of-scope for
-v1: team workspaces / shared connections, magic-link / passwordless
-auth, storage bucket browser, SQL editor, migrations / DDL, billing.
+v0.3 — usable end-to-end against any Supabase project, with optional
+AI-driven preset routing via OpenRouter. Out-of-scope for v1: team
+workspaces / shared connections, magic-link / passwordless auth,
+storage bucket browser, SQL editor, migrations / DDL, billing,
+multi-provider AI matrix.
 
 ## License
 

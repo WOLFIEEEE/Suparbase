@@ -1,10 +1,10 @@
-import { TableListView } from "@/components/workspace/TableListView";
+import { TablePresetRouter } from "@/components/workspace/TablePresetRouter";
 
 interface Props {
   params: Promise<{ name: string }>;
 }
 
-export default async function TableListPage({ params }: Props) {
+export default async function TablePage({ params }: Props) {
   const { name } = await params;
-  return <TableListView tableName={decodeURIComponent(name)} />;
+  return <TablePresetRouter tableName={decodeURIComponent(name)} />;
 }

@@ -19,22 +19,21 @@ export interface RateLimitResult {
  * shared across instances. Adequate for v1 single-process deploys; document
  * Upstash Ratelimit as the v2 upgrade.
  */
-export function checkWriteRate(userId: string): RateLimitResult {
-  const key = `w:${userId}`;
+function check(prefix: string, userId: string, budget: number, windowMs: number): RateLimitResult {
+  const key = `${prefix}:${userId}`;
   const now = Date.now();
   const existing = buckets.get(key);
 
   if (!existing) {
-    buckets.set(key, { tokens: WRITE_BUDGET - 1, updatedAt: now });
+    buckets.set(key, { tokens: budget - 1, updatedAt: now });
     return { allowed: true, retryAfterSeconds: 0 };
   }
 
-  // Refill at the rate of WRITE_BUDGET tokens per WINDOW_MS.
   const elapsed = now - existing.updatedAt;
-  const refilled = Math.min(WRITE_BUDGET, existing.tokens + (elapsed * WRITE_BUDGET) / WINDOW_MS);
+  const refilled = Math.min(budget, existing.tokens + (elapsed * budget) / windowMs);
 
   if (refilled < 1) {
-    const retryAfterMs = ((1 - refilled) * WINDOW_MS) / WRITE_BUDGET;
+    const retryAfterMs = ((1 - refilled) * windowMs) / budget;
     existing.tokens = refilled;
     existing.updatedAt = now;
     return { allowed: false, retryAfterSeconds: Math.ceil(retryAfterMs / 1000) };
@@ -43,4 +42,15 @@ export function checkWriteRate(userId: string): RateLimitResult {
   existing.tokens = refilled - 1;
   existing.updatedAt = now;
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+export function checkWriteRate(userId: string): RateLimitResult {
+  return check("w", userId, WRITE_BUDGET, WINDOW_MS);
+}
+
+const AI_BUDGET = 10;          // analyses per hour per user
+const AI_WINDOW_MS = 60 * 60_000;
+
+export function checkAiRate(userId: string): RateLimitResult {
+  return check("ai", userId, AI_BUDGET, AI_WINDOW_MS);
 }

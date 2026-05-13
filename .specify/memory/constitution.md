@@ -1,6 +1,20 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 3.0.0 → 3.1.0
+Reason for MINOR bump: added Principle IX (AI Assistance) and
+expanded Data & Security to cover the OpenRouter API key as a vaulted
+secret. No principle removed or redefined; no NON-NEGOTIABLE relaxed.
+
+Modified principles:
+  - VII. Data & Security → expanded to cover AI-provider keys
+  - VIII unchanged
+Added:
+  - Principle IX (AI Assistance)
+  - Technology section: OpenRouter under "Permitted additions"
+
+PREVIOUS SYNC IMPACT REPORT (3.0.0)
+====================================
 Version change: 2.0.0 → 3.0.0
 Reason for MAJOR bump: product is now a multi-tenant SaaS with a real
 backend, server-side credential vault, and authenticated user accounts.
@@ -103,21 +117,52 @@ boundary errors are the leading source of incidents in Next.js apps;
 treat the line as a hard contract.
 
 ### VII. Data & Security (NON-NEGOTIABLE)
-The user's API key is sensitive. The app MUST:
-- Encrypt keys at rest with AES-256-GCM; never log keys in plaintext.
-- Defensively redact JWT-shaped substrings from any error message before
+Every user-supplied secret (Supabase API key, OpenRouter API key, any
+future third-party credential) is sensitive. The app MUST:
+- Encrypt every secret at rest with AES-256-GCM via the shared vault;
+  never log secrets in plaintext.
+- Defensively redact JWT-shaped substrings AND `sk-or-*` / `sk-*`
+  OpenRouter/OpenAI-shaped substrings from any error message before
   any logging, in any process.
-- Warn prominently when a service-role key is detected; the warning
-  state persists in Settings while that connection is active.
+- Warn prominently when a service-role Supabase key is detected; the
+  warning state persists in Settings while that connection is active.
 - Require an authenticated session for every API route that touches a
-  connection; verify ownership at the row level.
+  vaulted secret; verify ownership at the row level.
 - Confirm destructive actions proportionally (delete > update > insert);
   destructive operations on a row MUST be reversible via undo where
   feasible, or gated by typed confirmation otherwise.
-- Rate-limit all proxy endpoints per-user.
+- Rate-limit all proxy endpoints per-user, including AI calls.
 - Set HTTP security headers: HSTS, CSP, X-Content-Type-Options,
   Referrer-Policy, Permissions-Policy.
-Rationale: this product holds the keys to our users' production data.
+Rationale: this product holds the keys to our users' production data
+and to their LLM provider accounts; both deserve identical treatment.
+
+### IX. AI Assistance
+AI features are opt-in, server-side, and cost-transparent. The app MAY
+call third-party LLM providers to classify schemas, suggest field
+semantics, and route tables to purpose-built presets. The app MUST:
+- Never call an LLM with the user's row data — only schema metadata
+  (table names, column names, column types, foreign-key targets).
+- Require the user to provide their own OpenRouter API key, stored in
+  the shared vault under the same encryption guarantees as Supabase
+  keys.
+- Run all LLM calls server-side; the OpenRouter key MUST NEVER reach
+  the browser, in any code path.
+- Cache analysis results keyed by a deterministic fingerprint of the
+  user's schema so the same schema is analyzed at most once per
+  change.
+- Validate every LLM response against a strict Zod schema before
+  storing or rendering; treat any malformed response as an "analysis
+  unavailable" condition, not as ground truth.
+- Degrade gracefully when the AI key is absent or the analysis call
+  fails: the existing data-driven GenericAdmin preset MUST remain
+  fully functional without any LLM involvement.
+- Surface to the user, in Settings, which model was used and roughly
+  how many tokens the last analysis consumed.
+
+Rationale: LLM features add value when they augment a working product
+and silently disappear when they fail. They MUST NOT become a
+single-point-of-failure for the admin tool that the user is paying for.
 
 ### VIII. Account & Tenancy
 Each user owns the connections they create; no implicit sharing in v1.
@@ -145,6 +190,9 @@ operable for teams or for incident response.
 
 **Permitted additions** (no justification needed): `cmdk`,
 `@radix-ui/*`, `bcryptjs` (if any future password mode), `pg`/`postgres`.
+**OpenRouter** is permitted under the AI Assistance principle; no
+SDK is required (the OpenAI-compatible Chat Completions API is hit
+via `fetch` from `src/server/ai/openrouter.ts`).
 
 **Forbidden without justification**: alternative ORMs (Prisma, etc.),
 alternative auth libraries, additional state management, alternative
@@ -203,4 +251,4 @@ with explicit justification.
 **Runtime guidance**: agent-specific files MAY exist for tooling
 preferences but MUST NOT contradict this constitution.
 
-**Version**: 3.0.0 | **Ratified**: 2026-05-13 | **Last Amended**: 2026-05-13
+**Version**: 3.1.0 | **Ratified**: 2026-05-13 | **Last Amended**: 2026-05-13

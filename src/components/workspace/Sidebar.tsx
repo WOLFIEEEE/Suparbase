@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Database, LayoutDashboard, Settings, Table2 } from "lucide-react";
+import { ArrowLeft, Database, LayoutDashboard, Settings, Sparkles, Table2 } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 
 const items = [
   { sub: "", label: "Dashboard", icon: LayoutDashboard },
   { sub: "tables", label: "Tables", icon: Table2 },
   { sub: "schema", label: "Schema", icon: Database },
-  { sub: "settings", label: "Settings", icon: Settings },
+  { sub: "settings", label: "Connection", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -60,8 +60,16 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
           );
         })}
       </nav>
-      <div className="border-t hairline p-3 text-[10px] uppercase tracking-wider text-fg-faint">
-        v0.2 · proxied
+      <div className="space-y-1 border-t hairline p-3">
+        <Link
+          href="/settings/ai"
+          onClick={onNavigate}
+          className="flex items-center gap-3 rounded px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
+        >
+          <Sparkles className="h-4 w-4 text-accent" aria-hidden />
+          <span>AI assistance</span>
+        </Link>
+        <div className="px-3 text-[10px] uppercase tracking-wider text-fg-faint">v0.3 · proxied · AI</div>
       </div>
     </div>
   );
