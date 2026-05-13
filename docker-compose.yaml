@@ -40,7 +40,9 @@ services:
         # Dir traversable + readable by everyone so non-root containers
         # (postgres, nextjs) can read the files inside.
         chmod 755 /secrets
-        gen() {
+        # URL-safe printable token for passwords/secrets that end up in URLs
+        # (postgres password becomes part of DATABASE_URL, so +/= are stripped).
+        gen_token() {
           target="/secrets/$$1"
           if [ ! -s "$$target" ]; then
             head -c 32 /dev/urandom | base64 | tr -d '\n=+/' | head -c 44 > "$$target"
@@ -48,13 +50,30 @@ services:
           else
             echo "[bootstrap] $$target already present"
           fi
-          # World-readable: the security boundary lives at the volume
-          # mount layer; inside the volume there is no second tenant.
           chmod 444 "$$target"
         }
-        gen postgres_password
-        gen auth_secret
-        gen encryption_key
+        # Standard base64 of exactly 32 random bytes — must decode back to 32
+        # bytes for AES-256-GCM. Do NOT strip padding/charset, that corrupts it.
+        gen_b64key() {
+          target="/secrets/$$1"
+          if [ -s "$$target" ]; then
+            n=$$(base64 -d < "$$target" 2>/dev/null | wc -c | tr -d ' ')
+            if [ "$$n" = "32" ]; then
+              echo "[bootstrap] $$target already present"
+              chmod 444 "$$target"
+              return 0
+            fi
+            echo "[bootstrap] $$target exists but decodes to $$n bytes (need 32); regenerating"
+            # File may be 0444 from a prior run — re-allow write before overwriting.
+            chmod 644 "$$target" || true
+          fi
+          head -c 32 /dev/urandom | base64 | tr -d '\n' > "$$target"
+          echo "[bootstrap] generated $$target"
+          chmod 444 "$$target"
+        }
+        gen_token postgres_password
+        gen_token auth_secret
+        gen_b64key encryption_key
         echo "[bootstrap] final listing of /secrets:"
         ls -la /secrets
         echo "[bootstrap] done"
