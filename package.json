@@ -1,8 +1,8 @@
 {
   "name": "suparbase",
   "private": true,
-  "version": "0.4.0",
-  "description": "Authenticated SaaS admin for any Supabase. Encrypted vault, server-side PostgREST proxy, OpenRouter-powered preset routing, Coolify-ready.",
+  "version": "0.5.0",
+  "description": "Authenticated SaaS admin for any Supabase. Email+password or GitHub auth, encrypted vault, server-side PostgREST proxy, OpenRouter-powered preset routing, zero-config Coolify deploy.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

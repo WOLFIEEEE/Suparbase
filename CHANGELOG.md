@@ -3,6 +3,31 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v0.5.0 — 2026-05-13 — Self-bootstrap & email/password auth
+
+Tag: `v0.5.0` · Spec: [`specs/005-bootstrap-and-credentials/`](specs/005-bootstrap-and-credentials/)
+
+- Constitution **v3.1.0 → v3.2.0**: Principle VII clarified —
+  auto-generated vault keys are permitted iff they persist with the
+  data they encrypt and the operator is warned via README.
+- **Self-bootstrap secrets**: a one-shot `bootstrap` Alpine container
+  writes `postgres_password`, `auth_secret`, and `encryption_key`
+  into a shared Docker volume on first deploy. `db` reads its
+  password via `POSTGRES_PASSWORD_FILE`; the app entrypoint reads
+  each `*_FILE` into env. Coolify deploy now requires **zero** env
+  vars (GitHub OAuth remains optional).
+- **Email + password auth**: NextAuth's Credentials provider with
+  bcryptjs (cost 12). New `/signup` page, new `/api/auth/signup`
+  route (rate-limited 5/hour/IP), `password_hash` column on `users`.
+- **GitHub OAuth becomes optional**: the provider is included only
+  when both `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET` are set. The
+  Sign-in/Sign-up pages conditionally render the GitHub button.
+- Session strategy switched from `database` to `jwt` so Credentials
+  composes with the Drizzle adapter.
+- `AUTH_URL` default → `https://suparbase.com`.
+- Redactor now strips bcrypt hashes (`$2a$`, `$2b$`, `$2y$`).
+- New migration: `drizzle/0002_minor_magus.sql`.
+
 ## v0.4.0 — 2026-05-13 — Coolify deployment
 
 Tag: `v0.4.0` · Spec: [`specs/004-deploy-coolify/`](specs/004-deploy-coolify/)
