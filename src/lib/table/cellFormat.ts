@@ -1,4 +1,4 @@
-import type { Column } from "@/lib/schema/types";
+import type { Column } from "@/lib/types/schema";
 
 export interface FormattedCell {
   text: string;

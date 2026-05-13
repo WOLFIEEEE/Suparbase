@@ -1,17 +1,19 @@
+"use client";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ErrorBanner } from "@/components/connect/ErrorBanner";
-import { AppError } from "@/lib/api/errors";
+import { ErrorBanner } from "@/components/connections/ErrorBanner";
+import { AppError } from "@/lib/errors";
 import { useInsertRow, useUpdateRow } from "@/lib/api/hooks";
-import type { Row, Schema, Table } from "@/lib/schema/types";
+import type { Row, Schema, Table } from "@/lib/types/schema";
 import { defaultsForCreate, defaultsForEdit } from "@/lib/forms/defaults";
 import { pickField } from "@/lib/forms/fields";
 import { extractPk, encodePkSegment } from "@/lib/table/pk";
+import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
 
 type Mode = "create" | "edit";
 
@@ -19,7 +21,7 @@ interface RowFormProps {
   table: Table;
   schema: Schema;
   mode: Mode;
-  initialRow?: Row; // required when mode === "edit"
+  initialRow?: Row;
   onCancel?: () => void;
   onSaved?: (row: Row) => void;
 }
@@ -36,7 +38,6 @@ function groupColumns(table: Table, mode: Mode): Group[] {
   const meta: Table["columns"] = [];
   const content: Table["columns"] = [];
   for (const col of table.columns) {
-    // Hide generated columns from create form entirely; show as read-only in edit.
     if (mode === "create" && col.isGenerated) continue;
     if (idNames.has(col.name)) ids.push(col);
     else if (metaPattern.test(col.name)) meta.push(col);
@@ -50,9 +51,10 @@ function groupColumns(table: Table, mode: Mode): Group[] {
 }
 
 export function RowForm({ table, schema, mode, initialRow, onCancel, onSaved }: RowFormProps) {
-  const navigate = useNavigate();
-  const insert = useInsertRow(table);
-  const update = useUpdateRow(table);
+  const router = useRouter();
+  const connectionId = useCurrentConnectionId();
+  const insert = useInsertRow(connectionId, table);
+  const update = useUpdateRow(connectionId, table);
   const submitting = insert.isPending || update.isPending;
 
   const groups = useMemo(() => groupColumns(table, mode), [table, mode]);
@@ -78,24 +80,24 @@ export function RowForm({ table, schema, mode, initialRow, onCancel, onSaved }: 
     e.preventDefault();
     setFieldError(null);
     setFormError(null);
-
     try {
       if (mode === "create") {
         const inserted = await insert.mutateAsync(values);
         toast.success(`Row inserted into ${table.name}`);
         onSaved?.(inserted);
-        // Navigate to the new row's detail page.
         const pk = extractPk(table, inserted);
         if (Object.keys(pk).length > 0) {
-          navigate(`/tables/${encodeURIComponent(table.name)}/${encodePkSegment(pk)}`, { replace: true });
+          router.replace(
+            `/c/${connectionId}/tables/${encodeURIComponent(table.name)}/${encodePkSegment(pk)}`,
+          );
         } else {
-          navigate(`/tables/${encodeURIComponent(table.name)}`);
+          router.push(`/c/${connectionId}/tables/${encodeURIComponent(table.name)}`);
         }
       } else {
         if (!initialRow) throw new Error("Missing initial row for edit");
         const pk = extractPk(table, initialRow);
         const updated = await update.mutateAsync({ pk, patch: values });
-        toast.success(`Row updated`);
+        toast.success("Row updated");
         onSaved?.(updated);
       }
     } catch (err) {
@@ -123,9 +125,7 @@ export function RowForm({ table, schema, mode, initialRow, onCancel, onSaved }: 
                 <div key={col.name} className="space-y-1.5">
                   <div className="flex items-baseline justify-between gap-2">
                     <Label htmlFor={fieldId}>
-                      <span className="font-mono text-xs normal-case tracking-normal text-fg">
-                        {col.name}
-                      </span>
+                      <span className="font-mono text-xs normal-case tracking-normal text-fg">{col.name}</span>
                       {!col.nullable && (
                         <span className="ml-2 text-[10px] text-danger" aria-label="required">
                           required
@@ -140,10 +140,14 @@ export function RowForm({ table, schema, mode, initialRow, onCancel, onSaved }: 
                   </div>
                   {readonly ? (
                     <div className="rounded border hairline bg-bg-sunken/60 px-3 py-2 font-mono text-xs text-fg-muted">
-                      {initialRow?.[col.name] == null
-                        ? <span className="italic text-fg-faint">null</span>
-                        : String(initialRow?.[col.name])}
-                      <Badge className="ml-2" tone="warn">read-only</Badge>
+                      {initialRow?.[col.name] == null ? (
+                        <span className="italic text-fg-faint">null</span>
+                      ) : (
+                        String(initialRow?.[col.name])
+                      )}
+                      <Badge className="ml-2" tone="warn">
+                        read-only
+                      </Badge>
                     </div>
                   ) : (
                     <Field
@@ -155,12 +159,8 @@ export function RowForm({ table, schema, mode, initialRow, onCancel, onSaved }: 
                       onChange={(v) => setField(col.name, v)}
                     />
                   )}
-                  {col.comment && (
-                    <p className="text-[11px] text-fg-faint">{col.comment}</p>
-                  )}
-                  {showError && (
-                    <p className="text-[11px] text-danger">{fieldError!.message}</p>
-                  )}
+                  {col.comment && <p className="text-[11px] text-fg-faint">{col.comment}</p>}
+                  {showError && <p className="text-[11px] text-danger">{fieldError!.message}</p>}
                 </div>
               );
             })}

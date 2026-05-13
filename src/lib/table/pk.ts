@@ -1,4 +1,4 @@
-import type { PrimaryKeyValue, Row, Table } from "@/lib/schema/types";
+import type { PrimaryKeyValue, Row, Table } from "@/lib/types/schema";
 
 /** Encode a primary key into a URL-safe segment. */
 export function encodePkSegment(pk: PrimaryKeyValue): string {

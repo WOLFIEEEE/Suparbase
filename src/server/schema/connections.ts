@@ -1,0 +1,43 @@
+import { customType, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { users } from "./auth";
+
+const bytea = customType<{ data: Uint8Array; default: false }>({
+  dataType() {
+    return "bytea";
+  },
+  fromDriver(value): Uint8Array {
+    if (value instanceof Uint8Array) return value;
+    if (Buffer.isBuffer(value)) return new Uint8Array(value);
+    if (typeof value === "string" && value.startsWith("\\x")) {
+      return new Uint8Array(Buffer.from(value.slice(2), "hex"));
+    }
+    throw new Error("Unexpected bytea value shape from driver");
+  },
+  toDriver(value: Uint8Array): Buffer {
+    return Buffer.from(value);
+  },
+});
+
+export const connections = pgTable(
+  "connections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    hostname: text("hostname").notNull(),
+    role: text("role").$type<"anon" | "authenticated" | "service_role" | "unknown">().notNull(),
+    encryptedKey: bytea("encrypted_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index("connections_user_idx").on(t.userId),
+    uniqueUserName: unique("connections_user_name_unique").on(t.userId, t.name),
+  }),
+);
+
+export type ConnectionRow = typeof connections.$inferSelect;
+export type ConnectionInsert = typeof connections.$inferInsert;

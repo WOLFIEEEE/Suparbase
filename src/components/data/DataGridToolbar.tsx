@@ -1,9 +1,11 @@
+"use client";
+import Link from "next/link";
 import { Plus, RefreshCw, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Table } from "@/lib/schema/types";
-import { Link } from "react-router-dom";
+import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
+import type { Table } from "@/lib/types/schema";
 
 interface DataGridToolbarProps {
   table: Table;
@@ -24,6 +26,7 @@ export function DataGridToolbar({
   onRefresh,
   isFetching,
 }: DataGridToolbarProps) {
+  const connectionId = useCurrentConnectionId();
   const canCreate = table.kind === "table" && table.primaryKey.length > 0;
 
   return (
@@ -69,7 +72,7 @@ export function DataGridToolbar({
 
       {canCreate && (
         <Button asChild>
-          <Link to={`/tables/${encodeURIComponent(table.name)}/new`}>
+          <Link href={`/c/${connectionId}/tables/${encodeURIComponent(table.name)}/new`}>
             <Plus className="h-3.5 w-3.5" aria-hidden />
             New row
           </Link>

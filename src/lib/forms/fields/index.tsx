@@ -1,4 +1,4 @@
-import type { Column } from "@/lib/schema/types";
+import type { Column } from "@/lib/types/schema";
 import { FieldText } from "./FieldText";
 import { FieldTextarea } from "./FieldTextarea";
 import { FieldNumber } from "./FieldNumber";

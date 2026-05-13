@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
-import type { Row, Schema, Table } from "@/lib/schema/types";
+import type { Row, Schema, Table } from "@/lib/types/schema";
 import { formatCellValue } from "@/lib/table/cellFormat";
 import { FkBadge } from "./FkBadge";
 import { Skeleton } from "@/components/ui/skeleton";

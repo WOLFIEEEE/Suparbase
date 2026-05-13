@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { redact } from "@/lib/connection/redact";
+import { redact } from "@/lib/redact";
 
 interface State {
   error: Error | null;

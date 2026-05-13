@@ -1,4 +1,4 @@
-import type { Column, Row, Table } from "@/lib/schema/types";
+import type { Column, Row, Table } from "@/lib/types/schema";
 
 /** Initial values for the create form: leave generated columns blank. */
 export function defaultsForCreate(table: Table): Record<string, unknown> {

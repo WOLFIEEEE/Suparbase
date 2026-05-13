@@ -1,115 +1,193 @@
 # Suparbase
 
-> Auto-admin dashboard for any Supabase project. Paste your URL and an API key. We
-> introspect your schema and hand you a working admin UI — tables, forms, foreign
-> keys, the lot. No code. No deploy. No server.
+> Authenticated SaaS admin for any Supabase project. Sign in, save your
+> projects, and run a real admin dashboard. Your API key is encrypted at
+> rest and proxied — it never reaches the browser.
 
-[![Static SPA](https://img.shields.io/badge/runtime-static_SPA-0A0A0B?labelColor=B6FF3C)](#)
-[![Bring your own Supabase](https://img.shields.io/badge/backend-BYO_Supabase-0A0A0B?labelColor=B6FF3C)](#)
+[![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
+[![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
+[![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
+[![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
 
 ## What this is
 
-Suparbase is a client-only single-page application. You provide a Supabase
-**project URL** and an **API key**. The app fetches your project's PostgREST
-OpenAPI document, infers the schema, and renders:
+Suparbase is a multi-tenant SaaS that gives any Supabase user a working
+admin dashboard for their own project. Sign in with GitHub, paste your
+project URL + API key, and you get:
 
-- A **dashboard** with row counts per table.
-- A **per-table data grid** with sort, search, and pagination, where foreign-key
-  cells resolve to human-readable labels.
-- A **detail / edit / create form** auto-built from each column's type:
-  text → input, long text → textarea, integer → number, boolean → switch,
-  timestamp → date-time picker, UUID → generator, JSON → JSON editor with
-  validation, enum → select, foreign key → searchable reference picker.
-- A **delete** flow with confirmation + 5-second undo.
-- A **schema view** that lists every table and column with type, nullability,
-  default, FK target, and column comments.
-- A **settings** surface showing the connected project's host, key role, and a
-  prominent **Disconnect** action.
+- **Schema-aware data grid** — sort, search (server-side `ilike`),
+  pagination, FK cells that resolve to human labels.
+- **Type-aware forms** — text, textarea, number, switch, datetime,
+  UUID, JSON editor with validation, enum select, searchable FK
+  picker.
+- **Delete with undo** — confirm + 5-second re-insert.
+- **Schema view** — every table, every column, with type, nullable,
+  default, FK target, and comments.
+- **Connection management** — multiple projects per account, rename,
+  delete, service-role warnings.
+- **Audit log of every write** — keyed to user, connection, table, PK,
+  verb, status. Indefinite retention in v1.
 
-Suparbase ships **no backend** of its own. Every request goes straight from your
-browser to your Supabase host. Your API key never touches a third party.
+## Security model
+
+This is the core promise:
+
+- API keys are **AES-256-GCM encrypted at rest** in the app database
+  (`encrypted_key` column on `connections`). The plaintext key NEVER
+  persists to disk.
+- The browser **never** receives the key. Every PostgREST call is
+  proxied through an authenticated Next.js route handler
+  (`/api/v/[id]/rest/[...path]`) which decrypts the key server-side
+  and injects it into the outbound request. The browser only ever
+  sees its session cookie.
+- Every request is **ownership-checked at the row level**: a request
+  for someone else's connection id receives 404 (not 403 — we don't
+  acknowledge that the row exists).
+- **JWT-shaped substrings are defensively redacted** from any error
+  message before logging, in any process.
+- Writes are **rate-limited** per user (60/minute default), tracked
+  in an audit log, and recorded with the affected table/PK.
+- The credential vault supports **versioned ciphertext** so you can
+  rotate the encryption key without downtime — see
+  `src/server/crypto/vault.ts`.
 
 ## Quickstart
 
+### Prerequisites
+
+- Node.js 20 LTS
+- pnpm 9
+- Postgres (Supabase, Neon, or local Docker)
+- A GitHub OAuth app — [github.com/settings/developers](https://github.com/settings/developers)
+  - Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+
+### Configure
+
 ```bash
-pnpm install
-pnpm dev          # http://localhost:5173
+cp .env.example .env.local
+# Fill in DATABASE_URL, AUTH_GITHUB_*, generate AUTH_SECRET and
+# SUPARBASE_ENCRYPTION_KEY:
+echo "AUTH_SECRET=$(openssl rand -base64 32)"
+echo "SUPARBASE_ENCRYPTION_KEY=$(openssl rand -base64 32)"
 ```
 
-Paste your project URL (e.g. `https://abcdefgh.supabase.co`) and an API key
-from **Project Settings → API**. The anon key is recommended. The service-role
-key works — you'll be warned and asked to type "I understand" first.
+### Install + migrate + run
+
+```bash
+pnpm install
+pnpm db:push          # apply schema to your DATABASE_URL
+pnpm dev              # http://localhost:3000
+```
+
+1. Click **Sign in with GitHub**.
+2. On `/connections`, click **New connection** and paste a Supabase
+   project URL + API key. The anon key is recommended; service-role
+   triggers a typed acknowledgement before the request fires.
+3. Click into the connection to land on the workspace dashboard.
 
 ## Build & deploy
 
 ```bash
-pnpm build        # → dist/
-pnpm preview      # serve dist/ locally
+pnpm typecheck
+pnpm build
+pnpm start
 ```
 
-`dist/` is a static bundle. Deploy anywhere:
+For Vercel:
 
 ```bash
-vercel --prod ./dist
-netlify deploy --prod --dir=dist
+vercel --prod
 ```
 
-Recommended CSP for self-hosting:
+Set the same env vars in your hosting provider. The proxy uses
+`crypto.createCipheriv`, so deploy to **Node runtime** (not edge).
+
+## Architecture
 
 ```
-default-src 'self';
-connect-src 'self' https://*.supabase.co https://*.supabase.in;
-img-src 'self' data: blob:;
-style-src 'self' 'unsafe-inline';
-font-src 'self' data:;
-script-src 'self';
-frame-ancestors 'none';
+┌────────────────────────────────────────────────────────────┐
+│                       Browser (you)                        │
+│   session cookie ────────────────────────────┐             │
+│   no API key, ever                            │             │
+└───────────────────────────────────────────────┼─────────────┘
+                                                │
+                ┌───────────────────────────────▼─────────────┐
+                │    Next.js (this app)                       │
+                │                                             │
+                │  /api/auth/*    NextAuth v5                 │
+                │  /api/connections          Drizzle ORM      │
+                │  /api/v/[id]/rest/*  ◀── proxy + audit      │
+                │  /api/v/[id]/introspect ◀── server-side     │
+                │                       schema parsing        │
+                │                                             │
+                │  vault (AES-256-GCM)                        │
+                │     ↓ decrypt key per request               │
+                └─────┼───────────────────────────────────────┘
+                      │
+                      ▼
+                ┌─────────────────────────────────────────────┐
+                │  Your Supabase project                      │
+                │  (PostgREST + Postgres)                     │
+                └─────────────────────────────────────────────┘
 ```
 
-## Stack
+### Stack
 
-- Vite 5 · React 18 · TypeScript 5
-- Tailwind CSS 3 + Radix UI primitives
-- `@supabase/supabase-js` v2 · `@tanstack/react-query` v5 · `@tanstack/react-table` v8
-- `react-hook-form` v7 · `react-router-dom` v6
-- `gsap` (connect screen only) · `sonner` (toasts) · `lucide-react` (icons)
+- **Framework**: Next.js 15 (App Router) on the Node runtime.
+- **Auth**: NextAuth v5 (Auth.js) with Drizzle adapter, GitHub OAuth.
+- **DB**: PostgreSQL via Drizzle ORM (`postgres` driver).
+- **UI**: Tailwind 3, Radix primitives, `lucide-react`, `cmdk`.
+- **Data**: `@tanstack/react-query` for client state, custom `pgrest()`
+  fetch wrapper to talk to the proxy.
+- **Forms**: `react-hook-form` + lightweight Zod-free runtime
+  coercion in `src/lib/pgrest/rows.ts`.
+- **Motion**: `gsap` on the landing surface only.
 
-## Security posture
+### Server / client boundary
 
-- **Zero proxy**: requests are direct browser → your Supabase host. We assert at
-  runtime that the host ends in `.supabase.co` / `.supabase.in`.
-- **No key in logs**: a defensive redactor strips JWT-shaped substrings from any
-  message before it reaches `console`.
-- **Role detection**: the JWT `role` claim is decoded client-side; service-role
-  keys force a typed-acknowledgement modal before the first network call.
-- **Persistence opt-in**: credentials live in `sessionStorage` (this tab only)
-  by default; **Remember on this device** moves them to `localStorage`.
-- **Destructive actions** require explicit confirmation; deletes show a 5-second
-  Undo via re-insert.
+`src/server/*` files are marked with `import "server-only"` where
+applicable; client components live in `src/components/*` and start
+with `"use client"`. Drizzle schema files are deliberately
+isomorphic-safe so `drizzle-kit` can import them.
+
+## Database schema
+
+```
+users           NextAuth + Drizzle adapter
+accounts        OAuth account linkage
+sessions        database-backed sessions
+verificationTokens (unused with OAuth but kept for adapter compat)
+connections     id, user_id, name, url, hostname, role, encrypted_key, created_at, last_used_at
+audit_log       id, user_id, connection_id, schema, table_name, primary_key (jsonb), verb, http_status, created_at
+```
+
+See [`drizzle/0000_chief_lily_hollister.sql`](drizzle/) for the
+generated migration.
 
 ## Spec-Kit artifacts
 
-This product was built spec-first using [Spec-Kit](https://github.com/github/spec-kit).
-The full audit trail lives in [`specs/001-supabase-admin/`](specs/001-supabase-admin/):
+Built spec-first. The full audit trail of decisions:
 
-| Document                                                       | What's in it                              |
-|----------------------------------------------------------------|-------------------------------------------|
-| [`spec.md`](specs/001-supabase-admin/spec.md)                  | User stories, FRs, edge cases, scope.     |
-| [`plan.md`](specs/001-supabase-admin/plan.md)                  | Stack, constraints, structure decisions.  |
-| [`research.md`](specs/001-supabase-admin/research.md)          | Phase-0 decision log with alternatives.   |
-| [`data-model.md`](specs/001-supabase-admin/data-model.md)      | Schema, connection, query-cache shape.    |
-| [`contracts/`](specs/001-supabase-admin/contracts/)            | Schema introspection, data access, routes.|
-| [`quickstart.md`](specs/001-supabase-admin/quickstart.md)      | Dev / build / deploy / smoke checklist.   |
-| [`tasks.md`](specs/001-supabase-admin/tasks.md)                | Task breakdown by user story.             |
+| Document                                                          | Contents                              |
+|-------------------------------------------------------------------|---------------------------------------|
+| [`spec.md`](specs/002-suparbase-saas/spec.md)                     | User stories, FRs, edge cases, scope. |
+| [`plan.md`](specs/002-suparbase-saas/plan.md)                     | Stack, structure, Constitution Check. |
+| [`research.md`](specs/002-suparbase-saas/research.md)             | Phase-0 decision log.                 |
+| [`data-model.md`](specs/002-suparbase-saas/data-model.md)         | Schema, types, cache keys.            |
+| [`contracts/`](specs/002-suparbase-saas/contracts/)               | Auth, connection API, proxy, audit.   |
+| [`quickstart.md`](specs/002-suparbase-saas/quickstart.md)         | Dev + deploy + smoke checklist.       |
+| [`tasks.md`](specs/002-suparbase-saas/tasks.md)                   | Implementation task breakdown.        |
+| [`.specify/memory/constitution.md`](.specify/memory/constitution.md) | Project constitution (v3.0.0).     |
 
-The project's constitution lives at [`.specify/memory/constitution.md`](.specify/memory/constitution.md)
-and defines non-negotiables on performance, accessibility, the client-only
-deployment model, and credential handling.
+The v0.1 (client-only Vite SPA) spec is preserved at
+[`specs/001-supabase-admin/`](specs/001-supabase-admin/) for historical
+context.
 
 ## Status
 
-v0.1 — usable end-to-end against a real Supabase project. Out-of-scope for v1:
-storage browser, SQL editor, auth user management, migrations / DDL.
+v0.2 — usable end-to-end against any Supabase project. Out-of-scope for
+v1: team workspaces / shared connections, magic-link / passwordless
+auth, storage bucket browser, SQL editor, migrations / DDL, billing.
 
 ## License
 

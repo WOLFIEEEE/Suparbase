@@ -1,5 +1,7 @@
+"use client";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -9,7 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Row, Table } from "@/lib/schema/types";
+import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
+import type { Row, Table } from "@/lib/types/schema";
 import { formatCellValue } from "@/lib/table/cellFormat";
 import { encodePkSegment } from "@/lib/table/pk";
 import { cn } from "@/lib/ui/cn";
@@ -32,24 +35,26 @@ function partition(table: Table) {
 }
 
 export function RowDrawer({ table, row, onClose, onDeleteRequest }: RowDrawerProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
+  const connectionId = useCurrentConnectionId();
   const { ids, content, meta } = partition(table);
   const open = !!row;
   const pkSegment = row && table.primaryKey.length
     ? encodePkSegment(Object.fromEntries(table.primaryKey.map((c) => [c, row[c]])))
     : null;
   const canEdit = table.kind === "table" && table.primaryKey.length > 0;
+  const baseRowHref = pkSegment ? `/c/${connectionId}/tables/${encodeURIComponent(table.name)}/${pkSegment}` : null;
 
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "e" && canEdit && pkSegment) {
-        navigate(`/tables/${encodeURIComponent(table.name)}/${pkSegment}?edit=1`);
+      if (e.key === "e" && canEdit && baseRowHref) {
+        router.push(`${baseRowHref}?edit=1`);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, canEdit, pkSegment, navigate, table.name]);
+  }, [open, canEdit, baseRowHref, router]);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -66,17 +71,17 @@ export function RowDrawer({ table, row, onClose, onDeleteRequest }: RowDrawerPro
             {content.length > 0 && <FieldSection title="Content" cols={content} row={row} />}
             {meta.length > 0 && <FieldSection title="Metadata" cols={meta} row={row} />}
             <div className="flex flex-wrap gap-2 border-t hairline pt-4">
-              {pkSegment && (
+              {baseRowHref && (
                 <Button variant="secondary" asChild>
-                  <Link to={`/tables/${encodeURIComponent(table.name)}/${pkSegment}`}>
+                  <Link href={baseRowHref}>
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                     Open in page
                   </Link>
                 </Button>
               )}
-              {canEdit && pkSegment && (
+              {canEdit && baseRowHref && (
                 <Button asChild>
-                  <Link to={`/tables/${encodeURIComponent(table.name)}/${pkSegment}?edit=1`}>
+                  <Link href={`${baseRowHref}?edit=1`}>
                     <Pencil className="h-3.5 w-3.5" aria-hidden />
                     Edit
                   </Link>
@@ -109,10 +114,7 @@ function FieldSection({ title, cols, row }: { title: string; cols: Table["column
             <div key={col.name} className="contents">
               <dt className="font-mono text-xs text-fg-muted">{col.name}</dt>
               <dd
-                className={cn(
-                  "font-mono text-xs",
-                  formatted.isNull && "italic text-fg-faint",
-                )}
+                className={cn("font-mono text-xs", formatted.isNull && "italic text-fg-faint")}
               >
                 {col.category === "json" && value != null ? (
                   <pre className="max-h-48 overflow-auto rounded surface-sunken p-2 text-[11px] leading-relaxed">

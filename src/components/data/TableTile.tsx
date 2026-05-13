@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+"use client";
+import Link from "next/link";
 import { ArrowUpRight, Eye, Key, Link2 } from "lucide-react";
 import { useRowCount } from "@/lib/api/hooks";
-import type { Table } from "@/lib/schema/types";
+import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
+import type { Table } from "@/lib/types/schema";
 import { Badge } from "@/components/ui/badge";
 
 interface TableTileProps {
@@ -16,12 +18,13 @@ function formatCount(n: number): string {
 }
 
 export function TableTile({ table }: TableTileProps) {
-  const { data, isLoading } = useRowCount(table);
+  const connectionId = useCurrentConnectionId();
+  const { data, isLoading } = useRowCount(connectionId, table);
   const fkCount = table.columns.filter((c) => c.fk).length;
 
   return (
     <Link
-      to={`/tables/${encodeURIComponent(table.name)}`}
+      href={`/c/${connectionId}/tables/${encodeURIComponent(table.name)}`}
       className="group block rounded border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong hover:bg-bg-raised/80"
     >
       <div className="flex items-start justify-between gap-3">

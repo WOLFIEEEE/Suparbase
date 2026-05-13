@@ -1,19 +1,19 @@
+"use client";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
-import { useDebouncedValue } from "@/lib/useDebouncedValue";
-import { useConnection, useRequiredClient } from "@/lib/connection/context";
-import { searchReferences } from "@/lib/api/reference";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
+import { searchReferences } from "@/lib/pgrest/reference";
 import { cn } from "@/lib/ui/cn";
 import type { FieldProps } from "./types";
 
 export function FieldFk({ column, schema, value, onChange }: FieldProps) {
   const fk = column.fk;
-  const client = useRequiredClient();
-  const { connection } = useConnection();
+  const connectionId = useCurrentConnectionId();
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
   const debounced = useDebouncedValue(term, 250);
@@ -25,10 +25,10 @@ export function FieldFk({ column, schema, value, onChange }: FieldProps) {
   const labelColumn = targetTable?.labelColumn ?? null;
 
   const { data: options = [], isLoading } = useQuery({
-    queryKey: ["fkPicker", connection?.hostname, fk?.schema, fk?.table, fk?.column, labelColumn, debounced],
+    queryKey: ["fkPicker", connectionId, fk?.schema, fk?.table, fk?.column, labelColumn, debounced],
     queryFn: () => {
       if (!fk) return [];
-      return searchReferences(client, fk, labelColumn, debounced);
+      return searchReferences(connectionId, fk, labelColumn, debounced);
     },
     enabled: open && !!fk,
     staleTime: 15_000,
@@ -73,9 +73,7 @@ export function FieldFk({ column, schema, value, onChange }: FieldProps) {
           />
           <CommandList>
             {isLoading && <div className="p-3 text-xs text-fg-faint">loading…</div>}
-            {!isLoading && options.length === 0 && (
-              <CommandEmpty>No matches.</CommandEmpty>
-            )}
+            {!isLoading && options.length === 0 && <CommandEmpty>No matches.</CommandEmpty>}
             {column.nullable && (
               <CommandItem
                 onSelect={() => {
@@ -98,10 +96,7 @@ export function FieldFk({ column, schema, value, onChange }: FieldProps) {
                   }}
                 >
                   <Check
-                    className={cn(
-                      "mr-2 h-3.5 w-3.5 text-accent",
-                      selected ? "opacity-100" : "opacity-0",
-                    )}
+                    className={cn("mr-2 h-3.5 w-3.5 text-accent", selected ? "opacity-100" : "opacity-0")}
                     aria-hidden
                   />
                   <span className="flex flex-1 items-center justify-between gap-2">

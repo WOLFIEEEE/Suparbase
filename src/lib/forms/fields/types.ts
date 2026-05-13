@@ -1,4 +1,4 @@
-import type { Column, Schema, Table } from "@/lib/schema/types";
+import type { Column, Schema, Table } from "@/lib/types/schema";
 
 export interface FieldProps {
   id: string;

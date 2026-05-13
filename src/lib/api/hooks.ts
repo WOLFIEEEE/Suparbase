@@ -1,134 +1,140 @@
+"use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useConnection, useRequiredClient } from "@/lib/connection/context";
-import { introspect } from "@/lib/schema/introspect";
-import type { PrimaryKeyValue, Row, Schema, Table } from "@/lib/schema/types";
-import { countRows } from "./count";
-import { deleteRow, getRow, insertRow, type ListParams, listRows, type ListResult, updateRow } from "./rows";
-import { lookupReferenceLabels } from "./reference";
+import type { PrimaryKeyValue, Row, Schema, Table } from "@/lib/types/schema";
+import { listRows, type ListParams, type ListResult, insertRow, updateRow, deleteRow, getRow } from "@/lib/pgrest/rows";
+import { countRows } from "@/lib/pgrest/count";
+import { lookupReferenceLabels } from "@/lib/pgrest/reference";
+import { AppError } from "@/lib/errors";
+import { pgrest } from "@/lib/pgrest/client";
 
-export function useSchema() {
-  const { connection } = useConnection();
+async function fetchSchema(connectionId: string): Promise<Schema> {
+  let res: Response;
+  try {
+    res = await fetch(`/api/v/${encodeURIComponent(connectionId)}/introspect`, { method: "GET" });
+  } catch (cause) {
+    throw new AppError("network", "Could not reach the server.", { cause });
+  }
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    if (payload && typeof payload === "object" && "category" in payload) {
+      const e = payload as { category: AppError["category"]; message: string };
+      throw new AppError(e.category, e.message);
+    }
+    throw new AppError("server", `Server responded with ${res.status}.`);
+  }
+  const data = (await res.json()) as { schema: Schema };
+  return data.schema;
+}
+
+export function useSchema(connectionId: string | undefined) {
   return useQuery<Schema>({
-    queryKey: ["schema", connection?.hostname],
-    queryFn: () => {
-      if (!connection) throw new Error("No active connection.");
-      return introspect(connection);
-    },
-    enabled: !!connection,
+    queryKey: ["schema", connectionId],
+    queryFn: () => fetchSchema(connectionId!),
+    enabled: !!connectionId,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
   });
 }
 
-export function useRowCount(table: Table | undefined) {
-  const client = useRequiredClient();
-  const { connection } = useConnection();
+export function useRowCount(connectionId: string | undefined, table: Table | undefined) {
   return useQuery({
-    queryKey: ["rowCount", connection?.hostname, table?.schema, table?.name],
-    queryFn: () => countRows(client, table!.schema, table!.name),
-    enabled: !!table && !!table.name,
+    queryKey: ["rowCount", connectionId, table?.schema, table?.name],
+    queryFn: () => countRows(connectionId!, table!.name),
+    enabled: !!connectionId && !!table && !!table.name,
     staleTime: 60_000,
   });
 }
 
-export function useRows(table: Table | undefined, params: ListParams) {
-  const client = useRequiredClient();
-  const { connection } = useConnection();
+export function useRows(connectionId: string | undefined, table: Table | undefined, params: ListParams) {
   return useQuery<ListResult>({
-    queryKey: ["rows", connection?.hostname, table?.schema, table?.name, params],
-    queryFn: () => listRows(client, table!, params),
-    enabled: !!table && !!table.name,
+    queryKey: ["rows", connectionId, table?.schema, table?.name, params],
+    queryFn: () => listRows(connectionId!, table!, params),
+    enabled: !!connectionId && !!table && !!table.name,
     staleTime: 5_000,
   });
 }
 
-export function useRow(table: Table | undefined, pk: PrimaryKeyValue | null) {
-  const client = useRequiredClient();
-  const { connection } = useConnection();
+export function useRow(connectionId: string | undefined, table: Table | undefined, pk: PrimaryKeyValue | null) {
   return useQuery<Row>({
-    queryKey: ["row", connection?.hostname, table?.schema, table?.name, pk],
+    queryKey: ["row", connectionId, table?.schema, table?.name, pk],
     queryFn: () => {
-      if (!pk || !table) throw new Error("Missing primary key.");
-      return getRow(client, table, pk);
+      if (!connectionId || !table || !pk) throw new Error("Missing connection/table/pk.");
+      return getRow(connectionId, table, pk);
     },
-    enabled: !!pk && !!table && !!table.name,
+    enabled: !!connectionId && !!table && !!table.name && !!pk,
     staleTime: 5_000,
   });
 }
 
-export function useInsertRow(table: Table | undefined) {
-  const client = useRequiredClient();
+export function useInsertRow(connectionId: string | undefined, table: Table | undefined) {
   const qc = useQueryClient();
-  const { connection } = useConnection();
   return useMutation({
     mutationFn: (values: Row) => {
-      if (!table) throw new Error("Table is not loaded yet.");
-      return insertRow(client, table, values);
+      if (!connectionId || !table) throw new Error("Connection or table is not loaded yet.");
+      return insertRow(connectionId, table, values);
     },
     onSuccess: () => {
-      if (!table) return;
-      qc.invalidateQueries({ queryKey: ["rows", connection?.hostname, table.schema, table.name] });
-      qc.invalidateQueries({ queryKey: ["rowCount", connection?.hostname, table.schema, table.name] });
+      if (!connectionId || !table) return;
+      qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] });
+      qc.invalidateQueries({ queryKey: ["rowCount", connectionId, table.schema, table.name] });
     },
   });
 }
 
-export function useUpdateRow(table: Table | undefined) {
-  const client = useRequiredClient();
+export function useUpdateRow(connectionId: string | undefined, table: Table | undefined) {
   const qc = useQueryClient();
-  const { connection } = useConnection();
   return useMutation({
     mutationFn: ({ pk, patch }: { pk: PrimaryKeyValue; patch: Row }) => {
-      if (!table) throw new Error("Table is not loaded yet.");
-      return updateRow(client, table, pk, patch);
+      if (!connectionId || !table) throw new Error("Connection or table is not loaded yet.");
+      return updateRow(connectionId, table, pk, patch);
     },
     onSuccess: (_data, variables) => {
-      if (!table) return;
-      qc.invalidateQueries({ queryKey: ["rows", connection?.hostname, table.schema, table.name] });
+      if (!connectionId || !table) return;
+      qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] });
       qc.invalidateQueries({
-        queryKey: ["row", connection?.hostname, table.schema, table.name, variables.pk],
+        queryKey: ["row", connectionId, table.schema, table.name, variables.pk],
       });
     },
   });
 }
 
-export function useDeleteRow(table: Table | undefined) {
-  const client = useRequiredClient();
+export function useDeleteRow(connectionId: string | undefined, table: Table | undefined) {
   const qc = useQueryClient();
-  const { connection } = useConnection();
   return useMutation({
     mutationFn: (pk: PrimaryKeyValue) => {
-      if (!table) throw new Error("Table is not loaded yet.");
-      return deleteRow(client, table, pk);
+      if (!connectionId || !table) throw new Error("Connection or table is not loaded yet.");
+      return deleteRow(connectionId, table, pk);
     },
     onSuccess: () => {
-      if (!table) return;
-      qc.invalidateQueries({ queryKey: ["rows", connection?.hostname, table.schema, table.name] });
-      qc.invalidateQueries({ queryKey: ["rowCount", connection?.hostname, table.schema, table.name] });
+      if (!connectionId || !table) return;
+      qc.invalidateQueries({ queryKey: ["rows", connectionId, table.schema, table.name] });
+      qc.invalidateQueries({ queryKey: ["rowCount", connectionId, table.schema, table.name] });
     },
   });
 }
 
 export function useReferenceLabels(
+  connectionId: string | undefined,
   table: Table | undefined,
   columnName: string,
   values: unknown[],
   schema: Schema | undefined,
 ) {
-  const client = useRequiredClient();
-  const { connection } = useConnection();
   const col = table?.columns.find((c) => c.name === columnName);
   const fk = col?.fk;
   const targetTable = fk ? schema?.tables.find((t) => t.name === fk.table && t.schema === fk.schema) : undefined;
   const targetLabel = targetTable?.labelColumn ?? null;
-
+  const valuesKey = values.length > 0 ? values.map(String).sort().join(",") : "";
   return useQuery<Map<string, string>>({
-    queryKey: ["fkLabels", connection?.hostname, fk?.schema, fk?.table, fk?.column, targetLabel, values.length > 0 ? values.map(String).sort().join(",") : ""],
+    queryKey: ["fkLabels", connectionId, fk?.schema, fk?.table, fk?.column, targetLabel, valuesKey],
     queryFn: () => {
-      if (!fk) return new Map<string, string>();
-      return lookupReferenceLabels(client, fk, targetLabel, values);
+      if (!connectionId || !fk) return new Map<string, string>();
+      return lookupReferenceLabels(connectionId, fk, targetLabel, values);
     },
-    enabled: !!fk && values.length > 0,
+    enabled: !!connectionId && !!fk && values.length > 0,
     staleTime: 30_000,
   });
 }
+
+// re-export `pgrest` so callers from components can drop in usage without an extra import path
+export { pgrest };

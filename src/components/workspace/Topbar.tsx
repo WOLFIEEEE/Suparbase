@@ -1,38 +1,45 @@
+"use client";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { Menu, RefreshCw, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useConnection } from "@/lib/connection/context";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SidebarNav } from "./Sidebar";
-import type { KeyRole } from "@/lib/connection/jwt";
+import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
 
-const roleTone: Record<KeyRole, "neutral" | "accent" | "warn" | "danger"> = {
+const ROLE_TONE: Record<KeyRole, "neutral" | "accent" | "warn" | "danger"> = {
   anon: "accent",
   authenticated: "accent",
   service_role: "danger",
   unknown: "warn",
 };
 
-const roleLabel: Record<KeyRole, string> = {
+const ROLE_LABEL: Record<KeyRole, string> = {
   anon: "anon",
   authenticated: "user",
   service_role: "service-role",
   unknown: "unknown",
 };
 
-export function Topbar() {
-  const { connection } = useConnection();
+export function Topbar({ connection }: { connection: ConnectionSummary }) {
+  const { data: session } = useSession();
   const qc = useQueryClient();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   function refreshSchema() {
-    if (!connection) return;
-    // Invalidate every query under this host so nothing stale survives a refresh.
     qc.invalidateQueries({
-      predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[1] === connection.hostname,
+      predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[1] === connection.id,
     });
   }
 
@@ -51,28 +58,61 @@ export function Topbar() {
             <Menu className="h-4 w-4" aria-hidden />
           </Button>
           <Link
-            to="/settings"
-            className="flex items-center gap-2 truncate font-mono text-xs text-fg-muted hover:text-fg"
+            href={`/c/${connection.id}/settings`}
+            className="flex items-center gap-2 truncate text-xs hover:text-fg"
             aria-label="Connection settings"
           >
             <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-            <span className="truncate">{connection?.hostname ?? "—"}</span>
+            <span className="truncate font-medium">{connection.name}</span>
+            <span className="truncate font-mono text-fg-faint">· {connection.hostname}</span>
           </Link>
-          {connection && (
-            <Badge tone={roleTone[connection.role]}>{roleLabel[connection.role]}</Badge>
-          )}
+          <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={refreshSchema}>
             <RefreshCw className="h-3.5 w-3.5" aria-hidden />
             <span className="hidden sm:inline">Refresh schema</span>
           </Button>
+          {session?.user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="h-8 w-8 overflow-hidden rounded-full border hairline hover:border-line-strong"
+                  aria-label="Account menu"
+                >
+                  {session.user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={session.user.image} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="block h-full w-full bg-bg-raised text-center font-mono text-xs leading-8">
+                      {(session.user.name ?? session.user.email ?? "?").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5 text-xs">
+                  <div className="truncate font-medium text-fg">{session.user.name}</div>
+                  <div className="truncate text-fg-faint">{session.user.email}</div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/connections">All connections</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+                  <LogOut className="mr-2 h-3.5 w-3.5" aria-hidden />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </header>
 
       <Dialog open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <DialogContent side="right" className="max-w-[18rem] p-0" hideClose>
-          <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
+          <SidebarNav connectionId={connection.id} onNavigate={() => setMobileNavOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
