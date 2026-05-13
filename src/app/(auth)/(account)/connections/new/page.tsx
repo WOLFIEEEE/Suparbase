@@ -1,17 +1,30 @@
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { ConnectionForm } from "@/components/connections/ConnectionForm";
+import { PageHeader } from "@/components/workspace/PageHeader";
 
 export default function NewConnectionPage() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
-      <Link
-        href="/connections"
-        className="inline-flex items-center gap-1 text-xs text-fg-faint hover:text-fg"
-      >
-        <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> connections
-      </Link>
-      <h1 className="font-display text-display-md">New connection</h1>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Connections", href: "/connections" },
+          { label: "New" },
+        ]}
+        title="Connect a Supabase project"
+        subtitle={
+          <span className="text-sm text-fg-muted">
+            Paste the project URL + API key from your Supabase dashboard.
+            We encrypt the key with AES-256-GCM before the row is committed —
+            it never reaches a browser after this form.
+          </span>
+        }
+        eyebrow={
+          <>
+            <Sparkles className="h-3 w-3 text-accent" aria-hidden />
+            Tip: find both at <span className="font-mono">supabase.com/dashboard → Project → Settings → API</span>
+          </>
+        }
+      />
       <div className="surface rounded-md p-6">
         <ConnectionForm />
       </div>

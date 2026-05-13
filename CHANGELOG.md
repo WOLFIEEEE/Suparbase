@@ -3,6 +3,72 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.0.0 — 2026-05-14 — Polished release
+
+Tag: `v1.0.0` · Spec: [`specs/008-v1-polish/`](specs/008-v1-polish/)
+
+The GA release. Closes the remaining v0.7 backlog (saved views, filter
+chips), pulls the v0.6 visual language down to every previously
+unpolished surface, and unifies typography into a single professional
+sans-serif family.
+
+- Constitution **v3.2.0 → v3.3.0**: Principle III (Anti-AI-Slop Design)
+  expanded to codify the v1.0 typography baseline — unified Inter
+  Variable for body + display with heavier weight + tighter tracking on
+  the display utility. No NON-NEGOTIABLE relaxed.
+- **Typography unified**. Dropped Fraunces (serif) entirely; the
+  `font-display` utility now resolves to Inter Variable at 650–700
+  weight with tighter tracking. One font family across the entire app
+  except JetBrains Mono for code/IDs. One fewer font family loaded at
+  first paint.
+- **Generic admin lift**. `TableListView` rebuilt: PageHeader chrome,
+  stat tiles, row cards (not HTML `<table>`), BulkBar + ExportMenu +
+  ImportPanel mounted, click-row → detail page (no drawer). New
+  `GenericDetail.tsx` mirrors UserDetail's hero + sectioned identity +
+  Linked-records sidebar for every non-archetype row. The old
+  `TableRowView`, `DataGrid`, `DataGridToolbar`, and `RowDrawer`
+  components are deleted — every list/detail page now uses the same
+  visual language regardless of archetype.
+- **Schema view rebuild**. The `/c/[id]/schema` page now uses
+  `PageHeader` chrome, archetype groupings (People / Library /
+  Activity / Everything else) via the existing `groupTablesByArchetype`
+  helper, expandable `<details>` per table revealing columns grouped
+  into Identifiers / Fields / Metadata, FK chips that link to the
+  referenced table, and a System tables disclosure.
+- **Connection flows polish**. `ConnectionList` cards redesigned:
+  database icon, role chip, last-used relative time, hover-revealed
+  action menu, whole-card click navigates to the workspace. The
+  new-connection page wraps `ConnectionForm` in `PageHeader` with a
+  "Paste from Supabase dashboard" eyebrow. `ConnectionSettings`
+  reorganized into Identity / Security / Danger Zone surface cards.
+- **Saved views (US5 from v0.7)**. New `saved_views` migration shipped
+  in v0.7 MVP is now wired end-to-end: `GET / POST / PATCH / DELETE
+  /api/views` routes, `useSavedViews` / `useCreateView` / `useUpdateView`
+  / `useDeleteView` hooks, and a `ViewTabs` component mounted in
+  `PageHeader`'s tabs slot on every list page. Views capture the
+  current search + filter + sort and apply via a single URL push.
+  Capped at 5 custom views per (user, connection, table).
+- **Filter chips (US6 from v0.7)**. New `FilterBar` + `FilterPopover`
+  + `FilterChip` components. Click "+ Filter" → pick column → pick
+  operator → enter value → chip appears. Multiple chips combine with
+  AND. Removing a chip narrows the URL. Operators are type-aware via
+  `OPERATORS_FOR_TYPE`. The URL is the canonical state; `listRows` now
+  accepts `filters?: ChipSpec[]` and translates them to PostgREST
+  filter params under the existing proxy.
+- **Settings + new-row + sign-in/up** previously partially polished now
+  also use `PageHeader` chrome end-to-end.
+- **v0.7 backlog status**: US5 (saved views) ✓ shipped. US6 (filter
+  chips) ✓ shipped. **US4 (inline cell editing) deferred to v1.1** —
+  the existing click-row → detail page → Edit flow still covers the
+  use case; inline editing requires invasive changes to row-card
+  layouts that would extend this release beyond its scope.
+- Removed `@fontsource-variable/fraunces` dependency.
+- Removed dead files: `src/components/workspace/TableRowView.tsx`,
+  `src/components/data/DataGrid.tsx`,
+  `src/components/data/DataGridToolbar.tsx`,
+  `src/components/row/RowDrawer.tsx`, and the orphan
+  `src/index.css` (vestigial from the v0.1 Vite SPA era).
+
 ## v0.6.0 — 2026-05-13 — Product workspace
 
 Tag: `v0.6.0` · Spec: [`specs/006-product-workspace/`](specs/006-product-workspace/)

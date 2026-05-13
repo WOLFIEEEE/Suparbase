@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/workspace/EmptyState";
-import { TableRowView } from "@/components/workspace/TableRowView";
 import { useSchema } from "@/lib/api/hooks";
 import { useAnalysis, analysisOrNull } from "@/hooks/useAnalysis";
 import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
@@ -13,6 +12,7 @@ import { findAnalysis, pickPreset } from "@/lib/presets/pick";
 const UserDetail = dynamic(() => import("@/components/presets/UserDetail"));
 const ContentDetail = dynamic(() => import("@/components/presets/ContentDetail"));
 const LogDetail = dynamic(() => import("@/components/presets/LogDetail"));
+const GenericDetail = dynamic(() => import("@/components/presets/GenericDetail"));
 
 interface Props {
   tableName: string;
@@ -47,39 +47,16 @@ export function RowPresetRouter({ tableName, pkSegment }: Props) {
   const analysis = findAnalysis(analysisOrNull(cachedAnalysis)?.tables, table);
   const preset = pickPreset(table, analysis, override ? "generic" : null);
 
-  if (preset === "users") {
-    return (
-      <UserDetail
-        connectionId={connectionId}
-        table={table}
-        schema={schema!}
-        analysis={analysis}
-        pkSegment={pkSegment}
-      />
-    );
-  }
-  if (preset === "content") {
-    return (
-      <ContentDetail
-        connectionId={connectionId}
-        table={table}
-        schema={schema!}
-        analysis={analysis}
-        pkSegment={pkSegment}
-      />
-    );
-  }
-  if (preset === "logs") {
-    return (
-      <LogDetail
-        connectionId={connectionId}
-        table={table}
-        schema={schema!}
-        analysis={analysis}
-        pkSegment={pkSegment}
-      />
-    );
-  }
+  const sharedProps = {
+    connectionId,
+    table,
+    schema: schema!,
+    analysis,
+    pkSegment,
+  };
 
-  return <TableRowView tableName={tableName} pkSegment={pkSegment} />;
+  if (preset === "users") return <UserDetail {...sharedProps} />;
+  if (preset === "content") return <ContentDetail {...sharedProps} />;
+  if (preset === "logs") return <LogDetail {...sharedProps} />;
+  return <GenericDetail {...sharedProps} />;
 }

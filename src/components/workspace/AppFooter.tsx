@@ -45,7 +45,7 @@ export function AppFooter({ width = "narrow", className }: Props) {
           >
             github
           </Link>
-          <span className="font-mono">v0.6</span>
+          <span className="font-mono">v1.0</span>
         </div>
       </div>
     </footer>

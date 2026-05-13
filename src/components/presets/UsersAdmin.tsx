@@ -9,6 +9,9 @@ import { SelectionProvider, useSelection } from "@/components/data/SelectionCont
 import { BulkBar } from "@/components/data/BulkBar";
 import { ExportMenu } from "@/components/data/ExportMenu";
 import { ImportPanel } from "@/components/data/ImportPanel";
+import { FilterBar } from "@/components/data/FilterBar";
+import { ViewTabs } from "@/components/data/ViewTabs";
+import { parseFilterParams } from "@/lib/filters/parse-url";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { ListParams } from "@/lib/pgrest/rows";
 import { encodePkSegment } from "@/lib/table/pk";
@@ -105,6 +108,7 @@ function UsersAdminBody({ connectionId, table, analysis }: PresetProps) {
 
   const page = Math.max(1, Number(sp.get("page") ?? 1) || 1);
   const pageSize = 25 as const;
+  const filters = useMemo(() => parseFilterParams(sp), [sp]);
   const listParams: ListParams = useMemo(
     () => ({
       page,
@@ -113,8 +117,9 @@ function UsersAdminBody({ connectionId, table, analysis }: PresetProps) {
         ? { column: createdCol, direction: "desc" }
         : undefined,
       search: debouncedSearch || undefined,
+      filters,
     }),
-    [page, debouncedSearch, createdCol],
+    [page, debouncedSearch, createdCol, filters],
   );
 
   const { data, isLoading, isFetching, error } = useRows(connectionId, table, listParams);
@@ -233,6 +238,13 @@ function UsersAdminBody({ connectionId, table, analysis }: PresetProps) {
           ) : null
         }
         actions={headerActions}
+        tabs={
+          <ViewTabs
+            connectionId={connectionId}
+            tableSchema={table.schema}
+            tableName={table.name}
+          />
+        }
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -300,6 +312,8 @@ function UsersAdminBody({ connectionId, table, analysis }: PresetProps) {
           </div>
         )}
       </div>
+
+      <FilterBar table={table} />
 
       <ul className="grid grid-cols-1 gap-2">
         {isLoading && rows.length === 0 ? (

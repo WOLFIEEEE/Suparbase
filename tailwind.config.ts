@@ -34,14 +34,18 @@ const config: Config = {
         },
       },
       fontFamily: {
+        // v1.0: unified to Inter Variable everywhere except mono.
+        // `font-display` uses the same family with tighter tracking + heavier
+        // weight via the display-{xl,lg,md} sizes below — produces the
+        // "Inter Display" look without loading a second font family.
         sans: ["'Inter Variable'", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["'JetBrains Mono Variable'", "ui-monospace", "monospace"],
-        display: ["'Fraunces Variable'", "ui-serif", "Georgia", "serif"],
+        display: ["'Inter Variable'", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       fontSize: {
-        "display-xl": ["clamp(3.5rem, 8vw, 7rem)", { lineHeight: "0.95", letterSpacing: "-0.04em", fontWeight: "500" }],
-        "display-lg": ["clamp(2.5rem, 5vw, 4.5rem)", { lineHeight: "1", letterSpacing: "-0.03em", fontWeight: "500" }],
-        "display-md": ["clamp(1.75rem, 3vw, 2.75rem)", { lineHeight: "1.05", letterSpacing: "-0.02em", fontWeight: "500" }],
+        "display-xl": ["clamp(3rem, 7vw, 5.5rem)", { lineHeight: "1.02", letterSpacing: "-0.035em", fontWeight: "700" }],
+        "display-lg": ["clamp(2.25rem, 4.5vw, 3.75rem)", { lineHeight: "1.04", letterSpacing: "-0.03em", fontWeight: "700" }],
+        "display-md": ["clamp(1.625rem, 2.75vw, 2.25rem)", { lineHeight: "1.1", letterSpacing: "-0.022em", fontWeight: "650" }],
       },
       borderRadius: {
         DEFAULT: "0.5rem",
