@@ -14,7 +14,8 @@ RUN pnpm install --frozen-lockfile
 
 
 # ---------- builder ----------
-# Build the Next.js standalone bundle.
+# Build Next.js (standalone) AND bundle the migrator into a single
+# self-contained JS file. The runner stage then needs zero extra deps.
 FROM node:20-alpine AS builder
 WORKDIR /app
 
@@ -27,8 +28,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time placeholders so `next build` can complete without real secrets.
-# Real values are injected at runtime via docker-compose `environment:`.
+# Build-time placeholders so `next build` can complete without real
+# secrets. Real values are injected at runtime via the docker-compose
+# `environment:` block.
 ENV DATABASE_URL=postgres://placeholder \
     AUTH_SECRET=build-time-placeholder-not-a-real-secret \
     AUTH_URL=http://localhost:3000 \
@@ -36,11 +38,15 @@ ENV DATABASE_URL=postgres://placeholder \
     AUTH_GITHUB_SECRET=build-time-placeholder \
     SUPARBASE_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 
+# `pnpm run build` chains `next build` AND `pnpm build:migrator`
+# (esbuild → dist/migrator.mjs — ~250 KB, fully self-contained).
 RUN pnpm run build
 
 
 # ---------- runner ----------
-# Minimal runtime image with only what the standalone server needs.
+# Minimal runtime image. No npm install: Next's standalone output
+# carries every dep its server code needs, and the migrator is a single
+# bundled file with drizzle-orm + postgres-js baked in.
 FROM node:20-alpine AS runner
 WORKDIR /app
 
@@ -56,23 +62,18 @@ RUN addgroup -g 1001 -S nodejs \
 # wget is used by the Docker HEALTHCHECK; keep it lean.
 RUN apk add --no-cache wget
 
-# Next.js standalone output: the server, only the node_modules it actually
-# needs, plus the .next/static assets.
+# Next.js standalone output: server + the exact node_modules subset its
+# server chunks need.
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Migrator + entrypoint + the SQL migrations themselves.
+# Bundled migrator + the SQL migrations it applies.
+COPY --from=builder --chown=nextjs:nodejs /app/dist/migrator.mjs ./dist/migrator.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
-# The migrator imports from drizzle-orm/postgres-js, which lives under
-# node_modules. The standalone trace doesn't keep those modules in the
-# root node_modules tree, so install the minimal runtime set the migrator
-# needs separately.
-RUN npm install --omit=dev --no-audit --no-fund \
-      drizzle-orm@^0.36.4 postgres@^3.4.5 \
- && chown -R nextjs:nodejs /app/node_modules
+# Entrypoint script (POSIX sh, busybox-compatible).
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 
 USER nextjs
 

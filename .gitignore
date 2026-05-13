@@ -3,6 +3,7 @@ node_modules
 out
 dist
 dist-ssr
+
 .DS_Store
 .env
 .env.local

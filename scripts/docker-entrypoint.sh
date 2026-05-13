@@ -58,7 +58,7 @@ if [ -z "${SUPARBASE_ENCRYPTION_KEY:-}" ]; then
 fi
 
 echo "==> running migrations"
-node scripts/migrate.mjs
+node dist/migrator.mjs
 
 echo "==> starting next on :${PORT:-3000}"
 exec node server.js
