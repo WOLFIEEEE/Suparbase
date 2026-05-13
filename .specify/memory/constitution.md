@@ -1,6 +1,24 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 3.2.0 → 3.3.0
+Reason for MINOR bump: codifies the v1.0 visual language — unified Inter
+family for body + display (Fraunces removed), the row-card list pattern
+as the default for every table, and the consistent PageHeader chrome on
+every authenticated workspace surface. No principle removed; no
+NON-NEGOTIABLE relaxed. Principle III (Anti-AI-Slop Design) text is
+expanded to clarify that unified sans typography is the v1.0 baseline.
+
+Modified principles:
+  - III. Anti-AI-Slop Design → clarifier added: unified Inter is the
+    sanctioned baseline; the "deliberate typography" requirement is
+    preserved via heavier weight + tighter tracking on the display utility.
+
+Added: none.
+Removed: none.
+
+PREVIOUS SYNC IMPACT REPORT (3.2.0)
+====================================
 Version change: 3.1.0 → 3.2.0
 Reason for MINOR bump: clarified that vault keys MAY be auto-generated
 at first deploy iff they persist with the data they encrypt and the
@@ -89,8 +107,17 @@ The visual language MUST be distinctive: deliberate typography (no
 generic system stacks on brand surfaces), a small intentional color
 system with one bold accent, and layouts that do not read as "another
 shadcn dashboard template." Reject default purple-to-blue gradients,
-three-card hero grids, and identical-looking sidebars. Rationale: an
-admin product indistinguishable from competitors is forgotten.
+three-card hero grids, and identical-looking sidebars.
+
+**v1.0 baseline (added 3.3.0)**: typography unifies on Inter Variable
+for both body and display, with the `.font-display` utility applying a
+heavier weight (650–700) and tighter tracking (-0.022em to -0.035em)
+to maintain a clear typographic hierarchy. The deliberate-typography
+requirement is satisfied via this contrast plus the brand mark, the
+single accent, and the row-card list pattern that distinguishes
+Suparbase from generic admin templates.
+
+Rationale: an admin product indistinguishable from competitors is forgotten.
 
 ### IV. Accessibility (NON-NEGOTIABLE)
 `prefers-reduced-motion` MUST be honored across every animation. All
@@ -273,4 +300,4 @@ with explicit justification.
 **Runtime guidance**: agent-specific files MAY exist for tooling
 preferences but MUST NOT contradict this constitution.
 
-**Version**: 3.2.0 | **Ratified**: 2026-05-13 | **Last Amended**: 2026-05-13
+**Version**: 3.3.0 | **Ratified**: 2026-05-13 | **Last Amended**: 2026-05-14

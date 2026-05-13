@@ -130,7 +130,7 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
           </div>
         </Link>
         <div className="px-3 text-[10px] uppercase tracking-wider text-fg-faint">
-          v0.6 · proxied · AI
+          v1.0 · proxied · AI
         </div>
       </div>
     </div>

@@ -8,6 +8,9 @@ import { useRows, useRowCount } from "@/lib/api/hooks";
 import { SelectionProvider, useSelection } from "@/components/data/SelectionContext";
 import { BulkBar } from "@/components/data/BulkBar";
 import { ExportMenu } from "@/components/data/ExportMenu";
+import { FilterBar } from "@/components/data/FilterBar";
+import { ViewTabs } from "@/components/data/ViewTabs";
+import { parseFilterParams } from "@/lib/filters/parse-url";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { ListParams } from "@/lib/pgrest/rows";
 import type { Row } from "@/lib/types/schema";
@@ -119,6 +122,7 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
 
   const page = Math.max(1, Number(sp.get("page") ?? 1) || 1);
   const pageSize = 50 as const;
+  const filters = useMemo(() => parseFilterParams(sp), [sp]);
 
   const listParams: ListParams = useMemo(
     () => ({
@@ -126,8 +130,9 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
       pageSize,
       sort: tsCol ? { column: tsCol, direction: "desc" } : undefined,
       search: debouncedSearch || undefined,
+      filters,
     }),
-    [page, debouncedSearch, tsCol],
+    [page, debouncedSearch, tsCol, filters],
   );
 
   const { data, isLoading, isFetching, error } = useRows(connectionId, table, listParams);
@@ -255,6 +260,13 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
           ) : null
         }
         actions={headerActions}
+        tabs={
+          <ViewTabs
+            connectionId={connectionId}
+            tableSchema={table.schema}
+            tableName={table.name}
+          />
+        }
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -312,6 +324,8 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
           )}
         </div>
       </div>
+
+      <FilterBar table={table} />
 
       {!tsCol && (
         <div className="flex items-start gap-3 rounded-md border hairline bg-warn/5 p-4 text-sm">

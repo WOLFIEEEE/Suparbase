@@ -5,12 +5,42 @@
 > rest and proxied — it never reaches the browser.
 
 [![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v0.6.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
 [![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
 [![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
 [![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
 [![OpenRouter](https://img.shields.io/badge/ai-OpenRouter-0A0A0B?labelColor=B6FF3C)](#)
+
+## What's new in v1.0
+
+The GA release. Polished every previously-rough surface and finished the
+v0.7 power-user backlog (saved views + filter chips). Highlights:
+
+- **Unified typography.** Dropped Fraunces; the entire app now uses Inter
+  Variable for both body and display (heavier weight + tighter tracking
+  on display). One fewer font family loaded; cleaner, more professional
+  hierarchy.
+- **Generic admin lift.** Every non-archetype table now renders with the
+  same chrome as Users/Content/Logs: PageHeader, row cards, BulkBar,
+  Export + Import, and a dedicated detail page with hero + sectioned
+  identity + Linked-records sidebar. The HTML-table + drawer pattern is
+  gone.
+- **Schema view rebuild.** Archetype-grouped tables, expandable column
+  groups (Identifiers / Fields / Metadata), FK chips that navigate to
+  the referenced table.
+- **Connection flows polish.** Connections list cards redesigned;
+  new-connection page wrapped in `PageHeader`; per-connection Settings
+  reorganized into Identity / Security / Danger Zone sections.
+- **Saved views.** Save a filter+sort combination as a named view; tabs
+  appear in `PageHeader` on every list page; persists per (user,
+  connection, table). Capped at 5 custom views per table.
+- **Filter chips.** Click `+ Filter` → pick column → pick operator →
+  enter value. Multiple chips combine with AND. URL is the canonical
+  state; chips are shareable + bookmark-able.
+
+Spec: [`specs/008-v1-polish/`](specs/008-v1-polish/). Full notes:
+[`CHANGELOG.md`](CHANGELOG.md).
 
 ## What's new in v0.6
 
@@ -328,7 +358,20 @@ CI runs `tsc --noEmit` + `next build` on every PR.
 
 ## Spec-Kit artifacts
 
-Built spec-first across six features so far. The full audit trail:
+Built spec-first across eight features so far. The full audit trail:
+
+### v1.0 — Polished release (`008-v1-polish/`)
+
+| Document | Contents |
+|---|---|
+| [`spec.md`](specs/008-v1-polish/spec.md) | 6 user stories covering generic admin lift, schema view, connection flows, v0.7 final, typography, and the polish pass. |
+| [`plan.md`](specs/008-v1-polish/plan.md) | Six-workstream plan + Constitution Check (all 9 principles). |
+| [`tasks.md`](specs/008-v1-polish/tasks.md) | Execution-ordered task list. |
+
+### v0.7 — Power-user data ops (`007-power-data-ops/`)
+
+The MVP slice (bulk + export + import) shipped in v0.7; the remaining
+saved-views + filter-chips work shipped as part of v1.0.
 
 ### v0.6 — Product workspace (`006-product-workspace/`)
 
@@ -382,23 +425,24 @@ context.
 
 ## Status
 
-**v0.6.0** — usable end-to-end against any Supabase project, with
-opinionated archetype-aware admin presets, a command palette, and a
-flash-free dark/light theme toggle. Self-host with zero env vars on
-Coolify or any docker-compose host.
+**v1.0.0** — GA. Every workspace surface uses the same opinionated
+visual language; unified Inter typography; bulk operations + CSV/JSON
+export + import + saved views + filter chips. Self-host with zero
+env vars on Coolify or any docker-compose host.
 
 **Planned next** (see [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to
 help):
 
-- **v0.7 "Power-user data ops"** — bulk actions, CSV / JSON import +
-  export, inline cell editing, saved filters / views per table.
-- **v0.8 "Postgres-native parity"** — SQL editor (read-only first),
+- **v1.1 "Inline editing"** — click-to-edit cells in the data grid
+  with type-appropriate editors, the only piece of the v0.7 backlog
+  deferred from v1.0.
+- **v1.2 "Postgres-native parity"** — SQL editor (read-only first),
   RLS policy viewer, `auth.users` dedicated admin, Supabase Storage
   browser.
-- **v0.9 "Operate-able for real"** — email verification, password
+- **v1.3 "Operate-able for real"** — email verification, password
   reset, audit-log UI, 2FA, health / metrics endpoints.
 
-**Out of scope for v1**: team workspaces / shared connections,
+**Out of scope for v1.x**: team workspaces / shared connections,
 magic-link / passwordless auth, billing, multi-provider AI matrix
 beyond OpenRouter.
 

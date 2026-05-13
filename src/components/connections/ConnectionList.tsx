@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2, Pencil, AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Database,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +24,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
-import { pgrest } from "@/lib/pgrest/client";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
 
 interface Props {
@@ -30,6 +44,13 @@ const ROLE_TONE: Record<KeyRole, "neutral" | "accent" | "warn" | "danger"> = {
   authenticated: "accent",
   service_role: "danger",
   unknown: "warn",
+};
+
+const ROLE_LABEL: Record<KeyRole, string> = {
+  anon: "anon",
+  authenticated: "user",
+  service_role: "service-role",
+  unknown: "unknown",
 };
 
 async function fetchConnections(): Promise<ConnectionSummary[]> {
@@ -61,8 +82,6 @@ async function deleteConnection(id: string): Promise<void> {
     throw new AppError((e?.category as AppError["category"]) ?? "server", e?.message ?? "Delete failed.");
   }
 }
-
-void pgrest; // keep the import side-effect clear that pgrest is used elsewhere
 
 export function ConnectionList({ initial }: Props) {
   const { data: connections = initial } = useQuery({
@@ -111,54 +130,85 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
     onError: (e) => toast.error(`Delete failed: ${(e as Error).message}`),
   });
 
+  const lastUsed = relativeFromNow(connection.lastUsedAt);
+
   return (
     <>
-      <article className="group relative rounded border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong">
+      <article className="group relative rounded-md border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong">
+        {/* Whole-card click overlay → open workspace */}
         <Link
           href={`/c/${connection.id}`}
-          className="block space-y-2"
+          className="absolute inset-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           aria-label={`Open ${connection.name}`}
-        >
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-display text-lg">{connection.name}</h3>
-            <Badge tone={ROLE_TONE[connection.role]}>{connection.role}</Badge>
+        />
+
+        <div className="relative z-10 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
+              <h3 className="truncate font-display text-lg leading-tight">{connection.name}</h3>
+            </div>
+            <p className="truncate font-mono text-[11px] text-fg-faint">{connection.hostname}</p>
           </div>
-          <p className="truncate font-mono text-xs text-fg-faint">{connection.hostname}</p>
-          {connection.role === "service_role" && (
-            <p className="flex items-center gap-1 text-[10px] text-warn">
+          <div className="relative z-20 flex shrink-0 items-center gap-1.5">
+            <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded p-1.5 text-fg-faint opacity-0 transition-opacity hover:bg-bg-sunken hover:text-fg group-hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent"
+                  aria-label={`Actions for ${connection.name}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem asChild>
+                  <Link href={`/c/${connection.id}`}>
+                    <ArrowRight className="mr-2 h-3.5 w-3.5" aria-hidden /> Open workspace
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/c/${connection.id}/settings`}>Open settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setNameDraft(connection.name);
+                    setRenameOpen(true);
+                  }}
+                >
+                  <Pencil className="mr-2 h-3.5 w-3.5" aria-hidden /> Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDeleteOpen(true);
+                  }}
+                  className="text-danger focus:text-danger"
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="relative z-10 mt-4 flex items-center justify-between gap-2 border-t hairline pt-3">
+          {connection.role === "service_role" ? (
+            <span className="inline-flex items-center gap-1 text-[10px] text-warn">
               <AlertTriangle className="h-3 w-3" aria-hidden /> bypasses RLS
-            </p>
+            </span>
+          ) : (
+            <span className="text-[10px] text-fg-faint">
+              {lastUsed ? `used ${lastUsed}` : `created ${relativeFromNow(connection.createdAt) ?? ""}`}
+            </span>
           )}
-          <p className="text-[10px] text-fg-faint">
-            last used {new Date(connection.lastUsedAt).toLocaleString()}
-          </p>
-        </Link>
-        <div className="mt-3 flex gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setNameDraft(connection.name);
-              setRenameOpen(true);
-            }}
-          >
-            <Pencil className="h-3 w-3" aria-hidden />
-            Rename
-          </Button>
-          <Button
-            type="button"
-            variant="danger"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteOpen(true);
-            }}
-          >
-            <Trash2 className="h-3 w-3" aria-hidden />
-            Delete
-          </Button>
+          <span className="inline-flex items-center gap-1 text-[10px] text-fg-faint group-hover:text-accent">
+            Open <ArrowRight className="h-3 w-3" aria-hidden />
+          </span>
         </div>
       </article>
 
@@ -181,7 +231,10 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
             <Button variant="ghost" onClick={() => setRenameOpen(false)} disabled={renameMutation.isPending}>
               Cancel
             </Button>
-            <Button onClick={() => renameMutation.mutate(nameDraft.trim())} disabled={!nameDraft.trim() || renameMutation.isPending}>
+            <Button
+              onClick={() => renameMutation.mutate(nameDraft.trim())}
+              disabled={!nameDraft.trim() || renameMutation.isPending}
+            >
               {renameMutation.isPending ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
@@ -196,8 +249,8 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
               <DialogTitle>Delete this connection?</DialogTitle>
             </div>
             <DialogDescription>
-              Removes <code className="font-mono text-fg">{connection.name}</code> from your account.
-              Your Supabase project is not touched.
+              Removes <code className="font-mono text-fg">{connection.name}</code> from your account. Your
+              Supabase project itself is not touched.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
