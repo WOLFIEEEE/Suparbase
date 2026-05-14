@@ -4,8 +4,7 @@ import { auth } from "@/server/auth";
 import { getConnectionForUser } from "@/server/connections/repo";
 import { introspectConnection, IntrospectionError } from "@/server/schema-introspect";
 import { loadCachedAnalysis } from "@/server/ai/analyze";
-import { runChat, type ChatMessageIn } from "@/server/ai/chat";
-import { OpenRouterError } from "@/server/ai/openrouter";
+import { runChat, type ChatEvent, type ChatMessageIn } from "@/server/ai/chat";
 import { getUserSettings, readOpenrouterKey } from "@/server/settings/repo";
 import { checkAiRate } from "@/server/proxy/ratelimit";
 import { heuristicAnalysisFor } from "@/lib/presets/heuristic";
@@ -37,7 +36,10 @@ export async function POST(req: NextRequest, ctx: Params) {
   const { id } = await ctx.params;
   const conn = await getConnectionForUser(session.user.id, id);
   if (!conn) {
-    return NextResponse.json({ category: "not_found", message: "Connection not found." }, { status: 404 });
+    return NextResponse.json(
+      { category: "not_found", message: "Connection not found." },
+      { status: 404 },
+    );
   }
 
   let body: { messages: ChatMessageIn[] };
@@ -87,8 +89,8 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
 
   // Prefer the cached analysis. If there isn't one, fall back to heuristic
-  // descriptions on the fly — we don't want a chat request to block on a
-  // potentially-slow full AI analysis.
+  // descriptions on the fly so chat works even before someone has run a full
+  // schema analysis.
   let analyses;
   try {
     const cached = await loadCachedAnalysis(session.user.id, id);
@@ -101,23 +103,44 @@ export async function POST(req: NextRequest, ctx: Params) {
     analyses = schema.tables.map(heuristicAnalysisFor);
   }
 
-  try {
-    const result = await runChat({
-      apiKey,
-      model,
-      hostname: conn.hostname,
-      history: body.messages,
-      ctx: { conn, schema, analyses },
-    });
-    return NextResponse.json(result);
-  } catch (e) {
-    if (e instanceof OpenRouterError) {
-      const status = e.category === "unauthorized" ? 400 : 502;
-      return NextResponse.json({ category: e.category, message: e.message }, { status });
-    }
-    return NextResponse.json(
-      { category: "server", message: (e as Error).message ?? "Chat failed." },
-      { status: 500 },
-    );
-  }
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const write = (event: ChatEvent) => {
+        controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+      };
+      try {
+        for await (const ev of runChat({
+          apiKey,
+          model,
+          hostname: conn.hostname,
+          history: body.messages,
+          ctx: { conn, schema, analyses },
+          signal: req.signal,
+        })) {
+          write(ev);
+        }
+      } catch (e) {
+        write({
+          type: "error",
+          category: "server",
+          message: (e as Error).message ?? "Chat failed.",
+        });
+      } finally {
+        controller.close();
+      }
+    },
+    cancel() {
+      // request aborted by client — generator's signal handler unwinds it
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-store, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
