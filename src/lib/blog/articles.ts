@@ -82,6 +82,20 @@ import {
   Article as EdgeCompareArticle,
   meta as edgeCompareMeta,
 } from "./content/edge-databases-comparison-2026";
+import { Article as AiReviewArticle, meta as aiReviewMeta } from "./content/ai-code-review-for-database-prs";
+import { Article as CursorSbArticle, meta as cursorSbMeta } from "./content/cursor-plus-supabase-2026";
+import { Article as WhenAiNotArticle, meta as whenAiNotMeta } from "./content/when-ai-shouldnt-touch-your-database";
+import { Article as TypeSafeArticle, meta as typeSafeMeta } from "./content/type-safe-database-for-ai-paired-code";
+import { Article as CapCostArticle, meta as capCostMeta } from "./content/capping-ai-database-costs";
+import { Article as ExplainArticle, meta as explainMeta } from "./content/postgres-explain-analyze-2026";
+import { Article as IndexesArticle, meta as indexesMeta } from "./content/postgres-indexes-explained-2026";
+import { Article as MvccArticle, meta as mvccMeta } from "./content/postgres-mvcc-when-it-bites";
+import { Article as FtsArticle, meta as ftsMeta } from "./content/postgres-full-text-search-2026";
+import { Article as PartArticle, meta as partMeta } from "./content/postgres-partitioning-at-scale";
+import { Article as BackupArticle, meta as backupMeta } from "./content/database-backups-2026";
+import { Article as ObsArticle, meta as obsMeta } from "./content/postgres-observability-stack-2026";
+import { Article as PrestGqlArticle, meta as prestGqlMeta } from "./content/postgrest-vs-graphql-vs-trpc";
+import { Article as EventArticle, meta as eventMeta } from "./content/event-driven-on-postgres-2026";
 
 const REGISTRY: ArticleMeta[] = [
   { ...rlsMeta, body: RlsArticle },
@@ -100,6 +114,20 @@ const REGISTRY: ArticleMeta[] = [
   { ...vibePatternsMeta, body: VibePatternsArticle },
   { ...supabaseAgentsMeta, body: SupabaseAgentsArticle },
   { ...edgeCompareMeta, body: EdgeCompareArticle },
+  { ...aiReviewMeta, body: AiReviewArticle },
+  { ...cursorSbMeta, body: CursorSbArticle },
+  { ...whenAiNotMeta, body: WhenAiNotArticle },
+  { ...typeSafeMeta, body: TypeSafeArticle },
+  { ...capCostMeta, body: CapCostArticle },
+  { ...explainMeta, body: ExplainArticle },
+  { ...indexesMeta, body: IndexesArticle },
+  { ...mvccMeta, body: MvccArticle },
+  { ...ftsMeta, body: FtsArticle },
+  { ...partMeta, body: PartArticle },
+  { ...backupMeta, body: BackupArticle },
+  { ...obsMeta, body: ObsArticle },
+  { ...prestGqlMeta, body: PrestGqlArticle },
+  { ...eventMeta, body: EventArticle },
 ];
 
 export function listArticles(): ArticleMeta[] {
