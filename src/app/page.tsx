@@ -1,9 +1,21 @@
 import Link from "next/link";
-import { auth } from "@/server/auth";
 import { redirect } from "next/navigation";
-import { Github } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Database,
+  History,
+  Lock,
+  Pencil,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  SquareCode,
+} from "lucide-react";
+import { auth } from "@/server/auth";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { Wordmark } from "@/components/brand/Logo";
+import { PublicLayout } from "@/components/public/PublicLayout";
+import { CTABand, FeatureCard, SectionHeading } from "@/components/public/sections";
 
 const STEPS = [
   {
@@ -31,69 +43,73 @@ const PROMISES = [
   "Self-hostable on Coolify or any docker-compose host with zero env vars typed.",
 ] as const;
 
+const FEATURE_PREVIEWS = [
+  {
+    icon: Sparkles,
+    title: "AI chat with tool-use",
+    body: "Ask a question; the agent lists tables, inspects schemas, runs filtered reads, and drafts writes you confirm in a diff card.",
+  },
+  {
+    icon: SquareCode,
+    title: "SQL playground",
+    body: "Raw SQL with read-only by default. Statement timeout, EXPLAIN, and a Recent dropdown backed by localStorage.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "RLS debugger",
+    body: "Browse pg_policies, then simulate SELECT/INSERT/UPDATE/DELETE as any role with custom JWT claims. All rolled back.",
+  },
+  {
+    icon: Pencil,
+    title: "Inline cell editing",
+    body: "Click any value on a row detail page to edit it in place. Enter to commit, Escape to cancel.",
+  },
+  {
+    icon: History,
+    title: "Per-row history",
+    body: "Every write captures a before/after snapshot. The detail page shows a chronological column-level diff timeline.",
+  },
+  {
+    icon: Search,
+    title: "Global Cmd-K search",
+    body: "Type an email or UUID; the palette scans every table in parallel and links straight to the row.",
+  },
+] as const;
+
 export default async function HomePage() {
   const session = await auth();
   if (session?.user) redirect("/connections");
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-bg">
-      {/* Subtle grid backdrop */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgb(245 245 241 / 1) 1px, transparent 1px), linear-gradient(90deg, rgb(245 245 241 / 1) 1px, transparent 1px)",
-          backgroundSize: "72px 72px",
-        }}
-      />
-      {/* Accent glow, one wash, top-right */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-32 -top-32 h-[44rem] w-[44rem] rounded-full"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgb(182 255 60 / 0.18), rgb(182 255 60 / 0) 70%)",
-        }}
-      />
+    <PublicLayout>
+      <div className="relative overflow-hidden">
+        {/* Subtle grid backdrop */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgb(var(--fg)) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--fg)) 1px, transparent 1px)",
+            backgroundSize: "72px 72px",
+          }}
+        />
+        {/* Accent glow, top-right */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-32 -top-32 h-[44rem] w-[44rem] rounded-full"
+          style={{
+            background:
+              "radial-gradient(closest-side, rgb(var(--accent) / 0.18), rgb(var(--accent) / 0) 70%)",
+          }}
+        />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6">
-        <header className="flex h-16 items-center justify-between">
-          <Link
-            href="/"
-            aria-label="Suparbase home"
-            className="inline-flex transition-colors hover:text-accent"
-          >
-            <Wordmark size="lg" />
-          </Link>
-          <nav className="flex items-center gap-1">
-            <a
-              href="https://github.com/WOLFIEEEE/Suparbase"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden items-center gap-1.5 rounded px-3 py-1.5 text-sm text-fg-muted hover:text-fg sm:inline-flex"
-              aria-label="GitHub repository"
-            >
-              <Github className="h-3.5 w-3.5" aria-hidden />
-              GitHub
-            </a>
-            <Link href="/signin" className="rounded px-3 py-1.5 text-sm text-fg-muted hover:text-fg">
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90"
-            >
-              Get started
-            </Link>
-          </nav>
-        </header>
+        <div className="relative mx-auto w-full max-w-6xl px-6">
+          <div className="py-12 md:py-16">
+            <LandingHero />
+          </div>
 
-        <main className="flex flex-1 flex-col gap-16 py-12 md:gap-24 md:py-16">
-          <LandingHero />
-
-          {/* How it works: vertical numbered list, not a 3-card grid (per Constitution III). */}
-          <section className="grid grid-cols-1 gap-y-8 md:grid-cols-[auto_1fr] md:gap-x-12">
+          {/* Three-step explainer */}
+          <section className="grid grid-cols-1 gap-y-8 py-10 md:grid-cols-[auto_1fr] md:gap-x-12 md:py-16">
             <div className="md:pt-1">
               <div className="text-[10px] uppercase tracking-[0.22em] text-fg-faint">How it works</div>
               <h2 className="mt-2 font-display text-2xl leading-tight md:text-3xl">
@@ -119,19 +135,45 @@ export default async function HomePage() {
               ))}
             </ol>
           </section>
+        </div>
 
-          {/* Security & operability: list inside a single surface card. */}
-          <section className="surface rounded-lg p-6 sm:p-8">
+        {/* Feature preview grid */}
+        <section className="border-t hairline bg-bg-raised/30">
+          <div className="mx-auto w-full max-w-6xl px-6 py-16 md:py-24">
+            <SectionHeading
+              eyebrow="What you get"
+              title="A working admin, not a wrapper."
+              subtitle="Every feature below ships in v1.4. None of them are coming soon."
+            />
+            <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURE_PREVIEWS.map((f) => (
+                <li key={f.title}>
+                  <FeatureCard {...f} tone="accent" />
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 flex justify-center">
+              <Link
+                href="/features"
+                className="inline-flex h-10 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
+              >
+                See all features <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Security & operability section */}
+        <section className="mx-auto w-full max-w-6xl px-6 py-16 md:py-24">
+          <div className="surface rounded-lg p-6 sm:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[18rem_1fr]">
               <div>
-                <div className="text-[10px] uppercase tracking-[0.22em] text-fg-faint">
-                  Why server-side
-                </div>
+                <div className="text-[10px] uppercase tracking-[0.22em] text-fg-faint">Why server-side</div>
                 <h2 className="mt-2 font-display text-2xl leading-tight">
                   The key never reaches the browser.
                 </h2>
                 <p className="mt-3 max-w-md text-sm text-fg-muted">
-                  Suparbase exists because "store the API key in localStorage" was
+                  Suparbase exists because &quot;store the API key in localStorage&quot; was
                   always a foot-gun. Every promise below is checked by the
                   pre-merge gates in our open spec-kit.
                 </p>
@@ -139,10 +181,7 @@ export default async function HomePage() {
               <ul className="space-y-3 text-sm text-fg-muted">
                 {PROMISES.map((p, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span
-                      aria-hidden
-                      className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                    />
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
                     <span className="leading-relaxed">{p}</span>
                   </li>
                 ))}
@@ -150,39 +189,25 @@ export default async function HomePage() {
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3 border-t hairline pt-5 text-sm">
               <Link
-                href="/signup"
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-accent px-4 font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90"
+                href="/docs#security"
+                className="inline-flex items-center gap-1 text-accent hover:underline"
               >
-                Try it →
+                <Lock className="h-3 w-3" aria-hidden /> Read the security model
               </Link>
-              <a
-                href="https://github.com/WOLFIEEEE/Suparbase"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border hairline px-4 text-fg-muted hover:border-line-strong hover:text-fg"
-              >
-                <Github className="h-3.5 w-3.5" aria-hidden /> Self-host
-              </a>
-              <span className="ml-auto font-mono text-xs text-fg-faint">v1.0.0</span>
+              <span className="ml-auto inline-flex items-center gap-1 font-mono text-xs text-fg-faint">
+                <Database className="h-3 w-3" aria-hidden /> v1.4.0
+              </span>
             </div>
-          </section>
-        </main>
-
-        <footer className="flex flex-wrap items-center justify-between gap-2 border-t hairline py-5 text-xs text-fg-faint">
-          <span>© {new Date().getFullYear()} Suparbase · open source · encrypted at rest</span>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://github.com/WOLFIEEEE/Suparbase"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-fg"
-            >
-              github
-            </a>
-            <span className="font-mono">v1.0</span>
           </div>
-        </footer>
+        </section>
       </div>
-    </div>
+
+      <CTABand
+        title="Drop in your key and ship."
+        body="Five minutes to set up. Free to self-host. No credit card on the hosted plan."
+        primary={{ href: "/signup", label: "Get started" }}
+        secondary={{ href: "/features", label: "See features" }}
+      />
+    </PublicLayout>
   );
 }
