@@ -3,12 +3,14 @@ import { SITE } from "@/lib/seo/site";
 import { listArticles } from "@/lib/blog/articles";
 import { listUseCases } from "@/lib/use-cases/registry";
 import { listCompare } from "@/lib/compare/registry";
+import { listGuides } from "@/lib/guides/registry";
 
 const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }> = [
   { path: "/", priority: 1.0, changeFrequency: "weekly" },
   { path: "/features", priority: 0.9, changeFrequency: "monthly" },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
   { path: "/docs", priority: 0.9, changeFrequency: "monthly" },
+  { path: "/guides", priority: 0.85, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.8, changeFrequency: "weekly" },
   { path: "/use-cases", priority: 0.8, changeFrequency: "monthly" },
   { path: "/compare", priority: 0.8, changeFrequency: "monthly" },
@@ -49,5 +51,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.75,
   }));
 
-  return [...staticEntries, ...articleEntries, ...useCaseEntries, ...compareEntries];
+  const guideEntries = listGuides().map((g) => ({
+    url: `${SITE.url}/guides/${g.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.78,
+  }));
+
+  return [
+    ...staticEntries,
+    ...articleEntries,
+    ...useCaseEntries,
+    ...compareEntries,
+    ...guideEntries,
+  ];
 }
