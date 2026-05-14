@@ -14,11 +14,19 @@ export interface UseCaseMeta {
 import { meta as saasMeta, Page as SaasPage } from "./content/saas-admin";
 import { meta as agencyMeta, Page as AgencyPage } from "./content/agency-multi-client";
 import { meta as internalMeta, Page as InternalPage } from "./content/internal-tools";
+import { meta as indieMeta, Page as IndiePage } from "./content/indie-hackers";
+import { meta as aiMeta, Page as AiPage } from "./content/ai-startups";
+import { meta as hcMeta, Page as HcPage } from "./content/healthcare-saas";
+import { meta as ecomMeta, Page as EcomPage } from "./content/ecommerce-operators";
 
 const REGISTRY: UseCaseMeta[] = [
   { ...saasMeta, body: SaasPage },
   { ...agencyMeta, body: AgencyPage },
   { ...internalMeta, body: InternalPage },
+  { ...indieMeta, body: IndiePage },
+  { ...aiMeta, body: AiPage },
+  { ...hcMeta, body: HcPage },
+  { ...ecomMeta, body: EcomPage },
 ];
 
 export function listUseCases(): UseCaseMeta[] {

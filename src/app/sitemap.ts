@@ -4,6 +4,7 @@ import { listArticles } from "@/lib/blog/articles";
 import { listUseCases } from "@/lib/use-cases/registry";
 import { listCompare } from "@/lib/compare/registry";
 import { listGuides } from "@/lib/guides/registry";
+import { listLearn } from "@/lib/learn/registry";
 
 const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }> = [
   { path: "/", priority: 1.0, changeFrequency: "weekly" },
@@ -14,6 +15,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: Me
   { path: "/blog", priority: 0.8, changeFrequency: "weekly" },
   { path: "/use-cases", priority: 0.8, changeFrequency: "monthly" },
   { path: "/compare", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/learn", priority: 0.7, changeFrequency: "monthly" },
   { path: "/changelog", priority: 0.6, changeFrequency: "weekly" },
   { path: "/about", priority: 0.6, changeFrequency: "monthly" },
   { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
@@ -58,11 +60,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.78,
   }));
 
+  const learnEntries = listLearn().map((e) => ({
+    url: `${SITE.url}/learn/${e.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.55,
+  }));
+
   return [
     ...staticEntries,
     ...articleEntries,
     ...useCaseEntries,
     ...compareEntries,
     ...guideEntries,
+    ...learnEntries,
   ];
 }
