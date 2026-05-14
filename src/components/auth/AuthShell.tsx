@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Database, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
+import { AuthHeroArt } from "@/components/auth/AuthHeroArt";
 import { cn } from "@/lib/ui/cn";
 
 interface AuthShellProps {
@@ -134,8 +135,8 @@ function BrandPane() {
         }}
       />
 
-      <div className="relative flex flex-1 flex-col justify-between gap-10 px-12 py-12">
-        <div className="space-y-4">
+      <div className="relative flex flex-1 flex-col justify-between gap-8 px-12 py-12">
+        <div className="space-y-3">
           <Wordmark size="lg" />
           <p className="max-w-md text-sm leading-relaxed text-fg-muted">
             An authenticated admin workspace for any Supabase project. Bring a
@@ -143,15 +144,19 @@ function BrandPane() {
           </p>
         </div>
 
-        <ul className="space-y-5 max-w-md">
+        <div className="flex items-center justify-center py-2">
+          <AuthHeroArt className="w-full max-w-[440px]" />
+        </div>
+
+        <ul className="grid max-w-md grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
           {VALUE_PROPS.map(({ icon: Icon, title, body }) => (
             <li key={title} className="flex gap-3">
               <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md border hairline bg-bg-raised">
                 <Icon className="h-3.5 w-3.5 text-accent" aria-hidden />
               </span>
-              <div className="space-y-0.5">
+              <div className="min-w-0 space-y-0.5">
                 <h3 className="font-display text-sm leading-tight">{title}</h3>
-                <p className="text-xs leading-relaxed text-fg-muted">{body}</p>
+                <p className="text-[11px] leading-relaxed text-fg-muted">{body}</p>
               </div>
             </li>
           ))}
