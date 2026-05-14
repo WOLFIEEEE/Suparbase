@@ -13,6 +13,7 @@ export interface ConnectionSummary {
   role: KeyRole;
   createdAt: string;
   lastUsedAt: string;
+  hasPostgresUrl: boolean;
 }
 
 export function toSummary(row: ConnectionRow): ConnectionSummary {
@@ -24,6 +25,7 @@ export function toSummary(row: ConnectionRow): ConnectionSummary {
     role: row.role,
     createdAt: row.createdAt.toISOString(),
     lastUsedAt: row.lastUsedAt.toISOString(),
+    hasPostgresUrl: row.encryptedPostgresUrl !== null && row.encryptedPostgresUrl !== undefined,
   };
 }
 
@@ -89,4 +91,22 @@ export async function deleteConnection(userId: string, id: string): Promise<bool
 
 export async function touchLastUsed(id: string): Promise<void> {
   await db.update(connections).set({ lastUsedAt: new Date() }).where(eq(connections.id, id));
+}
+
+/**
+ * Store or clear the optional direct-Postgres URL on a connection. Used by
+ * the RLS debugger.
+ */
+export async function setPostgresUrl(
+  userId: string,
+  id: string,
+  url: string | null,
+): Promise<ConnectionSummary | null> {
+  const value = url ? encryptKey(url) : null;
+  const [row] = await db
+    .update(connections)
+    .set({ encryptedPostgresUrl: value })
+    .where(and(eq(connections.id, id), eq(connections.userId, userId)))
+    .returning();
+  return row ? toSummary(row) : null;
 }

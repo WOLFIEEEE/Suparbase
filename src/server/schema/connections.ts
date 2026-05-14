@@ -30,6 +30,12 @@ export const connections = pgTable(
     hostname: text("hostname").notNull(),
     role: text("role").$type<"anon" | "authenticated" | "service_role" | "unknown">().notNull(),
     encryptedKey: bytea("encrypted_key").notNull(),
+    /**
+     * Optional direct Postgres connection string (postgres://...). Encrypted
+     * with the same vault key. Used only for RLS introspection / policy
+     * simulation; PostgREST remains the primary path for all CRUD.
+     */
+    encryptedPostgresUrl: bytea("encrypted_postgres_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }).defaultNow().notNull(),
   },

@@ -36,6 +36,13 @@
       "when": 1778734609219,
       "tag": "0004_faithful_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778735216986,
+      "tag": "0005_silent_hardball",
+      "breakpoints": true
     }
   ]
 }

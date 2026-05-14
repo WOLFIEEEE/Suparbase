@@ -8,4 +8,5 @@ export interface ConnectionSummary {
   role: KeyRole;
   createdAt: string;
   lastUsedAt: string;
+  hasPostgresUrl: boolean;
 }
