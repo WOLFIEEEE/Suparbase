@@ -32,7 +32,7 @@ export default async function TermsPage() {
 
             <h2>Hosted plan</h2>
             <p>
-              When you sign up at <a href="https://suparbase.dev">suparbase.dev</a> and use the hosted version, the
+              When you sign up at <a href="https://suparbase.com">suparbase.com</a> and use the hosted version, the
               terms below apply. By creating an account you agree to them.
             </p>
 
@@ -45,7 +45,7 @@ export default async function TermsPage() {
             <h3>2. Your account</h3>
             <p>
               You&apos;re responsible for keeping your credentials safe. If your account is compromised, email us
-              immediately at <a href="mailto:security@suparbase.dev">security@suparbase.dev</a>. We won&apos;t reset
+              immediately at <a href="mailto:security@suparbase.com">security@suparbase.com</a>. We won&apos;t reset
               your password from an email; we&apos;ll route a recovery flow through the in-app generate-link path.
             </p>
 
@@ -122,8 +122,8 @@ export default async function TermsPage() {
             <h2>Contact</h2>
             <p>
               For questions about these terms, email{" "}
-              <a href="mailto:legal@suparbase.dev">legal@suparbase.dev</a>. For everything else,{" "}
-              <a href="mailto:hello@suparbase.dev">hello@suparbase.dev</a>.
+              <a href="mailto:legal@suparbase.com">legal@suparbase.com</a>. For everything else,{" "}
+              <a href="mailto:hello@suparbase.com">hello@suparbase.com</a>.
             </p>
           </Prose>
         </div>

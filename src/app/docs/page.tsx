@@ -281,7 +281,7 @@ export default async function DocsPage() {
                 >
                   GitHub <ArrowUpRight className="h-3 w-3" aria-hidden />
                 </a>{" "}
-                or email <a href="mailto:hello@suparbase.dev" className="text-accent hover:underline">hello@suparbase.dev</a>.
+                or email <a href="mailto:hello@suparbase.com" className="text-accent hover:underline">hello@suparbase.com</a>.
               </p>
             </div>
           </div>

@@ -172,8 +172,8 @@ export default async function PrivacyPage() {
             <h2>Contact</h2>
             <p>
               For anything privacy-related, email{" "}
-              <a href="mailto:privacy@suparbase.dev">privacy@suparbase.dev</a>. For general support,{" "}
-              <a href="mailto:hello@suparbase.dev">hello@suparbase.dev</a>.
+              <a href="mailto:privacy@suparbase.com">privacy@suparbase.com</a>. For general support,{" "}
+              <a href="mailto:hello@suparbase.com">hello@suparbase.com</a>.
             </p>
           </Prose>
         </div>

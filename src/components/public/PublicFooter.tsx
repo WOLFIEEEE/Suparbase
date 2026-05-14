@@ -40,7 +40,7 @@ const COLUMNS: Column[] = [
       { label: "About", href: "/about" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
-      { label: "Contact", href: "mailto:hello@suparbase.dev", external: true },
+      { label: "Contact", href: "mailto:hello@suparbase.com", external: true },
     ],
   },
 ];

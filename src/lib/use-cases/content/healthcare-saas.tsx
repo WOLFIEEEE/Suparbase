@@ -39,7 +39,7 @@ export function Page() {
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
               <a
-                href="mailto:hello@suparbase.dev?subject=Healthcare%20compliance"
+                href="mailto:hello@suparbase.com?subject=Healthcare%20compliance"
                 className="inline-flex h-11 items-center rounded-md border hairline px-5 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
               >
                 Talk to us
@@ -120,7 +120,7 @@ export function Page() {
       <CTABand
         title="Talk to us about your compliance posture."
         body="We'll help you map the features to your auditor's checklist."
-        primary={{ href: "mailto:hello@suparbase.dev?subject=Healthcare%20compliance", label: "Email us" }}
+        primary={{ href: "mailto:hello@suparbase.com?subject=Healthcare%20compliance", label: "Email us" }}
         secondary={{ href: "/docs#security", label: "Read the security model" }}
       />
     </>

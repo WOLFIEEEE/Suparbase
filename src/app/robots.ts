@@ -1,7 +1,12 @@
 import type { MetadataRoute } from "next";
-import { SITE } from "@/lib/seo/site";
+import { getSiteUrl } from "@/lib/seo/site";
+
+// Resolve env at request time so the deployed robots.txt can't bake
+// in a stale/localhost URL from build time.
+export const dynamic = "force-dynamic";
 
 export default function robots(): MetadataRoute.Robots {
+  const base = getSiteUrl();
   return {
     rules: [
       {
@@ -19,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${SITE.url}/sitemap.xml`,
-    host: SITE.url,
+    sitemap: `${base}/sitemap.xml`,
+    host: base,
   };
 }

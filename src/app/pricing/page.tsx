@@ -71,7 +71,7 @@ const TIERS: Tier[] = [
     price: "Custom",
     blurb:
       "For larger teams that need SSO, dedicated infrastructure, or a private build. Talk to us about what you actually need.",
-    cta: { label: "Contact sales", href: "mailto:hello@suparbase.dev" },
+    cta: { label: "Contact sales", href: "mailto:hello@suparbase.com" },
     features: [
       { text: "Everything in Hosted" },
       { text: "SAML / OIDC SSO" },
