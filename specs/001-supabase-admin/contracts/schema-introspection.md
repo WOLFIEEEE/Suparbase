@@ -1,4 +1,4 @@
-# Contract — Schema Introspection
+# Contract: Schema Introspection
 
 ## Source endpoint
 

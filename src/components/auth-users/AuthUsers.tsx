@@ -257,7 +257,7 @@ function AuthUsersAdmin({ connection }: { connection: ConnectionSummary }) {
           </div>
         ) : filtered.length === 0 ? (
           <p className="px-2 py-8 text-center text-sm text-fg-muted">
-            {debouncedSearch ? "No users matched." : "No users yet — try inviting one."}
+            {debouncedSearch ? "No users matched." : "No users yet: try inviting one."}
           </p>
         ) : (
           <ul className="divide-y hairline">
@@ -458,7 +458,7 @@ function UserDetail({
       </header>
 
       <dl className="grid grid-cols-[7rem_1fr] gap-x-2 gap-y-1.5 text-[11px]">
-        <Detail label="Created" value={user.createdAt ? new Date(user.createdAt).toLocaleString() : "—"} />
+        <Detail label="Created" value={user.createdAt ? new Date(user.createdAt).toLocaleString() : ":"} />
         <Detail label="Last sign-in" value={user.lastSignInAt ? new Date(user.lastSignInAt).toLocaleString() : "never"} />
         <Detail
           label="Email confirmed"
@@ -477,7 +477,7 @@ function UserDetail({
             )
           }
         />
-        <Detail label="Providers" value={user.providers.length ? user.providers.join(", ") : "—"} />
+        <Detail label="Providers" value={user.providers.length ? user.providers.join(", ") : ":"} />
         <Detail
           label="Status"
           value={

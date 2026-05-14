@@ -60,7 +60,7 @@ export function AuthShell({ children, title, subtitle, eyebrow, footnote }: Auth
 
         <footer className="border-t hairline px-6 py-4 text-[11px] text-fg-faint sm:px-10">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span>© Suparbase — encrypted credentials, server-side proxy.</span>
+            <span>© Suparbase: encrypted credentials, server-side proxy.</span>
             <Link
               href="/"
               className="inline-flex items-center gap-1 transition-colors hover:text-fg"
@@ -92,7 +92,7 @@ const VALUE_PROPS: ValueProp[] = [
   {
     icon: Database,
     title: "Server-side proxy",
-    body: "All reads and writes route through our backend — the anon/service_role key stays on the server.",
+    body: "All reads and writes route through our backend: the anon/service_role key stays on the server.",
   },
   {
     icon: Sparkles,

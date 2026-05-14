@@ -1,4 +1,4 @@
-# Quickstart — verifying the v0.7 release
+# Quickstart: verifying the v0.7 release
 
 Manual smoke walk-through that maps to spec acceptance criteria. Run
 after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
@@ -19,7 +19,7 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
 4. A 1000-row CSV file on disk for the import smoke (`posts-import.csv`).
 5. A second 50 MB CSV file (synthetic) for the file-size-limit check.
 
-## 1. Bulk operations — User Story 1
+## 1. Bulk operations: User Story 1
 
 - [ ] On `posts`, tick row checkboxes on 5 rows. The sticky **BulkBar**
       appears showing "5 selected" with **Delete**, **Update column**,
@@ -34,15 +34,15 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
       `status: archived`.
 - [ ] Tick 5 rows on page 1, navigate to page 2 (no auto-selection
       there), tick 1 row on page 2. BulkBar shows "6 selected".
-- [ ] Click **Clear** — BulkBar disappears, no rows highlighted.
+- [ ] Click **Clear**: BulkBar disappears, no rows highlighted.
 - [ ] On a read-only `VIEW`, verify BulkBar shows only **Export
       selected** (no Delete / Update buttons).
-- [ ] Verify the audit log via the Dashboard's Recent activity panel —
+- [ ] Verify the audit log via the Dashboard's Recent activity panel :
       one entry per bulk-affected row, verb=`delete` or `update`.
 - [ ] Hit the bulk endpoint 6 times in a minute; the 6th call returns
       `429 rate_limited` with a `Retry-After` header.
 
-## 2. Export — User Story 2
+## 2. Export: User Story 2
 
 - [ ] On `users` with a filter `role = admin` applied, click
       **Export → CSV**. File `users-{YYYY-MM-DD}.csv` downloads.
@@ -60,7 +60,7 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
 - [ ] Mid-export, click the download manager's cancel. The
       partially-written file remains on disk (browser default).
 
-## 3. Import — User Story 3
+## 3. Import: User Story 3
 
 - [ ] Click **Import** on `posts`. The ImportPanel opens (Radix Sheet,
       slide from right).
@@ -86,7 +86,7 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
 - [ ] Verify the audit log via Recent activity: one `insert` entry per
       imported row.
 
-## 4. Inline cell editing — User Story 4
+## 4. Inline cell editing: User Story 4
 
 - [ ] On any generic-grid (Generic) table, single-click a `title` cell.
       The cell receives a visible focus ring.
@@ -108,10 +108,10 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
 - [ ] On an FK column, Enter → a small searchable popover → search by
       label → Enter picks; the cell shows the FK label, not the raw id.
 - [ ] Enable `prefers-reduced-motion` in OS settings. Reload. Edit a
-      cell — the flash and red-pulse are suppressed; everything else
+      cell: the flash and red-pulse are suppressed; everything else
       still works.
 
-## 5. Saved views — User Story 5
+## 5. Saved views: User Story 5
 
 - [ ] On `posts`, build a filter `status = published` + sort
       `published_at desc`. Click **Save view** in the toolbar → name it
@@ -122,7 +122,7 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
       reflects the view's state.
 - [ ] Reload. The tab persists; clicking it still applies.
 - [ ] Copy the URL with the view active, open in an incognito window
-      signed in as the same user — same data.
+      signed in as the same user: same data.
 - [ ] On the active view's tab, adjust the filter (remove a chip). The
       tab shows an unsaved-changes dot. Click **Update view** → tab
       becomes clean; click **Discard** → reverts.
@@ -133,7 +133,7 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
 - [ ] Sign in as the second user. Open the same table. None of the
       first user's views are visible.
 
-## 6. Filter chips — User Story 6
+## 6. Filter chips: User Story 6
 
 - [ ] On `users`, click the `role` column header. A popover appears
       with operators (`=`, `≠`, `contains`, `starts with`, `is null`,
@@ -145,9 +145,9 @@ after `pnpm typecheck`, `pnpm db:push`, and `pnpm build` on the
 - [ ] Click `last_sign_in_at` column header → `>=` → date picker → ISO
       date; third chip appears; results narrow further.
 - [ ] Click `×` on the first chip. URL drops that filter; list widens.
-- [ ] Try an `is null` chip on a nullable column — no value input
+- [ ] Try an `is null` chip on a nullable column: no value input
       needed; chip reads `column is null`.
-- [ ] Try an `in` chip on `status`: enter `published,draft` — chip
+- [ ] Try an `in` chip on `status`: enter `published,draft`: chip
       reads `status in (published, draft)`.
 - [ ] Tab to the toolbar → chips are focusable; Enter on a chip opens
       its edit popover; Escape closes.

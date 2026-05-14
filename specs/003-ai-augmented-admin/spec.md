@@ -9,7 +9,7 @@ that we route the user into based on what the AI says each table is."
 
 ## User Scenarios & Testing
 
-### User Story 1 — Add an OpenRouter key (P1)
+### User Story 1: Add an OpenRouter key (P1)
 
 A user adds their OpenRouter API key to their Suparbase account.
 
@@ -23,7 +23,7 @@ A user adds their OpenRouter API key to their Suparbase account.
 4. The user can clear the key with one click; the row is overwritten
    and removed.
 
-### User Story 2 — AI classifies each table (P1)
+### User Story 2: AI classifies each table (P1)
 
 After connecting a Supabase project, the user sees AI-suggested
 classification on the dashboard and per-table view.
@@ -34,13 +34,13 @@ classification on the dashboard and per-table view.
    Generic) and a **display name** in Title Case.
 2. The analysis runs once per schema fingerprint and is cached;
    re-loading the dashboard does NOT spend more tokens.
-3. Without an OpenRouter key, the dashboard renders identically to v0.2
-   — no badges, no "AI suggested" text, no errors.
+3. Without an OpenRouter key, the dashboard renders identically to v0.2;
+   no badges, no "AI suggested" text, no errors.
 4. If the AI call fails or returns malformed JSON, the dashboard still
    renders; the badge area is empty. An "AI analysis unavailable" hint
    appears on `/settings/ai` only.
 
-### User Story 3 — Tables open in a purpose-built preset (P1)
+### User Story 3: Tables open in a purpose-built preset (P1)
 
 When the user clicks a table, Suparbase routes them to the preset that
 matches the AI-derived category, rather than always rendering the
@@ -57,11 +57,11 @@ generic CRUD page.
    read-only table, JSON columns expanded inline, no create/edit/delete
    actions, filter by event type if a category-like column exists.
 4. Tables classified as **Generic** (or unclassified) fall through to
-   the v0.2 generic CRUD experience — no regression.
+   the v0.2 generic CRUD experience: no regression.
 5. A "Switch to generic view" link is always available on a preset
    page, so users can override the AI suggestion per session.
 
-### User Story 4 — Cost transparency (P2)
+### User Story 4: Cost transparency (P2)
 
 The user sees, in Settings, the model used and approximate token spend
 for their most recent schema analysis.
@@ -110,7 +110,7 @@ for their most recent schema analysis.
   analysis)` and exposed at `src/lib/presets/pick.ts`.
 - **FR-022**: Each preset (UsersAdmin, ContentAdmin, LogsAdmin) MUST
   render on top of the same DataGrid / RowForm primitives used by
-  GenericAdmin — no parallel data layer.
+  GenericAdmin: no parallel data layer.
 - **FR-023**: A "Switch to generic view" link MUST be available on
   every preset page; the override is per-session and stored in the
   URL (`?view=generic`).
@@ -128,7 +128,7 @@ for their most recent schema analysis.
 - **FR-040**: The OpenRouter key MUST never appear in any log,
   network response payload, or stack trace surface. The redactor MUST
   recognize `sk-or-…` shapes in addition to JWT shapes.
-- **FR-041**: AI features MUST be discoverable but not nagging — no
+- **FR-041**: AI features MUST be discoverable but not nagging: no
   modals demanding the user add a key.
 - **FR-042**: GenericAdmin MUST be the fallback for every failure
   mode, with no functional regression vs v0.2.

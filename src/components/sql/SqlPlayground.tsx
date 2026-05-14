@@ -308,7 +308,7 @@ function SafetyBanner({ readOnly }: { readOnly: boolean }) {
       <div className="flex items-center gap-2 rounded border border-accent/40 bg-accent/5 px-3 py-2 text-[11px] text-fg-muted">
         <Lock className="h-3 w-3 shrink-0 text-accent" aria-hidden />
         <span>
-          <strong className="text-fg">Read-only mode</strong> — runs your SQL inside
+          <strong className="text-fg">Read-only mode</strong>: runs your SQL inside
           a transaction with <code className="font-mono">SET TRANSACTION READ ONLY</code>
           {" "}and rolls it back afterwards. Any INSERT/UPDATE/DELETE will be rejected
           by Postgres.
@@ -321,7 +321,7 @@ function SafetyBanner({ readOnly }: { readOnly: boolean }) {
       <ShieldAlert className="h-3 w-3 shrink-0" aria-hidden />
       <span>
         <strong>Write mode is ON.</strong> Any SQL you run can do whatever your
-        stored Postgres role can do — including <code className="font-mono">DROP TABLE</code>
+        stored Postgres role can do: including <code className="font-mono">DROP TABLE</code>
         ,{" "}
         <code className="font-mono">DELETE</code>, and{" "}
         <code className="font-mono">TRUNCATE</code>. Each write run is recorded in the
@@ -409,7 +409,7 @@ function HistoryPanel({
   if (history.length === 0) {
     return (
       <p className="border-b hairline px-3 py-3 text-[11px] text-fg-faint">
-        No recent queries yet — anything you run from here is saved locally to
+        No recent queries yet: anything you run from here is saved locally to
         this browser.
       </p>
     );

@@ -1,4 +1,4 @@
-# Phase 1 — Data Model (delta from v0.2)
+# Phase 1: Data Model (delta from v0.2)
 
 ## New tables
 
@@ -41,7 +41,7 @@ One row per user (PK is the user id).
 }
 ```
 
-`source = 'heuristic'` rows have zeroes in the token columns — they
+`source = 'heuristic'` rows have zeroes in the token columns: they
 encode that the cached classification did not consume LLM credit.
 
 ## Shared domain types
@@ -111,5 +111,5 @@ interface AiSettingsSummary {
 ## State
 
 Server is authoritative. Client cache: React Query. The OpenRouter key
-NEVER lives in browser state — `hasKey` is a boolean derived
+NEVER lives in browser state: `hasKey` is a boolean derived
 server-side.

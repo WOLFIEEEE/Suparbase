@@ -89,7 +89,7 @@ export function SignInForm({ githubEnabled, error }: Props) {
               Password
             </Label>
             <span
-              title="Self-service password reset isn't wired up yet — contact your admin."
+              title="Self-service password reset isn't wired up yet: contact your admin."
               className="cursor-help text-[10px] uppercase tracking-wider text-fg-faint"
             >
               Forgot?

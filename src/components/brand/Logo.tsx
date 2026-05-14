@@ -1,7 +1,7 @@
 import { cn } from "@/lib/ui/cn";
 
 /**
- * Suparbase mark. Three offset bars forming a stylized 'S' — top/bottom in
+ * Suparbase mark. Three offset bars forming a stylized 'S': top/bottom in
  * `currentColor`, the middle bar in the brand accent. The mark is
  * theme-aware: it inherits text color and uses CSS variable `--accent`.
  *
@@ -19,11 +19,11 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
       className={cn("h-5 w-5", className)}
       {...props}
     >
-      {/* top bar — currentColor */}
+      {/* top bar: currentColor */}
       <rect x="3" y="4" width="14" height="4" rx="1.5" fill="currentColor" />
-      {/* middle bar — accent */}
+      {/* middle bar: accent */}
       <rect x="7" y="10" width="14" height="4" rx="1.5" fill="rgb(var(--accent))" />
-      {/* bottom bar — currentColor */}
+      {/* bottom bar: currentColor */}
       <rect x="3" y="16" width="14" height="4" rx="1.5" fill="currentColor" />
     </svg>
   );

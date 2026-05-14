@@ -1,4 +1,4 @@
-# Contract — `POST /api/v/[id]/rest/[name]/import`
+# Contract: `POST /api/v/[id]/rest/[name]/import`
 
 Accepts a single chunk (≤500 rows) of an import operation. The client
 chunks the source file and POSTs one chunk at a time so progress is
@@ -35,11 +35,11 @@ Cookie: next-auth.session-token=…
 
 - Requires a valid NextAuth session.
 - Verifies `connection.userId === session.user.id`; mismatch → `404`.
-- Counts against `checkBulkRate(userId)` — shares the bulk budget with
+- Counts against `checkBulkRate(userId)` · shares the bulk budget with
   bulk-delete and bulk-update (5 batches/min/user). Each *chunk* counts
   as one batch; a 5000-row import burns 10 buckets total.
 
-## Response — 200 OK
+## Response: 200 OK
 
 ```json
 {
@@ -80,7 +80,7 @@ appropriate 4xx/5xx, no rows are committed, no audit rows are written.
 6. Return aggregated counts + errors.
 
 Rolling back audit rows on abort means the audit table truthfully
-reflects what's actually in the database — never claims a write that
+reflects what's actually in the database: never claims a write that
 didn't happen.
 
 ## Error envelopes
@@ -97,7 +97,7 @@ didn't happen.
 ## What this contract does NOT include
 
 - A PostgREST bulk-insert path (`POST` with an array body). Discussed
-  in `research.md` Decision 5 — out of scope for v0.7.
+  in `research.md` Decision 5: out of scope for v0.7.
 - Async import progress endpoints (websockets / polling). The client
   drives chunking and reports progress entirely from the chunk responses
   it gets back.

@@ -97,7 +97,7 @@ export function SchemaView() {
           <span className="text-xs text-fg-muted">
             {schema
               ? `${totalTables} ${totalTables === 1 ? "table" : "tables"} · ${totalColumns} columns`
-              : "—"}
+              : ":"}
           </span>
         }
       />
@@ -219,7 +219,7 @@ function TableRow({ table, connectionId }: { table: Table; connectionId: string 
           <span className="flex items-center gap-3 text-[11px] text-fg-faint">
             <span>{table.columns.length} cols</span>
             <span>·</span>
-            <span>PK: {table.primaryKey.length > 0 ? table.primaryKey.join(", ") : "—"}</span>
+            <span>PK: {table.primaryKey.length > 0 ? table.primaryKey.join(", ") : ":"}</span>
             <Link
               href={`/c/${connectionId}/tables/${encodeURIComponent(table.name)}`}
               className="hidden items-center gap-0.5 rounded px-2 py-0.5 text-fg-faint hover:text-accent sm:inline-flex"

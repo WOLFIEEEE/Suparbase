@@ -8,11 +8,11 @@ item that expands into a column-level diff.
 ## Schema
 Migration `drizzle/0004_faithful_rattler.sql` adds two columns to
 `audit_log`:
-- `before_row jsonb` — populated on DELETE (and reserved for future
+- `before_row jsonb`: populated on DELETE (and reserved for future
   pre-fetch UPDATE capture).
-- `after_row jsonb` — populated on INSERT and UPDATE.
+- `after_row jsonb`: populated on INSERT and UPDATE.
 
-Existing rows have nulls in both — old history items still render but
+Existing rows have nulls in both: old history items still render but
 show no column diff.
 
 ## Capture
@@ -27,7 +27,7 @@ Client helpers `insertRow` / `updateRow` already set
 so the upstream echoes the deleted row back.
 
 Bulk operations and writes without `return=representation` continue to
-work — they just don't populate the snapshot columns.
+work: they just don't populate the snapshot columns.
 
 ## API
 `GET /api/v/[id]/audit/row?table=<name>&pk=<json>` →

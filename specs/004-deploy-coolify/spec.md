@@ -7,7 +7,7 @@
 
 ## User Scenarios & Testing
 
-### User Story 1 — Deploy in three minutes on Coolify (P1)
+### User Story 1: Deploy in three minutes on Coolify (P1)
 
 A Coolify operator points the project at this repo, sets six environment
 variables, and hits Deploy.
@@ -28,7 +28,7 @@ variables, and hits Deploy.
 5. Coolify's reverse proxy routes the app's port to the operator's
    chosen domain. Hitting the domain yields the marketing landing page.
 
-### User Story 2 — Database persists across redeploys (P1)
+### User Story 2: Database persists across redeploys (P1)
 
 The Postgres data volume survives container restarts and re-deploys.
 
@@ -40,7 +40,7 @@ The Postgres data volume survives container restarts and re-deploys.
    shows the saved connection (its encrypted key still decrypts);
    the AI settings still show the saved OpenRouter key.
 
-### User Story 3 — Auto-composed DATABASE_URL (P2)
+### User Story 3: Auto-composed DATABASE_URL (P2)
 
 The operator never sees or types a Postgres connection string.
 `DATABASE_URL` is composed inside docker-compose from
@@ -75,7 +75,7 @@ The operator never sees or types a Postgres connection string.
   poll it.
 - **FR-008**: `.env.example` MUST list exactly the env vars the
   operator needs to set in Coolify. `DATABASE_URL` MUST NOT appear
-  there — it is composed.
+  there: it is composed.
 - **FR-009**: A `.dockerignore` MUST exclude `.next`, `node_modules`,
   `.git`, local env files, and spec-kit folders so the build context
   stays minimal.

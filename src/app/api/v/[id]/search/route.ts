@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   const limit = checkReadRate(session.user.id);
   if (!limit.allowed) {
     return NextResponse.json(
-      { category: "rate_limited", message: "Too many searches — try again shortly." },
+      { category: "rate_limited", message: "Too many searches: try again shortly." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
     );
   }

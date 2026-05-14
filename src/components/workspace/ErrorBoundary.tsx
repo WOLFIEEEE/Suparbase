@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, _info: ErrorInfo) {
-    // Keys could appear in any thrown message — defensively redact before any logging.
+    // Keys could appear in any thrown message: defensively redact before any logging.
     // We intentionally do not call console.error here; redact() would let a single
     // mistake leak credentials. Surface to the user instead.
     void redact(error.message);
@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <p className="text-sm text-fg-muted">
               The screen hit an unexpected error. Your connection and data are
-              fine — try again.
+              fine: try again.
             </p>
             <pre className="max-h-32 overflow-auto rounded surface-sunken p-3 font-mono text-[11px] text-fg-muted">
               {redact(this.state.error.message || "unknown error")}

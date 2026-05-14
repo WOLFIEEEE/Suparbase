@@ -250,7 +250,7 @@ function UsersAdminBody({ connectionId, table, analysis }: PresetProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total users"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
           hint={createdCol ? "newest first" : undefined}
         />
         <StatTile
@@ -443,7 +443,7 @@ function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionTogg
         "group relative flex items-center gap-3 rounded-md border hairline bg-bg-raised p-3 transition-colors hover:border-line-strong hover:bg-bg-raised/80",
         isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-bg",
       )}>
-        {/* Checkbox column — outside the Link overlay's hit zone (see /speckit-analyze F1). */}
+        {/* Checkbox column: outside the Link overlay's hit zone (see /speckit-analyze F1). */}
         {onSelectionToggle && (
           <label
             className="pointer-events-auto relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"

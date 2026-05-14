@@ -10,13 +10,13 @@
 
 ## Why this release
 
-v0.6 made the workspace look like a product. v0.7 MVP made it operate like one (bulk + export + import). v1.0 closes the loop: every page the user can land on now uses the same visual language, the v0.7 backlog (inline edit, saved views, filter chips) ships, typography is unified, and the polish that was deferred — tooltips, empty/loading consistency, the lingering "old grid" feel on non-archetype tables — is done. This becomes the GA-ready release.
+v0.6 made the workspace look like a product. v0.7 MVP made it operate like one (bulk + export + import). v1.0 closes the loop: every page the user can land on now uses the same visual language, the v0.7 backlog (inline edit, saved views, filter chips) ships, typography is unified, and the polish that was deferred: tooltips, empty/loading consistency, the lingering "old grid" feel on non-archetype tables: is done. This becomes the GA-ready release.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 — Every table feels like a real admin, archetype or not (Priority: P1)
+### User Story 1: Every table feels like a real admin, archetype or not (Priority: P1)
 
-A user opens a table that doesn't match any AI archetype (a join table, a config table). Today they land in the v0.5-era data grid with the old chrome and the row drawer. After v1.0 they see the same `PageHeader` chrome as Users / Content / Logs, with full-width row cards, a proper toolbar (Export + Import + Refresh), the BulkBar for multi-row ops, and clicking a row navigates to a dedicated detail page with a hero card, sectioned identity, and a linked-records sidebar — mirroring the archetype experience.
+A user opens a table that doesn't match any AI archetype (a join table, a config table). Today they land in the v0.5-era data grid with the old chrome and the row drawer. After v1.0 they see the same `PageHeader` chrome as Users / Content / Logs, with full-width row cards, a proper toolbar (Export + Import + Refresh), the BulkBar for multi-row ops, and clicking a row navigates to a dedicated detail page with a hero card, sectioned identity, and a linked-records sidebar: mirroring the archetype experience.
 
 **Why this priority**: most Supabase projects have tables outside the four archetypes. Today the "Generic" path is the visible weak link. P1.
 
@@ -31,7 +31,7 @@ A user opens a table that doesn't match any AI archetype (a join table, a config
 
 ---
 
-### User Story 2 — Schema view feels like a product, not a code dump (Priority: P1)
+### User Story 2: Schema view feels like a product, not a code dump (Priority: P1)
 
 A user clicks **Schema** in the sidebar. Today they see a flat list of tables → columns. After v1.0 they see the same archetype groupings as the Dashboard / Tables list, each table expandable to show its columns grouped by category (identifiers / fields / metadata), with FK relationships rendered as clickable chips and column types shown as inline tokens.
 
@@ -48,13 +48,13 @@ A user clicks **Schema** in the sidebar. Today they see a flat list of tables �
 
 ---
 
-### User Story 3 — Power-user data ops complete (v0.7 final) (Priority: P1)
+### User Story 3: Power-user data ops complete (v0.7 final) (Priority: P1)
 
-The remaining v0.7 backlog ships: filter chips (US6), saved views (US5), inline cell editing (US4) — finishing the "operate like a real admin" promise.
+The remaining v0.7 backlog ships: filter chips (US6), saved views (US5), inline cell editing (US4): finishing the "operate like a real admin" promise.
 
 **Why this priority**: v0.7 left these on the table and they're already specced in `specs/007-power-data-ops/`. Without them the data-ops story has gaps that users see immediately. P1.
 
-**Independent Test**: walk `specs/007-power-data-ops/quickstart.md` §4, §5, §6 — inline edit, saved views, filter chips — on the new generic grid as well as on archetype list views.
+**Independent Test**: walk `specs/007-power-data-ops/quickstart.md` §4, §5, §6: inline edit, saved views, filter chips: on the new generic grid as well as on archetype list views.
 
 **Acceptance Scenarios**:
 
@@ -64,7 +64,7 @@ The remaining v0.7 backlog ships: filter chips (US6), saved views (US5), inline 
 
 ---
 
-### User Story 4 — Connection flows feel professional from the first deploy (Priority: P2)
+### User Story 4: Connection flows feel professional from the first deploy (Priority: P2)
 
 A new user deploys Suparbase, signs in, lands on `/connections`, adds their first Supabase project. Today the connections list is a plain card list, the new-connection form is a flat form, and the per-connection settings page is an un-grouped heap of form rows. After v1.0 each surface is tightened: the list uses an archetype-aware card grid showing tables-detected counts, the new-connection form is narrower with helpful copy and a paste-from-Supabase-dashboard quick-fill, the settings page is grouped into Identity / Security / Danger sections.
 
@@ -80,9 +80,9 @@ A new user deploys Suparbase, signs in, lands on `/connections`, adds their firs
 
 ---
 
-### User Story 5 — Typography is unified and professional (Priority: P2)
+### User Story 5: Typography is unified and professional (Priority: P2)
 
-A user looks at any page. Today display text uses **Fraunces** (a serif) and body uses **Inter** (a sans). After v1.0 the entire app uses a single professional sans family — Inter Variable for body + a heavier-weight tighter-tracking variant for display — for a unified, modern, software-product feel. JetBrains Mono stays for code/data/IDs.
+A user looks at any page. Today display text uses **Fraunces** (a serif) and body uses **Inter** (a sans). After v1.0 the entire app uses a single professional sans family: Inter Variable for body + a heavier-weight tighter-tracking variant for display: for a unified, modern, software-product feel. JetBrains Mono stays for code/data/IDs.
 
 **Why this priority**: serif display on a database admin tool reads as decorative rather than professional. The unified sans is the standard look for serious product tools (Linear, Notion, Vercel). P2.
 
@@ -92,17 +92,17 @@ A user looks at any page. Today display text uses **Fraunces** (a serif) and bod
 
 1. **Given** any page using `font-display`, **When** I inspect the rendered font, **Then** it resolves to "Inter Variable" (not Fraunces).
 2. **Given** display headlines, **When** I look at them, **Then** they appear in a heavier weight with tighter tracking than body text, producing a clear typographic hierarchy.
-3. **Given** the page weight/build, **When** I check the bundle, **Then** the Fraunces font is no longer loaded — fewer font requests at first paint.
+3. **Given** the page weight/build, **When** I check the bundle, **Then** the Fraunces font is no longer loaded: fewer font requests at first paint.
 
 ---
 
-### User Story 6 — Empty states, loading, tooltips, micro-polish (Priority: P3)
+### User Story 6: Empty states, loading, tooltips, micro-polish (Priority: P3)
 
 Across the app, every empty state uses a consistent `EmptyState` pattern; every async surface shows a skeleton (not blank); every icon-only button has a tooltip; success/error/in-flight states feel intentional (not utilitarian).
 
-**Why this priority**: cumulative polish — small individually, big in aggregate. P3.
+**Why this priority**: cumulative polish: small individually, big in aggregate. P3.
 
-**Independent Test**: hover every icon-only button — tooltip appears. Force every empty state — explanatory copy + suggested action. Slow network — skeletons instead of blank.
+**Independent Test**: hover every icon-only button: tooltip appears. Force every empty state: explanatory copy + suggested action. Slow network: skeletons instead of blank.
 
 **Acceptance Scenarios**:
 
@@ -127,7 +127,7 @@ Across the app, every empty state uses a consistent `EmptyState` pattern; every 
 - **FR-G01**: `TableListView` MUST use `PageHeader` chrome matching the archetype presets.
 - **FR-G02**: `TableListView` MUST render rows as full-width row cards (not HTML `<table>` rows).
 - **FR-G03**: Clicking a row in `TableListView` MUST navigate to its detail page; no drawer.
-- **FR-G04**: The generic detail page MUST render a hero card (label column at display size + identifying chips), sectioned identity fields respecting `analysis.hiddenColumns`, and a linked-records sidebar — mirroring `UserDetail`.
+- **FR-G04**: The generic detail page MUST render a hero card (label column at display size + identifying chips), sectioned identity fields respecting `analysis.hiddenColumns`, and a linked-records sidebar: mirroring `UserDetail`.
 - **FR-G05**: The generic detail page MUST surface Edit and Delete actions in the same PageHeader pattern as the archetype detail pages.
 - **FR-G06**: The new-row page MUST be wrapped in `PageHeader` with breadcrumbs back to the table list.
 - **FR-G07**: Bulk operations (US1 from v0.7) MUST work on the generic grid, not just on archetype tables.
@@ -155,7 +155,7 @@ Across the app, every empty state uses a consistent `EmptyState` pattern; every 
 
 **Typography (FR-T01–FR-T04)**
 
-- **FR-T01**: Display headings (`.font-display`) MUST resolve to Inter Variable with a heavier weight and tighter tracking — NOT Fraunces.
+- **FR-T01**: Display headings (`.font-display`) MUST resolve to Inter Variable with a heavier weight and tighter tracking: NOT Fraunces.
 - **FR-T02**: Body text MUST continue to resolve to Inter Variable.
 - **FR-T03**: Monospace columns / IDs MUST continue to resolve to JetBrains Mono Variable.
 - **FR-T04**: The Fraunces font file MUST be removed from the bundle (no preload, no import).
@@ -177,7 +177,7 @@ Across the app, every empty state uses a consistent `EmptyState` pattern; every 
 
 ### Measurable Outcomes
 
-- **SC-001**: Zero pages in the authenticated workspace render the v0.5-era chrome — every list / detail / form page uses `PageHeader`.
+- **SC-001**: Zero pages in the authenticated workspace render the v0.5-era chrome: every list / detail / form page uses `PageHeader`.
 - **SC-002**: The largest authenticated first-paint JS bundle stays ≤ 520 KB gzipped per Constitution Principle I.
 - **SC-003**: Removing Fraunces reduces the first-paint font payload (one fewer woff2 family loaded on the unauthenticated landing page and on every authenticated workspace page).
 - **SC-004**: A user can apply a filter, save it as a view, and re-apply it from a different browser session in fewer than 10 actions total (build filter, save, sign out, sign in, click tab, see results).

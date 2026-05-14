@@ -83,7 +83,7 @@ function previewJson(value: unknown, max = 80): string {
 }
 
 function prettyJson(value: unknown): string {
-  if (value == null) return "—";
+  if (value == null) return ":";
   if (typeof value === "string") {
     try {
       return JSON.stringify(JSON.parse(value), null, 2);
@@ -272,22 +272,22 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total events"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
           hint={tsCol ? "newest first" : "no timestamp"}
         />
         <StatTile
           label="Last 24h"
-          value={bucketed ? bucketed.last24 : "—"}
+          value={bucketed ? bucketed.last24 : ":"}
           hint="on this page"
         />
         <StatTile
           label="Last 7 days"
-          value={bucketed ? bucketed.last7d : "—"}
+          value={bucketed ? bucketed.last7d : ":"}
           hint="on this page"
         />
         <StatTile
           label="Event types"
-          value={bucketed ? bucketed.distinct : "—"}
+          value={bucketed ? bucketed.distinct : ":"}
           hint={eventCol ? `column: ${eventCol}` : "no event column"}
         />
       </div>
@@ -331,7 +331,7 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
         <div className="flex items-start gap-3 rounded-md border hairline bg-warn/5 p-4 text-sm">
           <AlertCircle className="h-4 w-4 shrink-0 text-warn" aria-hidden />
           <p className="text-fg-muted">
-            No timestamp column found on this table — events are shown in primary-key order, not
+            No timestamp column found on this table: events are shown in primary-key order, not
             time-ordered.
           </p>
         </div>

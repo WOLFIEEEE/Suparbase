@@ -1,4 +1,4 @@
-# Implementation Plan: Suparbase — Auto-Admin for Supabase
+# Implementation Plan: Suparbase: Auto-Admin for Supabase
 
 **Branch**: `001-supabase-admin` | **Date**: 2026-05-13 | **Spec**: [spec.md](./spec.md)
 
@@ -10,7 +10,7 @@ A client-only SPA that connects directly to a user-supplied Supabase project,
 introspects its public schema via PostgREST's OpenAPI document, and renders a
 working admin dashboard: per-table data grids with sort/search/pagination,
 type-aware create/edit forms with FK pickers and JSON editing, deletion with
-undo, a schema overview, and connection management. No first-party backend —
+undo, a schema overview, and connection management. No first-party backend :
 every request goes from the user's browser to their Supabase host.
 
 ## Technical Context
@@ -36,7 +36,7 @@ state in URL query string + React Query cache. Connection credentials in
 
 **Testing**: `tsc --noEmit` and `vite build` as automated gates. Manual smoke
 checklist against a real Supabase project (provided by the developer running
-the workflow). No unit-test framework in v1 — justified in Complexity Tracking.
+the workflow). No unit-test framework in v1: justified in Complexity Tracking.
 
 **Target Platform**: Modern evergreen browsers (latest two stable Chrome /
 Safari / Firefox / Edge) on desktop and tablet. Mobile (<768px) is read-only.
@@ -75,9 +75,9 @@ Source target: ~6,000–8,000 LOC.
 | VI. Clean Code Discipline | PASS | Introspection (`src/lib/schema/`), data access (`src/lib/api/`), form generation (`src/lib/forms/`), table generation (`src/lib/table/`) live in dedicated modules. Views are thin. |
 | VII. Data & Security (NON-NEG) | PASS | JWT role detection client-side; service-role key gated behind explicit warning + checkbox; keys never logged; Disconnect clears both storages; destructive ops gated by confirmation; delete has 5s undo. |
 
-**Result**: PASS — proceeding to Phase 0.
+**Result**: PASS: proceeding to Phase 0.
 
-**Re-check after Phase 1 design**: PASS — Phase 1 introduced no new violations.
+**Re-check after Phase 1 design**: PASS: Phase 1 introduced no new violations.
 The form-generation and table-generation modules are data-driven from the
 introspected schema (Principle VI: no per-table duplication).
 
@@ -120,7 +120,7 @@ specs/001-supabase-admin/
     ├── App.tsx                    # router shell + providers (QueryClient, Toaster)
     ├── index.css                  # tailwind layers + tokens
     ├── routes/
-    │   ├── ConnectRoute.tsx       # "/"  — connect screen
+    │   ├── ConnectRoute.tsx       # "/" : connect screen
     │   ├── DashboardRoute.tsx     # "/dashboard"
     │   ├── TablesRoute.tsx        # "/tables" (list of tables)
     │   ├── TableListRoute.tsx     # "/tables/:name"
@@ -188,7 +188,7 @@ specs/001-supabase-admin/
 **Structure Decision**: Single-project static SPA, organized by intent: `routes/`
 holds route components, `lib/` holds pure logic + data access modules,
 `components/` holds reusable UI grouped by domain. Schema-driven form and table
-generation live in `lib/forms/` and `lib/table/` — view components consume them
+generation live in `lib/forms/` and `lib/table/`: view components consume them
 and do not know about specific tables.
 
 ## Complexity Tracking
@@ -197,4 +197,4 @@ and do not know about specific tables.
 |----------|-----|--------------------------------------|
 | No unit-test framework in v1 | Correctness gates are `tsc --noEmit`, `vite build`, and a manual smoke checklist against a real Supabase project. Integration with a live PostgREST is where the value sits; mocking it for Vitest produces tests that pass while the app is broken. | Vitest + msw would test serialization/deserialization shims, not the real failure modes (OpenAPI parsing edge cases, RLS interactions, FK detection). v2 may add Playwright against a seeded local Supabase. |
 | React Query + URL state (no Zustand/Redux) | Server state lives in React Query; navigable state lives in the URL. No additional store needed. | A client store would duplicate query cache and risk staleness. |
-| shadcn/ui rather than hand-rolled primitives | Radix gives a11y and keyboard behavior for free across Dialog, Drawer, Tabs, Tooltip, DropdownMenu, Select — building these correctly from scratch is weeks. | Hand-rolling primitives loses focus-trap, ARIA, and keyboard handling — direct conflict with Principle IV. |
+| shadcn/ui rather than hand-rolled primitives | Radix gives a11y and keyboard behavior for free across Dialog, Drawer, Tabs, Tooltip, DropdownMenu, Select: building these correctly from scratch is weeks. | Hand-rolling primitives loses focus-trap, ARIA, and keyboard handling: direct conflict with Principle IV. |

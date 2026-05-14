@@ -7,7 +7,7 @@ import { auditLog, type AuditRow } from "@/server/schema/audit";
  * Fetch the most recent audit-log rows for one (user, connection) pair.
  *
  * The query is fully scoped to the caller's userId, so a leaked or guessed
- * `connectionId` cannot reveal another tenant's writes — the row simply
+ * `connectionId` cannot reveal another tenant's writes: the row simply
  * won't match. This is the second line of defence; the route handler is
  * the first (it verifies `getConnectionForUser` before calling here).
  */

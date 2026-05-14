@@ -237,17 +237,17 @@ function ContentAdminBody({ connectionId, table, analysis }: PresetProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
           hint={publishedAtCol ? "newest first" : undefined}
         />
         <StatTile
           label="Published"
-          value={draftPublishedSplit ? draftPublishedSplit.published : "—"}
+          value={draftPublishedSplit ? draftPublishedSplit.published : ":"}
           hint={statusCol ? `column: ${statusCol}` : "no status column"}
         />
         <StatTile
           label="Drafts"
-          value={draftPublishedSplit ? draftPublishedSplit.draft : "—"}
+          value={draftPublishedSplit ? draftPublishedSplit.draft : ":"}
           hint="on this page"
         />
         <StatTile

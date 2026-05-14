@@ -1,4 +1,4 @@
-# Contract — Audit Log
+# Contract: Audit Log
 
 ## Insertion
 
@@ -27,14 +27,14 @@ WHERE created_at < now() - interval '90 days'` outside the app.
 
 ## Privacy posture
 
-- We do NOT store the row body — only the primary key.
+- We do NOT store the row body · only the primary key.
 - We do NOT store the user's API key or any header value.
 - `userId` and `connectionId` use ON DELETE SET NULL so audit history
   survives user/connection deletion (operator may purge later).
 
 ## Surfacing in UI
 
-Audit log is not surfaced in the user UI in v1 — it exists for
+Audit log is not surfaced in the user UI in v1: it exists for
 operator-side incident response. Future work: a "Recent activity" tab
 per connection.
 

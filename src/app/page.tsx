@@ -14,12 +14,12 @@ const STEPS = [
   {
     k: "02",
     title: "Save your project",
-    body: "Paste a Supabase URL + API key. We encrypt it with AES-256-GCM before the row is committed — the plaintext key never lives on disk.",
+    body: "Paste a Supabase URL + API key. We encrypt it with AES-256-GCM before the row is committed: the plaintext key never lives on disk.",
   },
   {
     k: "03",
     title: "Use a working admin",
-    body: "Row cards, type-aware forms, FK lookups, bulk operations, CSV/JSON in + out, undoable deletes — all proxied server-side. Your key never reaches the browser.",
+    body: "Row cards, type-aware forms, FK lookups, bulk operations, CSV/JSON in + out, undoable deletes: all proxied server-side. Your key never reaches the browser.",
   },
 ] as const;
 
@@ -92,7 +92,7 @@ export default async function HomePage() {
         <main className="flex flex-1 flex-col gap-16 py-12 md:gap-24 md:py-16">
           <LandingHero />
 
-          {/* How it works — vertical numbered list, not a 3-card grid (per Constitution III). */}
+          {/* How it works: vertical numbered list, not a 3-card grid (per Constitution III). */}
           <section className="grid grid-cols-1 gap-y-8 md:grid-cols-[auto_1fr] md:gap-x-12">
             <div className="md:pt-1">
               <div className="text-[10px] uppercase tracking-[0.22em] text-fg-faint">How it works</div>
@@ -120,7 +120,7 @@ export default async function HomePage() {
             </ol>
           </section>
 
-          {/* Security & operability — list inside a single surface card. */}
+          {/* Security & operability: list inside a single surface card. */}
           <section className="surface rounded-lg p-6 sm:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[18rem_1fr]">
               <div>

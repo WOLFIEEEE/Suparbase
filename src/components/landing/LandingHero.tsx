@@ -14,7 +14,7 @@ import { cn } from "@/lib/ui/cn";
  *  1. Eyebrow fades in.
  *  2. Headline reveals word-by-word via a translate-from-below mask
  *     (proper clip-based reveal, not just opacity). The accent word
- *     ("Supabase") is followed by a terminal caret that blinks — says
+ *     ("Supabase") is followed by a terminal caret that blinks: says
  *     "this is software" without literal terminal chrome.
  *  3. Subtitle + CTAs fade up.
  *  4. Three product preview cards are "dealt" in from below with a
@@ -40,7 +40,7 @@ export function LandingHero() {
       };
 
       // Pre-set everything to its hidden state. useGSAP runs in
-      // useLayoutEffect so this fires before the browser paints — no
+      // useLayoutEffect so this fires before the browser paints: no
       // flash of unstyled content.
       gsap.set(selectors.words, { yPercent: 115, opacity: 0 });
       gsap.set(selectors.caret, { opacity: 0, scaleY: 0.6 });
@@ -119,7 +119,7 @@ export function LandingHero() {
         live · encrypted at rest · audited
       </div>
 
-      {/* Headline — three lines, each word masked + revealed. */}
+      {/* Headline: three lines, each word masked + revealed. */}
       <h1
         data-anim="headline"
         className="font-display text-display-xl leading-[1.02] tracking-tight"
@@ -134,7 +134,7 @@ export function LandingHero() {
           <span className="text-fg">
             <WordMask word={line3Word} />
           </span>
-          {/* Terminal caret — visual cue that this is software, not a brochure. */}
+          {/* Terminal caret: visual cue that this is software, not a brochure. */}
           <span
             data-anim="caret"
             aria-hidden
@@ -151,7 +151,7 @@ export function LandingHero() {
         className="max-w-2xl text-base text-fg-muted sm:text-lg"
       >
         Sign in, save your Supabase project, and run a real admin dashboard.
-        Your API key is encrypted at rest and proxied — it never reaches the browser.
+        Your API key is encrypted at rest and proxied: it never reaches the browser.
       </p>
 
       {/* CTAs */}
@@ -172,14 +172,14 @@ export function LandingHero() {
         </a>
       </div>
 
-      {/* Product preview cards — exact mock of what users see in the admin. */}
+      {/* Product preview cards: exact mock of what users see in the admin. */}
       <PreviewStack />
     </div>
   );
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Word mask — `<span overflow-hidden>` containing `<span class="word">`
+   Word mask: `<span overflow-hidden>` containing `<span class="word">`
    that translates from below. Pre-renders hidden via inline style so SSR
    has no flash.
    ────────────────────────────────────────────────────────────────────── */
@@ -202,7 +202,7 @@ function WordMask({
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   PreviewStack — three product row cards (Users, Content, Logs).
+   PreviewStack: three product row cards (Users, Content, Logs).
    Each one mirrors the actual archetype's row UI, so the landing page
    bridges to the product without screenshots.
    ────────────────────────────────────────────────────────────────────── */
@@ -299,7 +299,7 @@ function ContentRow() {
 }
 
 function LogsRow() {
-  // Live-ish timestamp ticker — "12s" → "13s" → ... → "1m" → loops.
+  // Live-ish timestamp ticker: "12s" → "13s" → ... → "1m" → loops.
   const [seconds, setSeconds] = useState(12);
   const reduced = useReducedMotion();
 

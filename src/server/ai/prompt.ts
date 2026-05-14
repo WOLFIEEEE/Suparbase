@@ -13,16 +13,16 @@ two could apply, pick the one that drives the dominant UI need:
               (draft/published).
 - "logs":     append-only events / activity / audit trails. created_at +
               event_type/verb, jsonb payload, no update timestamps.
-- "commerce": money-moving records — orders, invoices, transactions,
+- "commerce": money-moving records: orders, invoices, transactions,
               payments, charges, line_items. Look for total/amount/
               price/subtotal/fee/tax columns, currency, customer or
               buyer FK, order_number, status in {pending, paid,
               shipped, delivered, refunded, cancelled}.
-- "tasks":    workflow items — tasks, tickets, issues, todos. Look for
+- "tasks":    workflow items: tasks, tickets, issues, todos. Look for
               a status column with workflow values ({todo, in_progress,
               done, blocked, ...}), assignee/reporter FK, priority,
               due_date.
-- "messages": conversation records — comments, messages, threads,
+- "messages": conversation records: comments, messages, threads,
               conversations, posts-on-a-post. Look for body/text +
               author/sender FK + (thread_id|conversation_id|parent_id).
               Distinguished from "content" by the presence of a thread
@@ -55,7 +55,7 @@ Then for each table also produce:
                     post's title).
     avatarColumn:   a column that holds an image URL (avatar_url,
                     image, photo_url, picture).
-    badgeColumn:    the column to render as a chip — usually the
+    badgeColumn:    the column to render as a chip: usually the
                     statusColumn or a role/tier column.
 
 - hiddenColumns: columns to hide by default in list and detail views.

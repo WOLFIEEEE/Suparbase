@@ -36,9 +36,9 @@ docker-compose:
 
 - Session strategy switches from `database` to `jwt`. Existing OAuth
   users keep working; their session cookie is just regenerated on next
-  visit. (No production users yet — this is greenfield.)
+  visit. (No production users yet: this is greenfield.)
 - New table column: `users.password_hash TEXT NULL`. Bcrypt hash.
-- New file: `src/server/auth/credentials.ts` — Credentials provider
+- New file: `src/server/auth/credentials.ts` · Credentials provider
   configuration and `authorize()`.
 - `src/server/auth.ts` reads `AUTH_GITHUB_ID/SECRET`. When both set,
   the GitHub provider is included; otherwise omitted.
@@ -67,14 +67,14 @@ they encrypt and the operator is warned via README). Bump to v3.2.0.
 ```
 docker-compose.yaml                   + bootstrap service, * volumes, * env
 scripts/docker-entrypoint.sh          + load *_FILE vars, compose DATABASE_URL
-.env.example                          rewritten — all six vars optional
+.env.example                          rewritten: all six vars optional
 
 src/server/auth.ts                    conditional GitHub; jwt strategy; credentials wired
-src/server/auth/credentials.ts        NEW — provider + authorize()
-src/server/auth/passwords.ts          NEW — bcrypt helpers (hash, verify)
-src/server/auth/signup.ts             NEW — server-side signup logic
+src/server/auth/credentials.ts        NEW: provider + authorize()
+src/server/auth/passwords.ts          NEW: bcrypt helpers (hash, verify)
+src/server/auth/signup.ts             NEW: server-side signup logic
 src/server/schema/auth.ts             + password_hash column
-src/app/api/auth/signup/route.ts      NEW — POST handler
+src/app/api/auth/signup/route.ts      NEW: POST handler
 src/app/signin/page.tsx               rewritten as client form
 src/app/signup/page.tsx               NEW
 src/components/auth/SignInForm.tsx    NEW
@@ -94,4 +94,4 @@ specs/005-bootstrap-and-credentials/  spec, plan, tasks, contracts
 |----------|-----|-------------------------------|
 | Bootstrap container, not app-side gen | App-side generation can't set POSTGRES_PASSWORD before db starts. | App-side-only would force the operator to set POSTGRES_PASSWORD by hand. |
 | JWT strategy (was database) | Credentials provider doesn't compose with database sessions in NextAuth v5 without custom session row creation. | Custom signIn callback is documented but fragile across NextAuth updates. |
-| bcryptjs (not native bcrypt) | Pure-JS — works on Alpine without rebuild. | The native `bcrypt` package needs `python` + build chain in the deps stage. |
+| bcryptjs (not native bcrypt) | Pure-JS: works on Alpine without rebuild. | The native `bcrypt` package needs `python` + build chain in the deps stage. |

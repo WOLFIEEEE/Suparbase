@@ -7,7 +7,7 @@ interface Props {
   /**
    * `wide` constrains content to `max-w-7xl` (workspace pages).
    * `narrow` constrains to `max-w-6xl` (account pages).
-   * `bare` applies no max-width — caller controls layout.
+   * `bare` applies no max-width: caller controls layout.
    */
   width?: "wide" | "narrow" | "bare";
   className?: string;

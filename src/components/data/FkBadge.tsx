@@ -22,7 +22,7 @@ export function FkBadge({ table, columnName, value, allValuesOnPage, schema }: F
   const { data: labels } = useReferenceLabels(connectionId, table, columnName, valuesKey, schema);
 
   if (!fk) return <span className="font-mono text-fg-muted">{String(value)}</span>;
-  if (value === null || value === undefined) return <span className="text-fg-faint">—</span>;
+  if (value === null || value === undefined) return <span className="text-fg-faint">:</span>;
 
   const label = labels?.get(String(value));
   return (

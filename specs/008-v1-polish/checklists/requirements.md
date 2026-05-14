@@ -27,6 +27,6 @@
 
 ## Notes
 
-Validation iteration 1 — all items pass. This release stitches the v0.7 backlog plus a polish pass; foundations land in v0.7 MVP (saved_views table, ChipSpec types, CSV lib, SelectionContext, BulkBar). No clarifications needed.
+Validation iteration 1: all items pass. This release stitches the v0.7 backlog plus a polish pass; foundations land in v0.7 MVP (saved_views table, ChipSpec types, CSV lib, SelectionContext, BulkBar). No clarifications needed.
 
-Status: **PASS** — ready for implementation.
+Status: **PASS**: ready for implementation.

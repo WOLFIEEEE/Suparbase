@@ -16,7 +16,7 @@ mutation continues to route through the existing authenticated proxy and
 records audit rows; nothing about the security model changes.
 
 Technical approach in one paragraph: the work is mostly composition over
-existing primitives — the proxy already streams reads and supports
+existing primitives: the proxy already streams reads and supports
 PostgREST `in.()` filters, react-query already handles optimistic state,
 the cmdk/Radix primitives cover the new dropdowns and popovers, the typed-
 confirmation dialog and undo-toast already exist from v0.1. The only new
@@ -31,19 +31,19 @@ plumbing, (c) a small hand-rolled CSV streaming parser at `src/lib/csv/`
 
 **Language/Version**: TypeScript 5.9 (strict), React 19, Next.js 15.5 (App Router).
 
-**Primary Dependencies**: all already in the bundle — no new ones permitted
+**Primary Dependencies**: all already in the bundle: no new ones permitted
 per the spec and the constitution's Technology Standards.
-- `@tanstack/react-query` v5 — list / row / count caches, optimistic
+- `@tanstack/react-query` v5: list / row / count caches, optimistic
   updates for bulk + inline.
-- `@radix-ui/react-dialog` — typed-confirm dialog (existing), import panel
+- `@radix-ui/react-dialog`: typed-confirm dialog (existing), import panel
   (sheet-style), filter popover.
-- `@radix-ui/react-popover` — filter operator popover, FK picker in
+- `@radix-ui/react-popover`: filter operator popover, FK picker in
   inline editor.
-- `lucide-react` — icons.
-- `zod` (already used by AI analysis) — validates parsed JSON imports
+- `lucide-react`: icons.
+- `zod` (already used by AI analysis): validates parsed JSON imports
   against the analysis schema.
-- `sonner` — undo-toast for bulk delete (existing pattern).
-- `drizzle-orm` + `drizzle-kit` — one new migration for `saved_views`.
+- `sonner`: undo-toast for bulk delete (existing pattern).
+- `drizzle-orm` + `drizzle-kit`: one new migration for `saved_views`.
 - `class-variance-authority` + `tailwind-merge` + `clsx` via `cn()`.
 
 **Storage**: one new Drizzle table `saved_views` (id, user_id,
@@ -58,7 +58,7 @@ the bundle measurement assertion), and the manual smoke walk-through in
 this spec's `quickstart.md`. The new CI workflow shipped in v0.6.1
 enforces the first two on every PR.
 
-**Target Platform**: Web — latest two stable versions of Chrome, Safari,
+**Target Platform**: Web: latest two stable versions of Chrome, Safari,
 Firefox, Edge. Self-hostable Next.js standalone container.
 
 **Project Type**: Single Next.js app. No new top-level directories.
@@ -83,7 +83,7 @@ Firefox, Edge. Self-hostable Next.js standalone container.
   confirmation dialog; each affected row recorded in `audit_log`; new
   bulk-mutation routes get their own rate-limit bucket
   (`checkBulkRate`, 5 batches/minute/user).
-- Principle VI: new modules placed under existing folders only — no new
+- Principle VI: new modules placed under existing folders only · no new
   top-level directories. Server-only modules under `src/server/`.
 - Constitution Technology: NO new dependencies. CSV parsing is hand-
   rolled in `src/lib/csv/`. JSON imports parse with native `JSON.parse` +
@@ -99,9 +99,9 @@ All trivially within budget.
 
 | Principle | Status | Notes |
 |---|---|---|
-| **I. Performance First** (NON-NEGOTIABLE) | ✅ PASS | Bulk ops use PostgREST `in.()` filters with `?id=in.(a,b,c)` so one chunk = one round-trip. Chunk size of 500 keeps URLs under typical 8 KB limits. Export and import stream — neither buffers the full payload. Inline editor uses optimistic react-query updates so the UI stays at 60 fps. No new client deps; CSV parser is ~150 lines streaming. SavedView state is small JSON (< 1 KB). Bundle delta projected at < 25 KB gz for the largest authenticated route, leaving ample headroom under the 520 KB budget. |
+| **I. Performance First** (NON-NEGOTIABLE) | ✅ PASS | Bulk ops use PostgREST `in.()` filters with `?id=in.(a,b,c)` so one chunk = one round-trip. Chunk size of 500 keeps URLs under typical 8 KB limits. Export and import stream: neither buffers the full payload. Inline editor uses optimistic react-query updates so the UI stays at 60 fps. No new client deps; CSV parser is ~150 lines streaming. SavedView state is small JSON (< 1 KB). Bundle delta projected at < 25 KB gz for the largest authenticated route, leaving ample headroom under the 520 KB budget. |
 | **II. Motion Serves Comprehension** | ✅ PASS | The only new motion is (a) inline-edit success flash (~400ms accent-green; CSS transition gated by `prefers-reduced-motion`), (b) red-pulse on edit failure (same), (c) BulkBar slide-in (CSS transform). No GSAP introduced. |
-| **III. Anti-AI-Slop Design** | ✅ PASS | New components reuse `PageHeader`, `StatTile`, `Button`, `Badge`, `DropdownMenu`, `Popover` — the v0.6 visual language. BulkBar is a sticky toolbar pinned to the bottom of the list (one accent action button); ImportPanel is a Radix Sheet; FilterChip is a Badge variant. No new color introduced. |
+| **III. Anti-AI-Slop Design** | ✅ PASS | New components reuse `PageHeader`, `StatTile`, `Button`, `Badge`, `DropdownMenu`, `Popover`: the v0.6 visual language. BulkBar is a sticky toolbar pinned to the bottom of the list (one accent action button); ImportPanel is a Radix Sheet; FilterChip is a Badge variant. No new color introduced. |
 | **IV. Accessibility** (NON-NEGOTIABLE) | ✅ PASS | InlineCell uses `aria-readonly` on read-only cells, Tab/Shift+Tab traverses the row, Enter commits, Escape reverts. Filter popover uses Radix Popover (focus trap free; we manage `onOpenAutoFocus`). Bulk select checkboxes are `<input type="checkbox">` with proper labels. Undo toasts (Sonner) are already keyboard-operable. |
 | **V. Server-Side Vault & Proxy** (NON-NEGOTIABLE) | ✅ PASS | New bulk endpoints (`POST /api/v/[id]/rest/[name]/bulk-delete`, `bulk-update`) live under the existing proxy hierarchy and inherit ownership verification + audit + rate-limit. Imports use the existing `/api/v/[id]/rest/[name]` POST endpoint per chunk. SavedView CRUD goes through a new authenticated route (`/api/views`) that verifies `connection.userId === session.user.id` on every read. |
 | **VI. Clean Code Discipline** | ✅ PASS | New modules placed under existing folders. Server-only code under `src/server/proxy/bulk.ts`, `src/server/views/repo.ts`. Client components under `src/components/data/`. No new top-level directories. Old TableListView keeps working for tables that opt out via `?view=generic`. |
@@ -119,9 +119,9 @@ All trivially within budget.
 specs/007-power-data-ops/
 ├── plan.md                       # This file
 ├── spec.md                       # Feature spec
-├── research.md                   # Phase 0 — design decisions resolved
-├── data-model.md                 # Phase 1 — types + saved_views schema
-├── quickstart.md                 # Phase 1 — manual smoke checklist
+├── research.md                   # Phase 0: design decisions resolved
+├── data-model.md                 # Phase 1: types + saved_views schema
+├── quickstart.md                 # Phase 1: manual smoke checklist
 ├── contracts/
 │   ├── bulk-mutations.md         # POST /api/v/[id]/rest/[name]/bulk-{delete,update}
 │   ├── export.md                 # GET /api/v/[id]/rest/[name]/export
@@ -138,10 +138,10 @@ src/
 ├── app/
 │   └── api/
 │       ├── v/[id]/rest/[name]/
-│       │   ├── bulk-delete/route.ts        # NEW: POST — chunks + audit + undo data
-│       │   ├── bulk-update/route.ts        # NEW: POST — chunks + audit
-│       │   ├── export/route.ts             # NEW: GET — streams rows as CSV or JSON
-│       │   └── import/route.ts             # NEW: POST — accepts a chunk, inserts via PostgREST
+│       │   ├── bulk-delete/route.ts        # NEW: POST: chunks + audit + undo data
+│       │   ├── bulk-update/route.ts        # NEW: POST: chunks + audit
+│       │   ├── export/route.ts             # NEW: GET: streams rows as CSV or JSON
+│       │   └── import/route.ts             # NEW: POST: accepts a chunk, inserts via PostgREST
 │       └── views/
 │           ├── route.ts                    # NEW: GET (list) + POST (create)
 │           └── [id]/route.ts               # NEW: PATCH (rename/update) + DELETE

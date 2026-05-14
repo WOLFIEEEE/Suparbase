@@ -65,7 +65,7 @@ export function toAppError(input: unknown): AppError {
     const e = input as PostgrestLikeError;
 
     if (typeof e.code === "string" && e.code.startsWith("23")) {
-      // 23xxx — integrity constraint violations
+      // 23xxx: integrity constraint violations
       return new AppError(
         "constraint",
         redact(e.message ?? "Database constraint violated."),

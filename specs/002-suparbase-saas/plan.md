@@ -1,4 +1,4 @@
-# Implementation Plan: Suparbase — Authenticated SaaS
+# Implementation Plan: Suparbase: Authenticated SaaS
 
 **Branch**: `002-suparbase-saas` | **Date**: 2026-05-13 | **Spec**: [spec.md](./spec.md)
 
@@ -31,15 +31,15 @@ API keys off the browser.
 - App DB: Postgres (provider-agnostic; tested against Supabase + Neon).
 - Schema:
   - `users`, `accounts`, `sessions`, `verification_tokens` (NextAuth)
-  - `connections` — owned by user, encrypted key
-  - `audit_log` — write history
+  - `connections`: owned by user, encrypted key
+  - `audit_log`: write history
 - No in-app state lib; React Query + URL state cover everything.
 
 **Testing**: `tsc --noEmit` + `next build` + manual smoke checklist.
 No unit-test framework added (same rationale as v0.1).
 
 **Target Platform**: Modern evergreen browsers; Node 20 server runtime;
-Vercel or any Node host. **Edge runtime is not used** — the encryption
+Vercel or any Node host. **Edge runtime is not used**: the encryption
 module relies on Node `crypto`.
 
 **Project Type**: Next.js App Router web application.
@@ -51,7 +51,7 @@ warm.
 - Initial JS payload (landing/signin): ≤ 220KB gz
 - Total JS at first paint of any workspace route: ≤ 520KB gz
 - Initial CSS: ≤ 80KB gz
-- No edge runtime (Node only) — needed for `crypto.createCipheriv`
+- No edge runtime (Node only) · needed for `crypto.createCipheriv`
 
 **Scale/Scope**: Single Postgres instance, single deploy, ≤ 50 tables
 × 100 columns per user connection, 6–10 active connections per user.
@@ -62,7 +62,7 @@ warm.
 |-----------|--------|-------|
 | I. Performance First | PASS | Streaming proxy for list payloads; workspace lazy-routed; React Query staleTime tuned. |
 | II. Motion Serves Comprehension | PASS | GSAP scoped to `/` landing; CSS transitions everywhere else. |
-| III. Anti-AI-Slop Design | PASS | Phosphor-green accent, Fraunces display, Inter body — distinct from shadcn template. |
+| III. Anti-AI-Slop Design | PASS | Phosphor-green accent, Fraunces display, Inter body: distinct from shadcn template. |
 | IV. Accessibility (NON-NEG) | PASS | Radix primitives; keyboard-first interaction; reduced-motion honored. |
 | V. Server-Side Vault & Proxy (NON-NEG) | PASS | Encryption module + proxy route are the spine of the design. |
 | VI. Clean Code Discipline | PASS | `src/server/` clean of client imports; `src/client/` clean of server imports; vault, audit, proxy in dedicated modules. |
@@ -187,7 +187,7 @@ isomorphic data shapes + pure functions. `src/components/` is all
 
 | Decision | Why | Simpler Alternative Rejected Because |
 |----------|-----|--------------------------------------|
-| Server-side proxy for every PostgREST call | Constitution Principle V — keys off the browser. | Decrypting the key into the browser is the v0.1 model; we just promoted to "production ready" — that requires never shipping the key to client code. |
+| Server-side proxy for every PostgREST call | Constitution Principle V: keys off the browser. | Decrypting the key into the browser is the v0.1 model; we just promoted to "production ready": that requires never shipping the key to client code. |
 | Drizzle over Prisma | Smaller bundle, faster cold starts on serverless, type-safe SQL. | Prisma's Rust query engine bloats the deploy bundle and slows down Vercel cold starts. |
 | NextAuth v5 (Auth.js) | First-party Next.js integration; Drizzle adapter is official. | Building our own session management is busy-work for an admin tool. |
 | No edge runtime | `crypto.createCipheriv` is unavailable in edge; we keep the code path simple by serving from Node. | Edge would mean Web Crypto via `crypto.subtle`, doable but adds branching. |

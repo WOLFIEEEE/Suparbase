@@ -1,4 +1,4 @@
-# Contract — Connection management API
+# Contract: Connection management API
 
 All endpoints require a valid session; unauthorized requests return 401.
 All endpoints verify ownership at the row level; cross-user access
@@ -28,7 +28,7 @@ Steps:
 2. Validate `key` is a JWT shape (three dot-separated segments).
 3. Decode `role` from JWT payload.
 4. Verify the key actually works by hitting the upstream `/rest/v1/`
-   with `Accept: application/openapi+json` — if non-2xx, return 400
+   with `Accept: application/openapi+json`: if non-2xx, return 400
    with the appropriate category.
 5. Encrypt the key via the vault.
 6. Insert into `connections`.

@@ -1,4 +1,4 @@
-# Contracts — bulk-delete and bulk-update
+# Contracts: bulk-delete and bulk-update
 
 Two POST endpoints under the existing proxy hierarchy. Both share the
 same auth + ownership + audit + rate-limit posture as the single-row
@@ -13,7 +13,7 @@ write path.
 - **Ownership**: handler verifies `connection.userId === session.user.id`
   via the existing `getConnectionForUser`. Mismatch → `404` (don't leak
   existence).
-- **Rate limit**: new `checkBulkRate(userId)` bucket — 5 batches / minute.
+- **Rate limit**: new `checkBulkRate(userId)` bucket: 5 batches / minute.
   Exceeded → `429` with `Retry-After`.
 - **Audit**: one `audit_log` row per affected primary key, written in
   the same transaction as the mutation. Reuses `recordAuditWrite()`.
@@ -43,7 +43,7 @@ Cookie: next-auth.session-token=…
   includes the full pre-delete row snapshots so the client can offer
   undo via the existing single-row re-insert path.
 
-### Response — 200 OK
+### Response: 200 OK
 
 ```json
 {
@@ -74,7 +74,7 @@ shape of `getRow` results.
 6. Return aggregated `deleted` count + concatenated snapshots.
 
 If any chunk fails, the handler returns `502` with the partial counts
-in the body so the client can offer "you deleted X of Y — retry the
+in the body so the client can offer "you deleted X of Y: retry the
 rest?".
 
 ### Error envelopes
@@ -114,7 +114,7 @@ Cookie: next-auth.session-token=…
   generated; else `400 constraint` with `columnHint` pointing at the
   bad column.
 
-### Response — 200 OK
+### Response: 200 OK
 
 ```json
 { "updated": 30 }
@@ -139,7 +139,7 @@ through with the existing `columnHint` extraction in
 
 ## Idempotency
 
-Both endpoints are idempotent at the row level — re-running the same
+Both endpoints are idempotent at the row level: re-running the same
 request after a partial failure deletes/updates only the rows that
 weren't already deleted/updated. There is no explicit idempotency key
 in v0.7.
@@ -150,6 +150,6 @@ in v0.7.
   comments"). Out of scope for v0.7.
 - Soft-delete semantics. Not in scope; if the table has a soft-delete
   column the user's `patch` can set it but the proxy doesn't infer it.
-- Async / background bulk jobs. v0.7 is strictly synchronous — large
+- Async / background bulk jobs. v0.7 is strictly synchronous · large
   selections (max 5000 rows) complete within the 60-second request
   budget.

@@ -12,25 +12,25 @@
 
 The v0.6 archetype system (Users / Content / Logs / Generic) was a proof of concept that opinionated, AI-routed presets dramatically improve the admin experience over a flat data grid. v1.1 extends that system with three more archetypes that cover the most common table shapes outside the current set:
 
-- **Commerce** — orders, transactions, invoices, payments
-- **Tasks** — tickets, issues, todos with a workflow status + assignee
-- **Messages** — comments, threads, conversations with author + body + parent
+- **Commerce**: orders, transactions, invoices, payments
+- **Tasks**: tickets, issues, todos with a workflow status + assignee
+- **Messages**: comments, threads, conversations with author + body + parent
 
 After v1.1, any Supabase project with an orders table, a tickets table, or a comments table will automatically land on a purpose-built admin instead of the generic row card grid.
 
 ## User Scenarios & Testing
 
-### User Story 1 — Orders feel like an order admin, not a row grid (Priority: P1)
+### User Story 1: Orders feel like an order admin, not a row grid (Priority: P1)
 
 A user with an `orders` (or `invoices`, `transactions`, `payments`) table opens it. The list shows order number + customer label + status pipeline pill + total amount formatted with currency + created timestamp. Clicking opens a detail page with the order total at display size, a status timeline visualization, the line-items relation, and a customer card.
 
-### User Story 2 — Tickets feel like a workflow tool, not a row grid (Priority: P1)
+### User Story 2: Tickets feel like a workflow tool, not a row grid (Priority: P1)
 
 A user with a `tasks` (or `tickets`, `issues`, `todos`) table opens it. The list groups rows by status (To do / In progress / Done / etc.) with each row showing title + assignee avatar + priority chip + due date. The detail page shows the status as a stepper, the assignee + reporter relations as cards, and any sub-tasks via incoming FKs.
 
-### User Story 3 — Messages feel like a conversation, not a row grid (Priority: P2)
+### User Story 3: Messages feel like a conversation, not a row grid (Priority: P2)
 
-A user with a `comments` (or `messages`, `threads`, `conversations`) table opens it. The list renders as a threaded feed — author avatar + body excerpt + thread depth via parent_id + relative time + reply count. The detail page shows the full body, the author card, the parent (if any) inline, and any replies.
+A user with a `comments` (or `messages`, `threads`, `conversations`) table opens it. The list renders as a threaded feed: author avatar + body excerpt + thread depth via parent_id + relative time + reply count. The detail page shows the full body, the author card, the parent (if any) inline, and any replies.
 
 ## Functional Requirements
 
@@ -44,7 +44,7 @@ A user with a `comments` (or `messages`, `threads`, `conversations`) table opens
 
 - **FR-A01**: The AI prompt teaches each new category with concrete signals (column names, types, foreign-key patterns).
 - **FR-A02**: Heuristic fallback rules detect each new category from table-name + column-shape patterns: e.g. `orders` table with `total_amount` + `status` → commerce; `tasks` table with `status` + `assignee_id` → tasks; `comments` table with `body` + `author_id` + `parent_id` → messages.
-- **FR-A03**: Classification is exclusive — every table picks exactly one category. When two categories could apply (e.g. an `orders` table that also has a long `notes` body), the AI prompt explicitly prefers the dominant UI need.
+- **FR-A03**: Classification is exclusive: every table picks exactly one category. When two categories could apply (e.g. an `orders` table that also has a long `notes` body), the AI prompt explicitly prefers the dominant UI need.
 
 ### Commerce archetype (FR-C01–FR-C05)
 
@@ -52,7 +52,7 @@ A user with a `comments` (or `messages`, `threads`, `conversations`) table opens
 - **FR-C02**: Each row card shows the order identifier (order_number or PK), customer label (via FK if present), status pill, total amount with currency formatting, and created-at time.
 - **FR-C03**: `CommerceDetail` shows the total at display size in a hero card, a status pipeline visualization (pending → paid → shipped → delivered etc.), customer relation as a card, and a "Line items" sidebar pulling from incoming FKs.
 - **FR-C04**: Money columns identified by name (`total`, `amount`, `price`, `subtotal`, `fee`, `tax`, columns ending in `_cents`) format with currency.
-- **FR-C05**: Bulk actions, export, import, filter chips, saved views all work — same plumbing as Users/Content.
+- **FR-C05**: Bulk actions, export, import, filter chips, saved views all work: same plumbing as Users/Content.
 
 ### Tasks archetype (FR-K01–FR-K04)
 

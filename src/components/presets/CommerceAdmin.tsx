@@ -270,7 +270,7 @@ function CommerceAdminBody({ connectionId, table, analysis }: PresetProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total orders"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
           hint={createdCol ? "newest first" : undefined}
         />
         <StatTile
@@ -280,7 +280,7 @@ function CommerceAdminBody({ connectionId, table, analysis }: PresetProps) {
         />
         <StatTile
           label="Revenue (page)"
-          value={pageRevenue ? formatMoney(pageRevenue.sum * (isCentsColumnName(moneyCol ?? "") ? 100 : 1), pageRevenue.currency, isCentsColumnName(moneyCol ?? "")) : "—"}
+          value={pageRevenue ? formatMoney(pageRevenue.sum * (isCentsColumnName(moneyCol ?? "") ? 100 : 1), pageRevenue.currency, isCentsColumnName(moneyCol ?? "")) : ":"}
           hint={moneyCol ? `column: ${moneyCol}` : "no money column"}
         />
         <StatTile
@@ -479,7 +479,7 @@ function OrderRow({ row, connectionId, tableName, primaryKey, cols, isSelected, 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 truncate text-sm font-medium">
               <Hash className="h-3 w-3 text-fg-faint" aria-hidden />
-              {String(orderNumber ?? (primaryKey[0] ? row[primaryKey[0]] : "—"))}
+              {String(orderNumber ?? (primaryKey[0] ? row[primaryKey[0]] : ":"))}
             </span>
             {status != null && <StatusPill value={String(status)} />}
           </div>

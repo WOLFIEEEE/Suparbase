@@ -1,4 +1,4 @@
-# Contract — Authentication
+# Contract: Authentication
 
 ## NextAuth configuration
 
@@ -51,7 +51,7 @@ type AppSession = {
 ## Guards
 
 - `auth()` is called server-side in:
-  - `app/(auth)/layout.tsx` — redirects to `/signin?next=...` if null
+  - `app/(auth)/layout.tsx`: redirects to `/signin?next=...` if null
   - every `api/connections/*` route handler
   - every `api/v/:id/*` route handler
 - Client components call `useSession()` only for the user-menu UI

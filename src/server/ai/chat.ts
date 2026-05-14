@@ -57,27 +57,27 @@ function systemPrompt(hostname: string, tableCount: number): string {
 The user is an admin asking questions about their database (${tableCount} tables in public schema). You have these tools:
 
 READ:
-- list_tables(category?) — table catalog with AI-inferred displayName, category, and notes. Always start here if you don't already know which table(s) are relevant.
-- get_table_schema(table_name) — full column list with types/PKs/FKs. Use this before constructing a query so you reference real column names.
-- query_rows({table_name, columns?, filters?, sort?, limit≤50}) — fetches up to 50 rows. Use narrow column lists and filters.
-- count_rows({table_name, filters?}) — aggregate count. Prefer over query_rows when you only need a total.
+- list_tables(category?): table catalog with AI-inferred displayName, category, and notes. Always start here if you don't already know which table(s) are relevant.
+- get_table_schema(table_name): full column list with types/PKs/FKs. Use this before constructing a query so you reference real column names.
+- query_rows({table_name, columns?, filters?, sort?, limit≤50}): fetches up to 50 rows. Use narrow column lists and filters.
+- count_rows({table_name, filters?}): aggregate count. Prefer over query_rows when you only need a total.
 
-WRITE (proposal-only — you NEVER execute):
-- propose_update({table_name, filters, patch, summary}) — drafts an update. Returns a preview of up to 5 affected rows. The user clicks Apply in the UI to actually commit.
-- propose_insert({table_name, values, summary}) — drafts a new row. Same: user confirms.
-- propose_delete({table_name, filters, summary}) — drafts a delete. Returns affected-row preview.
+WRITE (proposal-only: you NEVER execute):
+- propose_update({table_name, filters, patch, summary}): drafts an update. Returns a preview of up to 5 affected rows. The user clicks Apply in the UI to actually commit.
+- propose_insert({table_name, values, summary}): drafts a new row. Same: user confirms.
+- propose_delete({table_name, filters, summary}): drafts a delete. Returns affected-row preview.
 
 Rules:
 - NEVER fabricate columns, tables, or values. If a requested column doesn't exist, call get_table_schema first.
 - For "how many X" questions, prefer count_rows over query_rows.
 - For "show me / find / list" questions, use query_rows with a sensible limit (default 10).
-- When the user asks you to CHANGE / SET / UPDATE / ADD / DELETE rows, you MUST call the matching propose_* tool. Never claim a write was made — only the user's Apply click in the UI commits.
+- When the user asks you to CHANGE / SET / UPDATE / ADD / DELETE rows, you MUST call the matching propose_* tool. Never claim a write was made: only the user's Apply click in the UI commits.
 - Before proposing a write, call get_table_schema and (when filtering) query_rows so you know the values are real. Validate column names exist.
 - When filtering on an enum, look at enumValues for the legal set.
 - When the user references a person/item by name and the primary key is a uuid, search by the obvious label column (name/email/title/slug) with ilike '%term%'.
 - Combine multiple filters with AND by passing them as separate entries in the filters array.
 - If a tool returns an error, read it and try a corrected call rather than apologising.
-- After a propose_* tool returns, your next message should be one short sentence telling the user a proposal is ready to review. Do not list the patch contents in prose — the UI shows it.
+- After a propose_* tool returns, your next message should be one short sentence telling the user a proposal is ready to review. Do not list the patch contents in prose: the UI shows it.
 - For read questions, reply directly in plain English. Be concise. Quote numeric facts and column values exactly.
 - If the question is unrelated to this database, say so briefly.`;
 }
@@ -132,7 +132,7 @@ export async function* runChat(args: RunArgs): AsyncGenerator<ChatEvent, void, v
         if (chunk.kind === "content_delta") {
           assistantText += chunk.delta;
           // Only stream text to the client when we know this is the final turn.
-          // We don't know yet — buffer until we see finish_reason. (We emit
+          // We don't know yet: buffer until we see finish_reason. (We emit
           // below once the stream completes.)
         } else if (chunk.kind === "tool_call_delta") {
           const entry = toolCalls.get(chunk.index) ?? { id: "", name: "", argsBuf: "" };
@@ -203,11 +203,11 @@ export async function* runChat(args: RunArgs): AsyncGenerator<ChatEvent, void, v
           content: result.payload,
         });
       }
-      // Loop — model now needs to consume tool results.
+      // Loop: model now needs to consume tool results.
       continue;
     }
 
-    // Final answer turn — flush the buffered text to the client.
+    // Final answer turn: flush the buffered text to the client.
     yield { type: "phase", phase: "answering" };
     if (assistantText.length > 0) {
       // Re-emit in chunks so the UI shows a typewriter feel even though we

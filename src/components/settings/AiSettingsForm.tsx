@@ -100,7 +100,7 @@ export function AiSettingsForm({ initial }: { initial: AiSettingsSummary }) {
         </div>
         <h1 className="font-display text-display-md">OpenRouter</h1>
         <p className="text-sm text-fg-muted">
-          Your key is AES-256-GCM encrypted at rest. It never leaves the server — all OpenRouter calls
+          Your key is AES-256-GCM encrypted at rest. It never leaves the server: all OpenRouter calls
           happen server-side.
         </p>
       </header>
@@ -156,8 +156,8 @@ export function AiSettingsForm({ initial }: { initial: AiSettingsSummary }) {
             tool-calling are tagged{" "}
             <span className="inline-flex items-center gap-0.5 rounded-full bg-accent/10 px-1 py-0.5 text-[9px] uppercase tracking-wider text-accent">
               tools
-            </span>{" "}
-            — those are the ones the chat assistant can use end-to-end.
+            </span>
+            ; those are the ones the chat assistant can use end-to-end.
           </p>
         </div>
 
@@ -188,7 +188,7 @@ export function AiSettingsForm({ initial }: { initial: AiSettingsSummary }) {
           <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-[10rem_1fr]">
             <div className="contents">
               <dt className="text-xs uppercase tracking-wider text-fg-muted">Model</dt>
-              <dd className="font-mono text-xs">{data.lastAnalysisModel ?? "—"}</dd>
+              <dd className="font-mono text-xs">{data.lastAnalysisModel ?? ":"}</dd>
             </div>
             <div className="contents">
               <dt className="text-xs uppercase tracking-wider text-fg-muted">Ran at</dt>
@@ -204,7 +204,7 @@ export function AiSettingsForm({ initial }: { initial: AiSettingsSummary }) {
           </dl>
         ) : (
           <p className="text-xs text-fg-faint">
-            No analysis has been run yet. Open a connection — the analysis runs the first time you load the
+            No analysis has been run yet. Open a connection: the analysis runs the first time you load the
             dashboard.
           </p>
         )}

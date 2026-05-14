@@ -1,4 +1,4 @@
-# Phase 0 — Research
+# Phase 0: Research
 
 ## 1. Schema introspection strategy
 
@@ -7,7 +7,7 @@
 and parse the resulting Swagger 2.0 JSON to derive tables, columns, types,
 nullability, primary keys, and foreign-key hints. Treat each entry in
 `definitions` as a table or view (PostgREST exposes both). Determine kind
-(table vs view) from the `paths` entry — tables have `post`/`patch`/`delete`
+(table vs view) from the `paths` entry: tables have `post`/`patch`/`delete`
 methods; views only have `get`.
 
 **Rationale**: This is the only schema source available with an anon key on a
@@ -18,7 +18,7 @@ description text in the column `description`.
 
 **Foreign-key parsing**: PostgREST emits a string like:
 `Note:\nThis is a Foreign Key to \`public.users.id\`. <fk table='users'
-column='id'/>` — we extract the target via the HTML-comment-like attribute when
+column='id'/>`: we extract the target via the HTML-comment-like attribute when
 present, falling back to a regex against the readable note. Tested patterns
 seen in PostgREST 12+.
 
@@ -47,14 +47,14 @@ remove both.
 **Rationale**: Browsers isolate `sessionStorage` per tab, which gives the
 correct multi-tab semantics described in the spec edge cases. `localStorage`
 is acceptable for the explicit "remember" opt-in. We do not implement
-encryption-at-rest — the threat model accepts that anyone with browser
+encryption-at-rest: the threat model accepts that anyone with browser
 access to the device can read the key, same as a `.env` file on disk.
 
 **Alternatives considered**:
 - IndexedDB: more code, no security benefit, browser-isolation behavior
   identical.
 - Web Crypto subtle encryption with a derived key: the derivation seed has
-  to live somewhere too — net effect is obfuscation, not security.
+  to live somewhere too: net effect is obfuscation, not security.
 
 ## 3. JWT role detection
 
@@ -72,7 +72,7 @@ key will be validated by the actual Supabase API on connect anyway).
 **Rationale**: Spec FR-003 demands client-side role detection before any
 network call. JWT decoding is ~12 LOC.
 
-## 4. Data access — list, count, CRUD
+## 4. Data access: list, count, CRUD
 
 **Decision**: Use `@supabase/supabase-js` for CRUD operations against
 PostgREST. Wrap calls in `lib/api/rows.ts` so React Query hooks always go
@@ -83,17 +83,17 @@ through one place.
   fall back to `count=estimated` when a `_count` query times out (we treat a
   3s soft timeout as "estimate is fine").
 - **Count-only (dashboard tiles)**: HEAD request via supabase-js
-  `select('*', { count: 'estimated', head: true })` — fast, no payload.
+  `select('*', { count: 'estimated', head: true })`: fast, no payload.
 - **Search**: `or('col1.ilike.%term%,col2.ilike.%term%,...')` across text-like
   columns. We cap at 8 columns to avoid pathological queries.
 - **Insert / Update**: with `Prefer: return=representation`.
 - **Delete**: by primary key; before deleting, fetch the row so we can
-  re-insert it for the 5-second undo (best effort — undo fails gracefully
+  re-insert it for the 5-second undo (best effort: undo fails gracefully
   if the table has unique constraints that race).
 
 **Alternatives considered**:
 - Raw fetch: more code; we'd reimplement what supabase-js already does.
-- Drizzle / Kysely / Prisma client: not relevant here — those are query
+- Drizzle / Kysely / Prisma client: not relevant here · those are query
   builders for first-party backends.
 
 ## 5. Data grid
@@ -105,7 +105,7 @@ pagination), `@tanstack/react-virtual` v3 for row virtualization on pages
 `lib/table/cells/`.
 
 **Rationale**: Tanstack is the de-facto headless choice; explicitly built for
-server-side pagination and virtualization. Decoupled from look — we own
+server-side pagination and virtualization. Decoupled from look: we own
 markup and Tailwind classes.
 
 ## 6. Form generation
@@ -116,26 +116,26 @@ markup and Tailwind classes.
 schema and defaults, hands them to `react-hook-form` via `zodResolver`, and
 maps each visible column to its field component.
 
-**Rationale**: One generation pipeline, six field components — small, reusable,
+**Rationale**: One generation pipeline, six field components: small, reusable,
 follows Principle VI.
 
 **Field components (initial set)**:
-- `FieldText` — string / varchar (single-line)
-- `FieldTextarea` — long text
-- `FieldNumber` — int / float / numeric
-- `FieldBool` — switch
-- `FieldDateTime` — timestamp / timestamptz / date
-- `FieldUuid` — text input + "generate" button
-- `FieldJson` — `<textarea>` with formatting (a real Monaco-grade editor is
+- `FieldText`: string / varchar (single-line)
+- `FieldTextarea`: long text
+- `FieldNumber`: int / float / numeric
+- `FieldBool`: switch
+- `FieldDateTime`: timestamp / timestamptz / date
+- `FieldUuid`: text input + "generate" button
+- `FieldJson`: `<textarea>` with formatting (a real Monaco-grade editor is
   out of scope for v1; we ship JSON.parse/JSON.stringify with error
   highlighting)
-- `FieldEnum` — select
-- `FieldFk` — combobox that queries the target table on the label column
+- `FieldEnum`: select
+- `FieldFk`: combobox that queries the target table on the label column
 
 ## 7. Routing
 
 **Decision**: `react-router-dom` v6 with the data-router pattern, but using
-plain `<Route>` elements (no loaders — React Query handles data). A
+plain `<Route>` elements (no loaders: React Query handles data). A
 `<RequireConnection>` wrapper at the workspace layout level redirects to `/`
 when no connection is present.
 
@@ -169,7 +169,7 @@ primitives + a 120ms route-fade via React Router's `useNavigation` (no GSAP).
   the shadcn registry as a runtime dependency).
 - Typography: `@fontsource-variable/geist-sans` (body, UI),
   `@fontsource-variable/geist-mono` (code, JSON, IDs),
-  `@fontsource-variable/fraunces` (landing headline accent only — display).
+  `@fontsource-variable/fraunces` (landing headline accent only: display).
 - Tokens declared as CSS variables in `:root` and read by Tailwind via the
   `theme.extend` config. This lets a future light theme drop in.
 
@@ -198,9 +198,9 @@ Categorize errors and present them consistently:
 | Category | Source | UI treatment |
 |----------|--------|--------------|
 | `network` | fetch failed / DNS / TLS | "Could not reach this Supabase host." with retry |
-| `unauthorized` | HTTP 401 | "This key was rejected by your project." — preserve form values |
+| `unauthorized` | HTTP 401 | "This key was rejected by your project.": preserve form values |
 | `forbidden` | HTTP 403 | "This key cannot access this resource (likely RLS)." |
-| `not_found` | HTTP 404 | "Endpoint not found — is this URL correct?" |
+| `not_found` | HTTP 404 | "Endpoint not found: is this URL correct?" |
 | `constraint` | HTTP 409 / PG `23xxx` codes | Field-level highlight when column identifiable; show PG message |
 | `rate_limited` | HTTP 429 | "Rate-limited by Supabase. Retrying in N seconds." |
 | `server` | HTTP 5xx | Generic + correlation id when present |
@@ -219,6 +219,6 @@ shape to a `AppError { category, message, columnHint? }`.
 - "Disconnect" clears both `localStorage` and `sessionStorage` entries.
 - No third-party analytics, no error reporters, no marketing pixels in v1.
 - Outbound requests target only the user's Supabase host. We assert this
-  with a runtime check in `supabase/client.ts` — if a fetch is attempted to
+  with a runtime check in `supabase/client.ts`: if a fetch is attempted to
   any host that doesn't match `*.supabase.co|.in`, log + abort.
 - CSP recommendations are documented in `quickstart.md` for self-deployers.

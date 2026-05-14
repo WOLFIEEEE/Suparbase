@@ -1,4 +1,4 @@
-# Phase 0 — Research (delta from v0.2)
+# Phase 0: Research (delta from v0.2)
 
 ## 1. OpenRouter as the AI gateway
 
@@ -113,7 +113,7 @@ Every analysis call returns `usage.prompt_tokens` /
 `usage.completion_tokens` from OpenRouter. We persist these on the
 `schema_analysis` row so the user can see them in `/settings/ai`.
 
-We do NOT estimate cost in $ — pricing varies by model and changes
+We do NOT estimate cost in $: pricing varies by model and changes
 frequently; tokens are the honest unit.
 
 ## 7. Rate limiting
@@ -129,8 +129,8 @@ limiter with Upstash Ratelimit (already documented in v0.2 research).
 ## 8. Redaction additions
 
 The shared `redact()` helper gains two more patterns:
-- `sk-or-[A-Za-z0-9-]{20,}` — OpenRouter keys
-- `sk-[A-Za-z0-9-]{20,}` — generic provider keys (OpenAI / Anthropic
+- `sk-or-[A-Za-z0-9-]{20,}`: OpenRouter keys
+- `sk-[A-Za-z0-9-]{20,}`: generic provider keys (OpenAI / Anthropic
   shape, safety net)
 
 Both are tested by writing the pattern at the top of a thrown error

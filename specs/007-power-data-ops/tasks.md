@@ -15,18 +15,18 @@ description: "Task list for v0.7 Power-User Data Ops"
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]** — runnable in parallel with other [P] tasks (different files, no dependencies on incomplete tasks).
-- **[Story]** — user-story tag (US1–US6); omitted for Setup, Foundational, and Polish tasks.
+- **[P]**: runnable in parallel with other [P] tasks (different files, no dependencies on incomplete tasks).
+- **[Story]**: user-story tag (US1–US6); omitted for Setup, Foundational, and Polish tasks.
 - File paths are absolute from repo root.
 
 ## Path Conventions
 
 Single Next.js app (per [plan.md](./plan.md) Project Structure):
-- `src/app/` — routes (App Router)
-- `src/components/` — UI (client components carry `"use client"`)
-- `src/lib/` — types, helpers, client-side data hooks
-- `src/server/` — server-only modules (never imported from client)
-- `drizzle/` — generated migrations
+- `src/app/`: routes (App Router)
+- `src/components/`: UI (client components carry `"use client"`)
+- `src/lib/`: types, helpers, client-side data hooks
+- `src/server/`: server-only modules (never imported from client)
+- `drizzle/`: generated migrations
 
 ---
 
@@ -46,13 +46,13 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 - [x] T003 [P] Create `src/lib/filters/operators.ts` exporting `chipToPostgrest(chip: ChipSpec): string` (`{column}={op}.{value}` mapping per [research.md Decision 6](./research.md)). Pure function.
 
-- [x] T004 [P] Create `src/lib/filters/parse-url.ts` exporting `parseFilterParams(searchParams: URLSearchParams): ChipSpec[]` — reads all repeated `filter=col.op.val` params.
+- [x] T004 [P] Create `src/lib/filters/parse-url.ts` exporting `parseFilterParams(searchParams: URLSearchParams): ChipSpec[]`: reads all repeated `filter=col.op.val` params.
 
-- [x] T005 [P] Create `src/lib/filters/serialize-url.ts` exporting `serializeChipsToParams(chips: ChipSpec[], sp: URLSearchParams): URLSearchParams` — returns a fresh URLSearchParams with the existing non-filter keys plus one repeated `filter` per chip.
+- [x] T005 [P] Create `src/lib/filters/serialize-url.ts` exporting `serializeChipsToParams(chips: ChipSpec[], sp: URLSearchParams): URLSearchParams`: returns a fresh URLSearchParams with the existing non-filter keys plus one repeated `filter` per chip.
 
 - [x] T006 Update `src/lib/pgrest/rows.ts` `ListParams` to accept `filters?: ChipSpec[]`, and have `listRows` translate each chip to a PostgREST query parameter via T003's helper. Backward-compatible: when absent, behaviour is unchanged. Depends on T002, T003.
 
-- [x] T007 [P] Create `src/lib/csv/parse.ts` exporting an async-iterable `parseCsv(stream: ReadableStream<string>): AsyncIterable<Record<string, string>>` — RFC 4180 compatible (quoted fields, embedded quotes via `""`, embedded newlines, header row inferred). Pure module, no React. Per [research.md Decision 4](./research.md).
+- [x] T007 [P] Create `src/lib/csv/parse.ts` exporting an async-iterable `parseCsv(stream: ReadableStream<string>): AsyncIterable<Record<string, string>>`: RFC 4180 compatible (quoted fields, embedded quotes via `""`, embedded newlines, header row inferred). Pure module, no React. Per [research.md Decision 4](./research.md).
 
 - [x] T008 [P] Create `src/lib/csv/serialize.ts` exporting `csvLineFromValues(values: unknown[]): string` and `csvHeaderLine(columns: string[]): string`. Quoting per RFC 4180; dates serialize via `toISOString()`; jsonb columns serialize via `JSON.stringify`.
 
@@ -68,7 +68,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 - [x] T014 [P] Create `src/server/views/repo.ts` exporting `listViewsForTable`, `createView`, `updateView`, `deleteView`. Each enforces `userId` scoping. `createView` rejects if 5 rows already exist for `(user, connection, schema, table)`; returns a structured constraint error with `columnHint: "name"`. Depends on T011.
 
-- [x] T015 Extend `src/server/proxy/ratelimit.ts` with `checkBulkRate(userId): RateLimitResult` — 5 batches per minute per user. Reuses the existing token-bucket helper.
+- [x] T015 Extend `src/server/proxy/ratelimit.ts` with `checkBulkRate(userId): RateLimitResult`: 5 batches per minute per user. Reuses the existing token-bucket helper.
 
 - [x] T016 [P] Create `src/components/data/SelectionContext.tsx` exporting `<SelectionProvider>` and `useSelection()` per [data-model.md §4](./data-model.md). State is `Set<string>` keyed by `encodePkSegment(row)`; provides `toggle`, `toggleMany`, `clear`. Client component.
 
@@ -76,11 +76,11 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 3: User Story 1 — Bulk operations (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1: Bulk operations (Priority: P1) 🎯 MVP
 
 **Goal**: Multi-row selection across pagination, plus bulk delete and bulk update with typed-confirmation, audit, undo, and rate-limit.
 
-**Independent Test**: walk [quickstart.md §1](./quickstart.md) — verify checkboxes appear, `BulkBar` shows count, bulk delete asks for typed confirm and produces one audit row per affected PK with 5-second undo, bulk update applies one or more columns to selected rows in one batch.
+**Independent Test**: walk [quickstart.md §1](./quickstart.md): verify checkboxes appear, `BulkBar` shows count, bulk delete asks for typed confirm and produces one audit row per affected PK with 5-second undo, bulk update applies one or more columns to selected rows in one batch.
 
 ### Server-side
 
@@ -97,11 +97,11 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 - [x] T020 [P] [US1] Add `useBulkDelete(connectionId, table)` and `useBulkUpdate(connectionId, table)` to `src/lib/api/hooks.ts`. Each invokes the new route, on success invalidates the matching `rows` and `rowCount` query keys. Depends on T018, T019.
 
-- [x] T021 [P] [US1] Create `src/components/data/BulkBar.tsx` — sticky bottom bar that mounts only when `selected.size > 0`. Shows the count, **Clear**, **Delete**, **Update column**, **Export selected** buttons. The Export action is wired in US2 (T028) — render the button now, with the click handler stubbed.
+- [x] T021 [P] [US1] Create `src/components/data/BulkBar.tsx`: sticky bottom bar that mounts only when `selected.size > 0`. Shows the count, **Clear**, **Delete**, **Update column**, **Export selected** buttons. The Export action is wired in US2 (T028): render the button now, with the click handler stubbed.
 
-- [x] T022 [P] [US1] Create `src/components/data/BulkDeleteDialog.tsx` — typed-confirm dialog (operator types the table name to enable submit). Reuses the styling of `DeleteRowDialog.tsx`. On confirm, calls `useBulkDelete.mutateAsync`. Shows undo toast (sonner) on success that re-inserts the returned `snapshots` via the existing `useInsertRow` hook.
+- [x] T022 [P] [US1] Create `src/components/data/BulkDeleteDialog.tsx`: typed-confirm dialog (operator types the table name to enable submit). Reuses the styling of `DeleteRowDialog.tsx`. On confirm, calls `useBulkDelete.mutateAsync`. Shows undo toast (sonner) on success that re-inserts the returned `snapshots` via the existing `useInsertRow` hook.
 
-- [x] T023 [P] [US1] Create `src/components/data/BulkUpdatePanel.tsx` — Radix Sheet panel listing the table's writable columns. The user picks one or more, each with the type-appropriate editor (text input / number / date / boolean Switch / FK popover / enum select), supplies a value, sees a preview (`apply {col}={val} to N rows?`), confirms. Calls `useBulkUpdate.mutateAsync`. Disables submit when no (column, value) pair is valid.
+- [x] T023 [P] [US1] Create `src/components/data/BulkUpdatePanel.tsx`: Radix Sheet panel listing the table's writable columns. The user picks one or more, each with the type-appropriate editor (text input / number / date / boolean Switch / FK popover / enum select), supplies a value, sees a preview (`apply {col}={val} to N rows?`), confirms. Calls `useBulkUpdate.mutateAsync`. Disables submit when no (column, value) pair is valid.
 
 - [x] T024 [US1] Add per-row checkbox to row cards in `src/components/presets/UsersAdmin.tsx`, `src/components/presets/ContentAdmin.tsx`, `src/components/presets/LogsAdmin.tsx`. The checkbox sits to the left of the avatar/title and toggles `useSelection().toggle(encodePkSegment(row))`. Add a "Select all on this page" checkbox to the existing toolbar (above the rows list). Mount `<BulkBar />` near the bottom of each preset. Hide Delete + Update buttons when `table.kind === "view"`. Wrap the preset bodies in `<SelectionProvider>` so the bar and rows share state. **Implementation note (from `/speckit-analyze` F1)**: every preset's row currently wraps the entire card in an absolute-positioned `<Link>` overlay (`className="absolute inset-0"`) for click navigation. The new checkbox must (a) live *outside* the overlay's inset (change `inset-0` → e.g. `left-12 top-0 right-0 bottom-0`) so clicks land on the checkbox, and (b) the checkbox's own `onClick` MUST call `e.stopPropagation()` defensively. Depends on T016, T021, T022, T023.
 
@@ -111,7 +111,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 4: User Story 2 — Export (Priority: P1)
+## Phase 4: User Story 2: Export (Priority: P1)
 
 **Goal**: CSV / JSON streaming export from any list view, respecting filters / sort / hidden columns.
 
@@ -120,8 +120,8 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 ### Server-side
 
 - [x] T026 [P] [US2] Create `src/server/proxy/export.ts`:
-  - `streamExportCsv({ connection, table, params, includeHidden }): ReadableStream<Uint8Array>` — fetches PostgREST pages of 1000 rows under the existing `forward()` Range plumbing, encodes each row via `csvLineFromValues` (from T008), and emits to the stream. Header line first.
-  - `streamExportJson(...)` — same but emits `[`, comma-separated row JSON, `]`. Streams.
+  - `streamExportCsv({ connection, table, params, includeHidden }): ReadableStream<Uint8Array>`: fetches PostgREST pages of 1000 rows under the existing `forward()` Range plumbing, encodes each row via `csvLineFromValues` (from T008), and emits to the stream. Header line first.
+  - `streamExportJson(...)`: same but emits `[`, comma-separated row JSON, `]`. Streams.
   - Both honour `params.filters`, `params.sort`, `params.search`. Hidden columns are removed from the emitted row unless `includeHidden`.
 
 - [x] T027 [US2] Create `src/app/api/v/[id]/rest/[name]/export/route.ts`: GET handler per [contracts/export.md](./contracts/export.md). Session → ownership → `checkReadRate` → parse `format`, `columns`, `includeHidden`, `filter[]`, `order`, `q`, `limit` → invoke the stream helper → return `new Response(stream, { headers })` with `Transfer-Encoding: chunked`, `Content-Type: text/csv` or `application/json`, and `Content-Disposition: attachment; filename={table}-{YYYY-MM-DD}.{ext}`. Depends on T026.
@@ -138,7 +138,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 5: User Story 3 — Import (Priority: P1)
+## Phase 5: User Story 3: Import (Priority: P1)
 
 **Goal**: Drag-CSV / paste-JSON, preview, infer mapping, validate types, resolve FKs by lookup, chunked insert with progress and audit.
 
@@ -153,9 +153,9 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ### Client-side
 
-- [x] T033 [P] [US3] Create `src/components/data/ImportPanel.tsx` — Radix Sheet that mounts on demand. Tabs: **CSV (drop or pick)** / **JSON (paste)**. Drives the `ImportPhase` state machine from `src/lib/csv/types.ts` (T009). On drop, uses `parseCsv` (T007) to stream the file, builds preview of first 20 rows, infers column mappings (case-insensitive). Files > 50 MB are rejected at the drop handler with the spec's copy.
+- [x] T033 [P] [US3] Create `src/components/data/ImportPanel.tsx`: Radix Sheet that mounts on demand. Tabs: **CSV (drop or pick)** / **JSON (paste)**. Drives the `ImportPhase` state machine from `src/lib/csv/types.ts` (T009). On drop, uses `parseCsv` (T007) to stream the file, builds preview of first 20 rows, infers column mappings (case-insensitive). Files > 50 MB are rejected at the drop handler with the spec's copy.
 
-- [x] T034 [P] [US3] Create `src/components/data/ImportPreviewTable.tsx` — renders preview rows with per-column mapping selects (each cell shows raw + coerced + red dot on error). Allows the user to map any source column to a target column or **Ignore**. For FK target columns, exposes the **Resolve via lookup** option that uses `useReferenceLabels` to batch-resolve labels → ids before insert.
+- [x] T034 [P] [US3] Create `src/components/data/ImportPreviewTable.tsx`: renders preview rows with per-column mapping selects (each cell shows raw + coerced + red dot on error). Allows the user to map any source column to a target column or **Ignore**. For FK target columns, exposes the **Resolve via lookup** option that uses `useReferenceLabels` to batch-resolve labels → ids before insert.
 
 - [x] T035 [P] [US3] Add `useImportChunk(connectionId, table)` to `src/lib/api/hooks.ts`. Implements the chunked submit loop with per-chunk progress reporting via callbacks; obeys `onError` mode. Returns `{ run(rows, opts), cancel(), state }`. Depends on T032.
 
@@ -167,13 +167,13 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 6: User Story 4 — Inline cell editing (Priority: P2)
+## Phase 6: User Story 4: Inline cell editing (Priority: P2)
 
 **Goal**: Single-click edit on every editable cell in the generic data grid, with type-appropriate editors and full keyboard support.
 
 **Independent Test**: walk [quickstart.md §4](./quickstart.md).
 
-- [ ] T038 [P] [US4] Create `src/components/data/InlineCell.tsx` — a client component that wraps a cell with focus + edit state. Read-only when the column is generated, primary-key, in `analysis.hiddenColumns`, or table kind is view. Editors are switched by column type:
+- [ ] T038 [P] [US4] Create `src/components/data/InlineCell.tsx`: a client component that wraps a cell with focus + edit state. Read-only when the column is generated, primary-key, in `analysis.hiddenColumns`, or table kind is view. Editors are switched by column type:
   - `string` / `text` → `<input>` or `<textarea>` based on max length.
   - `integer` / `float` → `<input type="number">`.
   - `boolean` → Radix `<Switch>`.
@@ -194,7 +194,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 7: User Story 5 — Saved views (Priority: P2)
+## Phase 7: User Story 5: Saved views (Priority: P2)
 
 **Goal**: Save / rename / delete named views per table, applied via a tab strip on every preset.
 
@@ -208,7 +208,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ### Client-side
 
-- [ ] T045 [P] [US5] Create `src/lib/api/views.ts` exporting `useSavedViews(connectionId, schema, table)`, `useCreateView`, `useUpdateView`, `useDeleteView` — react-query wrappers that target the `/api/views` routes from T043 + T044.
+- [ ] T045 [P] [US5] Create `src/lib/api/views.ts` exporting `useSavedViews(connectionId, schema, table)`, `useCreateView`, `useUpdateView`, `useDeleteView`: react-query wrappers that target the `/api/views` routes from T043 + T044.
 
 - [ ] T046 [P] [US5] Create `src/components/data/ViewTabs.tsx`: tab strip rendering "All" plus the user's custom views for the current (connection, schema, table). Each tab has a `⋯` menu with **Rename** / **Delete**. The active tab is accent-tinted (matches the v0.6 sidebar active state). Clicking a tab updates the URL with the view's `state` (filters, sort, search, hidden), then `useRows` re-fetches via the existing list params. Disabled "Save view" button when 5 custom views exist.
 
@@ -224,15 +224,15 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 8: User Story 6 — Filter chips (Priority: P2)
+## Phase 8: User Story 6: Filter chips (Priority: P2)
 
 **Goal**: Click a column header → pick an operator → enter a value → chip → URL updates → list re-fetches. Multiple chips combine with AND.
 
 **Independent Test**: walk [quickstart.md §6](./quickstart.md).
 
-- [ ] T051 [P] [US6] Create `src/components/data/FilterPopover.tsx` — Radix Popover that mounts on click of a column header. Shows operators appropriate to the column's `category` (`eq`/`neq`/`contains`/`starts with`/`is null`/`not null`/`in` for strings; `gt`/`lt`/`gte`/`lte`/`eq`/`neq`/`is null`/`not null` for numerics/datetimes; `in`/`eq`/`is null` for enums; `eq`/`neq` for booleans). Submits a `ChipSpec` via prop callback.
+- [ ] T051 [P] [US6] Create `src/components/data/FilterPopover.tsx`: Radix Popover that mounts on click of a column header. Shows operators appropriate to the column's `category` (`eq`/`neq`/`contains`/`starts with`/`is null`/`not null`/`in` for strings; `gt`/`lt`/`gte`/`lte`/`eq`/`neq`/`is null`/`not null` for numerics/datetimes; `in`/`eq`/`is null` for enums; `eq`/`neq` for booleans). Submits a `ChipSpec` via prop callback.
 
-- [ ] T052 [P] [US6] Create `src/components/data/FilterChip.tsx` — Badge variant showing `column op value`, with a focusable `×` button. Keyboard: Tab focuses, Enter opens an edit popover (same component as T051) over the chip, Escape closes.
+- [ ] T052 [P] [US6] Create `src/components/data/FilterChip.tsx`: Badge variant showing `column op value`, with a focusable `×` button. Keyboard: Tab focuses, Enter opens an edit popover (same component as T051) over the chip, Escape closes.
 
 - [ ] T053 [US6] Add the column-header click handler to every list view: wrap the column-name text in a `<button>` that toggles a `<FilterPopover>`. Apply to row-card headers in `UsersAdmin`, `ContentAdmin`, `LogsAdmin` (where there's no header, expose the same filter UI from a small "Filter" button in the toolbar that lists every column). Apply to actual column headers in `TableListView`. Depends on T051.
 
@@ -279,7 +279,7 @@ Phase 3 US1 (P1, MVP) ─┐
 Phase 4 US2 (P1)       ├── parallel-able after Foundational; US2 depends on T024 for the BulkBar "Export selected" wiring
 Phase 5 US3 (P1)       │
 Phase 6 US4 (P2)       │
-Phase 7 US5 (P2)       │ — depends on URL filter wiring from US6, so US6 should land first OR ship in the same branch
+Phase 7 US5 (P2)       │: depends on URL filter wiring from US6, so US6 should land first OR ship in the same branch
 Phase 8 US6 (P2)       │
   ↓
 Phase 9 Polish         ── runs after all stories merged
@@ -311,7 +311,7 @@ Phase 9 Polish         ── runs after all stories merged
 
 ---
 
-## Parallel example — Phase 2 Foundational
+## Parallel example: Phase 2 Foundational
 
 ```bash
 Task: "T002 filter ChipSpec types"
@@ -334,7 +334,7 @@ Task: "T015 checkBulkRate bucket"
 Task: "T016 SelectionContext provider"
 ```
 
-## Parallel example — Phase 3 US1 Bulk operations
+## Parallel example: Phase 3 US1 Bulk operations
 
 ```bash
 # Once Foundational is done:
@@ -361,17 +361,17 @@ Task: "T025 smoke quickstart §1"
 
 The three P1 stories together are the v0.7 MVP. Implementing all three before any P2 is the recommended order:
 
-1. Phase 1 + 2 — Foundational primitives.
-2. Phase 3 US1 — bulk operations. The BulkBar lands first because it's the architectural anchor for selection state.
-3. Phase 4 US2 — export. Reuses BulkBar's "Export selected" pathway; faster to land after US1.
-4. Phase 5 US3 — import. Independent of US1/US2 but the largest single piece of UI; saving it for last lets it borrow the BulkBar styling and the table-toolbar pattern.
-5. **STOP and validate** — quickstart §1 + §2 + §3 + §7 (constitution gates) + §8 (regression). Demo this slice.
+1. Phase 1 + 2: Foundational primitives.
+2. Phase 3 US1: bulk operations. The BulkBar lands first because it's the architectural anchor for selection state.
+3. Phase 4 US2: export. Reuses BulkBar's "Export selected" pathway; faster to land after US1.
+4. Phase 5 US3: import. Independent of US1/US2 but the largest single piece of UI; saving it for last lets it borrow the BulkBar styling and the table-toolbar pattern.
+5. **STOP and validate**: quickstart §1 + §2 + §3 + §7 (constitution gates) + §8 (regression). Demo this slice.
 
 The MVP at this point is shippable on its own as v0.7-rc1 if the team wants an intermediate release.
 
 ### Incremental delivery after MVP
 
-- **US4 Inline editing** — a contained surface (`GenericAdmin` only). Ship it after MVP is green.
+- **US4 Inline editing**: a contained surface (`GenericAdmin` only). Ship it after MVP is green.
 - **US6 Filter chips** before **US5 Saved views**: saved views without URL filter state are degenerate (you can save "All" but nothing else useful). Ship US6, then US5.
 - Polish (Phase 9) runs once the last P2 story merges.
 
@@ -383,7 +383,7 @@ With multiple developers after Foundational:
 - Dev B: US2 → US6 → US5 (the URL/filter axis).
 - Dev C: US4 (cell-edit work is self-contained).
 
-Inter-story merge conflicts are minimal: only `RowPresetRouter`/`PageHeader` are shared, and each story touches a different region of those files. Apply the v0.6 lesson from `/speckit-analyze` F1 — when two tasks edit the same file, merge them into one foundational task instead. We already grouped T024 to be a single edit across all three preset files; same for T048 (PageHeader tabs slot) and T053 (column-header click handler across presets).
+Inter-story merge conflicts are minimal: only `RowPresetRouter`/`PageHeader` are shared, and each story touches a different region of those files. Apply the v0.6 lesson from `/speckit-analyze` F1: when two tasks edit the same file, merge them into one foundational task instead. We already grouped T024 to be a single edit across all three preset files; same for T048 (PageHeader tabs slot) and T053 (column-header click handler across presets).
 
 ---
 
@@ -391,7 +391,7 @@ Inter-story merge conflicts are minimal: only `RowPresetRouter`/`PageHeader` are
 
 - Total tasks: **64**.
 - Per-story counts: US1=9, US2=5, US3=7, US4=5, US5=8, US6=6. Setup=1, Foundational=15, Polish=8.
-- Suggested MVP scope: **Setup + Foundational + US1 + US2 + US3** (37 tasks) — bulk ops + export + import together. Demo-able as "Suparbase v0.7-rc1".
+- Suggested MVP scope: **Setup + Foundational + US1 + US2 + US3** (37 tasks) · bulk ops + export + import together. Demo-able as "Suparbase v0.7-rc1".
 - Tests are not generated; CI (added in v0.6.1) gates typecheck + build automatically.
 - Commits should follow the v0.5 / v0.6 prefix conventions (`feat:`, `fix:`, `chore:`, `refactor:`), with bodies that explain *why* and reference the relevant FR or SC ids from [spec.md](./spec.md).
 - The new `saved_views` migration is the only schema change in v0.7. Coolify deploys pick it up automatically via the entrypoint's `node dist/migrator.mjs` step.

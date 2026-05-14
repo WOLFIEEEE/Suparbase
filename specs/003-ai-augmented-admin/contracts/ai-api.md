@@ -1,4 +1,4 @@
-# Contract — AI APIs
+# Contract: AI APIs
 
 All routes are authenticated; unauthenticated requests return 401.
 All routes verify ownership at the row level.
@@ -32,7 +32,7 @@ Body { key?: string; defaultModel?: string }
 - If `key` is the literal empty string `""`, the server clears the
   key (same as DELETE).
 - If `defaultModel` is present, persist it as-is. (We do not validate
-  the model name — OpenRouter rejects invalid ones at call time, and
+  the model name: OpenRouter rejects invalid ones at call time, and
   the user is responsible for choosing a model their key supports.)
 
 Response: refreshed `AiSettingsSummary`.
@@ -80,7 +80,7 @@ Body (optional) { force?: boolean }
 200 OK SchemaAnalysisResult
 429 Too Many Requests + Retry-After
 404 Not Found
-500 Server error (only if heuristic itself throws — defensive)
+500 Server error (only if heuristic itself throws: defensive)
 ```
 
 ## OpenRouter wire format (server-internal)

@@ -7,7 +7,7 @@ import { pgrestServerGet, PgRestServerError } from "@/server/proxy/server-pgrest
 
 /**
  * Tool runtime for the AI chat agent. The agent never touches the user's
- * Supabase project directly — it asks for tool calls; this module executes
+ * Supabase project directly: it asks for tool calls; this module executes
  * them server-side using the decrypted connection key and a strict allow-list
  * of read-only PostgREST verbs.
  */
@@ -25,7 +25,7 @@ export const TOOL_DEFINITIONS = [
     function: {
       name: "list_tables",
       description:
-        "List the tables in this Supabase project with their AI-inferred display name, category, and a one-sentence description. Always call this first when you don't know which tables are relevant. Returns a concise catalog only — no row data.",
+        "List the tables in this Supabase project with their AI-inferred display name, category, and a one-sentence description. Always call this first when you don't know which tables are relevant. Returns a concise catalog only: no row data.",
       parameters: {
         type: "object",
         properties: {
@@ -117,7 +117,7 @@ export const TOOL_DEFINITIONS = [
     function: {
       name: "count_rows",
       description:
-        "Return the count of rows matching an optional filter set. Cheap aggregate — prefer this over query_rows when you only need totals.",
+        "Return the count of rows matching an optional filter set. Cheap aggregate: prefer this over query_rows when you only need totals.",
       parameters: {
         type: "object",
         required: ["table_name"],
@@ -149,7 +149,7 @@ export const TOOL_DEFINITIONS = [
     function: {
       name: "propose_update",
       description:
-        "Build a write proposal that the USER will confirm before anything happens. Use this whenever the user asks to change/set/update existing rows. Returns a preview of up to 5 affected rows plus the planned patch. NEVER executes — the user clicks Apply in the chat UI to commit.",
+        "Build a write proposal that the USER will confirm before anything happens. Use this whenever the user asks to change/set/update existing rows. Returns a preview of up to 5 affected rows plus the planned patch. NEVER executes: the user clicks Apply in the chat UI to commit.",
       parameters: {
         type: "object",
         required: ["table_name", "filters", "patch", "summary"],
@@ -376,7 +376,7 @@ function listTables(args: z.infer<typeof ListTablesArgs>, ctx: ToolContext): Too
         name: t.name,
         schema: t.schema,
         kind: t.kind,
-        rows: undefined as number | undefined, // not fetched here — cheap call
+        rows: undefined as number | undefined, // not fetched here: cheap call
         category: a?.category ?? "generic",
         displayName: a?.displayName ?? t.name,
         notes: a?.notes ?? "",
@@ -534,7 +534,7 @@ async function countRows(
 }
 
 // ---------------------------------------------------------------------------
-// Write proposals — never execute on the server, only build a payload that
+// Write proposals: never execute on the server, only build a payload that
 // the user can confirm in the chat UI. The execute endpoint then applies it.
 // ---------------------------------------------------------------------------
 
@@ -571,7 +571,7 @@ function validatePatchColumns(table: Table, patch: Record<string, unknown>): str
     if (!tc) return `Column "${col}" does not exist on "${table.name}".`;
     if (tc.isGenerated) return `Column "${col}" is generated and cannot be set.`;
     if (tc.isPrimaryKey)
-      return `Column "${col}" is a primary key — refusing to change it via the chat assistant.`;
+      return `Column "${col}" is a primary key: refusing to change it via the chat assistant.`;
   }
   return null;
 }
@@ -582,9 +582,9 @@ async function proposeUpdate(
 ): Promise<ToolResult> {
   const table = findTable(ctx, args.table_name);
   if (!table) return error(`Table "${args.table_name}" does not exist.`);
-  if (table.kind === "view") return error(`"${table.name}" is a view — cannot update.`);
+  if (table.kind === "view") return error(`"${table.name}" is a view: cannot update.`);
   if (table.primaryKey.length === 0)
-    return error(`"${table.name}" has no primary key — refusing to issue writes.`);
+    return error(`"${table.name}" has no primary key: refusing to issue writes.`);
 
   const colErr = validatePatchColumns(table, args.patch);
   if (colErr) return error(colErr);
@@ -613,7 +613,7 @@ function proposeInsert(
 ): ToolResult {
   const table = findTable(ctx, args.table_name);
   if (!table) return error(`Table "${args.table_name}" does not exist.`);
-  if (table.kind === "view") return error(`"${table.name}" is a view — cannot insert.`);
+  if (table.kind === "view") return error(`"${table.name}" is a view: cannot insert.`);
 
   for (const col of Object.keys(args.values)) {
     const tc = table.columns.find((c) => c.name === col);
@@ -636,9 +636,9 @@ async function proposeDelete(
 ): Promise<ToolResult> {
   const table = findTable(ctx, args.table_name);
   if (!table) return error(`Table "${args.table_name}" does not exist.`);
-  if (table.kind === "view") return error(`"${table.name}" is a view — cannot delete.`);
+  if (table.kind === "view") return error(`"${table.name}" is a view: cannot delete.`);
   if (table.primaryKey.length === 0)
-    return error(`"${table.name}" has no primary key — refusing to issue writes.`);
+    return error(`"${table.name}" has no primary key: refusing to issue writes.`);
 
   try {
     const { preview, totalCount } = await fetchAffectedPreview(table, args.filters, ctx);

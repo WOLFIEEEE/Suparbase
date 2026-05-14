@@ -1,4 +1,4 @@
-# Feature Specification: Suparbase — Authenticated SaaS
+# Feature Specification: Suparbase: Authenticated SaaS
 
 **Feature Branch**: `002-suparbase-saas`
 
@@ -10,7 +10,7 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 — Sign up, save a connection, browse data (Priority: P1)
+### User Story 1: Sign up, save a connection, browse data (Priority: P1)
 
 A developer arrives on the marketing landing page, clicks "Sign in with
 GitHub", lands on the connections dashboard, clicks "New connection",
@@ -48,7 +48,7 @@ response payload, (c) every PostgREST call goes through `/api/v/...`,
 
 ---
 
-### User Story 2 — Manage multiple connections (Priority: P1)
+### User Story 2: Manage multiple connections (Priority: P1)
 
 A user can save several Supabase projects, name them, switch between
 them, rename them, and delete them. Deletion cryptographically erases
@@ -76,11 +76,11 @@ connection's row no longer exists in the DB.
 
 ---
 
-### User Story 3 — Browse, create, edit, delete data through the proxy (Priority: P1)
+### User Story 3: Browse, create, edit, delete data through the proxy (Priority: P1)
 
 All the v0.1 admin functionality (data grid, sort/search/pagination,
 type-aware forms, FK picker, delete with undo, schema view) is
-preserved — but every call routes through the authenticated proxy.
+preserved: but every call routes through the authenticated proxy.
 Writes are recorded in an audit log.
 
 **Why this priority**: The admin functionality is the product. No
@@ -107,7 +107,7 @@ correct user, connection, table, PK, and verb.
 
 ---
 
-### User Story 4 — Account management & sign-out (Priority: P2)
+### User Story 4: Account management & sign-out (Priority: P2)
 
 A user can see their profile (avatar, email, GitHub handle), sign out
 on demand, and see when their session expires.
@@ -132,7 +132,7 @@ session cookie; bare `/connections` redirects to `/signin`.
 - **Encryption key rotation**: ciphertext is versioned; old rows are
   re-encrypted lazily on next decrypt, or via a migration script.
 - **Deleted user**: cascade deletes their connections (audit log
-  retained with `user_id` only — keep for incident response).
+  retained with `user_id` only: keep for incident response).
 - **Multi-tab session expiry**: client receives 401 on next call,
   toast prompts re-sign-in.
 - **OAuth provider rejection**: bounce to `/signin?error=...` with a
@@ -170,7 +170,7 @@ session cookie; bare `/connections` redirects to `/signin`.
 - **FR-012**: API responses about connections MUST NOT include the
   decrypted key. The encrypted value is for server use only.
 - **FR-013**: The connection list endpoint MUST return for each
-  connection: id, name, hostname (host only — never the full URL is
+  connection: id, name, hostname (host only: never the full URL is
   fine, but never the key), role, createdAt, lastUsedAt.
 - **FR-014**: Users MUST be able to rename a connection.
 - **FR-015**: Users MUST be able to delete a connection. Deletion
@@ -205,7 +205,7 @@ session cookie; bare `/connections` redirects to `/signin`.
 **Workspace UX** (parity with v0.1)
 
 - **FR-030** … **FR-070**: All v0.1 functional requirements from spec
-  `001-supabase-admin` apply to the workspace at `/c/[id]/...` — data
+  `001-supabase-admin` apply to the workspace at `/c/[id]/...`: data
   grid sort/search/pagination, type-aware create/edit forms, FK
   picker, delete with undo, schema view, mobile nav.
 

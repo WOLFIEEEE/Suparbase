@@ -40,7 +40,7 @@ export default async function SqlPage({ params }: Props) {
           <p className="max-w-prose text-xs text-fg-muted">
             The SQL playground shares the same direct-Postgres connection as the
             RLS debugger. Open the RLS page to paste your project&apos;s
-            connection string — we encrypt it with the same vault key that
+            connection string: we encrypt it with the same vault key that
             stores your PostgREST key, and only the RLS and SQL pages ever read
             it.
           </p>
@@ -62,7 +62,7 @@ export default async function SqlPage({ params }: Props) {
         title="SQL playground"
         subtitle={
           <span className="text-xs text-fg-muted">
-            Run arbitrary SQL. Read-only by default — writes need an explicit
+            Run arbitrary SQL. Read-only by default: writes need an explicit
             toggle and burn write-rate tokens.
           </span>
         }

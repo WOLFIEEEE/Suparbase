@@ -74,7 +74,7 @@ export function TablesList() {
                 {totalNonSystem} {totalNonSystem === 1 ? "table" : "tables"} grouped by archetype
               </>
             ) : (
-              "—"
+              ":"
             )}
           </span>
         }

@@ -73,7 +73,7 @@ export function RowHistoryPanel({ connectionId, table, pk }: Props) {
         <History className="h-3 w-3" aria-hidden /> History
       </h3>
       {!enabled ? (
-        <p className="text-xs text-fg-muted">No primary key on this row — history isn&apos;t tracked.</p>
+        <p className="text-xs text-fg-muted">No primary key on this row: history isn&apos;t tracked.</p>
       ) : isLoading ? (
         <div className="space-y-2">
           <Skeleton className="h-4 w-3/4" />

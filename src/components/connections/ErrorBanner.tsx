@@ -22,7 +22,7 @@ const TITLES: Record<AppError["category"], string> = {
 const HINTS: Record<AppError["category"], string> = {
   network: "Check your network connection and try again.",
   unauthorized: "Your session may have expired. Sign in again.",
-  forbidden: "The key cannot access this resource — likely an RLS policy.",
+  forbidden: "The key cannot access this resource: likely an RLS policy.",
   not_found: "The resource doesn't exist.",
   constraint: "The database rejected this value. See details above.",
   rate_limited: "Wait a moment and try again.",
@@ -31,7 +31,7 @@ const HINTS: Record<AppError["category"], string> = {
   validation: "Check the request and try again.",
   no_key: "Add an OpenRouter API key in Settings → AI.",
   no_postgres_url: "Add a direct Postgres URL on the RLS page first.",
-  rls: "Postgres rejected this — RLS or read-only mode.",
+  rls: "Postgres rejected this: RLS or read-only mode.",
   service_role_required: "Open connection settings and store a service_role key.",
 };
 

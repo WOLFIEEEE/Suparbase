@@ -1,4 +1,4 @@
-# Quality Checklist — 005-bootstrap-and-credentials
+# Quality Checklist: 005-bootstrap-and-credentials
 
 - [x] No [NEEDS CLARIFICATION] markers
 - [x] All FRs testable on a local docker compose

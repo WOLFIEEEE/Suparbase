@@ -1,4 +1,4 @@
-# Contract — Data Access
+# Contract: Data Access
 
 All row CRUD funnels through `src/lib/api/`. Views import React Query hooks
 from `src/lib/api/hooks.ts`; those hooks call into the typed helpers below.
@@ -82,7 +82,7 @@ export async function countRows(
 ```
 
 Uses `select('*', { count: 'estimated', head: true })`. Estimated is fine for
-the dashboard — exact counts on large tables are expensive.
+the dashboard: exact counts on large tables are expensive.
 
 ## Reference picker
 

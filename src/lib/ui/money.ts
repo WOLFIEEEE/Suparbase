@@ -14,7 +14,7 @@ export function formatMoney(
   currency: string | null | undefined,
   isCents: boolean,
 ): string {
-  if (raw == null) return "—";
+  if (raw == null) return ":";
   const n = typeof raw === "number" ? raw : Number(raw);
   if (!Number.isFinite(n)) return String(raw);
   const value = isCents ? n / 100 : n;
@@ -25,7 +25,7 @@ export function formatMoney(
       currencyDisplay: "symbol",
     }).format(value);
   } catch {
-    // Bad currency code — fall back to USD.
+    // Bad currency code: fall back to USD.
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: "USD",

@@ -94,7 +94,7 @@ export function ImportPanel({ open, onClose, connectionId, table }: Props) {
       for await (const r of parseCsvString(text)) {
         if (headerKeys.length === 0) headerKeys = Object.keys(r.values);
         rows.push(r.values);
-        // We don't truncate here — keep the full set for the chunked import,
+        // We don't truncate here: keep the full set for the chunked import,
         // but the preview UI only renders the first PREVIEW_ROWS.
       }
     } catch (e) {

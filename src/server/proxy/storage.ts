@@ -192,7 +192,7 @@ interface RawObject {
 
 export interface ListObjectsResult {
   objects: StorageObject[];
-  /** True when we asked for limit+1 and got back limit+1 — indicates more pages. */
+  /** True when we asked for limit+1 and got back limit+1: indicates more pages. */
   hasMore: boolean;
 }
 

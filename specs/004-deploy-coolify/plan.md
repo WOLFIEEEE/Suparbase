@@ -8,7 +8,7 @@ Production deploy on Coolify (Docker-Compose mode). One `Dockerfile`
 produces a standalone Next.js runtime; one `docker-compose.yaml`
 defines `db` (Supabase Postgres image) and `app`; one entrypoint
 script runs Drizzle migrations before `next start`. Coolify's built-in
-Traefik proxy handles TLS and routing — we do not ship a reverse
+Traefik proxy handles TLS and routing: we do not ship a reverse
 proxy.
 
 ## Architecture
@@ -33,17 +33,17 @@ proxy.
 
 ## Files
 
-- `Dockerfile` — multi-stage:
-  1. `deps` — install pnpm deps with frozen lockfile
-  2. `builder` — copy source, `pnpm build` with `output: "standalone"`
-  3. `runner` — copy `.next/standalone`, `.next/static`, `public`,
+- `Dockerfile`: multi-stage:
+  1. `deps`: install pnpm deps with frozen lockfile
+  2. `builder`: copy source, `pnpm build` with `output: "standalone"`
+  3. `runner`: copy `.next/standalone`, `.next/static`, `public`,
      `drizzle/`, `scripts/migrate.mjs`, and a tiny entrypoint
-- `docker-compose.yaml` — db + app, healthchecks, named volumes,
+- `docker-compose.yaml`: db + app, healthchecks, named volumes,
   `DATABASE_URL` composed in `environment:`
-- `.dockerignore` — keep build context tiny
-- `scripts/migrate.mjs` — ESM script using
+- `.dockerignore`: keep build context tiny
+- `scripts/migrate.mjs`: ESM script using
   `drizzle-orm/postgres-js/migrator`
-- `scripts/docker-entrypoint.sh` — `node scripts/migrate.mjs && exec
+- `scripts/docker-entrypoint.sh`: `node scripts/migrate.mjs && exec
   node server.js`
 
 ## Required env (operator-facing)

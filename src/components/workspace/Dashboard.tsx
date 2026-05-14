@@ -238,7 +238,7 @@ function StripTile({ kind, table, fallbackCount, loading }: StripTileProps) {
   } else if (count?.count != null) {
     value = count.count.toLocaleString();
   } else {
-    value = "—";
+    value = ":";
   }
 
   const hint =

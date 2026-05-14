@@ -1,4 +1,4 @@
-# Phase 1 — Data Model
+# Phase 1: Data Model
 
 **Feature**: Product Workspace (v0.6) · [spec.md](./spec.md) · [plan.md](./plan.md)
 
@@ -15,8 +15,8 @@ The Dashboard header and Topbar already render the connection summary; v0.6 simp
 ```ts
 interface ConnectionSummary {
   id: string;
-  name: string;        // "my-staging" — now the Dashboard page title
-  hostname: string;    // "abc.supabase.co" — demoted to subtitle
+  name: string;        // "my-staging": now the Dashboard page title
+  hostname: string;    // "abc.supabase.co": demoted to subtitle
   role: "anon" | "authenticated" | "service_role" | "unknown";
   createdAt: string;
 }
@@ -64,7 +64,7 @@ interface TableAnalysis {
   titleColumn?: string | null;
   notes?: string;
 
-  // Added in v0.5.1 — load-bearing for v0.6:
+  // Added in v0.5.1: load-bearing for v0.6:
   primary?: TableAnalysisPrimary;       // titleColumn, subtitleColumn, avatarColumn, badgeColumn
   hiddenColumns?: string[];             // password_hash, encrypted_*, jsonb meta, etc.
   relations?: TableAnalysisRelation[];  // FK columns w/ label and showOnDetail
@@ -110,7 +110,7 @@ interface AiSettingsSummary {
 
 The sidebar AI-assistance footer reads `lastAnalysisModel` and `lastTotalTokens` to populate its subtitle (FR-S03).
 
-## 2. New concept — Theme preference
+## 2. New concept: Theme preference
 
 This is a client-side preference, not a database entity.
 
@@ -143,7 +143,7 @@ Rationale captured in [research.md Decision 5](./research.md).
 
 1. **First render (server)**: `app/layout.tsx` reads `cookies().get("suparbase-theme")`. If `"light"` or `"dark"`, set `<html data-theme={value}>`. If absent or `"system"`, leave the attribute off (CSS variables already provide `prefers-color-scheme` defaults).
 2. **Toggle (client)**: `ThemeToggle` button updates `document.documentElement.dataset.theme` optimistically and writes the cookie via `document.cookie`.
-3. **Subsequent navigation**: each SSR request reads the cookie again — there is no flash.
+3. **Subsequent navigation**: each SSR request reads the cookie again: there is no flash.
 
 ### 2.4 State transitions
 
@@ -172,10 +172,10 @@ interface PaletteEntry {
 ```
 
 Sources:
-- `kind: "connection"` — from the existing `useConnections()` hook.
-- `kind: "table"` — from the active connection's `useSchema()` result, each row decorated with the AI display name from the matching `TableAnalysis`.
-- `kind: "settings"` — static list: AI assistance, Connection settings, Account.
-- `kind: "action"` — static list: New connection, Run AI analysis (only if user has an OpenRouter key), Toggle theme, Sign out.
+- `kind: "connection"`: from the existing `useConnections()` hook.
+- `kind: "table"`: from the active connection's `useSchema()` result, each row decorated with the AI display name from the matching `TableAnalysis`.
+- `kind: "settings"`: static list: AI assistance, Connection settings, Account.
+- `kind: "action"`: static list: New connection, Run AI analysis (only if user has an OpenRouter key), Toggle theme, Sign out.
 
 The component never persists this list; closing the palette drops it from local state. Re-opening recomputes from the (typically warm) react-query cache.
 

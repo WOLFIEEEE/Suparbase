@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, ctx: Params) {
 
   const tableName = decodeURIComponent(name);
   // Resolve the table's primary-key columns by introspecting once. We re-use
-  // the cached introspection on each bulk call — cheap, and authoritative.
+  // the cached introspection on each bulk call: cheap, and authoritative.
   let primaryKeyCols: string[];
   try {
     const schema = await introspectConnection(conn);

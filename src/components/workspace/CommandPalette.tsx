@@ -136,7 +136,7 @@ export function CommandPalette() {
     staleTime: 60_000,
   });
 
-  // Global row search — kicks in once the query is 2+ chars. Server scans
+  // Global row search: kicks in once the query is 2+ chars. Server scans
   // text/uuid/int columns of every table in parallel.
   const debouncedQuery = useDebouncedValue(query, 300);
   const searchActive = open && debouncedQuery.trim().length >= 2;

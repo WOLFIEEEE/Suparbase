@@ -1,4 +1,4 @@
-# Phase 1 — Data Model
+# Phase 1: Data Model
 
 **Feature**: Power-User Data Ops (v0.7) · [spec.md](./spec.md) · [plan.md](./plan.md)
 
@@ -7,7 +7,7 @@ audit-log access pattern (per-row fan-out for bulk operations), and a
 handful of client-side TypeScript types. No changes to any existing
 schema or stored value.
 
-## 1. New table — `saved_views`
+## 1. New table: `saved_views`
 
 A per-user, per-connection, per-table named filter + sort + visibility
 snapshot.
@@ -70,13 +70,13 @@ interface ViewState {
 
 The `hidden` array layers on top of the AI analysis: columns listed here
 are hidden *additionally* (or, when the column is already
-analysis-hidden, the override means "show this column anyway" — a
+analysis-hidden, the override means "show this column anyway": a
 v0.7.1 nice-to-have, not in scope for v0.7's minimum).
 
 ### 1.4 Constraints
 
 - 5 custom views maximum per `(user_id, connection_id, table_schema, table_name)`.
-  Enforced at the API layer in the POST handler — counts existing rows
+  Enforced at the API layer in the POST handler: counts existing rows
   before inserting; returns `400 constraint` with `column: "name"` if
   over the limit. The "All" default view is **not** stored; it's
   rendered by the UI as the absence of a custom view.
@@ -113,7 +113,7 @@ The single-row endpoint already runs `INSERT INTO audit_log` per row;
 bulk reuses the same `recordAuditWrite()` helper, called once per
 affected PK in the chunk.
 
-## 3. Filter chip — `ChipSpec`
+## 3. Filter chip: `ChipSpec`
 
 URL- and state-serializable filter shape. Defined in
 `src/lib/filters/types.ts`.
@@ -138,7 +138,7 @@ URL serialization:
 - `is_null` → `filter=col.is.null`; `not_null` → `filter=col.not.is.null`
 - `in` → `filter=col.in.(a,b,c)`
 
-Multiple chips repeat the `filter` parameter — matches the existing
+Multiple chips repeat the `filter` parameter: matches the existing
 PostgREST URL convention.
 
 ## 4. Selection state (client-side, ephemeral)
@@ -253,7 +253,7 @@ Both routes inherit error semantics from the existing
 │ FilterChip       │ ─► URL state     ─► useRows (existing) w/ extra params
 └──────────────────┘
                        
-saved_views (NEW)              audit_log (existing — fan-out write)
+saved_views (NEW)              audit_log (existing: fan-out write)
   ▲                              ▲
   │ CRUD by /api/views           │ one row per bulk-affected PK
   │                              │

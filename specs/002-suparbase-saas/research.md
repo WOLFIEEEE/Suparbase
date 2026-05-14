@@ -1,4 +1,4 @@
-# Phase 0 — Research (delta from v0.1)
+# Phase 0: Research (delta from v0.1)
 
 Only decisions specific to the SaaS migration are recorded here. The
 v0.1 research file ([../001-supabase-admin/research.md](../001-supabase-admin/research.md))
@@ -59,7 +59,7 @@ table for proactive rotation.
 
 **Decision**: A tiny `pgrest()` fetch wrapper hits `/api/v/[id]/rest/...`
 and the existing `lib/api/rows.ts` is rewritten on top of it. We drop
-`@supabase/supabase-js` from the client — saves ~53 KB gz and removes
+`@supabase/supabase-js` from the client: saves ~53 KB gz and removes
 the only library that knows about the API key.
 
 **Rationale**: `supabase-js` is excellent, but it expects to construct
@@ -79,7 +79,7 @@ pgrest.update(connectionId, schema, table, pkFilter, patch);
 pgrest.delete(connectionId, schema, table, pkFilter);
 ```
 
-The proxy on the server side does NOT use `supabase-js` either — it
+The proxy on the server side does NOT use `supabase-js` either: it
 forwards the request as fetched.
 
 ## 5. Proxy semantics
@@ -101,7 +101,7 @@ verbs. The handler:
 9. If method is a write (`POST` / `PATCH` / `PUT` / `DELETE`) AND
    the upstream response is 2xx, inserts an audit row.
 
-**Streaming**: `new Response(upstream.body, { ... })` — Next.js
+**Streaming**: `new Response(upstream.body, { ... })`: Next.js
 preserves the body stream.
 
 **Body limits**: we cap inbound write bodies at 5 MB to prevent
@@ -141,7 +141,7 @@ http_status     smallint
 created_at      timestamptz default now()
 ```
 
-We do not store the row payload — only its PK. Reduces storage cost
+We do not store the row payload: only its PK. Reduces storage cost
 and the blast radius if the audit log itself leaks.
 
 ## 8. Security headers

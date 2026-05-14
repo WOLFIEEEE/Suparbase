@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   const limit = checkAiRate(session.user.id);
   if (!limit.allowed) {
     return NextResponse.json(
-      { category: "rate_limited", message: "Too many AI requests — try again later." },
+      { category: "rate_limited", message: "Too many AI requests: try again later." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
     );
   }
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest, ctx: Params) {
       }
     },
     cancel() {
-      // request aborted by client — generator's signal handler unwinds it
+      // request aborted by client: generator's signal handler unwinds it
     },
   });
 

@@ -315,21 +315,21 @@ function TasksAdminBody({ connectionId, table, analysis }: PresetProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
         />
         <StatTile
           label="To do"
-          value={grouped ? grouped.todo.length : "—"}
+          value={grouped ? grouped.todo.length : ":"}
           hint="on this page"
         />
         <StatTile
           label="In progress"
-          value={grouped ? grouped.doing.length : "—"}
+          value={grouped ? grouped.doing.length : ":"}
           hint="on this page"
         />
         <StatTile
           label="Done"
-          value={grouped ? grouped.done.length : "—"}
+          value={grouped ? grouped.done.length : ":"}
           hint="on this page"
         />
       </div>

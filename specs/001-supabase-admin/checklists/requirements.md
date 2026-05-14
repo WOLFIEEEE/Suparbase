@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Suparbase — Auto-Admin for Supabase
+# Specification Quality Checklist: Suparbase: Auto-Admin for Supabase
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-05-13
@@ -6,7 +6,7 @@
 
 ## Content Quality
 
-- [x] No implementation details (languages, frameworks, APIs) leak into spec.md — stack lives in the plan and constitution
+- [x] No implementation details (languages, frameworks, APIs) leak into spec.md: stack lives in the plan and constitution
 - [x] Focused on user value and business needs
 - [x] Written for non-technical stakeholders (Supabase is named because it is the product's stated integration, not an implementation choice)
 - [x] All mandatory sections completed

@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Suparbase — Authenticated SaaS
+# Specification Quality Checklist: Suparbase: Authenticated SaaS
 
 **Purpose**: Validate spec completeness before planning
 **Created**: 2026-05-13
@@ -6,7 +6,7 @@
 
 ## Content Quality
 
-- [x] No implementation details (languages, frameworks, APIs) — stack lives in the plan
+- [x] No implementation details (languages, frameworks, APIs): stack lives in the plan
 - [x] Focused on user value and business needs (auth, vault, audit, parity)
 - [x] Written for a stakeholder review (technical, but framework-agnostic)
 - [x] All mandatory sections completed

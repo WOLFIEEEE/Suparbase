@@ -6,7 +6,7 @@ interface Props {
 
 /**
  * Decorative SVG for the auth pages' brand pane. Three stacked admin
- * cards — abstracting the actual product UI — with hairline strokes,
+ * cards: abstracting the actual product UI: with hairline strokes,
  * an accent-coloured highlight bar on the front card, and a floating
  * chat bubble + sparkle. All colours come from the theme so the art
  * tracks light/dark mode for free.
@@ -47,7 +47,7 @@ export function AuthHeroArt({ className }: Props) {
         {/* Dotted backdrop, fades from center outward */}
         <rect width="360" height="260" fill="url(#dots)" />
 
-        {/* Connection lines under the cards — hint at "data flowing" */}
+        {/* Connection lines under the cards: hint at "data flowing" */}
         <g stroke="rgb(var(--line))" strokeWidth="1" strokeLinecap="round">
           <path d="M30 220 L 100 220 L 110 210" />
           <path d="M340 40 L 270 40 L 260 50" />
@@ -104,7 +104,7 @@ export function AuthHeroArt({ className }: Props) {
           <circle cx="227" cy="105" r="2" fill="rgb(var(--accent))" />
         </g>
 
-        {/* Front card — fully opaque, accent edge */}
+        {/* Front card: fully opaque, accent edge */}
         <g className="auth-art-card auth-art-card-front" filter="url(#softShadow)">
           <rect
             x="24"
@@ -157,7 +157,7 @@ export function AuthHeroArt({ className }: Props) {
           <rect x="200" y="211" width="36" height="3" rx="1.5" fill="rgb(var(--fg))" fillOpacity="0.2" />
         </g>
 
-        {/* Floating chat bubble — Ask AI */}
+        {/* Floating chat bubble: Ask AI */}
         <g className="auth-art-bubble">
           <rect
             x="244"

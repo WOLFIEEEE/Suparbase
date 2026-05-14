@@ -8,7 +8,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set. Copy .env.example to .env.local and fill it in.");
 }
 
-// In dev, hot-reload re-evaluates this module — reuse the underlying socket pool.
+// In dev, hot-reload re-evaluates this module: reuse the underlying socket pool.
 declare global {
   // eslint-disable-next-line no-var
   var __suparbase_pg__: ReturnType<typeof postgres> | undefined;

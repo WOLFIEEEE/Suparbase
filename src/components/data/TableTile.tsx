@@ -90,7 +90,7 @@ export function TableTile({ table }: TableTileProps) {
         <div className="space-y-0.5">
           <div className="text-[10px] uppercase tracking-wider text-fg-faint">rows</div>
           <div className="font-display text-2xl tabular-nums text-fg">
-            {isLoading ? "—" : data?.count != null ? formatCount(data.count) : "—"}
+            {isLoading ? ":" : data?.count != null ? formatCount(data.count) : ":"}
           </div>
         </div>
         {fkCount > 0 && (

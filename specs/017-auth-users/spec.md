@@ -1,16 +1,16 @@
 # Auth users page (v1.3)
 
 ## Goal
-Manage Supabase Auth users — invite, recover password, ban, delete —
+Manage Supabase Auth users: invite, recover password, ban, delete :
 from inside the workspace using the project's Admin API.
 
 ## Server
-- `src/server/proxy/auth-admin.ts` — typed wrappers around
+- `src/server/proxy/auth-admin.ts`: typed wrappers around
   `${conn.url}/auth/v1/admin/*` and `/auth/v1/invite`:
   - `listUsers(page, perPage)` → `{users, total, page, perPage}`
   - `getUser(uid)`, `createUser`, `updateUser`, `deleteUser`
   - `generateRecoveryLink(email)` → magic-link URL for password reset
-  - `sendInvite(email, data?)` — invites a new user
+  - `sendInvite(email, data?)`: invites a new user
 - Every helper calls `requireServiceRole(conn)` first and throws
   `ServiceRoleRequiredError` if the stored key is anon/authenticated.
   The page surfaces this as a friendly "service_role key required"
@@ -18,10 +18,10 @@ from inside the workspace using the project's Admin API.
 
 ## API
 - `GET /api/v/[id]/auth-users?page=N&per_page=M` → paginated list
-- `POST /api/v/[id]/auth-users` — `{mode: "invite" | "create", ...}` →
+- `POST /api/v/[id]/auth-users`: `{mode: "invite" | "create", ...}` →
   invite or create. Validates email + password via zod.
 - `GET /api/v/[id]/auth-users/[uid]` → single user
-- `PATCH /api/v/[id]/auth-users/[uid]` — update email/phone/password/
+- `PATCH /api/v/[id]/auth-users/[uid]`: update email/phone/password/
   metadata/ban_duration
 - `DELETE /api/v/[id]/auth-users/[uid]`
 - `POST /api/v/[id]/auth-users/[uid]/recovery` → generates a recovery

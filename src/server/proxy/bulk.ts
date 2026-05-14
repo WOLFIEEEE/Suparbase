@@ -99,7 +99,7 @@ export async function bulkDelete(args: BulkDeleteArgs): Promise<BulkDeleteResult
   for (const chunk of chunkList(primaryKeys, CHUNK_SIZE)) {
     const filter = chunkToQuery(primaryKey, chunk);
 
-    // (a) snapshot SELECT for undo — direct GET (the pgrestCall helper only
+    // (a) snapshot SELECT for undo: direct GET (the pgrestCall helper only
     //     handles DELETE/PATCH per its Verb literal).
     if (returnSnapshots) {
       const sel = new URLSearchParams(filter);
@@ -138,7 +138,7 @@ export async function bulkDelete(args: BulkDeleteArgs): Promise<BulkDeleteResult
     }
     deleted += chunk.length;
 
-    // (c) audit fan-out — one row per affected PK
+    // (c) audit fan-out: one row per affected PK
     await Promise.all(
       chunk.map((pk) =>
         auditWrite({

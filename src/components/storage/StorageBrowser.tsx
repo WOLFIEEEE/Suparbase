@@ -608,7 +608,7 @@ function EmptyFolder({ onUpload, pending }: { onUpload: () => void; pending: boo
   return (
     <div className="rounded-md border border-dashed hairline px-6 py-12 text-center text-sm text-fg-muted">
       <FolderOpen className="mx-auto h-5 w-5 text-fg-faint" aria-hidden />
-      <p className="mt-2">Nothing in this folder yet — drag a file here, or use Upload.</p>
+      <p className="mt-2">Nothing in this folder yet: drag a file here, or use Upload.</p>
       <Button onClick={onUpload} variant="secondary" size="sm" className="mt-3" disabled={pending}>
         {pending ? (
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
@@ -705,7 +705,7 @@ function ObjectTable({
               <span className="min-w-0 flex-1 truncate font-mono text-xs">{o.name}</span>
             </button>
             <span className="hidden w-24 shrink-0 text-right font-mono text-[10px] text-fg-faint sm:inline">
-              {o.isFolder ? "—" : formatBytes(o.size)}
+              {o.isFolder ? ":" : formatBytes(o.size)}
             </span>
             <span className="hidden w-28 shrink-0 truncate text-right font-mono text-[10px] text-fg-faint md:inline">
               {o.isFolder ? "" : o.mimeType ?? ""}
@@ -806,7 +806,7 @@ function ObjectActions({
 }
 
 function formatBytes(n: number | null): string {
-  if (n == null) return "—";
+  if (n == null) return ":";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;

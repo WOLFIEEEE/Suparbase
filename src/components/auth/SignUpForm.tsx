@@ -77,7 +77,7 @@ export function SignUpForm({ githubEnabled }: Props) {
       });
       if (!signin || signin.error) {
         // Surfacing as an error so they can manually sign in.
-        setFormError("Account created — sign in to continue.");
+        setFormError("Account created: sign in to continue.");
         setSubmitting(false);
         window.location.assign(`/signin?next=${encodeURIComponent(next)}`);
         return;
@@ -264,7 +264,7 @@ interface Strength {
 }
 
 function scorePassword(pw: string): Strength {
-  if (pw.length === 0) return { score: 0, label: "—", tone: "danger" };
+  if (pw.length === 0) return { score: 0, label: ":", tone: "danger" };
   let score = 0;
   if (pw.length >= 12) score++;
   if (pw.length >= 16) score++;
@@ -336,7 +336,7 @@ function PasswordStrengthMeter({
       >
         {error ??
           (satisfied
-            ? `${strength.label} — looks good.`
+            ? `${strength.label}: looks good.`
             : `${strength.label} · ${Math.max(0, MIN_PASSWORD_LENGTH - password.length)} more character${MIN_PASSWORD_LENGTH - password.length === 1 ? "" : "s"} to go.`)}
       </p>
     </div>

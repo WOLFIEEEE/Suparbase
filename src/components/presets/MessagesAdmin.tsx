@@ -252,18 +252,18 @@ function MessagesAdminBody({ connectionId, table, analysis }: PresetProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
           hint={createdCol ? "newest first" : undefined}
         />
         <StatTile label="On this page" value={rows.length} hint={`page ${page}`} />
         <StatTile
           label="Replies"
-          value={replyCount != null ? replyCount : "—"}
+          value={replyCount != null ? replyCount : ":"}
           hint={threadCol ? `via ${threadCol}` : "no thread column"}
         />
         <StatTile
           label="Authors"
-          value={authorCount != null ? authorCount : "—"}
+          value={authorCount != null ? authorCount : ":"}
           hint={authorCol ? "unique on page" : "no author column"}
         />
       </div>

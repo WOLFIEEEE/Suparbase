@@ -1,4 +1,4 @@
-# Quality Checklist — 003-ai-augmented-admin
+# Quality Checklist: 003-ai-augmented-admin
 
 ## Content
 - [x] No implementation details in spec.md (stack lives in plan.md)

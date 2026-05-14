@@ -6,12 +6,12 @@
 
 Six coordinated workstreams ship as v1.0:
 
-1. **Typography unification** — drop Fraunces; use Inter Variable for both body and display via a tighter-tracking utility.
-2. **Generic admin lift** — `TableListView` v2 (row cards), `TableRowView` v2 (hero + sectioned + sidebar), new-row page wrapped in `PageHeader`.
-3. **Schema view rebuild** — archetype groupings + expandable tables + FK chips.
-4. **Connection flow polish** — `ConnectionList` card grid, narrower new-connection form, grouped settings page.
-5. **v0.7 final** — filter chips (US6), saved views (US5), inline cell editing (US4), reusing the v0.7-MVP foundational primitives (ChipSpec, saved_views table, SelectionContext).
-6. **Polish pass** — tooltip coverage on icon buttons, consistent `EmptyState` everywhere, skeleton coverage on every async surface.
+1. **Typography unification**: drop Fraunces; use Inter Variable for both body and display via a tighter-tracking utility.
+2. **Generic admin lift**: `TableListView` v2 (row cards), `TableRowView` v2 (hero + sectioned + sidebar), new-row page wrapped in `PageHeader`.
+3. **Schema view rebuild**: archetype groupings + expandable tables + FK chips.
+4. **Connection flow polish**: `ConnectionList` card grid, narrower new-connection form, grouped settings page.
+5. **v0.7 final**: filter chips (US6), saved views (US5), inline cell editing (US4), reusing the v0.7-MVP foundational primitives (ChipSpec, saved_views table, SelectionContext).
+6. **Polish pass**: tooltip coverage on icon buttons, consistent `EmptyState` everywhere, skeleton coverage on every async surface.
 
 ## Technical Context
 
@@ -20,10 +20,10 @@ Six coordinated workstreams ship as v1.0:
 **Schema** unchanged. `saved_views` migration shipped in v0.7 MVP.
 
 **New API routes** (the v0.7 backlog the MVP deferred):
-- `GET /api/views?connectionId=…&schema=…&table=…` — list
-- `POST /api/views` — create
-- `PATCH /api/views/[id]` — rename / update state
-- `DELETE /api/views/[id]` — delete
+- `GET /api/views?connectionId=…&schema=…&table=…`: list
+- `POST /api/views`: create
+- `PATCH /api/views/[id]`: rename / update state
+- `DELETE /api/views/[id]`: delete
 
 **New + modified components** (approx 22 files):
 
@@ -36,7 +36,7 @@ src/
   components/
     workspace/
       TableListView.tsx                     REWRITTEN (row cards + bulk + filter chips + inline)
-      TableRowView.tsx                      REWRITTEN (hero + sidebar — mirror UserDetail)
+      TableRowView.tsx                      REWRITTEN (hero + sidebar: mirror UserDetail)
       RowPresetRouter.tsx                   MODIFIED (generic branch dispatches GenericDetail)
       SchemaView.tsx                        REWRITTEN
       ConnectionSettings.tsx                REWRITTEN (grouped sections)

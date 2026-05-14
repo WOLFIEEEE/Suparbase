@@ -3,14 +3,14 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
-## v1.4.0 — 2026-05-14 — SQL playground
+## v1.4.0 · 2026-05-14 · SQL playground
 
 Tag: `v1.4.0` · Spec: [`018`](specs/018-sql-playground/)
 
 - **SQL playground.** New `/c/[id]/sql` workspace page that runs raw
   SQL against the user's project via the existing direct-Postgres URL
   (the encrypted column introduced for the RLS debugger). Read-only by
-  default — the server wraps every query in
+  default: the server wraps every query in
   `BEGIN; SET TRANSACTION READ ONLY; SET LOCAL statement_timeout = N;
   <sql>; ROLLBACK` so Postgres itself rejects writes (error code
   25006) and the rollback is belt-and-braces. Write mode is a separate
@@ -27,7 +27,7 @@ Tag: `v1.4.0` · Spec: [`018`](specs/018-sql-playground/)
   syntax error) and rendered with `detail` + `hint` + `position` from
   the upstream response.
 
-## v1.3.0 — 2026-05-14 — Storage + Auth users
+## v1.3.0 · 2026-05-14 · Storage + Auth users
 
 Tag: `v1.3.0` · Specs: [`016`](specs/016-storage-browser/), [`017`](specs/017-auth-users/)
 
@@ -54,11 +54,11 @@ Two big surface-area additions that close the most-asked gaps in v1.2:
   "service_role key required" banner with a link to the connection
   settings instead of failing with an opaque 403.
 
-## v1.2.0 — 2026-05-14 — Power-user release
+## v1.2.0 · 2026-05-14 · Power-user release
 
 Tag: `v1.2.0` · Specs: [`011`](specs/011-inline-cell-editing/), [`012`](specs/012-global-row-search/), [`013`](specs/013-row-history/), [`014`](specs/014-ai-write-actions/), [`015`](specs/015-rls-debugger/)
 
-Five distinct features landed together — each was reviewed, built, and
+Five distinct features landed together: each was reviewed, built, and
 shipped as its own commit so any one of them can be reverted without
 disturbing the others.
 
@@ -82,12 +82,12 @@ disturbing the others.
   right rail of every detail page; entries expand to show a column-by-
   column `from → to` diff. (specs/013)
 - **AI write actions with a confirm-then-execute diff card.** Three new
-  agent tools — `propose_update` / `propose_insert` / `propose_delete`
-  — let the chat assistant draft writes without executing them. Each
+  agent tools: `propose_update`, `propose_insert`, and `propose_delete`
+  let the chat assistant draft writes without executing them. Each
   proposal carries a preview of up to 5 affected rows. The UI renders a
   colored diff card; Apply hits `POST /api/ai/chat/[id]/execute`, which
   re-validates the proposal server-side and writes audit_log diffs the
-  history panel picks up immediately. Reads stay independent — the AI
+  history panel picks up immediately. Reads stay independent: the AI
   has no direct INSERT/PATCH/DELETE tool. (specs/014)
 - **RLS policy debugger.** A new workspace page lists every
   `pg_policies` entry, shows which tables actually have RLS enabled,
@@ -97,18 +97,18 @@ disturbing the others.
   authenticated keys, this introduces an optional second credential:
   the connections table gained an encrypted `postgres_url` column
   (migration `0005`), and the RLS page prompts to add one before any
-  catalog query runs. The URL is never echoed back over the wire —
+  catalog query runs. The URL is never echoed back over the wire :
   only `hasPostgresUrl: boolean`. (specs/015)
 
-## v1.1.0 — 2026-05-14 — More archetypes
+## v1.1.0 · 2026-05-14 · More archetypes
 
 Tag: `v1.1.0` · Spec: [`specs/010-more-archetypes/`](specs/010-more-archetypes/)
 
-The archetype system was deliberately narrow in v1.0 — Users, Content, Logs,
+The archetype system was deliberately narrow in v1.0: Users, Content, Logs,
 and a Generic fallback. v1.1 widens the taxonomy without changing the
 mechanism: three new categories, each with a dedicated list + detail view,
 each automatically applied to any matching table from the AI analysis (or
-heuristic fallback) — no per-schema configuration required.
+heuristic fallback): no per-schema configuration required.
 
 - **Commerce archetype.** Orders, invoices, transactions, payments,
   charges, receipts, carts, checkouts. List view (`CommerceAdmin`)
@@ -149,10 +149,10 @@ heuristic fallback) — no per-schema configuration required.
   Tables page renders them as their own sections ("Commerce",
   "Workflow", "Conversations") under the existing disclosure pattern.
 - No new dependencies. Bundle: largest authenticated route
-  (`/c/[id]/tables/[name]/new`) stays at 186 KB First Load JS — well
+  (`/c/[id]/tables/[name]/new`) stays at 186 KB First Load JS: well
   under the 520 KB gz budget. Typecheck + `next build` both green.
 
-## v1.0.1 — 2026-05-14 — Landing polish
+## v1.0.1 · 2026-05-14 · Landing polish
 
 Tag: `v1.0.1`
 
@@ -163,12 +163,12 @@ v1.0.0 unchanged; this is `/` only.
   (proper translate-from-below clip, not just opacity fade). Each word
   starts at `yPercent: 115` and rises into its `overflow-hidden` mask
   with `power4.out` easing + stagger; the accent line ("Supabase
-  project.") is followed by a terminal caret that blinks — visual cue
+  project.") is followed by a terminal caret that blinks: visual cue
   that this is software, not a brochure.
 - **Product preview cards** dealt in below the CTAs with a `back.out`
   ease + slight rotation that settles. The three cards mirror the
   actual archetypes from the product (Users / Content / Logs) so the
-  user sees exactly what they'll get the moment they sign in — bridges
+  user sees exactly what they'll get the moment they sign in: bridges
   marketing → product without screenshots. Each carries one subtle
   live signal: the Users status pulses; the Logs timestamp ticks
   "12s → 13s → … → 59s → 12s" in real time. Both honour
@@ -183,7 +183,7 @@ v1.0.0 unchanged; this is `/` only.
   (+9 KB), entirely from the new product preview cards. Well under
   the 520 KB gz budget.
 
-## v1.0.0 — 2026-05-14 — Polished release
+## v1.0.0 · 2026-05-14 · Polished release
 
 Tag: `v1.0.0` · Spec: [`specs/008-v1-polish/`](specs/008-v1-polish/)
 
@@ -193,7 +193,7 @@ unpolished surface, and unifies typography into a single professional
 sans-serif family.
 
 - Constitution **v3.2.0 → v3.3.0**: Principle III (Anti-AI-Slop Design)
-  expanded to codify the v1.0 typography baseline — unified Inter
+  expanded to codify the v1.0 typography baseline: unified Inter
   Variable for body + display with heavier weight + tighter tracking on
   the display utility. No NON-NEGOTIABLE relaxed.
 - **Typography unified**. Dropped Fraunces (serif) entirely; the
@@ -207,7 +207,7 @@ sans-serif family.
   `GenericDetail.tsx` mirrors UserDetail's hero + sectioned identity +
   Linked-records sidebar for every non-archetype row. The old
   `TableRowView`, `DataGrid`, `DataGridToolbar`, and `RowDrawer`
-  components are deleted — every list/detail page now uses the same
+  components are deleted: every list/detail page now uses the same
   visual language regardless of archetype.
 - **Schema view rebuild**. The `/c/[id]/schema` page now uses
   `PageHeader` chrome, archetype groupings (People / Library /
@@ -238,7 +238,7 @@ sans-serif family.
 - **Settings + new-row + sign-in/up** previously partially polished now
   also use `PageHeader` chrome end-to-end.
 - **v0.7 backlog status**: US5 (saved views) ✓ shipped. US6 (filter
-  chips) ✓ shipped. **US4 (inline cell editing) deferred to v1.1** —
+  chips) ✓ shipped. **US4 (inline cell editing) deferred to v1.1** :
   the existing click-row → detail page → Edit flow still covers the
   use case; inline editing requires invasive changes to row-card
   layouts that would extend this release beyond its scope.
@@ -249,7 +249,7 @@ sans-serif family.
   `src/components/row/RowDrawer.tsx`, and the orphan
   `src/index.css` (vestigial from the v0.1 Vite SPA era).
 
-## v0.6.0 — 2026-05-13 — Product workspace
+## v0.6.0 · 2026-05-13 · Product workspace
 
 Tag: `v0.6.0` · Spec: [`specs/006-product-workspace/`](specs/006-product-workspace/)
 
@@ -281,20 +281,20 @@ database admin. No schema changes; no new dependencies.
   Cmd/Ctrl+K from anywhere in the workspace. Indexes connections,
   tables (with AI display names), pages, settings, and global actions
   (Toggle theme, Run AI analysis, Sign out). Lazy-loads its index on
-  first open — the dialog appears instantly. Built on the existing
+  first open: the dialog appears instantly. Built on the existing
   cmdk + Radix Dialog primitives, no new deps.
 - **Theme toggle** ([ThemeToggle.tsx](src/components/workspace/ThemeToggle.tsx),
   [src/lib/theme/](src/lib/theme/)). Topbar button switches between
   light and dark; preference persists in a `suparbase-theme` cookie
   readable by the server in [`app/layout.tsx`](src/app/layout.tsx) so
-  initial paint matches — no flash on reload. Defaults to OS
+  initial paint matches: no flash on reload. Defaults to OS
   `prefers-color-scheme` when no preference is set. Full WCAG-AA light
   palette added to [globals.css](src/app/globals.css).
 - **Sidebar polish** ([Sidebar.tsx](src/components/workspace/Sidebar.tsx)).
   Inline counts on Tables and Schema, accent-tinted active state with a
   left-edge indicator, AI footer link shows last-used model + token
   total when an analysis is cached.
-- **New API route**: `GET /api/v/[id]/audit/recent?limit=10` — reads
+- **New API route**: `GET /api/v/[id]/audit/recent?limit=10`: reads
   the user's own recent writes for a single connection. Connection
   ownership verified before any DB read; rate-limited under a new
   `checkReadRate` bucket (240/min/user). Contract:
@@ -310,18 +310,18 @@ database admin. No schema changes; no new dependencies.
   from every archetype (the drawer module still exists for the generic
   grid fallback).
 - Bundle measurement: largest authenticated first-paint payload is
-  `/c/[id]/tables/[name]/[pk]` at 189 KB First Load JS — well under
+  `/c/[id]/tables/[name]/[pk]` at 189 KB First Load JS: well under
   the Constitution's 520 KB gz budget.
 - Deletes the now-unused `src/components/presets/shared/PresetHeader.tsx`
-  in favour of the shared `PageHeader` (Principle VI — no abstraction
+  in favour of the shared `PageHeader` (Principle VI: no abstraction
   without a second caller).
 - Constitution **v3.2.0 unchanged**: no new principle needed.
 
-## v0.5.0 — 2026-05-13 — Self-bootstrap & email/password auth
+## v0.5.0 · 2026-05-13 · Self-bootstrap & email/password auth
 
 Tag: `v0.5.0` · Spec: [`specs/005-bootstrap-and-credentials/`](specs/005-bootstrap-and-credentials/)
 
-- Constitution **v3.1.0 → v3.2.0**: Principle VII clarified —
+- Constitution **v3.1.0 → v3.2.0**: Principle VII clarified :
   auto-generated vault keys are permitted iff they persist with the
   data they encrypt and the operator is warned via README.
 - **Self-bootstrap secrets**: a one-shot `bootstrap` Alpine container
@@ -342,13 +342,13 @@ Tag: `v0.5.0` · Spec: [`specs/005-bootstrap-and-credentials/`](specs/005-bootst
 - Redactor now strips bcrypt hashes (`$2a$`, `$2b$`, `$2y$`).
 - New migration: `drizzle/0002_minor_magus.sql`.
 
-## v0.4.0 — 2026-05-13 — Coolify deployment
+## v0.4.0 · 2026-05-13 · Coolify deployment
 
 Tag: `v0.4.0` · Spec: [`specs/004-deploy-coolify/`](specs/004-deploy-coolify/)
 
 - Production `Dockerfile` (multi-stage, non-root, Next.js standalone output).
 - `docker-compose.yaml` with two services: `supabase/postgres` for the
-  app database, and the Next.js app. No host port binding — Coolify's
+  app database, and the Next.js app. No host port binding: Coolify's
   Traefik proxy routes by domain.
 - `scripts/migrate.mjs` runs Drizzle migrations at container start.
 - Operator only sets six env vars in Coolify; three of them Coolify can
@@ -356,12 +356,12 @@ Tag: `v0.4.0` · Spec: [`specs/004-deploy-coolify/`](specs/004-deploy-coolify/)
   `DATABASE_URL` is composed inside the compose file.
 - Constitution v3.1.0 unchanged (no new principle needed for deploy).
 
-## v0.3.0 — 2026-05-13 — AI-augmented admin presets
+## v0.3.0 · 2026-05-13 · AI-augmented admin presets
 
 Tag: `v0.3.0` · Spec: [`specs/003-ai-augmented-admin/`](specs/003-ai-augmented-admin/)
 
-- Constitution **v3.0.0 → v3.1.0**: added Principle IX (AI Assistance)
-  — opt-in, server-only, schema-only inputs, Zod-validated outputs,
+- Constitution **v3.0.0 → v3.1.0**: added Principle IX (AI Assistance):
+  opt-in, server-only, schema-only inputs, Zod-validated outputs,
   cached by fingerprint, graceful fallback.
 - New `user_settings` table (encrypted OpenRouter key, default model,
   last-run token usage) and `schema_analysis` cache table.
@@ -377,7 +377,7 @@ Tag: `v0.3.0` · Spec: [`specs/003-ai-augmented-admin/`](specs/003-ai-augmented-
 - Redactor now strips `sk-or-…` / `sk-…` patterns in addition to JWTs.
 - AI rate limit: 10 analyses / hour / user.
 
-## v0.2.0 — 2026-05-13 — Authenticated SaaS
+## v0.2.0 · 2026-05-13 · Authenticated SaaS
 
 Tag: `v0.2.0` · Spec: [`specs/002-suparbase-saas/`](specs/002-suparbase-saas/)
 
@@ -390,7 +390,7 @@ Tag: `v0.2.0` · Spec: [`specs/002-suparbase-saas/`](specs/002-suparbase-saas/)
   connections / audit_log.
 - **AES-256-GCM credential vault** with versioned ciphertext (supports
   rotation via `SUPARBASE_ENCRYPTION_KEY_OLD`).
-- **Server-side PostgREST proxy** at `/api/v/[id]/rest/[...path]` —
+- **Server-side PostgREST proxy** at `/api/v/[id]/rest/[...path]` :
   the user's API key never reaches the browser. Streams responses,
   rate-limits writes, logs every write to an audit table.
 - Replaced `supabase-js` (browser) with a small `pgrest()` fetch
@@ -398,7 +398,7 @@ Tag: `v0.2.0` · Spec: [`specs/002-suparbase-saas/`](specs/002-suparbase-saas/)
 - HSTS / CSP / X-Content-Type-Options / Referrer-Policy /
   Permissions-Policy at the Next.js edge.
 
-## v0.1.0 — 2026-05-13 — Client-only Vite SPA
+## v0.1.0 · 2026-05-13 · Client-only Vite SPA
 
 Tag: `v0.1.0` · Spec: [`specs/001-supabase-admin/`](specs/001-supabase-admin/)
 

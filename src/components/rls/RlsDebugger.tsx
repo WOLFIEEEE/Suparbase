@@ -170,7 +170,7 @@ function PostgresUrlSetup({
             debugger talks to Postgres directly. Paste your project&apos;s direct
             connection string below. We encrypt it with the same vault key that
             stores your service_role key. It&apos;s used <em>only</em> for the RLS
-            page — nothing else in Suparbase reads it.
+            page: nothing else in Suparbase reads it.
           </p>
         </div>
         <a
@@ -470,7 +470,7 @@ function Simulator({
             onChange={(e) => setTable(e.target.value)}
             className="w-full rounded border hairline bg-bg-raised px-2 py-1.5 text-xs"
           >
-            {tables.length === 0 && <option value="">— no tables —</option>}
+            {tables.length === 0 && <option value="">: no tables :</option>}
             {tables.map((t) => (
               <option key={t} value={t}>
                 {t}

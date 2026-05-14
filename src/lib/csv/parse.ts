@@ -26,7 +26,7 @@ export interface CsvRowRaw {
 /**
  * Parse a string body. For very large files the caller should pre-stream
  * the file via FileReader / ReadableStream then assemble into chunks before
- * calling — the v0.7 ImportPanel does this.
+ * calling: the v0.7 ImportPanel does this.
  */
 export async function* parseCsvString(
   text: string,
@@ -92,7 +92,7 @@ function lexRow(text: string, start: number, delim: string): { row: string[]; ad
       }
       if (ch === "\n") lines++;
       if (ch === "\r" && text[i + 1] === "\n") {
-        // CRLF inside quoted field — preserve as LF.
+        // CRLF inside quoted field: preserve as LF.
         field += "\n";
         lines++;
         i += 2;

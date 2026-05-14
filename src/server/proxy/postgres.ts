@@ -28,7 +28,7 @@ const ROLE_ALLOWLIST = new Set([
 interface QueryOptions {
   /** Postgres role to switch to inside the transaction. */
   role?: string;
-  /** `request.jwt.claims` object — JSON-serialized into a Postgres GUC. */
+  /** `request.jwt.claims` object: JSON-serialized into a Postgres GUC. */
   claims?: Record<string, unknown>;
   /** Statement timeout (ms) for the simulated query. */
   timeoutMs?: number;
@@ -124,7 +124,7 @@ export interface PgPolicy {
 }
 
 /**
- * List every RLS policy in the public schema. Touches no row data — just
+ * List every RLS policy in the public schema. Touches no row data: just
  * pg_catalog. Used by the policy browser.
  */
 export async function listPolicies(conn: ConnectionRow): Promise<PgPolicy[]> {

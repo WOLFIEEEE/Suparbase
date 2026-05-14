@@ -194,7 +194,7 @@ export async function deleteRow(connectionId: string, table: Table, pk: PrimaryK
     path: encodeURIComponent(table.name),
     query,
     // Ask the upstream to echo the deleted row back so the audit log can
-    // capture the before-state — used by the row history panel and AI
+    // capture the before-state: used by the row history panel and AI
     // write-action preview.
     headers: { Prefer: "return=representation" },
   });

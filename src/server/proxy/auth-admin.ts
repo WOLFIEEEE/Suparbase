@@ -260,7 +260,7 @@ export async function deleteUser(conn: ConnectionRow, userId: string): Promise<v
 
 /**
  * GoTrue's generate_link with `type=recovery` returns a magic-link URL. We
- * use this for "send password reset" — the admin can copy the URL or have
+ * use this for "send password reset": the admin can copy the URL or have
  * GoTrue email it depending on the project's SMTP config.
  */
 export interface RecoveryLink {

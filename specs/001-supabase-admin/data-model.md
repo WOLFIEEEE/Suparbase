@@ -1,11 +1,11 @@
-# Phase 1 — Data Model
+# Phase 1: Data Model
 
 All runtime data falls into three buckets:
 
-1. **Connection state** — persisted in `sessionStorage` or `localStorage`.
-2. **Schema metadata** — derived by introspecting the user's Supabase project;
+1. **Connection state**: persisted in `sessionStorage` or `localStorage`.
+2. **Schema metadata**: derived by introspecting the user's Supabase project;
    held only in memory (React Query cache) for the session.
-3. **Row data** — the user's actual data; fetched on demand, cached briefly in
+3. **Row data**: the user's actual data; fetched on demand, cached briefly in
    React Query.
 
 There is no first-party persistence. Source of truth for types: `src/lib/...`

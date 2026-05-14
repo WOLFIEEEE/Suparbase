@@ -13,7 +13,7 @@ with the same vault key as the PostgREST credential.
 
 UI: the RLS page detects when no Postgres URL is set and shows a
 single-input setup card. `PUT /api/connections/[id]/postgres-url`
-stores or clears it. The URL is never returned over the wire — only
+stores or clears it. The URL is never returned over the wire: only
 `hasPostgresUrl: boolean` is exposed on the connection summary.
 
 ## Server
@@ -31,7 +31,7 @@ stores or clears it. The URL is never returned over the wire — only
 - `GET  /api/v/[id]/rls/policies` →
   `{policies: PgPolicy[], status: {table, rlsEnabled, policyCount}[]}`
 - `POST /api/v/[id]/rls/simulate` →
-  `{results: VerbResult[]}` — runs SELECT (count), INSERT (DEFAULT VALUES),
+  `{results: VerbResult[]}`: runs SELECT (count), INSERT (DEFAULT VALUES),
   UPDATE (`SET pk = pk` to test visibility), and DELETE (`WHERE FALSE`),
   then rolls back. Each verb returns `{allowed, rowsVisible?, message?}`.
 

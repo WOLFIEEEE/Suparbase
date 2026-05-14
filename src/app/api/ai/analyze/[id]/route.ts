@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   const limit = checkAiRate(session.user.id);
   if (!limit.allowed) {
     return NextResponse.json(
-      { category: "rate_limited", message: "Too many analyses — try again later." },
+      { category: "rate_limited", message: "Too many analyses: try again later." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
     );
   }

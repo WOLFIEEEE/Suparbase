@@ -15,9 +15,9 @@ import { AppError } from "@/lib/errors";
 interface Props {
   connectionId: string;
   table: Table;
-  /** Columns the parent considers visible — used by the Export-Selected menu. */
+  /** Columns the parent considers visible: used by the Export-Selected menu. */
   visibleColumns?: string[];
-  /** Hidden columns the parent's analysis identified — exposed via the export menu toggle. */
+  /** Hidden columns the parent's analysis identified: exposed via the export menu toggle. */
   hiddenColumns?: string[];
 }
 

@@ -1,5 +1,5 @@
 /**
- * Settings pages are narrower than connections — single-column forms read
+ * Settings pages are narrower than connections: single-column forms read
  * better at this width. The auth check and header/footer chrome live in the
  * parent `(account)/layout.tsx`.
  */

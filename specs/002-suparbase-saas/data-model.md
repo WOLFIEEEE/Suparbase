@@ -1,4 +1,4 @@
-# Phase 1 — Data Model
+# Phase 1: Data Model
 
 ## Database schema (Postgres, via Drizzle)
 
@@ -93,7 +93,7 @@ includes a leading version byte so the vault knows which key to try.
 }
 ```
 
-We do not store the row payload — just the PK that was affected.
+We do not store the row payload: just the PK that was affected.
 
 ### Migrations
 

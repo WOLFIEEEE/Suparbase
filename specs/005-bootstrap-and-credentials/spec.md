@@ -5,12 +5,12 @@
 **Status**: Draft
 **Input**: User description: "Generate POSTGRES_PASSWORD, AUTH_SECRET, and
 SUPARBASE_ENCRYPTION_KEY automatically (don't make me type them). Default
-AUTH_URL to suparbase.com. Make GitHub auth optional — normal email +
+AUTH_URL to suparbase.com. Make GitHub auth optional: normal email +
 password signup/login should still work."
 
 ## User Scenarios & Testing
 
-### User Story 1 — Deploy with zero secrets typed (P1)
+### User Story 1: Deploy with zero secrets typed (P1)
 
 Operator deploys on Coolify, leaves `POSTGRES_PASSWORD`, `AUTH_SECRET`,
 and `SUPARBASE_ENCRYPTION_KEY` blank, and the deploy still succeeds with
@@ -25,13 +25,13 @@ cryptographically strong secrets.
 3. The `app` service's entrypoint loads each `*_FILE` value into the
    corresponding environment variable before launching Next.js.
 4. On the second boot, the bootstrap step sees existing files and is
-   a no-op — the same secrets are reused, so previously encrypted rows
+   a no-op: the same secrets are reused, so previously encrypted rows
    still decrypt correctly.
 5. If the operator does set a value in Coolify's UI, that value wins
    (the entrypoint only falls back to the file when the env var is
    empty).
 
-### User Story 2 — Default domain is suparbase.com (P2)
+### User Story 2: Default domain is suparbase.com (P2)
 
 `AUTH_URL` defaults to `https://suparbase.com` in `docker-compose.yaml`.
 Operators on other domains override the env var; Coolify auto-populates
@@ -44,7 +44,7 @@ it from the assigned domain.
 2. With `AUTH_URL=https://demo.example.com` in Coolify, the app uses
    that origin everywhere.
 
-### User Story 3 — Sign up with email + password (P1)
+### User Story 3: Sign up with email + password (P1)
 
 A visitor signs up for a new Suparbase account using email + password.
 The GitHub OAuth button is shown only when the operator has provided
@@ -63,7 +63,7 @@ GitHub OAuth credentials.
    configured. Otherwise the page shows only the email+password form.
 4. Existing OAuth flow continues to work when configured.
 
-### User Story 4 — Operator awareness of vault key (P2)
+### User Story 4: Operator awareness of vault key (P2)
 
 Operators who let the system auto-generate `SUPARBASE_ENCRYPTION_KEY`
 are warned that losing the secrets volume = losing all encrypted
@@ -74,7 +74,7 @@ credentials.
    requirement.
 2. Settings (`/settings/ai`) shows a faint hint that the encryption
    key is self-generated when the env var was not provided
-   (optional — surface only if cheap to detect).
+   (optional: surface only if cheap to detect).
 
 ## Functional Requirements
 
@@ -101,7 +101,7 @@ credentials.
 - **FR-011**: A Credentials provider MUST accept `{ email, password }`
   and verify against the `password_hash` column on `users`.
 - **FR-012**: A `password_hash` column MUST be added to `users`
-  (nullable — existing OAuth users have no password).
+  (nullable: existing OAuth users have no password).
 - **FR-013**: `POST /api/auth/signup` MUST: validate body (email,
   password ≥ 12 chars, optional name), check email uniqueness, hash
   with bcrypt cost 12, insert a `users` row, then return the session.

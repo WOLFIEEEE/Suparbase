@@ -263,7 +263,7 @@ function Editor({
         }}
         className={sharedClass}
       >
-        {col.nullable && <option value="">— null —</option>}
+        {col.nullable && <option value="">: null :</option>}
         {col.enumValues.map((v) => (
           <option key={v} value={v}>
             {v}
@@ -286,7 +286,7 @@ function Editor({
         }}
         className={sharedClass}
       >
-        {col.nullable && <option value="">— null —</option>}
+        {col.nullable && <option value="">: null :</option>}
         <option value="true">true</option>
         <option value="false">false</option>
       </select>
@@ -306,7 +306,7 @@ function Editor({
         }}
         rows={Math.min(8, Math.max(2, Math.ceil(draft.length / 60)))}
         className={cn(sharedClass, "min-h-[2.5rem] resize-y")}
-        placeholder="(text — ⌘/Ctrl+Enter to save)"
+        placeholder="(text: ⌘/Ctrl+Enter to save)"
       />
     );
   } else {

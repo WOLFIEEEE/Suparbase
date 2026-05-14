@@ -11,21 +11,21 @@ description: "Task list for v0.6 Product Workspace"
 
 **Tests**: NOT requested. This release is UI composition with no new server-side business logic beyond a single thin read endpoint; the project's gating checks remain `tsc --noEmit`, `next build`, and the manual smoke path in `quickstart.md`.
 
-**Organization**: Tasks are grouped by user story (US1–US7) per spec.md. Stories are sequenced by priority: US1, US2, US3 are P1 (must-have); US4, US5 are P2; US6, US7 are P3. After Foundational, every story can be worked in parallel by separate developers — no story depends on another's implementation.
+**Organization**: Tasks are grouped by user story (US1–US7) per spec.md. Stories are sequenced by priority: US1, US2, US3 are P1 (must-have); US4, US5 are P2; US6, US7 are P3. After Foundational, every story can be worked in parallel by separate developers: no story depends on another's implementation.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]** — runnable in parallel with other [P] tasks (different files, no dependencies on incomplete tasks).
-- **[Story]** — user-story tag (US1–US7); omitted for Setup, Foundational, and Polish tasks.
+- **[P]**: runnable in parallel with other [P] tasks (different files, no dependencies on incomplete tasks).
+- **[Story]**: user-story tag (US1–US7); omitted for Setup, Foundational, and Polish tasks.
 - File paths are absolute from repo root.
 
 ## Path Conventions
 
 Single Next.js app (per [plan.md](./plan.md) Project Structure):
-- `src/app/` — routes (App Router)
-- `src/components/` — UI (client components carry `"use client"`)
-- `src/lib/` — types, helpers, client-side data hooks
-- `src/server/` — server-only modules (never imported from client)
+- `src/app/`: routes (App Router)
+- `src/components/`: UI (client components carry `"use client"`)
+- `src/lib/`: types, helpers, client-side data hooks
+- `src/server/`: server-only modules (never imported from client)
 
 ---
 
@@ -59,23 +59,23 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 3: User Story 1 — Dashboard (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1: Dashboard (Priority: P1) 🎯 MVP
 
-**Goal**: A connection home that explains the project in product terms — hero stats, archetype-grouped table sections with AI display names, recent-activity panel from the audit log, and 3–4 quick-action buttons. The hostname is demoted; the connection's friendly name is the page title.
+**Goal**: A connection home that explains the project in product terms: hero stats, archetype-grouped table sections with AI display names, recent-activity panel from the audit log, and 3–4 quick-action buttons. The hostname is demoted; the connection's friendly name is the page title.
 
 **Independent Test**: Visit `/c/{id}` on a connection that has at least one users-classified table and one logs-classified table. Quickstart §1 checklist passes end-to-end.
 
 ### Implementation for User Story 1
 
-- [x] T009 [US1] Add `useRecentAudit(connectionId: string | undefined, limit = 10)` to `src/lib/api/hooks.ts` — react-query hook fetching `/api/v/{id}/audit/recent?limit=N`. `staleTime: 30_000`, `gcTime: 5 * 60_000`. Returns `{ entries: AuditRow[] }`. Depends on T008.
+- [x] T009 [US1] Add `useRecentAudit(connectionId: string | undefined, limit = 10)` to `src/lib/api/hooks.ts`: react-query hook fetching `/api/v/{id}/audit/recent?limit=N`. `staleTime: 30_000`, `gcTime: 5 * 60_000`. Returns `{ entries: AuditRow[] }`. Depends on T008.
 
-- [x] T010 [P] [US1] Create `src/components/workspace/dashboard/StatStrip.tsx` — client component that takes `{ tables, analyses, useRowCount }` and renders 4 archetype tiles using the existing `StatTile` from `PageHeader.tsx`. Tiles render only when a matching archetype exists; absent archetypes fall back to "Other tables" with the generic count.
+- [x] T010 [P] [US1] Create `src/components/workspace/dashboard/StatStrip.tsx`: client component that takes `{ tables, analyses, useRowCount }` and renders 4 archetype tiles using the existing `StatTile` from `PageHeader.tsx`. Tiles render only when a matching archetype exists; absent archetypes fall back to "Other tables" with the generic count.
 
-- [x] T011 [P] [US1] Create `src/components/workspace/dashboard/ArchetypeGroup.tsx` — client component that takes `{ title, icon, tables, analyses, connectionId }` and renders the section header (with count) and a responsive 3-column grid of `TableTile` cards (reusing `src/components/data/TableTile.tsx`).
+- [x] T011 [P] [US1] Create `src/components/workspace/dashboard/ArchetypeGroup.tsx`: client component that takes `{ title, icon, tables, analyses, connectionId }` and renders the section header (with count) and a responsive 3-column grid of `TableTile` cards (reusing `src/components/data/TableTile.tsx`).
 
-- [x] T012 [P] [US1] Create `src/components/workspace/dashboard/RecentActivity.tsx` — client component that calls `useRecentAudit(connectionId, 10)`, renders a vertical list of entries (verb chip, table name, time-ago via `relativeFromNow`, deep link to row when `primaryKey` is non-null), or an empty-state card with copy "Audit logging populates as you edit rows."
+- [x] T012 [P] [US1] Create `src/components/workspace/dashboard/RecentActivity.tsx`: client component that calls `useRecentAudit(connectionId, 10)`, renders a vertical list of entries (verb chip, table name, time-ago via `relativeFromNow`, deep link to row when `primaryKey` is non-null), or an empty-state card with copy "Audit logging populates as you edit rows."
 
-- [x] T013 [P] [US1] Create `src/components/workspace/dashboard/QuickActions.tsx` — client component that takes `{ connectionId, usersTable: Table | null, hasAiKey: boolean }` and renders 3–4 `<Button asChild>` links: "Open settings" (always), "Invite user" (deep link to the users table's `/new` route when present), "Run AI analysis" (only when `hasAiKey`), and an optional fourth action like "Recent activity" anchor scroll.
+- [x] T013 [P] [US1] Create `src/components/workspace/dashboard/QuickActions.tsx`: client component that takes `{ connectionId, usersTable: Table | null, hasAiKey: boolean }` and renders 3–4 `<Button asChild>` links: "Open settings" (always), "Invite user" (deep link to the users table's `/new` route when present), "Run AI analysis" (only when `hasAiKey`), and an optional fourth action like "Recent activity" anchor scroll.
 
 - [x] T014 [US1] Rewrite `src/components/workspace/Dashboard.tsx`: replace existing body with the `PageHeader` chrome (title = connection name from the layout-supplied `connection.name`, subtitle = `connection.hostname`, eyebrow = accent dot + "dashboard"), `<StatStrip>`, archetype-grouped `<ArchetypeGroup>` sections using `groupTablesByArchetype` from T002, `<RecentActivity>`, and `<QuickActions>`. Render an explicit empty state when `schema.tables.length === 0`. Honour `prefers-reduced-motion` for any landing-style flourish. Depends on T002, T009–T013.
 
@@ -85,7 +85,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 4: User Story 2 — Tables list (Priority: P1)
+## Phase 4: User Story 2: Tables list (Priority: P1)
 
 **Goal**: Tables grouped by archetype with named sections ("People / Library / Activity / Everything else"), `auth.*` / `storage.*` collapsed under a system-tables disclosure, and a search that filters every section in place.
 
@@ -93,7 +93,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ### Implementation for User Story 2
 
-- [x] T016 [US2] Rewrite `src/components/workspace/TablesList.tsx`: replace the existing alphabetical tile grid with: `PageHeader` chrome (title "Tables", breadcrumb back to `/c/{id}`), a search input that filters across all sections by table name, archetype-named sections (People / Library / Activity / Everything else) using `groupTablesByArchetype` from T002 — each section's heading hidden when zero matches — and a closed `<details>` "System tables (N)" disclosure at the bottom containing every table from the `system` group. Reuse `TableTile` from `src/components/data/TableTile.tsx`. Depends on T002.
+- [x] T016 [US2] Rewrite `src/components/workspace/TablesList.tsx`: replace the existing alphabetical tile grid with: `PageHeader` chrome (title "Tables", breadcrumb back to `/c/{id}`), a search input that filters across all sections by table name, archetype-named sections (People / Library / Activity / Everything else) using `groupTablesByArchetype` from T002: each section's heading hidden when zero matches: and a closed `<details>` "System tables (N)" disclosure at the bottom containing every table from the `system` group. Reuse `TableTile` from `src/components/data/TableTile.tsx`. Depends on T002.
 
 - [x] T017 [US2] Manual smoke against [quickstart.md](./quickstart.md) §2. All checkboxes pass.
 
@@ -101,7 +101,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 5: User Story 3 — Content archetype (Priority: P1)
+## Phase 5: User Story 3: Content archetype (Priority: P1)
 
 **Goal**: Content tables (posts, articles, docs) feel like a CMS: PageHeader chrome, stat tiles, opinionated row cards (title + status + author + published-at), and a dedicated detail page with a title hero, body rendered as readable wrapped text, and a Linked-records sidebar.
 
@@ -109,7 +109,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ### Implementation for User Story 3
 
-- [x] T018 [P] [US3] Rewrite `src/components/presets/ContentAdmin.tsx`: drop the old `PresetHeader` import, mount `PageHeader` with breadcrumbs (`Tables` → `displayName`), AI eyebrow, and "New post" primary action when `table.kind === "table" && primaryKey.length > 0`. Stat tiles via `StatTile`: total items, draft/published split (only when a status column exists), "Newest first" hint. Row cards mirror `UsersAdmin.tsx` layout — title prominent via `analysis.primary.titleColumn`, status pill aligned right via `analysis.primary.badgeColumn`, subtitle row from `analysis.primary.subtitleColumn` + author label from `analysis.relations` + published-at via `relativeFromNow`. Click navigates to `/c/{id}/tables/{name}/{pk}` (no drawer). Action menu via existing `DropdownMenu` primitive (Open / Edit / Email author when applicable).
+- [x] T018 [P] [US3] Rewrite `src/components/presets/ContentAdmin.tsx`: drop the old `PresetHeader` import, mount `PageHeader` with breadcrumbs (`Tables` → `displayName`), AI eyebrow, and "New post" primary action when `table.kind === "table" && primaryKey.length > 0`. Stat tiles via `StatTile`: total items, draft/published split (only when a status column exists), "Newest first" hint. Row cards mirror `UsersAdmin.tsx` layout: title prominent via `analysis.primary.titleColumn`, status pill aligned right via `analysis.primary.badgeColumn`, subtitle row from `analysis.primary.subtitleColumn` + author label from `analysis.relations` + published-at via `relativeFromNow`. Click navigates to `/c/{id}/tables/{name}/{pk}` (no drawer). Action menu via existing `DropdownMenu` primitive (Open / Edit / Email author when applicable).
 
 - [x] T019 [P] [US3] Create `src/components/presets/ContentDetail.tsx`: mirror the file layout of `UserDetail.tsx`. Hero block has title at display-size (`text-display-lg` or equivalent), metadata row (status pill + author link + published-at + updated-at), and the `bodyColumn` rendered in a `<div>` with `whiteSpace: "pre-wrap"`, `wordBreak: "break-word"`, inherit font. Two-column body with sections (Identifiers / Metadata / Other, deduping the hero columns and respecting `analysis.hiddenColumns`) on the left and a Linked-records sidebar on the right (incoming FKs across the schema, identical to UserDetail). Include the Edit / Delete actions via `RowForm` + `DeleteRowDialog` with undo. Default export.
 
@@ -121,19 +121,19 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 6: User Story 4 — Logs archetype (Priority: P2)
+## Phase 6: User Story 4: Logs archetype (Priority: P2)
 
-**Goal**: Logs tables (events, audit, webhooks) render as a time-grouped event stream — day-bucket headers, event-type chips, collapsed jsonb payloads — with a detail page that prioritizes timestamp and pretty-prints the payload.
+**Goal**: Logs tables (events, audit, webhooks) render as a time-grouped event stream: day-bucket headers, event-type chips, collapsed jsonb payloads: with a detail page that prioritizes timestamp and pretty-prints the payload.
 
 **Independent Test**: Visit a logs-classified table with rows spanning multiple days. Quickstart §4 checklist passes.
 
 ### Implementation for User Story 4
 
-- [x] T022 [P] [US4] Rewrite `src/components/presets/LogsAdmin.tsx`: drop `PresetHeader`, mount `PageHeader` with stat tiles (total events, events in last 24h, events in last 7d, distinct event types — each tile gracefully degrades when its column is absent). Pick the timestamp column from `analysis.primary.titleColumn` if it's a date type, then fall back to `created_at` / `inserted_at` / any `*_at`. Group rendered rows by day bucket: "Today" (today), "Yesterday" (today-1), "This week" (today-6 to today-2), "Earlier" (older). Each row card shows event-type column as a `StatusPill`-style chip, actor relation as a labeled link, and the timestamp as `relativeFromNow` with absolute on hover. Any jsonb column collapses to a single-line preview (`JSON.stringify(value).slice(0, 80) + "…"`) — clicking it toggles an inline expanded `<pre>`. When no timestamp column exists, render a single warning banner ("no timestamp column found — events are not time-ordered") above an ungrouped ordered list (per [research.md Decision 7](./research.md)).
+- [x] T022 [P] [US4] Rewrite `src/components/presets/LogsAdmin.tsx`: drop `PresetHeader`, mount `PageHeader` with stat tiles (total events, events in last 24h, events in last 7d, distinct event types: each tile gracefully degrades when its column is absent). Pick the timestamp column from `analysis.primary.titleColumn` if it's a date type, then fall back to `created_at` / `inserted_at` / any `*_at`. Group rendered rows by day bucket: "Today" (today), "Yesterday" (today-1), "This week" (today-6 to today-2), "Earlier" (older). Each row card shows event-type column as a `StatusPill`-style chip, actor relation as a labeled link, and the timestamp as `relativeFromNow` with absolute on hover. Any jsonb column collapses to a single-line preview (`JSON.stringify(value).slice(0, 80) + "…"`): clicking it toggles an inline expanded `<pre>`. When no timestamp column exists, render a single warning banner ("no timestamp column found: events are not time-ordered") above an ungrouped ordered list (per [research.md Decision 7](./research.md)).
 
 - [x] T023 [P] [US4] Create `src/components/presets/LogDetail.tsx`: hero block leads with the timestamp (absolute date + `relativeFromNow` subtitle), event-type chip, actor relation rendered as a `LinkedRecordCard` (small reusable component or inline JSX matching UserDetail's relations sidebar). Pretty-print the payload as `JSON.stringify(parsed, null, 2)` inside a `<pre class="surface-sunken">`. Two-column layout (main / relations) mirroring `ContentDetail`. Default export.
 
-- [x] T024 [US4] *(merged into T020 — see `/speckit-analyze` finding F1.)* No-op placeholder kept for ID stability; T020 now wires both `ContentDetail` and `LogDetail` in a single edit.
+- [x] T024 [US4] *(merged into T020: see `/speckit-analyze` finding F1.)* No-op placeholder kept for ID stability; T020 now wires both `ContentDetail` and `LogDetail` in a single edit.
 
 - [x] T025 [US4] Manual smoke against [quickstart.md](./quickstart.md) §4. All checkboxes pass.
 
@@ -141,9 +141,9 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 7: User Story 5 — Command palette (Priority: P2)
+## Phase 7: User Story 5: Command palette (Priority: P2)
 
-**Goal**: Cmd/Ctrl+K opens a keyboard-driven palette from anywhere in the workspace. It indexes connections, tables (with AI display names), settings pages, and a small action set. Lazy data fetch — opening is instant.
+**Goal**: Cmd/Ctrl+K opens a keyboard-driven palette from anywhere in the workspace. It indexes connections, tables (with AI display names), settings pages, and a small action set. Lazy data fetch: opening is instant.
 
 **Independent Test**: Press Cmd+K from any `/c/{id}/*` route. Quickstart §5 checklist passes.
 
@@ -153,13 +153,13 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 - [x] T027 [US5] Mount `<CommandPalette />` in `src/app/(auth)/c/[id]/layout.tsx` once, inside the `CurrentConnectionProvider`, so the palette is available on every workspace route. Depends on T026.
 
-- [x] T028 [US5] Manual smoke against [quickstart.md](./quickstart.md) §5. All checkboxes pass — particularly the lazy-index behaviour and the keyboard-only flow.
+- [x] T028 [US5] Manual smoke against [quickstart.md](./quickstart.md) §5. All checkboxes pass: particularly the lazy-index behaviour and the keyboard-only flow.
 
 **Checkpoint**: US5 is independently demoable. Cmd+K works.
 
 ---
 
-## Phase 8: User Story 6 — Theme toggle (Priority: P3)
+## Phase 8: User Story 6: Theme toggle (Priority: P3)
 
 **Goal**: A theme toggle in the Topbar flips between light and dark, persists via cookie, and never produces a flash on the next page load. Defaults to `prefers-color-scheme` when no preference is set.
 
@@ -177,7 +177,7 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 ---
 
-## Phase 9: User Story 7 — Sidebar polish (Priority: P3)
+## Phase 9: User Story 7: Sidebar polish (Priority: P3)
 
 **Goal**: Sidebar items show inline counts; the active item is accent-tinted with a left-edge indicator; the AI footer link shows last-used model and token total when an analysis is cached.
 
@@ -201,11 +201,11 @@ Single Next.js app (per [plan.md](./plan.md) Project Structure):
 
 - [x] T036 Run `pnpm typecheck`. Fix any errors. Green output required.
 
-- [x] T037 Run `pnpm build`. Verify it succeeds. Inspect the Next.js build output for the largest first-paint JS bundle on an authenticated route — confirm it remains ≤ 520 KB gzipped per Constitution Principle I. Record the measurement in the PR description.
+- [x] T037 Run `pnpm build`. Verify it succeeds. Inspect the Next.js build output for the largest first-paint JS bundle on an authenticated route: confirm it remains ≤ 520 KB gzipped per Constitution Principle I. Record the measurement in the PR description.
 
 - [x] T038 Walk the full [quickstart.md](./quickstart.md) checklist top to bottom (sections §1 through §9) on a connection with at least one table per archetype and at least one prior write recorded in the audit log. All checkboxes pass.
 
-- [x] T039 Update `CHANGELOG.md` with a new section for v0.6 — "Product workspace": the Dashboard / Tables list redesign, Content + Logs preset rebuilds, command palette, theme toggle, sidebar polish, the new `/api/v/[id]/audit/recent` route, no schema migration. Reference the spec at `specs/006-product-workspace/`.
+- [x] T039 Update `CHANGELOG.md` with a new section for v0.6: "Product workspace": the Dashboard / Tables list redesign, Content + Logs preset rebuilds, command palette, theme toggle, sidebar polish, the new `/api/v/[id]/audit/recent` route, no schema migration. Reference the spec at `specs/006-product-workspace/`.
 
 - [x] T040 Commit on `006-product-workspace`, then open a PR to `main`. The PR description quotes the success criteria from [spec.md](./spec.md) §"Success Criteria" and the bundle measurement from T037.
 
@@ -263,7 +263,7 @@ Across stories, after Foundational completes, **all seven user-story phases can 
 
 ---
 
-## Parallel example — Phase 2 Foundational
+## Parallel example: Phase 2 Foundational
 
 ```bash
 # Fan out:
@@ -279,7 +279,7 @@ Task: "T005 Wire theme cookie into app/layout.tsx"
 Task: "T008 Create /api/v/[id]/audit/recent route handler"
 ```
 
-## Parallel example — Phase 3 US1 Dashboard
+## Parallel example: Phase 3 US1 Dashboard
 
 ```bash
 # Once Foundational is done:
@@ -302,15 +302,15 @@ Task: "T015 Smoke quickstart §1"
 1. Complete Phase 1 Setup.
 2. Complete Phase 2 Foundational.
 3. Complete Phase 3 US1 Dashboard.
-4. **STOP and validate** — quickstart §1 + §8 (constitution gates) + §9 (regression).
+4. **STOP and validate**: quickstart §1 + §8 (constitution gates) + §9 (regression).
 5. Demo / merge as the MVP. Everything beyond US1 is incremental.
 
 ### Incremental delivery
 
 After MVP, ship in spec priority order:
 
-- US2 Tables list (P1) — completes the "every page uses PageHeader" promise.
-- US3 Content archetype (P1) — completes the "every archetype matches Users" promise.
+- US2 Tables list (P1) · completes the "every page uses PageHeader" promise.
+- US3 Content archetype (P1) · completes the "every archetype matches Users" promise.
 - US4 Logs archetype (P2).
 - US5 Command palette (P2).
 - US6 Theme toggle (P3).
@@ -322,9 +322,9 @@ Each story is independently mergeable. Polish (Phase 10) runs once the last stor
 
 With multiple developers and Foundational complete:
 
-- Dev A: US1 → US3 (the two largest P1s — Dashboard and Content).
+- Dev A: US1 → US3 (the two largest P1s: Dashboard and Content).
 - Dev B: US2 → US4 (Tables list, then Logs).
-- Dev C: US5 → US6 → US7 (palette, theme, sidebar — the smaller surfaces).
+- Dev C: US5 → US6 → US7 (palette, theme, sidebar: the smaller surfaces).
 
 No story integrates with another at the implementation level, so merge-order risk is low.
 
@@ -335,6 +335,6 @@ No story integrates with another at the implementation level, so merge-order ris
 - Total tasks: **40**.
 - Per-story counts: US1=7, US2=2, US3=4, US4=4, US5=3, US6=3, US7=2. Setup=1, Foundational=7, Polish=7.
 - Independent test for every story is the corresponding quickstart section.
-- Suggested MVP scope: **US1 + Foundational + Setup** (15 tasks) — enough to demo the visual leap on the Dashboard.
+- Suggested MVP scope: **US1 + Foundational + Setup** (15 tasks) · enough to demo the visual leap on the Dashboard.
 - Tests are not generated because the project doesn't run automated UI tests; the gate is `tsc --noEmit`, `next build`, and the manual quickstart walk-through (Constitution §"Pre-merge gates" 1, 2, 4).
 - Commits should follow the pattern used in v0.5: small commits per leaf task, conventional commit prefixes (`feat`, `refactor`, `chore`), and a final summary commit closing the spec.

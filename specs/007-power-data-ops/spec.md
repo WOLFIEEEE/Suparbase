@@ -6,11 +6,11 @@
 
 **Status**: Draft
 
-**Input**: User description: "Close the single biggest functional gap left after v0.6: the admin still operates one row at a time. v0.7 introduces bulk select + bulk delete + bulk update, CSV/JSON export and import, inline cell editing, saved views per table, and filter chips driven by column headers — all while every mutation still routes through the existing authenticated proxy and is recorded in the audit log."
+**Input**: User description: "Close the single biggest functional gap left after v0.6: the admin still operates one row at a time. v0.7 introduces bulk select + bulk delete + bulk update, CSV/JSON export and import, inline cell editing, saved views per table, and filter chips driven by column headers: all while every mutation still routes through the existing authenticated proxy and is recorded in the audit log."
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 — Operate on many rows at once (Priority: P1)
+### User Story 1: Operate on many rows at once (Priority: P1)
 
 A user managing a content site reviews 200 posts and decides to archive 30 of them. Today this would mean opening each row's detail page and changing the status one by one. After v0.7 they tick a row checkbox on each one, then in the toolbar that appears, click "Update column" → pick `status` → type `archived` → confirm. The 30 rows update in a single auditable batch with a 5-second undo. They can also bulk-delete a different selection the same way.
 
@@ -29,7 +29,7 @@ A user managing a content site reviews 200 posts and decides to archive 30 of th
 
 ---
 
-### User Story 2 — Export the current view to CSV or JSON (Priority: P1)
+### User Story 2: Export the current view to CSV or JSON (Priority: P1)
 
 A user wants to share a list of users (filtered to `role = admin`) with their compliance team as a spreadsheet. They click "Export → CSV" in the toolbar. A file `users-2026-05-13.csv` downloads with one row per filtered user, columns matching the visible columns, and timestamps formatted as ISO 8601. They could also pick JSON; same shape, machine-readable.
 
@@ -48,9 +48,9 @@ A user wants to share a list of users (filtered to `role = admin`) with their co
 
 ---
 
-### User Story 3 — Bring data in from a CSV or JSON file (Priority: P1)
+### User Story 3: Bring data in from a CSV or JSON file (Priority: P1)
 
-A user with 80 new posts in a CSV (exported from a previous CMS) wants to load them all into Suparbase at once. They open the Import panel, drag the file in, and see a preview of the first 20 rows with their `title`, `body`, `slug`, `published_at` columns auto-mapped to matching table columns. One column — `author_email` — is mapped manually to the `author_id` column with the user picking "Resolve via lookup" and the panel runs a small batch FK lookup. The user chooses "Skip bad rows" for any FK violations, confirms, and watches a progress bar climb to 100%. The summary reports "76 imported, 4 skipped (FK lookup miss)".
+A user with 80 new posts in a CSV (exported from a previous CMS) wants to load them all into Suparbase at once. They open the Import panel, drag the file in, and see a preview of the first 20 rows with their `title`, `body`, `slug`, `published_at` columns auto-mapped to matching table columns. One column: `author_email`: is mapped manually to the `author_id` column with the user picking "Resolve via lookup" and the panel runs a small batch FK lookup. The user chooses "Skip bad rows" for any FK violations, confirms, and watches a progress bar climb to 100%. The summary reports "76 imported, 4 skipped (FK lookup miss)".
 
 **Why this priority**: the inverse of export, and the difference between "this is a viewer" and "this is an admin tool". P1.
 
@@ -59,7 +59,7 @@ A user with 80 new posts in a CSV (exported from a previous CMS) wants to load t
 **Acceptance Scenarios**:
 
 1. **Given** the import panel is open, **When** I drag a 100-row CSV into it, **Then** within 1 second I see a preview of the first 20 rows with column mappings inferred by case-insensitive name match.
-2. **Given** an unmapped column in the CSV, **When** I click the column header in the preview, **Then** a select lets me map it to any column of the target table — or to "Ignore".
+2. **Given** an unmapped column in the CSV, **When** I click the column header in the preview, **Then** a select lets me map it to any column of the target table: or to "Ignore".
 3. **Given** a column mapping where the CSV value cannot be coerced to the target column type (e.g. text in a numeric column), **When** I look at the preview, **Then** that cell is marked with a red dot and the row is flagged as "type error".
 4. **Given** a row references an FK by a label (e.g. `author_email`), **When** I map it as "Resolve via lookup" and pick the lookup column, **Then** the import resolves the label to the FK id at insert time, in batches of ≤500.
 5. **Given** I click Import with "Skip bad rows" selected, **When** the import runs, **Then** valid rows are inserted in chunks, progress is reported as `imported / total`, and at the end a summary lists the count of skipped rows with their errors.
@@ -68,7 +68,7 @@ A user with 80 new posts in a CSV (exported from a previous CMS) wants to load t
 
 ---
 
-### User Story 4 — Edit a cell without opening a modal (Priority: P2)
+### User Story 4: Edit a cell without opening a modal (Priority: P2)
 
 A user spots a typo in the `title` column of a row in the generic data grid. They click the cell once to focus it, double-click (or press Enter) to start editing, type the correction, and press Enter to commit. The cell flashes accent-green for ~400ms to confirm. They Tab to the next editable cell and keep going. No modal.
 
@@ -89,7 +89,7 @@ A user spots a typo in the `title` column of a row in the generic data grid. The
 
 ---
 
-### User Story 5 — Save and switch named views per table (Priority: P2)
+### User Story 5: Save and switch named views per table (Priority: P2)
 
 A user maintaining a `posts` table frequently filters to "status = published" sorted by `published_at desc`. They build the filter once, click "Save view" → name it "Published latest" → submit. The view appears as a tab on the page header. Next time they open the table they click that tab and the filter + sort apply instantly. They share the URL with a colleague; the colleague opens it and sees the same data.
 
@@ -104,11 +104,11 @@ A user maintaining a `posts` table frequently filters to "status = published" so
 3. **Given** I'm on a custom view, **When** I edit the filter (e.g. remove a chip), **Then** the tab shows an unsaved-indicator dot; clicking "Update view" persists; clicking "Discard" reverts.
 4. **Given** I have a "Drafts" view, **When** I right-click (or click "⋯") on the tab, **Then** I can rename or delete it; the default "All" tab cannot be deleted.
 5. **Given** I have created 5 custom views on a table, **When** I try to create a sixth, **Then** the "Save view" button is disabled with an explanatory tooltip; the user must delete an existing view to make room.
-6. **Given** a second user signs into the same app, **When** they open the same table, **Then** they see only their own views and the default "All" — not the first user's views.
+6. **Given** a second user signs into the same app, **When** they open the same table, **Then** they see only their own views and the default "All": not the first user's views.
 
 ---
 
-### User Story 6 — Filter without writing PostgREST (Priority: P2)
+### User Story 6: Filter without writing PostgREST (Priority: P2)
 
 A user on a `users` table wants to find admins with `email` containing `acme.com` who signed in in the last 30 days. They click the `role` column header → choose `=` → type `admin` → a chip appears. They click `email` → `contains` → type `acme.com` → another chip. They click `last_sign_in_at` → `>=` → date picker → a third chip. Results narrow with each chip. They share the URL; the colleague gets the same view.
 
@@ -121,7 +121,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 1. **Given** a list view, **When** I click a column header, **Then** a popover offers operators appropriate to the column type (`=`, `≠`, `contains`, `starts with`, `is null`, `is not null`, `in`, `>`, `<`, `>=`, `<=`).
 2. **Given** the popover, **When** I pick `=` and type a value, **Then** a chip `column = value` appears in the toolbar, the list filters, and the URL gains `&filter=column.eq.value`.
 3. **Given** two chips, **When** I look at the list, **Then** results match BOTH conditions (AND); there is no OR builder in v0.7.
-4. **Given** an `is null` chip, **When** I look at the list, **Then** the input is hidden — no value is needed.
+4. **Given** an `is null` chip, **When** I look at the list, **Then** the input is hidden: no value is needed.
 5. **Given** an `in` chip, **When** I enter a comma-separated list, **Then** the chip renders as `column in (a, b, c)` and the URL encodes the same.
 6. **Given** I click `×` on a chip, **When** the chip is removed, **Then** the list re-fetches without that condition and the URL no longer carries it.
 
@@ -130,9 +130,9 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 ### Edge Cases
 
 - A user selects 5 rows then changes the filter, hiding some selected rows. The selection persists; the BulkBar still shows "5 selected" but only the visible matching rows are highlighted. Clicking "Clear" wipes the selection.
-- A user selects 5 rows then refreshes the page. Selection is per-session and does not persist across reloads — the BulkBar disappears on reload.
+- A user selects 5 rows then refreshes the page. Selection is per-session and does not persist across reloads · the BulkBar disappears on reload.
 - An export takes longer than 60s. The proxy continues to stream; the browser shows a progress indicator; the user can cancel. Cancelling does not destroy what's already been saved by the browser.
-- An import file is larger than 50 MB. The import panel rejects the file with copy "files over 50 MB must be split — try `split -l 5000 file.csv`".
+- An import file is larger than 50 MB. The import panel rejects the file with copy "files over 50 MB must be split · try `split -l 5000 file.csv`".
 - An import row references an FK with a duplicate label (the lookup returns multiple matches). The row is flagged as "ambiguous"; the user must edit the cell manually or pick "Skip ambiguous".
 - An inline cell edit triggers a server-side check that takes >2s. The cell shows a small spinner; the editor remains focused; the user can Escape to abort.
 - A saved view references a column that has since been dropped from the table. The view is marked with an exclamation-mark icon and prompts the user to either delete it or open it for editing.
@@ -158,7 +158,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 **Export (FR-X01–FR-X06)**
 
 - **FR-X01**: An Export button MUST appear in the toolbar of every list view and offer CSV and JSON variants.
-- **FR-X02**: The export MUST honour the current filters, sort, and search; only rows that match the current view are exported. **Exception**: when the export is invoked from the BulkBar's "Export selected" button, the export targets the selected primary keys exactly and ignores other filters, sort, and search — the user has already curated the row set by hand.
+- **FR-X02**: The export MUST honour the current filters, sort, and search; only rows that match the current view are exported. **Exception**: when the export is invoked from the BulkBar's "Export selected" button, the export targets the selected primary keys exactly and ignores other filters, sort, and search: the user has already curated the row set by hand.
 - **FR-X03**: The export MUST exclude columns marked `hiddenColumns` in the analysis by default; a checkbox in the export menu re-includes them.
 - **FR-X04**: The export filename MUST be `{table}-{YYYY-MM-DD}.{ext}`; the timestamp uses the user's local date.
 - **FR-X05**: Exports of tables larger than 1000 rows MUST stream from the server; the browser writes rows as they arrive. The UI thread MUST remain responsive.
@@ -170,7 +170,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 - **FR-I02**: The panel MUST accept CSV (via drag, file picker, or paste) and JSON (via paste); the first 20 rows MUST appear as a preview within 1 second of file selection.
 - **FR-I03**: Column mappings MUST be inferred by case-insensitive name match between source headers and target table columns; the user can manually remap any column or set it to "Ignore".
 - **FR-I04**: Type validation MUST run client-side before submission; cells that cannot be coerced to the target column's type MUST be visibly flagged in the preview.
-- **FR-I05**: FK columns MUST support "Resolve via lookup" — the user picks which source column carries the label, and the import resolves to the FK id in batches of ≤500 lookups per round-trip before insertion.
+- **FR-I05**: FK columns MUST support "Resolve via lookup": the user picks which source column carries the label, and the import resolves to the FK id in batches of ≤500 lookups per round-trip before insertion.
 - **FR-I06**: Users MUST be able to choose between "Commit whole batch (all-or-nothing)" and "Skip bad rows" for handling validation/insert failures.
 - **FR-I07**: Inserts MUST go through the existing proxy in chunks of ≤500 rows per round-trip; progress MUST be reported live as `imported / total`; at the end a summary lists skipped rows with their errors.
 - **FR-I08**: Files larger than 50 MB MUST be rejected at the panel with explanatory copy.
@@ -182,7 +182,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 - **FR-E03**: Pressing Enter MUST commit the value; pressing Escape MUST revert and close the editor; the existing `useUpdateRow` hook handles the network call.
 - **FR-E04**: A successful commit MUST briefly pulse the cell accent-green (~400ms) and exit edit mode. A failure MUST pulse red, revert the value, and surface the error as a toast.
 - **FR-E05**: Tab MUST move focus to the next editable cell in the same row; Shift+Tab MUST move to the previous. Arrow keys MUST move between cells within the same row when not in edit mode.
-- **FR-E06**: Generated columns, primary-key columns, and columns explicitly listed in `analysis.hiddenColumns` MUST be read-only — single-clicking them MUST NOT engage edit mode.
+- **FR-E06**: Generated columns, primary-key columns, and columns explicitly listed in `analysis.hiddenColumns` MUST be read-only: single-clicking them MUST NOT engage edit mode.
 - **FR-E07**: For read-only tables (`kind === "view"`), no cells engage edit mode regardless of column flags.
 
 **Saved views (FR-V01–FR-V07)**
@@ -197,7 +197,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 
 **Filter chips (FR-F01–FR-F05)**
 
-- **FR-F01**: Clicking any column header MUST open a popover offering operators appropriate to the column type (`=`, `≠`, `contains`, `starts with`, `is null`, `is not null`, `in`, `>`, `<`, `>=`, `<=` — subset by type).
+- **FR-F01**: Clicking any column header MUST open a popover offering operators appropriate to the column type (`=`, `≠`, `contains`, `starts with`, `is null`, `is not null`, `in`, `>`, `<`, `>=`, `<=`: subset by type).
 - **FR-F02**: Submitting a filter MUST add a chip to the toolbar reading `column op value` and update the URL with a canonical `filter` query parameter.
 - **FR-F03**: Multiple chips MUST combine with AND; an OR builder is explicitly out of scope for v0.7.
 - **FR-F04**: Removing a chip MUST update both the list and the URL atomically.
@@ -212,7 +212,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 
 ### Key Entities *(include if feature involves data)*
 
-- **SavedView** (new): a per-user, per-connection, per-table named filter+sort+visibility snapshot. Fields: `id`, `userId`, `connectionId`, `tableSchema`, `tableName`, `name`, `state` (JSONB — search, sort, filters, hiddenColumns overrides), `createdAt`, `updatedAt`. Indexed by `(userId, connectionId, tableSchema, tableName)`.
+- **SavedView** (new): a per-user, per-connection, per-table named filter+sort+visibility snapshot. Fields: `id`, `userId`, `connectionId`, `tableSchema`, `tableName`, `name`, `state` (JSONB: search, sort, filters, hiddenColumns overrides), `createdAt`, `updatedAt`. Indexed by `(userId, connectionId, tableSchema, tableName)`.
 - **AuditLog** (existing, unchanged): a bulk operation produces one row per affected primary key, identical in shape to a single-row mutation. The `verb` column distinguishes `insert | update | delete`.
 - **TableAnalysis** (existing, unchanged): `hiddenColumns` is read by Export (excludes them by default) and Inline editing (marks them read-only).
 
@@ -228,7 +228,7 @@ A user on a `users` table wants to find admins with `email` containing `acme.com
 - **SC-006**: All new interactive UI passes a keyboard-only walkthrough of every acceptance scenario; no scenario requires a mouse.
 - **SC-007**: The largest authenticated first-paint JS bundle remains ≤ 520 KB gzipped after v0.7 lands (Constitution Principle I).
 - **SC-008**: No new dependencies are added; CSV parsing and JSON validation use existing project capabilities.
-- **SC-009**: A bulk delete that fails mid-flight (network drop) leaves the audit log consistent with the database — no orphan audit rows for un-deleted entries, no missing audit rows for deleted entries.
+- **SC-009**: A bulk delete that fails mid-flight (network drop) leaves the audit log consistent with the database: no orphan audit rows for un-deleted entries, no missing audit rows for deleted entries.
 - **SC-010**: A user creating their sixth custom view on a table sees a clear "limit reached" message; no silent failure.
 
 ## Assumptions

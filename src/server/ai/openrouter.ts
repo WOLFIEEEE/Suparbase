@@ -70,7 +70,7 @@ interface ModelsResponse {
 }
 
 /**
- * Pull the OpenRouter model catalogue. The endpoint is public — auth is
+ * Pull the OpenRouter model catalogue. The endpoint is public: auth is
  * optional and only used to bias the response toward what the user's key
  * can call. Throws OpenRouterError on transport / parse failures.
  */

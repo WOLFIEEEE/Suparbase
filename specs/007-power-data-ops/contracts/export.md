@@ -1,4 +1,4 @@
-# Contract — `GET /api/v/[id]/rest/[name]/export`
+# Contract: `GET /api/v/[id]/rest/[name]/export`
 
 Streams the current filtered list view to the browser as CSV or JSON.
 
@@ -15,9 +15,9 @@ GET /api/v/{connectionId}/rest/{tableName}/export
 | `format` | `"csv" \| "json"` | `"csv"` | Output format. |
 | `columns` | `string` | (visible columns minus AI-hidden) | Comma-separated list of column names to include. Server respects this verbatim. |
 | `includeHidden` | `"0" \| "1"` | `"0"` | If `"1"`, AI-hidden columns are included in the default visible set. |
-| `filter` | `string` (repeated) | — | PostgREST-style filter, one per filter chip. Same syntax as the list view. |
+| `filter` | `string` (repeated) |: | PostgREST-style filter, one per filter chip. Same syntax as the list view. |
 | `order` | `string` | (table PK ascending) | PostgREST `order` value, e.g. `created_at.desc`. |
-| `q` | `string` | — | The list view's text search term; expanded server-side into an `or(...)` ilike filter as in the existing list path. |
+| `q` | `string` |: | The list view's text search term; expanded server-side into an `or(...)` ilike filter as in the existing list path. |
 | `limit` | integer | `100000` (hard cap) | Refuses to export more than the cap; client suggests "apply more filters". |
 
 ## Auth + ownership + rate limit
@@ -44,7 +44,7 @@ Datetimes serialize as ISO 8601 UTC; JSONB columns serialize as their
 parsed JSON value inside a quoted CSV field; bytea is base64-encoded.
 Server-side: pages are fetched from PostgREST in chunks of 1000 rows
 using the `Range` header; each chunk is encoded and pushed to the
-response stream immediately — never buffered in full.
+response stream immediately: never buffered in full.
 
 ### JSON
 
@@ -79,7 +79,7 @@ browser per Constitution Principle VI safety).
 The handler observes `req.signal`. When the user closes the tab or
 clicks "Cancel" in a future progress UI, the upstream PostgREST request
 is aborted on the next chunk boundary. No locking on the user's
-database — the only resource is the open HTTP connection.
+database: the only resource is the open HTTP connection.
 
 ## Client integration
 
@@ -94,5 +94,5 @@ sets the `download` attribute. No JS-side streaming code on the client.
 - Server-side caching (each request streams fresh).
 - Compressed downloads (the browser negotiates gzip with the Next.js
   server; we don't manually zip).
-- Multi-table joins (single table only — joins live in the v0.8 SQL
+- Multi-table joins (single table only · joins live in the v0.8 SQL
   editor surface).

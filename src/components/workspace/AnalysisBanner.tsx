@@ -31,7 +31,7 @@ export function AnalysisBanner() {
   const hasKey = !!settings?.hasKey;
 
   if (result && result.source === "ai") {
-    // Subtle existing badge — no banner needed.
+    // Subtle existing badge: no banner needed.
     return null;
   }
 

@@ -1,4 +1,4 @@
-# Contract — Preset framework
+# Contract: Preset framework
 
 ## Preset id
 

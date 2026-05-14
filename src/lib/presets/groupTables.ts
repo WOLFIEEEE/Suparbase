@@ -10,7 +10,7 @@ export interface ArchetypeGroups {
   tasks: Table[];
   messages: Table[];
   generic: Table[];
-  /** Tables in the `auth` or `storage` schemas — hidden by default behind a disclosure. */
+  /** Tables in the `auth` or `storage` schemas: hidden by default behind a disclosure. */
   system: Table[];
 }
 

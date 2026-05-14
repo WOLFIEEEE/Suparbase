@@ -1,7 +1,7 @@
 # Contributing to Suparbase
 
 Thanks for taking the time. Suparbase is an opinionated open-source admin
-tool for Supabase projects — the bar for contributions is real but the
+tool for Supabase projects: the bar for contributions is real but the
 scope is small enough that a focused PR can ship quickly.
 
 ## What to know before you start
@@ -11,11 +11,11 @@ scope is small enough that a focused PR can ship quickly.
   server/client boundary, the credential vault rules, and the
   accessibility floor. Every PR is reviewed against it.
 - **The product is spec-first.** Significant features begin with a
-  Spec-Kit cycle under [`specs/`](specs/) — `spec.md`, `plan.md`,
+  Spec-Kit cycle under [`specs/`](specs/): `spec.md`, `plan.md`,
   `tasks.md`. Small fixes and polish don't need that ceremony.
 - **The stack is fixed.** Next.js 15 App Router, NextAuth v5, Drizzle ORM,
   Tailwind 3, Radix primitives, `@tanstack/react-query`, `cmdk`. New
-  dependencies need justification — see the constitution's
+  dependencies need justification: see the constitution's
   "Forbidden without justification" list.
 
 ## How to find something to work on
@@ -26,11 +26,11 @@ under each release's "deferred" notes, and in the most recent
 [`specs/`](specs/) folder under "Out of scope". Concretely, the
 biggest open buckets right now are:
 
-- **Power-user data ops** — bulk actions, CSV import/export, inline cell
+- **Power-user data ops**: bulk actions, CSV import/export, inline cell
   editing, saved filters/views per table.
-- **Postgres-native parity** — SQL editor (read-only first), RLS policy
+- **Postgres-native parity**: SQL editor (read-only first), RLS policy
   viewer, `auth.users` dedicated admin, Supabase Storage browser.
-- **Operability** — email verification, password reset, audit-log UI
+- **Operability**: email verification, password reset, audit-log UI
   page, 2FA / passkeys, structured logs.
 
 ## Local development
@@ -53,12 +53,12 @@ pnpm dev          # → http://localhost:3000
 
 Every PR must pass these before review:
 
-1. **`pnpm typecheck`** — `tsc --noEmit` returns clean. CI enforces this.
-2. **`pnpm build`** — `next build` succeeds. CI enforces this. The
+1. **`pnpm typecheck`**: `tsc --noEmit` returns clean. CI enforces this.
+2. **`pnpm build`**: `next build` succeeds. CI enforces this. The
    constitution caps total JS at first paint of any authenticated route
    at 520 KB gzipped; check the `Route` table in the build output if
    you're touching bundle-sensitive code.
-3. **Manual smoke** — for UI changes, walk the path you touched: sign
+3. **Manual smoke**: for UI changes, walk the path you touched: sign
    in → create a connection → browse a table → edit a row → sign out.
    For spec-kit features, walk the spec's `quickstart.md` checklist.
 4. **No `console.*` calls in shipped paths.** `rg "console\.(log|warn|error)" src/`
@@ -75,7 +75,7 @@ Every PR must pass these before review:
 - **Server-only files** must `import "server-only";` at the top.
   Client components must start with `"use client";`.
 - **Spec-kit features ship with their artifacts.** If you start a
-  spec, finish it — `spec.md` + `plan.md` + `tasks.md` minimum.
+  spec, finish it: `spec.md` + `plan.md` + `tasks.md` minimum.
 - **Commits** follow the loose `feat:` / `fix:` / `chore:` / `refactor:`
   prefix style. Bodies explain *why*, not *what*.
 
@@ -88,7 +88,7 @@ For anything bigger than a one-line fix:
 2. **If accepted**, run `/speckit-specify` against the constitution.
    That produces `specs/NNN-your-feature/spec.md`.
 3. **Iterate**: `/speckit-plan` → `/speckit-tasks` → `/speckit-analyze`
-   → `/speckit-implement`. This isn't bureaucracy — each step catches
+   → `/speckit-implement`. This isn't bureaucracy: each step catches
    issues earlier than implementation would.
 
 For small fixes (typo, minor bug, polish): just open a PR with a

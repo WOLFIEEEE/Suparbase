@@ -9,13 +9,13 @@ any write is committed.
 Three new tools added to the agent loop. None of them execute writes;
 they only build a proposal payload.
 
-- `propose_update({table_name, summary, filters, patch})` —
+- `propose_update({table_name, summary, filters, patch})` :
   pre-validates the patch column names, then fetches up to 5 affected
   rows via PostgREST SELECT (with `count=exact`) so the UI can show a
   before/after diff and the affected-row count.
-- `propose_insert({table_name, summary, values})` —
+- `propose_insert({table_name, summary, values})` :
   validates column names against the schema.
-- `propose_delete({table_name, summary, filters})` —
+- `propose_delete({table_name, summary, filters})` :
   pre-fetches the affected rows preview.
 
 The tool result is a `{kind: "proposed_*", ...}` object that the
@@ -45,7 +45,7 @@ the shape via `toProposal()` and renders a ProposalCard inline.
 - Errors render inline with an AlertTriangle and the server message.
 
 ## Safety
-- The agent CANNOT directly write to PostgREST — the chat tool surface
+- The agent CANNOT directly write to PostgREST · the chat tool surface
   has no INSERT/PATCH/DELETE primitive. Only the propose_* tools exist,
   and they always return proposals.
 - Apply uses the existing write-rate-limit bucket.

@@ -31,7 +31,7 @@ function buildBaseQuery(args: ExportArgs): URLSearchParams {
   q.set("select", args.columns.length > 0 ? args.columns.join(",") : "*");
 
   if (args.pkColumn && args.pkValues && args.pkValues.length > 0) {
-    // Export-Selected mode — ignore other filters (per FR-X02 exception).
+    // Export-Selected mode: ignore other filters (per FR-X02 exception).
     const escaped = args.pkValues
       .map((v) => (/[,()."]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v))
       .join(",");

@@ -29,7 +29,7 @@ import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 
 // ---------------------------------------------------------------------------
-// Event types — must mirror src/server/ai/chat.ts ChatEvent
+// Event types: must mirror src/server/ai/chat.ts ChatEvent
 // ---------------------------------------------------------------------------
 
 type Phase = "thinking" | "tool_running" | "answering";
@@ -308,7 +308,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           appliedCount: applied,
         });
         toast.success(
-          `Applied to ${entry.proposal.table} — ${applied} row${applied === 1 ? "" : "s"}.`,
+          `Applied to ${entry.proposal.table}: ${applied} row${applied === 1 ? "" : "s"}.`,
         );
         // Invalidate cached row/list/count queries for the touched table.
         qc.invalidateQueries({
@@ -955,7 +955,7 @@ function ProposalCard({
               Discard
             </Button>
             <span className="basis-full text-[10px] text-fg-faint sm:ml-auto sm:basis-auto">
-              Read-only by default — runs only on Apply.
+              Read-only by default: runs only on Apply.
             </span>
           </>
         )}

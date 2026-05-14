@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     );
   }
 
-  // Quote-safe — table name validated against schema introspection? For
+  // Quote-safe: table name validated against schema introspection? For
   // v1 we treat it as an identifier and quote it. We also gate the actual
   // SQL execution inside withRlsSimulation which always rolls back.
   const ident = `"${body.table.replace(/"/g, '""')}"`;
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, ctx: Params) {
       async (tx) => {
         const out: VerbResult[] = [];
 
-        // SELECT — count visible rows.
+        // SELECT: count visible rows.
         try {
           const r = await tx.unsafe<{ n: number }[]>(
             `SELECT count(*)::int AS n FROM public.${ident}`,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest, ctx: Params) {
           });
         }
 
-        // INSERT — try a no-op default-only insert. Rolled back regardless.
+        // INSERT: try a no-op default-only insert. Rolled back regardless.
         try {
           await tx.unsafe(`INSERT INTO public.${ident} DEFAULT VALUES`);
           out.push({ verb: "INSERT", allowed: true });
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest, ctx: Params) {
           });
         }
 
-        // UPDATE — touch every row with `SET <pk>=<pk>` to test visibility.
+        // UPDATE: touch every row with `SET <pk>=<pk>` to test visibility.
         try {
           const pkRows = await tx.unsafe<{ a: string }[]>(
             `SELECT a.attname AS a FROM pg_index i
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest, ctx: Params) {
             out.push({
               verb: "UPDATE",
               allowed: false,
-              message: "no primary key — skipped.",
+              message: "no primary key: skipped.",
             });
           } else {
             const pk = `"${pkRows[0]!.a.replace(/"/g, '""')}"`;
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, ctx: Params) {
           });
         }
 
-        // DELETE — try DELETE WHERE FALSE so it touches no rows but still
+        // DELETE: try DELETE WHERE FALSE so it touches no rows but still
         // exercises the policy at planning time.
         try {
           await tx.unsafe(`DELETE FROM public.${ident} WHERE FALSE`);

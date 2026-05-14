@@ -14,7 +14,7 @@ export default function NewConnectionPage() {
         subtitle={
           <span className="text-sm text-fg-muted">
             Paste the project URL + API key from your Supabase dashboard.
-            We encrypt the key with AES-256-GCM before the row is committed —
+            We encrypt the key with AES-256-GCM before the row is committed :
             it never reaches a browser after this form.
           </span>
         }

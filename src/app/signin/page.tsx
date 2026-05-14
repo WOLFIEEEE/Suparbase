@@ -25,7 +25,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     <AuthShell
       eyebrow="Welcome back"
       title="Sign in"
-      subtitle="Pick up where you left off — your saved connections and AI history are waiting."
+      subtitle="Pick up where you left off: your saved connections and AI history are waiting."
       footnote="By signing in you agree to a basic operator-side audit log of writes performed through your connections."
     >
       <SignInForm githubEnabled={isGithubEnabled()} error={mapError(error)} />

@@ -75,7 +75,7 @@ export function ViewTabs({ connectionId, tableSchema, tableName }: Props) {
 
   function applyView(view: SavedView | null) {
     const next = new URLSearchParams();
-    // Preserve non-stateful params (e.g., page=1, size=…) is intentional NO —
+    // Preserve non-stateful params (e.g., page=1, size=…) is intentional NO :
     // when a view applies, every state slot is reset to the view's snapshot.
     next.set("page", "1");
     if (view) {

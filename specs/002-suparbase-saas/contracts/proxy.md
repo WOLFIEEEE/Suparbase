@@ -1,10 +1,10 @@
-# Contract — PostgREST Proxy
+# Contract: PostgREST Proxy
 
 ## Route
 
 `/api/v/[connectionId]/rest/[...path]/route.ts` exports `GET`, `POST`,
 `PATCH`, `PUT`, `DELETE`, and `HEAD` handlers. Each is identical except
-for the verb — implemented via a single `proxyHandler(method, req,
+for the verb: implemented via a single `proxyHandler(method, req,
 ctx)` helper.
 
 ## Behavior
@@ -23,7 +23,7 @@ ctx)` helper.
    - Allowed inbound headers (pass-through): `Range`, `Prefer`,
      `Content-Type`, `Content-Range`, `Accept`.
    - Strip: `Authorization`, `Cookie`, `apikey`, all `X-*` except
-     `X-Forwarded-For` (we drop that too — Supabase doesn't need our
+     `X-Forwarded-For` (we drop that too: Supabase doesn't need our
      internal IPs).
    - Inject: `apikey: <plaintext>`, `Authorization: Bearer <plaintext>`,
      `X-Client-Info: suparbase-saas/0.2`.

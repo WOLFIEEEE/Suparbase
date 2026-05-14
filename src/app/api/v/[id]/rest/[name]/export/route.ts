@@ -73,7 +73,7 @@ export async function GET(req: NextRequest, ctx: Params) {
   }
 
   // Resolve columns: explicit query > default visible (analysis-aware ideally,
-  // but we don't have analysis here — the client passes it via `columns`).
+  // but we don't have analysis here: the client passes it via `columns`).
   const columnsParam = url.searchParams.get("columns");
   const columns = columnsParam
     ? columnsParam.split(",").map((s) => s.trim()).filter(Boolean)
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest, ctx: Params) {
 
   const filters: Array<{ column: string; value: string }> = [];
   for (const raw of url.searchParams.getAll("filter")) {
-    // raw shape `col.op.value` — split by the first two dots, value may contain dots.
+    // raw shape `col.op.value`: split by the first two dots, value may contain dots.
     const firstDot = raw.indexOf(".");
     if (firstDot <= 0) continue;
     const col = raw.slice(0, firstDot);

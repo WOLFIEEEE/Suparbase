@@ -76,7 +76,7 @@ interface Args {
 export async function executeProposal({ userId, conn, proposal }: Args): Promise<ExecuteResult> {
   const limit = checkWriteRate(userId);
   if (!limit.allowed) {
-    throw new ProposalExecutionError("rate_limited", "Too many writes — try again shortly.", 429);
+    throw new ProposalExecutionError("rate_limited", "Too many writes: try again shortly.", 429);
   }
 
   if (!proposal.table || typeof proposal.table !== "string") {

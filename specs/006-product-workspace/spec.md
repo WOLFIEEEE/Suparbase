@@ -10,7 +10,7 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 — Land on a Dashboard that explains the project, not the schema (Priority: P1)
+### User Story 1: Land on a Dashboard that explains the project, not the schema (Priority: P1)
 
 A user signs into Suparbase and opens one of their saved connections. Instead of a flat grid of "12 tables, 3 views" they land on a Dashboard that tells them what this project IS: how many people are in their audience, how much content they have, how much activity has happened recently, and 3–4 things they can do right now.
 
@@ -21,14 +21,14 @@ A user signs into Suparbase and opens one of their saved connections. Instead of
 **Acceptance Scenarios**:
 
 1. **Given** I have a connection with users, posts, and an audit-log-style events table, **When** I open the connection home, **Then** the page header shows the connection's friendly name (not the hostname) as the title, the hostname appears as a muted subtitle, and a single accent dot indicates connection health.
-2. **Given** the same connection, **When** I scan the page, **Then** I see a stat strip with: total people in the users-classified table, total items in the content-classified table, total events in the last 7 days from the logs-classified table, and a count of all other tables — each tile labeled in plain English (e.g. "Audience", "Library", "Activity (7d)", "Other tables").
+2. **Given** the same connection, **When** I scan the page, **Then** I see a stat strip with: total people in the users-classified table, total items in the content-classified table, total events in the last 7 days from the logs-classified table, and a count of all other tables: each tile labeled in plain English (e.g. "Audience", "Library", "Activity (7d)", "Other tables").
 3. **Given** I have audit-log entries for this connection, **When** I scroll the Dashboard, **Then** a "Recent activity" panel shows up to 10 entries with verb, table, time-ago, and a link to the affected row.
 4. **Given** I have no audit-log entries yet, **When** I scroll the Dashboard, **Then** the panel renders an empty state with copy explaining audit logging will populate once I edit rows.
 5. **Given** the Dashboard, **When** I look at the actions area, **Then** I see 3–4 quick-action buttons: at least "Invite user" (linking to the users-classified table's new-row route when one exists) and "Open settings"; AI-related actions appear only when an OpenRouter key is configured.
 
 ---
 
-### User Story 2 — Browse tables grouped by what they're for, not alphabetically (Priority: P1)
+### User Story 2: Browse tables grouped by what they're for, not alphabetically (Priority: P1)
 
 A user clicks the "Tables" sidebar item. Instead of an alphabetical grid of tiles, they see their tables grouped by archetype with friendly section titles, internal/system tables hidden behind a disclosure, and a search that filters across all groups.
 
@@ -45,9 +45,9 @@ A user clicks the "Tables" sidebar item. Instead of an alphabetical grid of tile
 
 ---
 
-### User Story 3 — Content tables feel like a CMS, not a styled grid (Priority: P1)
+### User Story 3: Content tables feel like a CMS, not a styled grid (Priority: P1)
 
-A user opens a content-classified table (posts, articles, docs). They see a CMS-style list — title prominent, status pill, author, published-at — and clicking a row opens a real article detail page with a title hero, the body rendered, and a relations sidebar. The drawer is gone.
+A user opens a content-classified table (posts, articles, docs). They see a CMS-style list: title prominent, status pill, author, published-at: and clicking a row opens a real article detail page with a title hero, the body rendered, and a relations sidebar. The drawer is gone.
 
 **Why this priority**: content is one of the two most-common archetypes (the other being users). Without this, the visual coherence claim isn't true. P1.
 
@@ -62,11 +62,11 @@ A user opens a content-classified table (posts, articles, docs). They see a CMS-
 
 ---
 
-### User Story 4 — Log tables feel like an activity stream, not a grid (Priority: P2)
+### User Story 4: Log tables feel like an activity stream, not a grid (Priority: P2)
 
-A user opens a logs-classified table (events, audit, webhooks). They see a time-bucketed event stream — "Today / Yesterday / Earlier this week" — with each event rendered as a row card showing verb, actor, and a payload preview.
+A user opens a logs-classified table (events, audit, webhooks). They see a time-bucketed event stream: "Today / Yesterday / Earlier this week": with each event rendered as a row card showing verb, actor, and a payload preview.
 
-**Why this priority**: logs are the third most-common archetype. Visually crucial because logs in a raw grid are the *worst* — long jsonb payloads make the page unreadable. P2.
+**Why this priority**: logs are the third most-common archetype. Visually crucial because logs in a raw grid are the *worst*: long jsonb payloads make the page unreadable. P2.
 
 **Independent Test**: open a logs-classified table that has at least 20 rows spanning multiple days; verify rows are grouped by day with a sticky day header, jsonb payloads are collapsed to a one-line summary by default with a click-to-expand, and the page header matches the Users archetype.
 
@@ -79,7 +79,7 @@ A user opens a logs-classified table (events, audit, webhooks). They see a time-
 
 ---
 
-### User Story 5 — Jump to anything with the keyboard (Priority: P2)
+### User Story 5: Jump to anything with the keyboard (Priority: P2)
 
 A user presses Cmd/Ctrl+K from anywhere in the workspace. A command palette opens showing a search field and a list of jumpable destinations: their other connections, tables (with AI display names), a few global actions, and settings pages. Typing filters the list; Enter navigates.
 
@@ -97,24 +97,24 @@ A user presses Cmd/Ctrl+K from anywhere in the workspace. A command palette open
 
 ---
 
-### User Story 6 — Choose dark or light without a flash on next visit (Priority: P3)
+### User Story 6: Choose dark or light without a flash on next visit (Priority: P3)
 
-A user clicks a theme toggle in the Topbar. The workspace switches between dark and light. On the next page load — and on any subsequent visit — the chosen theme is applied during initial paint, not after hydration.
+A user clicks a theme toggle in the Topbar. The workspace switches between dark and light. On the next page load: and on any subsequent visit: the chosen theme is applied during initial paint, not after hydration.
 
 **Why this priority**: visible polish, but smaller audience impact than the structural redesigns. P3.
 
-**Independent Test**: toggle the theme, navigate to a different route, reload — verify no flash of the previous theme; verify the toggle is keyboard-operable and announces its pressed state.
+**Independent Test**: toggle the theme, navigate to a different route, reload: verify no flash of the previous theme; verify the toggle is keyboard-operable and announces its pressed state.
 
 **Acceptance Scenarios**:
 
 1. **Given** I'm in dark mode, **When** I click the theme toggle, **Then** the workspace switches to light mode and the toggle's icon/label updates.
-2. **Given** I have switched to light, **When** I reload the page, **Then** the page paints in light immediately — no dark flash, no theme flicker.
+2. **Given** I have switched to light, **When** I reload the page, **Then** the page paints in light immediately: no dark flash, no theme flicker.
 3. **Given** the theme toggle, **When** I focus it with the keyboard, **Then** it has a visible focus ring and announces its current state ("dark, toggle to light" or equivalent) to a screen reader.
 4. **Given** I have not chosen a theme, **When** I first visit the workspace, **Then** the theme defaults to the system preference (prefers-color-scheme).
 
 ---
 
-### User Story 7 — Sidebar reflects what the AI has learned (Priority: P3)
+### User Story 7: Sidebar reflects what the AI has learned (Priority: P3)
 
 A user looks at the sidebar. The static "Tables" / "Schema" / "Settings" items remain, but the workspace nav now shows small inline counts and the active item is accent-tinted. The "AI assistance" footer link grows a tiny subtitle showing model + last token usage when an analysis exists.
 
@@ -189,7 +189,7 @@ A user looks at the sidebar. The static "Tables" / "Schema" / "Settings" items r
 - **FR-P01**: A command palette MUST open from anywhere in the workspace via Cmd+K (macOS) or Ctrl+K (other platforms).
 - **FR-P02**: The palette MUST index, at minimum: the user's connections, the active connection's tables (with AI display names), the global settings pages, and a small action set ("Open settings", "Run AI analysis" when applicable, "Sign out", "Toggle theme").
 - **FR-P03**: The palette MUST display results in labelled groups and MUST be fully keyboard-operable (arrow keys, Enter to select, Escape to close); the focus trap MUST be correct.
-- **FR-P04**: The palette MUST lazy-load its index — opening the palette MUST NOT block on data fetches; results MUST stream in.
+- **FR-P04**: The palette MUST lazy-load its index: opening the palette MUST NOT block on data fetches; results MUST stream in.
 - **FR-P05**: The palette MUST close on selection and navigate the page via client-side routing.
 
 **Theme (FR-TH01–FR-TH04)**
@@ -210,7 +210,7 @@ A user looks at the sidebar. The static "Tables" / "Schema" / "Settings" items r
 - **Connection**: an authenticated user's saved Supabase project. Already exists in the schema; this feature reads `connection.name`, `connection.hostname`, and creation metadata to render the Dashboard header.
 - **Table & Analysis**: the introspected schema and the cached `TableAnalysis` (category, display name, primary identity, hidden columns, relations) together drive every archetype-aware surface in this release.
 - **Audit log entry**: existing `audit_log` rows are read by the Dashboard's recent-activity panel. No schema changes are required.
-- **User setting — theme**: a per-user preference (light / dark / system) persisted as a signed cookie. Not stored in the database for v1.
+- **User setting: theme**: a per-user preference (light / dark / system) persisted as a signed cookie. Not stored in the database for v1.
 
 ## Success Criteria *(mandatory)*
 
@@ -218,11 +218,11 @@ A user looks at the sidebar. The static "Tables" / "Schema" / "Settings" items r
 
 - **SC-001**: A first-time visitor opening a populated connection identifies, within 5 seconds and without scrolling, the dominant archetypes of that database (e.g. "this project has users and content"), because each archetype is named in plain English in the Dashboard hero.
 - **SC-002**: Across the seven workspace surfaces (Dashboard, Tables list, Users list/detail, Content list/detail, Logs list/detail), zero pages render the "rows-in-a-flat-grid + drawer-as-detail" pattern.
-- **SC-003**: From any workspace route, a keyboard-only user can open the command palette (Cmd+K / Ctrl+K), type 1–3 characters to disambiguate a table, and press Enter to navigate to that table — without touching the mouse.
+- **SC-003**: From any workspace route, a keyboard-only user can open the command palette (Cmd+K / Ctrl+K), type 1–3 characters to disambiguate a table, and press Enter to navigate to that table: without touching the mouse.
 - **SC-004**: When the user reloads after switching themes, the time between first paint and a re-paint due to theme correction is zero (i.e. no flash is observable).
 - **SC-005**: The total JS payload at first paint of any authenticated route remains within the Constitution Principle I budget (≤ 520 KB gzipped), measured against a production build.
 - **SC-006**: 100% of interactive elements introduced in this release (command palette, theme toggle, archetype section disclosures, system-tables disclosure) pass keyboard-only operation and visible-focus checks.
-- **SC-007**: An analysis is correctly degraded — for a connection with no cached AI analysis, the Dashboard, Tables list, and presets still render using the heuristic fallback alone, with zero user-facing errors.
+- **SC-007**: An analysis is correctly degraded: for a connection with no cached AI analysis, the Dashboard, Tables list, and presets still render using the heuristic fallback alone, with zero user-facing errors.
 - **SC-008**: The "drawer as detail" pattern is removed from the Content and Logs archetypes; every row now navigates to a dedicated URL that is shareable and bookmarkable.
 
 ## Assumptions

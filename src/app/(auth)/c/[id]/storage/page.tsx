@@ -29,7 +29,7 @@ export default async function StoragePage({ params }: Props) {
         subtitle={
           <span className="text-xs text-fg-muted">
             Browse buckets, upload and delete files, mint signed URLs. Uses
-            your stored Supabase key — same auth as the table proxy.
+            your stored Supabase key: same auth as the table proxy.
           </span>
         }
       />

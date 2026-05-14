@@ -31,7 +31,7 @@
 
 ## Notes
 
-Validation iteration 1 — all items pass on first review. Observations:
+Validation iteration 1: all items pass on first review. Observations:
 
 - "Content Quality / no implementation details": the Assumptions section references
   PostgREST `in.()` filter syntax and the existing audit log shape. These are
@@ -45,10 +45,10 @@ Validation iteration 1 — all items pass on first review. Observations:
   audit-log UI, and multi-tenancy. Each is sequenced into a named later
   release.
 - "Success criteria are technology-agnostic": SC-007 references the
-  Constitution's 520 KB gz budget — this is a project-internal performance
+  Constitution's 520 KB gz budget: this is a project-internal performance
   contract, not a framework artifact; legitimate to include here.
 - "Dependencies and assumptions identified": Assumptions section enumerates
   every cross-feature dependency (audit log shape, proxy streaming, no new
   deps, one Drizzle migration for SavedView, ≤5000-row bulk cap).
 
-Status: **PASS** — ready for `/speckit-plan`. No clarification round required.
+Status: **PASS**: ready for `/speckit-plan`. No clarification round required.

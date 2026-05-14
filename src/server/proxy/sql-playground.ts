@@ -232,7 +232,7 @@ function wrapPgError(err: unknown): SqlExecutionError | null {
   if (e.code === "25006") {
     return new SqlExecutionError(
       "rls",
-      "Read-only mode is on — this statement writes data. Toggle write mode if you really want to run it.",
+      "Read-only mode is on: this statement writes data. Toggle write mode if you really want to run it.",
       { detail, hint, position },
     );
   }

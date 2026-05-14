@@ -17,7 +17,7 @@ table to look in.
   of 4 text columns scanned.
 
 ## API
-`POST /api/v/[id]/search` — `{q: string}` → `{hits: SearchHit[]}` where
+`POST /api/v/[id]/search`: `{q: string}` → `{hits: SearchHit[]}` where
 `SearchHit = {table, schema, primaryKey, matchedColumn, snippet}`.
 Read-rate limited, no writes, schema introspection cached.
 
@@ -31,4 +31,4 @@ Read-rate limited, no writes, schema introspection cached.
 ## Out of scope
 - JSON column matching.
 - Cross-schema search (auth/storage stays excluded).
-- Ranking — first-match-wins per table.
+- Ranking · first-match-wins per table.

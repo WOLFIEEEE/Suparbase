@@ -16,7 +16,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
     <AuthShell
       eyebrow="Free · takes a minute"
       title="Create your account"
-      subtitle="Bring a Supabase key after signup — we'll encrypt it before it touches disk and never expose it to a browser."
+      subtitle="Bring a Supabase key after signup: we'll encrypt it before it touches disk and never expose it to a browser."
       footnote="No credit card. No newsletter. The only outbound emails we send are password recovery links you trigger yourself."
     >
       <SignUpForm githubEnabled={isGithubEnabled()} />

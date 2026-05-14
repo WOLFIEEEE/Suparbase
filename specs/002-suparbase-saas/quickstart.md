@@ -5,7 +5,7 @@
 - Node.js 20 LTS or newer
 - pnpm 9
 - Postgres (any of):
-  - Supabase free project — grab `DATABASE_URL` from Settings → Database
+  - Supabase free project · grab `DATABASE_URL` from Settings → Database
   - Neon free database
   - Local Docker: `docker run -d --name suparbase-pg -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres:16`
 - A GitHub OAuth app (Settings → Developer settings → OAuth Apps):
@@ -44,7 +44,7 @@ pnpm db:push        # apply Drizzle schema to your DATABASE_URL
 pnpm dev            # http://localhost:3000
 ```
 
-1. Click "Sign in with GitHub" — first run authorizes your OAuth app.
+1. Click "Sign in with GitHub": first run authorizes your OAuth app.
 2. On `/connections`, click "New connection" and paste a Supabase
    project URL + an API key.
 3. Click into the connection to land on the workspace dashboard.

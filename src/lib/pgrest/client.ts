@@ -70,7 +70,7 @@ export async function pgrest<T = unknown>(req: PgRestRequest): Promise<PgRestRes
       const e = payload as { category: ErrorCategory; message: string; columnHint?: string; field?: string };
       throw new AppError(e.category, e.message, { columnHint: e.columnHint });
     }
-    // Upstream PostgREST may return its own shape — let toAppError translate.
+    // Upstream PostgREST may return its own shape: let toAppError translate.
     throw toAppError({ status: res.status, ...(payload as object) });
   }
 

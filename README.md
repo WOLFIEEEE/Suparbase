@@ -2,7 +2,7 @@
 
 > Authenticated SaaS admin for any Supabase project. Sign in, save your
 > projects, and run a real admin dashboard. Your API key is encrypted at
-> rest and proxied — it never reaches the browser.
+> rest and proxied: it never reaches the browser.
 
 [![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-v1.1.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
@@ -15,7 +15,7 @@
 ## What's new in v1.1
 
 The archetype taxonomy widens. v1.0 shipped four categories
-(Users / Content / Logs / Generic); v1.1 adds three more — each with a
+(Users / Content / Logs / Generic); v1.1 adds three more: each with a
 list view + a dedicated detail view, each automatically applied to any
 matching table from the AI analysis or the heuristic fallback.
 
@@ -42,7 +42,7 @@ The OpenRouter prompt + Zod response schema teach the model the new
 categories with concrete signals; the heuristic fallback matches the
 same shapes so first paint never waits on the model. No new
 dependencies. Largest authenticated route stays at 186 KB First Load
-JS — well under the 520 KB gz budget.
+JS: well under the 520 KB gz budget.
 
 Spec: [`specs/010-more-archetypes/`](specs/010-more-archetypes/). Full
 notes: [`CHANGELOG.md`](CHANGELOG.md).
@@ -79,7 +79,7 @@ Spec: [`specs/008-v1-polish/`](specs/008-v1-polish/). Full notes:
 
 ## What's new in v0.6
 
-A coherent visual + UX overhaul of every workspace surface — the app
+A coherent visual + UX overhaul of every workspace surface: the app
 reads as a product, not a database admin tool. Highlights:
 
 - **Archetype-grouped Dashboard** that explains the project (Audience /
@@ -88,14 +88,14 @@ reads as a product, not a database admin tool. Highlights:
   `auth.*` / `storage.*` tables collapse behind a "System tables"
   disclosure.
 - **Users, Content, Logs** archetypes have opinionated row cards and
-  dedicated detail pages — no more drawer-as-detail.
+  dedicated detail pages: no more drawer-as-detail.
 - **Cmd / Ctrl + K command palette** jumps to any table, connection,
   setting, or action with the keyboard.
 - **Dark / light theme toggle** that reads the system preference, paints
   the chosen theme during SSR (no flash on reload).
 - **Sticky sidebar + topbar** with backdrop blur. Every authenticated
   page now has a consistent header + footer.
-- **AI analysis extension** — `TableAnalysis` now carries primary
+- **AI analysis extension**: `TableAnalysis` now carries primary
   identity (avatar, badge, subtitle), columns to hide by default, and
   FK relations annotated for detail-page surfacing.
 
@@ -108,17 +108,17 @@ Suparbase is a multi-tenant SaaS that gives any Supabase user a working
 admin dashboard for their own project. Sign in with GitHub, paste your
 project URL + API key, and you get:
 
-- **Schema-aware data grid** — sort, search (server-side `ilike`),
+- **Schema-aware data grid**: sort, search (server-side `ilike`),
   pagination, FK cells that resolve to human labels.
-- **Type-aware forms** — text, textarea, number, switch, datetime,
+- **Type-aware forms**: text, textarea, number, switch, datetime,
   UUID, JSON editor with validation, enum select, searchable FK
   picker.
-- **Delete with undo** — confirm + 5-second re-insert.
-- **Schema view** — every table, every column, with type, nullable,
+- **Delete with undo**: confirm + 5-second re-insert.
+- **Schema view**: every table, every column, with type, nullable,
   default, FK target, and comments.
-- **Connection management** — multiple projects per account, rename,
+- **Connection management**: multiple projects per account, rename,
   delete, service-role warnings.
-- **Audit log of every write** — keyed to user, connection, table, PK,
+- **Audit log of every write**: keyed to user, connection, table, PK,
   verb, status. Indefinite retention in v1.
 
 ## AI assistance (optional)
@@ -128,26 +128,26 @@ Supply your own OpenRouter API key in `/settings/ai`. Suparbase then:
 - Sends the **introspected schema** (table names, column names, types,
   foreign-key targets) to a model of your choice via OpenRouter.
   **Row data is never sent.**
-- Receives a strict JSON classification per table — one of `users`,
-  `content`, `logs`, `generic` — plus a display name and the columns
+- Receives a strict JSON classification per table: one of `users`,
+  `content`, `logs`, `generic`: plus a display name and the columns
   worth showing in a list view.
 - Caches the result keyed by a SHA-256 of your schema. The same schema
   is analyzed at most once per change.
 - Routes each table to a **purpose-built admin preset**:
-  - **UsersAdmin** — avatar cards with role + status chips, action menu,
+  - **UsersAdmin**: avatar cards with role + status chips, action menu,
     profile detail page with identity panel + linked-records sidebar.
-  - **ContentAdmin** — CMS-style row cards (title / status / author /
+  - **ContentAdmin**: CMS-style row cards (title / status / author /
     published-at), detail page with title hero, readable body, and
     relations sidebar.
-  - **LogsAdmin** — time-bucketed event stream (Today / Yesterday / This
+  - **LogsAdmin**: time-bucketed event stream (Today / Yesterday / This
     week / Earlier), jsonb payloads collapse to a one-line preview with
     click-to-expand, detail page that pretty-prints the payload.
-  - **GenericAdmin** — the regular CRUD experience (fallback for
+  - **GenericAdmin**: the regular CRUD experience (fallback for
     anything we can't classify, or for tables you manually switch to).
 
 A `?view=generic` URL param overrides the preset per session. If you
 don't provide an OpenRouter key, a built-in **heuristic classifier**
-still routes obvious tables to the right preset — the AI step is
+still routes obvious tables to the right preset: the AI step is
 strictly additive, never load-bearing.
 
 Your OpenRouter key is encrypted at rest in the same AES-256-GCM
@@ -168,14 +168,14 @@ This is the core promise:
   and injects it into the outbound request. The browser only ever
   sees its session cookie.
 - Every request is **ownership-checked at the row level**: a request
-  for someone else's connection id receives 404 (not 403 — we don't
+  for someone else's connection id receives 404 (not 403: we don't
   acknowledge that the row exists).
 - **JWT-shaped substrings are defensively redacted** from any error
   message before logging, in any process.
 - Writes are **rate-limited** per user (60/minute default), tracked
   in an audit log, and recorded with the affected table/PK.
 - The credential vault supports **versioned ciphertext** so you can
-  rotate the encryption key without downtime — see
+  rotate the encryption key without downtime: see
   `src/server/crypto/vault.ts`.
 
 ## Deploy on Coolify (recommended)
@@ -183,9 +183,9 @@ This is the core promise:
 This repo ships a production-ready `Dockerfile` and `docker-compose.yaml`.
 The compose file declares two services:
 
-- **`db`** — `supabase/postgres:15.1.1.78` (Postgres + the extensions
+- **`db`**: `supabase/postgres:15.1.1.78` (Postgres + the extensions
   Supabase ships).
-- **`app`** — this Next.js app, built as a standalone Node 20 image.
+- **`app`**: this Next.js app, built as a standalone Node 20 image.
   Runs Drizzle migrations at startup, then `next start`.
 
 ### In Coolify (zero env vars required)
@@ -195,14 +195,14 @@ The compose file declares two services:
 
 The compose file declares three services that boot in order:
 
-- **`bootstrap`** (Alpine, runs once) — writes three strong random
+- **`bootstrap`** (Alpine, runs once): writes three strong random
   secrets into a `suparbase_secrets` Docker volume:
   `postgres_password`, `auth_secret`, `encryption_key`. On every
-  subsequent deploy this is a no-op — the existing secrets are
+  subsequent deploy this is a no-op: the existing secrets are
   reused.
-- **`db`** — `supabase/postgres`. Reads its password from
+- **`db`**: `supabase/postgres`. Reads its password from
   `POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`.
-- **`app`** — this Next.js app. Entrypoint reads each secret file,
+- **`app`**: this Next.js app. Entrypoint reads each secret file,
   composes `DATABASE_URL` at runtime, runs Drizzle migrations, then
   starts the server.
 
@@ -232,7 +232,7 @@ The compose file declares three services that boot in order:
 5. Restart the app. The Sign in page now shows a "Continue with
    GitHub" button.
 
-Without these env vars, Suparbase still works fine — users sign up
+Without these env vars, Suparbase still works fine: users sign up
 and sign in with email + password (bcrypt-hashed at cost 12 in the
 same `users` table).
 
@@ -266,7 +266,7 @@ curl -fsSL https://your-domain.example/api/health
 # → {"status":"ok"}
 ```
 
-If the app container exits during startup, check Coolify's logs view —
+If the app container exits during startup, check Coolify's logs view :
 the most likely culprits are a missing required env var or a DNS issue
 preventing `app` from reaching `db`.
 
@@ -279,7 +279,7 @@ preventing `app` from reaching `db`.
 - Node.js 20 LTS
 - pnpm 9
 - Postgres (Supabase, Neon, or local Docker)
-- A GitHub OAuth app — [github.com/settings/developers](https://github.com/settings/developers)
+- A GitHub OAuth app: [github.com/settings/developers](https://github.com/settings/developers)
   - Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
 
 ### Configure
@@ -395,7 +395,7 @@ CI runs `tsc --noEmit` + `next build` on every PR.
 
 Built spec-first across eight features so far. The full audit trail:
 
-### v1.0 — Polished release (`008-v1-polish/`)
+### v1.0: Polished release (`008-v1-polish/`)
 
 | Document | Contents |
 |---|---|
@@ -403,12 +403,12 @@ Built spec-first across eight features so far. The full audit trail:
 | [`plan.md`](specs/008-v1-polish/plan.md) | Six-workstream plan + Constitution Check (all 9 principles). |
 | [`tasks.md`](specs/008-v1-polish/tasks.md) | Execution-ordered task list. |
 
-### v0.7 — Power-user data ops (`007-power-data-ops/`)
+### v0.7: Power-user data ops (`007-power-data-ops/`)
 
 The MVP slice (bulk + export + import) shipped in v0.7; the remaining
 saved-views + filter-chips work shipped as part of v1.0.
 
-### v0.6 — Product workspace (`006-product-workspace/`)
+### v0.6: Product workspace (`006-product-workspace/`)
 
 | Document | Contents |
 |---|---|
@@ -420,17 +420,17 @@ saved-views + filter-chips work shipped as part of v1.0.
 | [`tasks.md`](specs/006-product-workspace/tasks.md) | 40 tasks across 1 setup + 7 foundational + 7 user stories + 7 polish. |
 | [`quickstart.md`](specs/006-product-workspace/quickstart.md) | Manual smoke checklist per user story. |
 
-### v0.5 — Self-bootstrap & email/password auth (`005-bootstrap-and-credentials/`)
+### v0.5: Self-bootstrap & email/password auth (`005-bootstrap-and-credentials/`)
 
 Bootstrap container generates secrets on first deploy; NextAuth Credentials
 provider with bcrypt; GitHub OAuth becomes optional.
 
-### v0.4 — Coolify deployment (`004-deploy-coolify/`)
+### v0.4: Coolify deployment (`004-deploy-coolify/`)
 
 Production Dockerfile + docker-compose, Drizzle migrator bundled with
 esbuild, zero-config Coolify deploy.
 
-### v0.3 — AI-augmented admin presets (`003-ai-augmented-admin/`)
+### v0.3: AI-augmented admin presets (`003-ai-augmented-admin/`)
 
 | Document                                                          | Contents                              |
 |-------------------------------------------------------------------|---------------------------------------|
@@ -441,7 +441,7 @@ esbuild, zero-config Coolify deploy.
 | [`contracts/`](specs/003-ai-augmented-admin/contracts/)           | AI APIs + preset selector contract.         |
 | [`tasks.md`](specs/003-ai-augmented-admin/tasks.md)               | Phase-by-phase task list.                   |
 
-### v0.2 — Authenticated SaaS (`002-suparbase-saas/`)
+### v0.2: Authenticated SaaS (`002-suparbase-saas/`)
 
 | Document                                                          | Contents                              |
 |-------------------------------------------------------------------|---------------------------------------|
@@ -460,8 +460,8 @@ context.
 
 ## Status
 
-**v1.1.0** — Archetype taxonomy widened to seven categories — Users,
-Content, Logs, Commerce, Tasks, Messages, Generic — each with list +
+**v1.1.0**: Archetype taxonomy widened to seven categories: Users,
+Content, Logs, Commerce, Tasks, Messages, Generic: each with list +
 detail views automatically applied from the AI analysis (heuristic
 fallback when offline). Builds on v1.0's unified visual language;
 bulk operations + CSV/JSON export + import + saved views + filter chips
@@ -471,13 +471,13 @@ docker-compose host.
 **Planned next** (see [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to
 help):
 
-- **v1.2 "Inline editing"** — click-to-edit cells in the data grid
+- **v1.2 "Inline editing"**: click-to-edit cells in the data grid
   with type-appropriate editors, the last piece of the v0.7 backlog
   deferred from v1.0.
-- **v1.3 "Postgres-native parity"** — SQL editor (read-only first),
+- **v1.3 "Postgres-native parity"**: SQL editor (read-only first),
   RLS policy viewer, `auth.users` dedicated admin, Supabase Storage
   browser.
-- **v1.4 "Operate-able for real"** — email verification, password
+- **v1.4 "Operate-able for real"**: email verification, password
   reset, audit-log UI, 2FA, health / metrics endpoints.
 
 **Out of scope for v1.x**: team workspaces / shared connections,

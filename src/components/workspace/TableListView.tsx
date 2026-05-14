@@ -66,7 +66,7 @@ interface RouterProps {
 }
 
 /**
- * Generic admin grid — used for any table that doesn't match an opinionated
+ * Generic admin grid: used for any table that doesn't match an opinionated
  * archetype. Rewritten in v1.0 to match the UsersAdmin/ContentAdmin chrome:
  * PageHeader, row cards, BulkBar, ExportMenu, ImportPanel. Click row →
  * detail page (no drawer).
@@ -268,7 +268,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total rows"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : ":"}
           hint={table.kind === "view" ? "read-only" : undefined}
         />
         <StatTile label="Columns" value={table.columns.length} hint={`${analysis?.hiddenColumns?.length ?? 0} hidden`} />
@@ -279,7 +279,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         />
         <StatTile
           label="Primary key"
-          value={table.primaryKey.length > 0 ? table.primaryKey.length : "—"}
+          value={table.primaryKey.length > 0 ? table.primaryKey.length : ":"}
           hint={table.primaryKey.length > 0 ? table.primaryKey.join(", ") : "none"}
         />
       </div>

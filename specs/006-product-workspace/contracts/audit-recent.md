@@ -1,4 +1,4 @@
-# Contract — `GET /api/v/[id]/audit/recent`
+# Contract: `GET /api/v/[id]/audit/recent`
 
 The only new HTTP surface introduced by v0.6. Reads the user's own recent audit entries for a single connection to populate the Dashboard's recent-activity panel.
 
@@ -23,7 +23,7 @@ GET /api/v/{connectionId}/audit/recent?limit=10
 
 Values outside `[1, 25]` are clamped to the nearest bound; non-integer values fall back to the default.
 
-## Response — `200 OK`
+## Response: `200 OK`
 
 ```json
 {
@@ -48,7 +48,7 @@ Field-by-field:
 - `primaryKey`: the affected row's primary key, as a JSON object keyed by column name. Used to build `/c/{id}/tables/{name}/{pk}` when present and non-empty; rendered as a non-link otherwise.
 - `createdAt`: ISO-8601 UTC timestamp. The client formats with `relativeFromNow`.
 
-## Response — error envelopes
+## Response: error envelopes
 
 All errors follow the project-wide `AppError` envelope already used by other routes (`src/lib/errors.ts`):
 
@@ -61,11 +61,11 @@ All errors follow the project-wide `AppError` envelope already used by other rou
 | `401`  | `unauthorized`  | No session or expired session.                                    |
 | `404`  | `not_found`     | Connection doesn't exist OR is owned by a different user.         |
 | `429`  | `rate_limited`  | Exceeds the per-user token bucket (shared with proxy reads).      |
-| `500`  | `server`        | Unexpected — payload is redacted by the existing logger.          |
+| `500`  | `server`        | Unexpected: payload is redacted by the existing logger.          |
 
 ## Rate limit
 
-Shared with the existing proxy read bucket — no separate limit. The audit endpoint counts toward the same per-user budget as `/api/v/[id]/rest/*` reads.
+Shared with the existing proxy read bucket: no separate limit. The audit endpoint counts toward the same per-user budget as `/api/v/[id]/rest/*` reads.
 
 ## Caching headers
 
@@ -77,7 +77,7 @@ The endpoint is per-user and per-connection. Never cached by intermediaries.
 
 ## Redaction
 
-The audit row's `primaryKey` payload is run through the existing redactor (`src/server/audit/redact.ts` or equivalent) before serialization, stripping JWT-shaped substrings, `sk-or-*`, `sk-*`, and bcrypt prefixes. This is defensive — primary keys should never contain secrets — but it's the consistent treatment per Constitution Principle VII.
+The audit row's `primaryKey` payload is run through the existing redactor (`src/server/audit/redact.ts` or equivalent) before serialization, stripping JWT-shaped substrings, `sk-or-*`, `sk-*`, and bcrypt prefixes. This is defensive: primary keys should never contain secrets: but it's the consistent treatment per Constitution Principle VII.
 
 ## Smoke test (manual)
 
@@ -94,5 +94,5 @@ Expected: `{ "entries": [ ... ] }` with up to 5 entries, newest first.
 ## Out-of-scope (not in v0.6)
 
 - Pagination beyond the 25-row max.
-- Filtering by table, verb, or date range — that's the v0.9 "Audit log UI" feature.
-- Streaming / Server-Sent Events for live updates — v0.10 "Realtime" feature.
+- Filtering by table, verb, or date range · that's the v0.9 "Audit log UI" feature.
+- Streaming / Server-Sent Events for live updates · v0.10 "Realtime" feature.

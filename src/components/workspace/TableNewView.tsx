@@ -46,7 +46,7 @@ export function TableNewView({ tableName }: { tableName: string }) {
     return (
       <EmptyState
         title="This is a view"
-        description="Views are read-only — you cannot insert rows here."
+        description="Views are read-only: you cannot insert rows here."
         action={
           <Button asChild>
             <Link href={`/c/${connectionId}/tables/${encodeURIComponent(table.name)}`}>Open view</Link>

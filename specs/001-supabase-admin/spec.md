@@ -1,4 +1,4 @@
-# Feature Specification: Suparbase — Auto-Admin for Supabase
+# Feature Specification: Suparbase: Auto-Admin for Supabase
 
 **Feature Branch**: `001-supabase-admin`
 
@@ -10,7 +10,7 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 — Connect a Supabase project in under one minute (Priority: P1)
+### User Story 1: Connect a Supabase project in under one minute (Priority: P1)
 
 A developer who already has a Supabase project lands on the app, pastes their
 project URL and an API key, clicks "Connect", and within seconds sees a working
@@ -23,7 +23,7 @@ Connection is the entire entry funnel.
 **Independent Test**: Take a fresh Supabase project, paste its URL and anon key
 into the connect screen, click connect, and verify the dashboard renders
 every introspected table without errors. Repeat with an invalid URL and a
-wrong key — verify clear error states.
+wrong key: verify clear error states.
 
 **Acceptance Scenarios**:
 
@@ -48,7 +48,7 @@ wrong key — verify clear error states.
 
 ---
 
-### User Story 2 — Browse and read your data (Priority: P1)
+### User Story 2: Browse and read your data (Priority: P1)
 
 A connected user navigates to a table, sees a paginated list of rows in a
 clean data grid with column headers inferred from the schema. They can sort by
@@ -86,7 +86,7 @@ show meaningful labels.
 
 ---
 
-### User Story 3 — Create, edit, and delete rows safely (Priority: P1)
+### User Story 3: Create, edit, and delete rows safely (Priority: P1)
 
 A connected user creates a new row in any table via an auto-generated form
 where each field uses an input appropriate to its type. They edit an existing
@@ -97,9 +97,9 @@ RLS rejections) are surfaced clearly.
 **Why this priority**: A read-only admin is half a product. Write operations
 complete the value proposition.
 
-**Independent Test**: For each of these field types in a target schema —
+**Independent Test**: For each of these field types in a target schema :
 `text`, `int`, `bool`, `timestamp`, `jsonb`, `uuid`, `enum`, and a foreign-key
-column — verify create, edit, and delete work, validation fires on bad input,
+column: verify create, edit, and delete work, validation fires on bad input,
 and constraint errors surface readably.
 
 **Acceptance Scenarios**:
@@ -130,7 +130,7 @@ and constraint errors surface readably.
 
 ---
 
-### User Story 4 — Understand the schema at a glance (Priority: P2)
+### User Story 4: Understand the schema at a glance (Priority: P2)
 
 A connected user opens a "Schema" view that lists every table with its
 columns, types, primary key, and foreign-key relationships. They can see at a
@@ -156,7 +156,7 @@ listed.
 
 ---
 
-### User Story 5 — Manage the connection (Priority: P2)
+### User Story 5: Manage the connection (Priority: P2)
 
 A connected user can disconnect (clearing credentials), switch to a different
 project, view which project they are connected to, and see whether they are
@@ -171,7 +171,7 @@ verify the workspace reflects B's schema and credentials are scoped.
 **Acceptance Scenarios**:
 
 1. **Given** a connected user opens settings, **When** the settings panel
-   renders, **Then** it displays the project URL (host only — no key), the
+   renders, **Then** it displays the project URL (host only: no key), the
    key role (anon / authenticated / service_role / unknown), and a
    "Disconnect" action.
 2. **Given** the user clicks Disconnect, **When** they confirm, **Then** all
@@ -185,7 +185,7 @@ verify the workspace reflects B's schema and credentials are scoped.
 
 ### Edge Cases
 
-- **No tables exist**: schema introspects but returns zero tables — show an
+- **No tables exist**: schema introspects but returns zero tables: show an
   empty state explaining how to add tables to the project.
 - **Schema introspection times out**: show a retry affordance with the
   underlying network error category (timeout / DNS / TLS / HTTP 4xx / HTTP
@@ -243,13 +243,13 @@ verify the workspace reflects B's schema and credentials are scoped.
   `${url}/rest/v1/?apikey=${key}` and parse it to discover tables, columns,
   types, nullability, primary keys, and foreign-key hints.
 - **FR-011**: The app MUST identify, for each table: column name, column
-  type (textual category — string, integer, float, boolean, datetime, json,
+  type (textual category: string, integer, float, boolean, datetime, json,
   uuid, enum, unknown), nullable, default value (when present), primary key
   membership, and foreign-key targets (when described in the OpenAPI
   description text by PostgREST's standard `Note:\nThis is a Foreign Key
   to ...` format).
-- **FR-012**: The app MUST identify, for each table, a "human label column"
-  — the first column matching a priority list: `name`, `title`, `email`,
+- **FR-012**: The app MUST identify, for each table, a "human label column":
+  the first column matching a priority list: `name`, `title`, `email`,
   `slug`, `username`, `handle`, `display_name`, `label`, falling back to the
   primary key. This label column is used for foreign-key reference rendering.
 - **FR-013**: The app MUST distinguish tables from views (PostgREST exposes
@@ -399,11 +399,11 @@ verify the workspace reflects B's schema and credentials are scoped.
 - The user has an existing Supabase project; the app does not create projects.
 - The user's Supabase project exposes its public schema via PostgREST (the
   default for all Supabase projects).
-- API keys are JWTs (true for Supabase) — role detection assumes the JWT
+- API keys are JWTs (true for Supabase) · role detection assumes the JWT
   payload contains a `role` claim.
 - Anon-key access is bounded by RLS policies set on the user's project. The
   app does not promise data access beyond what the key allows.
-- Service-role keys bypass RLS — the app warns but does not refuse; the user
+- Service-role keys bypass RLS · the app warns but does not refuse; the user
   is responsible for that choice.
 - Modern evergreen browsers; no IE11.
 - v1 ships English only.

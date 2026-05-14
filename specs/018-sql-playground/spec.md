@@ -5,12 +5,12 @@ Run arbitrary SQL against the user&apos;s project from inside the
 workspace. Read-only by default; explicit toggle to enable writes.
 
 ## Server
-- `src/server/proxy/sql-playground.ts` — `executeSql({conn, sql,
+- `src/server/proxy/sql-playground.ts`: `executeSql({conn, sql,
   readOnly, statementTimeoutMs})`:
   - Opens a one-shot `postgres` connection using the encrypted Postgres
     URL (same column as the RLS debugger, `encryptedPostgresUrl`).
   - Always runs inside a transaction.
-    - read-only: `BEGIN; SET TRANSACTION READ ONLY; SET LOCAL statement_timeout = N; <sql>; ROLLBACK` — Postgres rejects any write itself, and the rollback is belt-and-braces.
+    - read-only: `BEGIN; SET TRANSACTION READ ONLY; SET LOCAL statement_timeout = N; <sql>; ROLLBACK` · Postgres rejects any write itself, and the rollback is belt-and-braces.
     - write: `BEGIN; SET LOCAL statement_timeout = N; <sql>; COMMIT`.
   - Caps result set at `ROW_CAP = 1000` rows; serialises each cell with
     a 2 KB character cap; renders bytea as `\\xHEX` or
@@ -40,7 +40,7 @@ workspace. Read-only by default; explicit toggle to enable writes.
   added).
 - Toolbar:
   - Read-only / Write mode toggle. Switching to write mode requires a
-    `window.confirm` click — friction by design.
+    `window.confirm` click: friction by design.
   - Statement timeout selector (1s / 5s / 15s / 30s / 60s).
   - EXPLAIN button: prefixes the current query with
     `EXPLAIN ANALYZE` and runs it.
@@ -48,7 +48,7 @@ workspace. Read-only by default; explicit toggle to enable writes.
     `localStorage["suparbase.sql.history.<connId>"]`.
   - Run / Cancel button. `Cmd/Ctrl + Enter` keyboard shortcut.
 - Plain `<textarea>` editor (monospace, Tab inserts two spaces). No
-  CodeMirror — keeps bundle size flat.
+  CodeMirror: keeps bundle size flat.
 - Result panel shows:
   - Mode badge (`read-only` or `write`),
   - Command tag (`SELECT`, `UPDATE 4`, …),
@@ -66,7 +66,7 @@ workspace. Read-only by default; explicit toggle to enable writes.
   - Write: danger-coloured, names the role and warns about
     `DROP TABLE` etc.
 - Server enforces both the read-only transaction wrapper and the
-  statement timeout — the UI&apos;s mode toggle is just a hint to
+  statement timeout: the UI&apos;s mode toggle is just a hint to
   the server, which is the real gate.
 
 ## Out of scope (v1.4)

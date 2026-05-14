@@ -20,7 +20,7 @@ export async function POST(_req: NextRequest, ctx: Params) {
     const user = await getUser(conn, uid);
     if (!user.email) {
       return NextResponse.json(
-        { category: "validation", message: "User has no email — recovery requires one." },
+        { category: "validation", message: "User has no email: recovery requires one." },
         { status: 400 },
       );
     }

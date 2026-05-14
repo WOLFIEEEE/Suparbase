@@ -6,11 +6,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Suparbase — managed admin for any Supabase",
+    default: "Suparbase: managed admin for any Supabase",
     template: "%s · Suparbase",
   },
   description:
-    "Sign in, save your Supabase projects, and run a real admin dashboard. Your keys stay on the server — never in the browser.",
+    "Sign in, save your Supabase projects, and run a real admin dashboard. Your keys stay on the server: never in the browser.",
   metadataBase: new URL(process.env.AUTH_URL ?? "http://localhost:3000"),
   openGraph: {
     title: "Suparbase",

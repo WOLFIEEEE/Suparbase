@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, ctx: Params) {
         eq(auditLog.userId, session.user.id),
         eq(auditLog.connectionId, id),
         eq(auditLog.tableName, tableName),
-        // jsonb @> jsonb — narrow to rows whose stored PK matches the requested PK.
+        // jsonb @> jsonb: narrow to rows whose stored PK matches the requested PK.
         sql`${auditLog.primaryKey} @> ${JSON.stringify(pk)}::jsonb`,
       ),
     )

@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   const limit = body.readOnly ? checkReadRate(session.user.id) : checkWriteRate(session.user.id);
   if (!limit.allowed) {
     return NextResponse.json(
-      { category: "rate_limited", message: "Too many SQL requests — try again shortly." },
+      { category: "rate_limited", message: "Too many SQL requests: try again shortly." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
     );
   }

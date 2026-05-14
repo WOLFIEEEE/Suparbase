@@ -19,13 +19,13 @@ interface Props {
   /** Columns to include by default; the user can opt into hidden columns via the toggle. */
   visibleColumns: string[];
   hiddenColumns?: string[];
-  /** If supplied, this menu acts as "Export selected" — the URL carries `in_pk=…`. */
+  /** If supplied, this menu acts as "Export selected": the URL carries `in_pk=…`. */
   selectedPrimaryKeys?: PrimaryKeyValue[];
 }
 
 /**
  * Toolbar dropdown that builds an export URL from the current list params
- * and triggers a browser download. No JS-side streaming — `<a href=… download>`
+ * and triggers a browser download. No JS-side streaming: `<a href=… download>`
  * lets the browser handle progress, cancel, partial-file persistence.
  */
 export function ExportMenu({

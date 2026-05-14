@@ -95,18 +95,18 @@ function hasAnyColumn(table: Table, re: RegExp): boolean {
 }
 
 export function heuristicCategory(table: Table): TableCategory {
-  // Users — strongest signal (name + email)
+  // Users: strongest signal (name + email)
   if (USERS_NAME_RE.test(table.name) && hasAnyColumn(table, EMAIL_LIKE_RE)) {
     return "users";
   }
 
-  // Logs — append-only event/audit shape
+  // Logs: append-only event/audit shape
   if (LOGS_NAME_RE.test(table.name)) return "logs";
   if (hasAnyColumn(table, EVENT_LIKE_RE) && hasAnyColumn(table, /^created_at$/i)) {
     return "logs";
   }
 
-  // Commerce — name match or money + status
+  // Commerce: name match or money + status
   if (COMMERCE_NAME_RE.test(table.name)) return "commerce";
   if (
     hasMoneyColumn(table) &&
@@ -116,7 +116,7 @@ export function heuristicCategory(table: Table): TableCategory {
     return "commerce";
   }
 
-  // Tasks — workflow with assignee + status
+  // Tasks: workflow with assignee + status
   if (TASKS_NAME_RE.test(table.name)) return "tasks";
   if (
     hasAnyColumn(table, STATUS_LIKE_RE) &&
@@ -125,7 +125,7 @@ export function heuristicCategory(table: Table): TableCategory {
     return "tasks";
   }
 
-  // Messages — body + (author + thread) shape
+  // Messages: body + (author + thread) shape
   if (MESSAGES_NAME_RE.test(table.name)) return "messages";
   if (
     hasAnyColumn(table, BODY_LIKE_RE) &&
@@ -136,7 +136,7 @@ export function heuristicCategory(table: Table): TableCategory {
     return "messages";
   }
 
-  // Content — title + body, OR by name
+  // Content: title + body, OR by name
   if (CONTENT_NAME_RE.test(table.name)) return "content";
   const hasTitle = hasAnyColumn(table, TITLE_LIKE_RE);
   const hasBody = hasAnyColumn(table, BODY_LIKE_RE);

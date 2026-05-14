@@ -109,7 +109,7 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
           </AlertTitle>
           <AlertDescription>
             This key bypasses Row-Level Security. The encrypted blob lives on our server; the plaintext key is
-            only ever decrypted when proxying requests on your behalf — it never reaches the browser.
+            only ever decrypted when proxying requests on your behalf: it never reaches the browser.
           </AlertDescription>
         </Alert>
       )}

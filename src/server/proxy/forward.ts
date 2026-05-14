@@ -43,7 +43,7 @@ export async function proxyForward({ request, method, connectionId, userId, path
   if (isWrite) {
     const limit = checkWriteRate(userId);
     if (!limit.allowed) {
-      return jsonError(429, "rate_limited", "Too many writes — try again shortly.", {
+      return jsonError(429, "rate_limited", "Too many writes: try again shortly.", {
         "Retry-After": String(limit.retryAfterSeconds),
       });
     }
@@ -119,7 +119,7 @@ export async function proxyForward({ request, method, connectionId, userId, path
   });
 
   // Audit log fires asynchronously after we already have the outgoing response
-  // ready — never blocks the user-visible reply.
+  // ready: never blocks the user-visible reply.
   if (auditClone) {
     void (async () => {
       const auditMeta = await extractAuditFromRequest({

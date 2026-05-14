@@ -9,7 +9,7 @@ const MAX_PER_TABLE = 5;
 const NAME_MIN = 1;
 const NAME_MAX = 40;
 
-/** Public-API shape — drops user_id / connection_id since the caller already knows them. */
+/** Public-API shape: drops user_id / connection_id since the caller already knows them. */
 export interface SavedViewSummary {
   id: string;
   name: string;
