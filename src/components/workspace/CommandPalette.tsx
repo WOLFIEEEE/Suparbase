@@ -9,9 +9,11 @@ import {
   FileText,
   Home,
   Kanban,
+  Loader2,
   LogOut,
   MessageSquare,
   Plus,
+  Search,
   Settings as SettingsIcon,
   ShoppingCart,
   SunMoon,
@@ -19,6 +21,8 @@ import {
   Table2,
   Users as UsersIcon,
 } from "lucide-react";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { encodePkSegment } from "@/lib/table/pk";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +56,28 @@ async function fetchAiSettings(): Promise<AiSettingsSummary> {
   const res = await fetch("/api/settings/ai");
   if (!res.ok) throw new AppError("server", "Failed to load AI settings.");
   return res.json();
+}
+
+interface SearchHit {
+  table: string;
+  schema: string;
+  primaryKey: Record<string, unknown>;
+  matchedColumn: string;
+  snippet: string;
+}
+
+async function searchRowsApi(connectionId: string, q: string): Promise<SearchHit[]> {
+  const res = await fetch(`/api/v/${encodeURIComponent(connectionId)}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ q }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => null);
+    throw new AppError((e?.category as AppError["category"]) ?? "server", e?.message ?? "Search failed.");
+  }
+  const data = (await res.json()) as { hits: SearchHit[] };
+  return data.hits ?? [];
 }
 
 const CATEGORY_ICON: Record<TableCategory, typeof UsersIcon> = {
@@ -108,6 +134,18 @@ export function CommandPalette() {
     queryFn: fetchAiSettings,
     enabled: open,
     staleTime: 60_000,
+  });
+
+  // Global row search — kicks in once the query is 2+ chars. Server scans
+  // text/uuid/int columns of every table in parallel.
+  const debouncedQuery = useDebouncedValue(query, 300);
+  const searchActive = open && debouncedQuery.trim().length >= 2;
+  const { data: searchHits, isFetching: searchFetching } = useQuery<SearchHit[]>({
+    queryKey: ["rowSearch", connection.id, debouncedQuery],
+    queryFn: () => searchRowsApi(connection.id, debouncedQuery.trim()),
+    enabled: searchActive,
+    staleTime: 30_000,
+    retry: false,
   });
 
   const tables = useMemo(() => {
@@ -171,6 +209,54 @@ export function CommandPalette() {
                 Schema
               </CommandItem>
             </CommandGroup>
+
+            {searchActive && (
+              <CommandGroup
+                heading={
+                  <span className="inline-flex items-center gap-1.5">
+                    <Search className="h-3 w-3" aria-hidden />
+                    Rows matching &ldquo;{debouncedQuery.trim()}&rdquo;
+                    {searchFetching && (
+                      <Loader2 className="ml-1 h-3 w-3 animate-spin text-accent" aria-hidden />
+                    )}
+                  </span>
+                }
+              >
+                {!searchHits && searchFetching ? (
+                  <CommandItem disabled value="__search_loading" forceMount>
+                    <Search className="mr-2 h-4 w-4 text-fg-faint" aria-hidden />
+                    <span className="text-fg-faint">Searching every table…</span>
+                  </CommandItem>
+                ) : searchHits && searchHits.length === 0 ? (
+                  <CommandItem disabled value="__search_empty" forceMount>
+                    <Search className="mr-2 h-4 w-4 text-fg-faint" aria-hidden />
+                    <span className="text-fg-faint">No rows matched.</span>
+                  </CommandItem>
+                ) : (
+                  (searchHits ?? []).map((h, i) => {
+                    const pkSeg = encodePkSegment(h.primaryKey);
+                    const href = `/c/${connection.id}/tables/${encodeURIComponent(h.table)}/${pkSeg}`;
+                    return (
+                      <CommandItem
+                        key={`${h.table}-${i}-${pkSeg}`}
+                        value={`row ${h.table} ${h.matchedColumn} ${h.snippet} ${pkSeg}`}
+                        onSelect={() => navigate(href)}
+                        forceMount
+                      >
+                        <Search className="mr-2 h-4 w-4 shrink-0 text-fg-faint" aria-hidden />
+                        <span className="min-w-0 flex-1 truncate">
+                          <span className="font-mono text-fg-muted">{h.table}</span>
+                          <span className="ml-2 text-fg">{h.snippet}</span>
+                        </span>
+                        <span className="ml-2 shrink-0 font-mono text-[10px] text-fg-faint">
+                          {h.matchedColumn}
+                        </span>
+                      </CommandItem>
+                    );
+                  })
+                )}
+              </CommandGroup>
+            )}
 
             <CommandGroup heading="Tables">
               {schemaLoading && tables.length === 0 ? (
