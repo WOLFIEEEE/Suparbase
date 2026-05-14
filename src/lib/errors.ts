@@ -10,7 +10,10 @@ export type ErrorCategory =
   | "server"
   | "client_bug"
   | "validation"
-  | "no_key";
+  | "no_key"
+  | "no_postgres_url"
+  | "rls"
+  | "service_role_required";
 
 export interface AppErrorOptions {
   cause?: unknown;

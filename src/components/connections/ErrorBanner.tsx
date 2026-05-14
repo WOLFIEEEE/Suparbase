@@ -14,6 +14,9 @@ const TITLES: Record<AppError["category"], string> = {
   client_bug: "Something went wrong",
   validation: "Invalid request",
   no_key: "AI key missing",
+  no_postgres_url: "Postgres URL missing",
+  rls: "Blocked by policy",
+  service_role_required: "Service role key required",
 };
 
 const HINTS: Record<AppError["category"], string> = {
@@ -27,6 +30,9 @@ const HINTS: Record<AppError["category"], string> = {
   client_bug: "We logged the issue. Try again.",
   validation: "Check the request and try again.",
   no_key: "Add an OpenRouter API key in Settings → AI.",
+  no_postgres_url: "Add a direct Postgres URL on the RLS page first.",
+  rls: "Postgres rejected this — RLS or read-only mode.",
+  service_role_required: "Open connection settings and store a service_role key.",
 };
 
 export function ErrorBanner({ error }: { error: AppError }) {
