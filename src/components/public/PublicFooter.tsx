@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowUpRight, Github, Heart, Server, Shield } from "lucide-react";
 import { listArticles } from "@/lib/blog/articles";
 import { Logo } from "@/components/brand/Logo";
+import { FooterArt } from "@/components/public/FooterArt";
+import { TypingPrompt } from "@/components/public/TypingPrompt";
 import { SITE } from "@/lib/seo/site";
 import { cn } from "@/lib/ui/cn";
 
@@ -52,13 +54,15 @@ export function PublicFooter() {
       <div className="relative mx-auto w-full max-w-6xl px-6">
         <StatusBar />
 
+        {/* Panoramic art panel above the manifesto */}
+        <div className="relative -mx-6 mt-10 mb-2 sm:mt-14">
+          <FooterArt />
+        </div>
+
         {/* Manifesto block */}
-        <section className="grid grid-cols-1 gap-10 py-14 md:grid-cols-[1fr_minmax(0,18rem)] md:py-20">
+        <section className="grid grid-cols-1 gap-10 py-10 md:grid-cols-[1fr_minmax(0,18rem)] md:py-14">
           <div className="space-y-6">
-            <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-fg-faint">
-              <span className="text-accent">~/suparbase</span> $ ship --everywhere
-              <span aria-hidden className="ml-0.5 inline-block h-3 w-[6px] -mb-[2px] animate-pulse bg-accent align-baseline" />
-            </div>
+            <TypingPrompt />
             <h2 className="font-display text-3xl leading-[1.05] sm:text-4xl md:text-[2.75rem]">
               Encrypted credentials.
               <br />
@@ -360,6 +364,47 @@ function FooterBackdrop() {
             "radial-gradient(closest-side, rgb(var(--accent) / 0.08), rgb(var(--accent) / 0) 70%)",
         }}
       />
+
+      {/* Traveling accent dots — drift across the grid lines so the
+          background never feels static. Different durations to keep them
+          out of sync. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <span className="footer-particle footer-particle-1" />
+        <span className="footer-particle footer-particle-2" />
+        <span className="footer-particle footer-particle-3" />
+        <span className="footer-particle footer-particle-4" />
+      </div>
+      <style>{`
+        .footer-particle {
+          position: absolute;
+          width: 4px; height: 4px;
+          border-radius: 9999px;
+          background: rgb(var(--accent));
+          opacity: 0;
+          filter: blur(0.5px);
+          box-shadow: 0 0 12px rgb(var(--accent) / 0.45);
+          will-change: transform, opacity;
+        }
+        @keyframes footer-drift-rt {
+          0%   { transform: translate3d(-4vw, 60vh, 0); opacity: 0; }
+          10%  { opacity: 0.85; }
+          90%  { opacity: 0.85; }
+          100% { transform: translate3d(110vw, 4vh, 0); opacity: 0; }
+        }
+        @keyframes footer-drift-lt {
+          0%   { transform: translate3d(110vw, 70vh, 0); opacity: 0; }
+          10%  { opacity: 0.6; }
+          90%  { opacity: 0.6; }
+          100% { transform: translate3d(-6vw, 0vh, 0); opacity: 0; }
+        }
+        .footer-particle-1 { animation: footer-drift-rt 12s linear infinite; animation-delay: 0s; }
+        .footer-particle-2 { animation: footer-drift-rt 18s linear infinite; animation-delay: 4s; }
+        .footer-particle-3 { animation: footer-drift-lt 16s linear infinite; animation-delay: 2s; }
+        .footer-particle-4 { animation: footer-drift-lt 22s linear infinite; animation-delay: 9s; }
+        @media (prefers-reduced-motion: reduce) {
+          .footer-particle { animation: none !important; opacity: 0; }
+        }
+      `}</style>
     </>
   );
 }
@@ -369,24 +414,58 @@ function FooterBackdrop() {
 // ---------------------------------------------------------------------------
 
 function GiantWordmark() {
+  const wordmarkClass = cn(
+    "font-display font-bold leading-[0.85] tracking-[-0.06em]",
+    "text-[clamp(5rem,18vw,16rem)]",
+    "select-none",
+  );
   return (
     <div
       aria-hidden
-      className="relative -mb-2 mt-2 flex select-none items-end justify-center overflow-hidden"
+      className="relative -mb-2 mt-4 flex items-end justify-center overflow-hidden"
     >
-      {/* The wordmark itself — uses currentColor with low opacity so it reads
-          as a decorative texture rather than a headline. The period turns
-          into the brand mark. */}
+      {/* Layer 1: gradient fill — base value. */}
       <span
         className={cn(
-          "font-display font-bold leading-[0.85] tracking-[-0.06em]",
-          "text-[clamp(5rem,18vw,16rem)]",
-          "bg-gradient-to-b from-fg/[0.07] via-fg/[0.04] to-transparent bg-clip-text text-transparent",
+          wordmarkClass,
+          "block bg-gradient-to-b from-fg/[0.08] via-fg/[0.04] to-transparent bg-clip-text text-transparent",
         )}
       >
         suparbase
-        <span className="inline-block translate-y-[0.04em] text-accent/40">.</span>
+        <span className="footer-period inline-block translate-y-[0.04em] text-accent/50">.</span>
       </span>
+
+      {/* Layer 2: stroke outline — sits exactly on top via absolute positioning
+          inside the same flex parent. Two layers produce a faint chromatic
+          dimension without the cost of a real chroma filter. */}
+      <span
+        className={cn(
+          wordmarkClass,
+          "absolute inset-x-0 bottom-0 flex justify-center text-transparent",
+          "[-webkit-text-stroke:1px_rgb(var(--accent)_/_0.22)]",
+        )}
+      >
+        <span>
+          suparbase
+          <span className="footer-period-glow [-webkit-text-stroke:0] text-accent/70">.</span>
+        </span>
+      </span>
+
+      <style>{`
+        @keyframes footer-period-pulse {
+          0%, 100% { opacity: 0.55; transform: translateY(0); }
+          50%      { opacity: 1;    transform: translateY(-0.02em); }
+        }
+        @keyframes footer-period-glow-pulse {
+          0%, 100% { text-shadow: 0 0 16px rgb(var(--accent) / 0.0); }
+          50%      { text-shadow: 0 0 28px rgb(var(--accent) / 0.55); }
+        }
+        .footer-period       { animation: footer-period-pulse 3.4s ease-in-out infinite; }
+        .footer-period-glow  { animation: footer-period-glow-pulse 3.4s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .footer-period, .footer-period-glow { animation: none; }
+        }
+      `}</style>
     </div>
   );
 }
