@@ -3,6 +3,52 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.2.0 — 2026-05-14 — Power-user release
+
+Tag: `v1.2.0` · Specs: [`011`](specs/011-inline-cell-editing/), [`012`](specs/012-global-row-search/), [`013`](specs/013-row-history/), [`014`](specs/014-ai-write-actions/), [`015`](specs/015-rls-debugger/)
+
+Five distinct features landed together — each was reviewed, built, and
+shipped as its own commit so any one of them can be reverted without
+disturbing the others.
+
+- **Inline cell editing.** Click any editable value on a row detail
+  page to edit it in place. Enter / Tab / blur commit; Escape cancels;
+  optimistic UI with toast feedback. Works across all seven archetype
+  detail pages via a new shared `EditableField` component. JSON, FK,
+  generated, PK columns, and view tables stay read-only. (specs/011)
+- **Global row search (Cmd-K).** The command palette now scans every
+  public-schema table in parallel for any 2+ character query. String
+  columns match via ilike, uuid columns via eq when the term looks like
+  a uuid, integer columns via eq when it parses as a number. Each hit
+  links straight to the row detail page. New
+  `POST /api/v/[id]/search` endpoint, max 5 hits per table, 30 hits
+  total. (specs/012)
+- **Row history panel.** `audit_log` gained `before_row` / `after_row`
+  jsonb columns (migration `0004`). The proxy now captures snapshots
+  from `Prefer: return=representation` responses for insert/update, and
+  the delete client helper was updated to request representation too so
+  the deleted row is captured. A new `RowHistoryPanel` sits in the
+  right rail of every detail page; entries expand to show a column-by-
+  column `from → to` diff. (specs/013)
+- **AI write actions with a confirm-then-execute diff card.** Three new
+  agent tools — `propose_update` / `propose_insert` / `propose_delete`
+  — let the chat assistant draft writes without executing them. Each
+  proposal carries a preview of up to 5 affected rows. The UI renders a
+  colored diff card; Apply hits `POST /api/ai/chat/[id]/execute`, which
+  re-validates the proposal server-side and writes audit_log diffs the
+  history panel picks up immediately. Reads stay independent — the AI
+  has no direct INSERT/PATCH/DELETE tool. (specs/014)
+- **RLS policy debugger.** A new workspace page lists every
+  `pg_policies` entry, shows which tables actually have RLS enabled,
+  and simulates SELECT/INSERT/UPDATE/DELETE inside a rolled-back
+  transaction with the role + `request.jwt.claims` of your choice.
+  Because `pg_policies` isn't exposed through PostgREST with anon /
+  authenticated keys, this introduces an optional second credential:
+  the connections table gained an encrypted `postgres_url` column
+  (migration `0005`), and the RLS page prompts to add one before any
+  catalog query runs. The URL is never echoed back over the wire —
+  only `hasPostgresUrl: boolean`. (specs/015)
+
 ## v1.1.0 — 2026-05-14 — More archetypes
 
 Tag: `v1.1.0` · Spec: [`specs/010-more-archetypes/`](specs/010-more-archetypes/)

@@ -1,9 +1,9 @@
 <!-- SPECKIT START -->
-**Current**: v1.1.0 on `main` (tagged `v1.1.0`). Archetype taxonomy
-widened to seven categories — Users, Content, Logs, Commerce, Tasks,
-Messages, Generic. Each new category ships list + detail views matching
-the v1.0 visual language, auto-applied from the AI analysis (heuristic
-fallback when offline). Inline cell editing still deferred (v1.2).
+**Current**: v1.2.0 on `main` (tagged `v1.2.0`). Five major features
+landed together: inline cell editing, global row search in the command
+palette, per-row history panel with column-level diffs, AI write
+actions with a confirm-before-execute diff card, and an RLS policy
+debugger that simulates requests inside a rolled-back transaction.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -23,4 +23,9 @@ Spec-kit features (chronological):
 - [specs/007-power-data-ops/](specs/007-power-data-ops/) — v0.7 MVP, power-user data ops (bulk + export + import)
 - [specs/008-v1-polish/](specs/008-v1-polish/) — v1.0, polish release + v0.7 final (saved views + filter chips)
 - [specs/010-more-archetypes/](specs/010-more-archetypes/) — v1.1, archetype taxonomy widened (commerce + tasks + messages)
+- [specs/011-inline-cell-editing/](specs/011-inline-cell-editing/) — v1.2, click-to-edit values on the row detail page
+- [specs/012-global-row-search/](specs/012-global-row-search/) — v1.2, Cmd-K search across every table in parallel
+- [specs/013-row-history/](specs/013-row-history/) — v1.2, audit-log diffs surfaced on every detail page
+- [specs/014-ai-write-actions/](specs/014-ai-write-actions/) — v1.2, AI assistant drafts writes; user confirms in a diff card
+- [specs/015-rls-debugger/](specs/015-rls-debugger/) — v1.2, RLS policy browser + simulator (needs direct Postgres URL)
 <!-- SPECKIT END -->
