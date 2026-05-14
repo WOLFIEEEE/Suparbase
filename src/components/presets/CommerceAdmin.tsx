@@ -450,7 +450,7 @@ function OrderRow({ row, connectionId, tableName, primaryKey, cols, isSelected, 
       )}>
         {onSelectionToggle && (
           <label
-            className="relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
+            className="pointer-events-auto relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <input
@@ -472,10 +472,10 @@ function OrderRow({ row, connectionId, tableName, primaryKey, cols, isSelected, 
             aria-label={`Open ${orderLabel}`}
           />
         )}
-        <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
+        <div className="pointer-events-none relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
           <ShoppingCart className="h-3.5 w-3.5 text-fg-muted" aria-hidden />
         </div>
-        <div className="relative z-10 min-w-0 flex-1 space-y-0.5">
+        <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-0.5">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 truncate text-sm font-medium">
               <Hash className="h-3 w-3 text-fg-faint" aria-hidden />
@@ -490,12 +490,12 @@ function OrderRow({ row, connectionId, tableName, primaryKey, cols, isSelected, 
             {createdRel && <span className="text-fg-faint">placed {createdRel}</span>}
           </div>
         </div>
-        <div className="relative z-10 shrink-0 text-right">
+        <div className="pointer-events-none relative z-10 shrink-0 text-right">
           {formattedMoney && (
             <div className="font-display text-base tabular-nums">{formattedMoney}</div>
           )}
         </div>
-        <div className="relative z-20 shrink-0">
+        <div className="pointer-events-auto relative z-20 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

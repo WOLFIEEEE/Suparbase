@@ -453,7 +453,7 @@ function ContentRow({ row, connectionId, tableName, primaryKey, cols, isSelected
               </div>
             )}
           </div>
-          <div className="relative z-20 flex shrink-0 items-center gap-2">
+          <div className="pointer-events-auto relative z-20 flex shrink-0 items-center gap-2">
             {typeof status === "boolean" ? (
               <StatusPill value={status ? "published" : "draft"} />
             ) : status != null ? (
@@ -486,12 +486,12 @@ function ContentRow({ row, connectionId, tableName, primaryKey, cols, isSelected
           </div>
         </div>
         {excerpt != null && String(excerpt).trim() !== "" && (
-          <p className="relative z-10 line-clamp-2 text-sm text-fg-muted">
+          <p className="pointer-events-none relative z-10 line-clamp-2 text-sm text-fg-muted">
             {String(excerpt)}
           </p>
         )}
         {rel && (
-          <div className="relative z-10 flex items-center gap-1 text-[11px] text-fg-faint">
+          <div className="pointer-events-none relative z-10 flex items-center gap-1 text-[11px] text-fg-faint">
             <Calendar className="h-3 w-3" aria-hidden /> {rel}
           </div>
         )}

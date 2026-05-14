@@ -429,7 +429,7 @@ function GenericRow({
       )}>
         {onSelectionToggle && (
           <label
-            className="relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
+            className="pointer-events-auto relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <input
@@ -452,11 +452,11 @@ function GenericRow({
           />
         )}
 
-        <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
+        <div className="pointer-events-none relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
           <KeyRound className="h-3.5 w-3.5 text-fg-faint" aria-hidden />
         </div>
 
-        <div className="relative z-10 min-w-0 flex-1 space-y-1">
+        <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium text-sm">{leadDisplay}</span>
           </div>
@@ -482,7 +482,7 @@ function GenericRow({
           )}
         </div>
 
-        <div className="relative z-20 shrink-0">
+        <div className="pointer-events-auto relative z-20 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

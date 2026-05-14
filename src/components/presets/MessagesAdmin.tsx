@@ -411,7 +411,7 @@ function MessageRow({ row, connectionId, tableName, primaryKey, cols, isSelected
       )}>
         {onSelectionToggle && (
           <label
-            className="relative z-20 -m-2 mt-0 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
+            className="pointer-events-auto relative z-20 -m-2 mt-0 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <input
@@ -433,14 +433,14 @@ function MessageRow({ row, connectionId, tableName, primaryKey, cols, isSelected
             aria-label={`Open ${display}`}
           />
         )}
-        <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
+        <div className="pointer-events-none relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
           {isReply ? (
             <CornerDownRight className="h-3.5 w-3.5 text-fg-muted" aria-hidden />
           ) : (
             <MessageSquare className="h-3.5 w-3.5 text-fg-muted" aria-hidden />
           )}
         </div>
-        <div className="relative z-10 min-w-0 flex-1 space-y-1">
+        <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2 text-xs">
             {authorLabel != null && (
               <span className="inline-flex items-center gap-1 truncate font-medium text-fg">
@@ -458,7 +458,7 @@ function MessageRow({ row, connectionId, tableName, primaryKey, cols, isSelected
             {bodySnippet || <span className="italic text-fg-faint">no body</span>}
           </p>
         </div>
-        <div className="relative z-20 shrink-0">
+        <div className="pointer-events-auto relative z-20 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

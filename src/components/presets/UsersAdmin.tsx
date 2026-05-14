@@ -446,7 +446,7 @@ function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionTogg
         {/* Checkbox column — outside the Link overlay's hit zone (see /speckit-analyze F1). */}
         {onSelectionToggle && (
           <label
-            className="relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
+            className="pointer-events-auto relative z-20 -m-2 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <input
@@ -468,7 +468,7 @@ function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionTogg
           )}
           aria-label={`Open ${display}`}
         />
-        <div className="relative z-10 h-10 w-10 shrink-0 overflow-hidden rounded-full bg-bg-sunken">
+        <div className="pointer-events-none relative z-10 h-10 w-10 shrink-0 overflow-hidden rounded-full bg-bg-sunken">
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatar} alt="" className="h-full w-full object-cover" />
@@ -478,7 +478,7 @@ function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionTogg
             </span>
           )}
         </div>
-        <div className="relative z-10 min-w-0 flex-1 space-y-0.5">
+        <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-0.5">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">{display}</span>
             {status != null && <StatusPill value={String(status)} />}
@@ -496,7 +496,7 @@ function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionTogg
             {createdRel && <span className="text-fg-faint">joined {createdRel}</span>}
           </div>
         </div>
-        <div className="relative z-10 flex shrink-0 flex-col items-end gap-1 text-right text-[10px]">
+        <div className="pointer-events-none relative z-10 flex shrink-0 flex-col items-end gap-1 text-right text-[10px]">
           {role != null && (
             <span className="inline-flex items-center gap-1 rounded-full bg-bg-sunken px-2 py-0.5 text-fg-muted">
               <ShieldCheck className="h-3 w-3" aria-hidden />
@@ -505,7 +505,7 @@ function UserRow({ row, primaryKey, tableHref, cols, isSelected, onSelectionTogg
           )}
           {lastSeenRel && <span className="text-fg-faint">seen {lastSeenRel}</span>}
         </div>
-        <div className="relative z-20 shrink-0">
+        <div className="pointer-events-auto relative z-20 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

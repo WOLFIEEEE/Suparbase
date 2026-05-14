@@ -142,7 +142,7 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
           aria-label={`Open ${connection.name}`}
         />
 
-        <div className="relative z-10 flex items-start justify-between gap-3">
+        <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex items-center gap-2">
               <Database className="h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
@@ -150,7 +150,7 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
             </div>
             <p className="truncate font-mono text-[11px] text-fg-faint">{connection.hostname}</p>
           </div>
-          <div className="relative z-20 flex shrink-0 items-center gap-1.5">
+          <div className="pointer-events-auto relative z-20 flex shrink-0 items-center gap-1.5">
             <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -196,7 +196,7 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
           </div>
         </div>
 
-        <div className="relative z-10 mt-4 flex items-center justify-between gap-2 border-t hairline pt-3">
+        <div className="pointer-events-none relative z-10 mt-4 flex items-center justify-between gap-2 border-t hairline pt-3">
           {connection.role === "service_role" ? (
             <span className="inline-flex items-center gap-1 text-[10px] text-warn">
               <AlertTriangle className="h-3 w-3" aria-hidden /> bypasses RLS
