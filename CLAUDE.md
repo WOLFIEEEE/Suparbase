@@ -1,9 +1,9 @@
 <!-- SPECKIT START -->
-**Current**: v1.3.0 on `main` (tagged `v1.3.0`). Two new top-level
-workspace pages: a Storage browser that talks to `/storage/v1/*` and
-an Auth users admin page that wraps Supabase's `/auth/v1/admin/*` API
-(needs a service_role key on the connection, gracefully degrades
-otherwise).
+**Current**: v1.4.0 on `main` (tagged `v1.4.0`). SQL playground added
+— read-only by default (Postgres `SET TRANSACTION READ ONLY` plus a
+rollback), explicit toggle for write mode that burns the same
+rate-limit bucket as PostgREST writes and records to the audit log.
+Reuses the encrypted Postgres URL that the RLS debugger introduced.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -30,4 +30,5 @@ Spec-kit features (chronological):
 - [specs/015-rls-debugger/](specs/015-rls-debugger/) — v1.2, RLS policy browser + simulator (needs direct Postgres URL)
 - [specs/016-storage-browser/](specs/016-storage-browser/) — v1.3, Supabase Storage bucket + object browser with signed URLs
 - [specs/017-auth-users/](specs/017-auth-users/) — v1.3, auth.users admin page (invite / recover / ban / delete)
+- [specs/018-sql-playground/](specs/018-sql-playground/) — v1.4, read-only-by-default SQL editor + results table
 <!-- SPECKIT END -->

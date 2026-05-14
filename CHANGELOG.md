@@ -3,6 +3,30 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.4.0 — 2026-05-14 — SQL playground
+
+Tag: `v1.4.0` · Spec: [`018`](specs/018-sql-playground/)
+
+- **SQL playground.** New `/c/[id]/sql` workspace page that runs raw
+  SQL against the user's project via the existing direct-Postgres URL
+  (the encrypted column introduced for the RLS debugger). Read-only by
+  default — the server wraps every query in
+  `BEGIN; SET TRANSACTION READ ONLY; SET LOCAL statement_timeout = N;
+  <sql>; ROLLBACK` so Postgres itself rejects writes (error code
+  25006) and the rollback is belt-and-braces. Write mode is a separate
+  toggle behind a `window.confirm`; write-mode queries burn the same
+  rate-limit bucket as PostgREST writes and record an `audit_log`
+  entry with the SQL text stored in `afterRow.sql` so the row history
+  panel and recent-activity feed both surface it. UI: textarea editor
+  (`Cmd/Ctrl+Enter` to run, `Tab` inserts spaces), statement-timeout
+  selector (1–60s), EXPLAIN button, sticky-header results table with
+  column name + Postgres type, NULL/boolean/long-string treatments,
+  and a Recent dropdown reading the last 30 queries from
+  `localStorage`. Postgres error codes are mapped to friendly
+  categories (read-only violation, statement timeout, RLS violation,
+  syntax error) and rendered with `detail` + `hint` + `position` from
+  the upstream response.
+
 ## v1.3.0 — 2026-05-14 — Storage + Auth users
 
 Tag: `v1.3.0` · Specs: [`016`](specs/016-storage-browser/), [`017`](specs/017-auth-users/)
