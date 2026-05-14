@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
+import { ModelPicker } from "@/components/settings/ModelPicker";
 import { AppError } from "@/lib/errors";
 import type { AiSettingsSummary } from "@/lib/types/analysis";
 
@@ -149,19 +150,14 @@ export function AiSettingsForm({ initial }: { initial: AiSettingsSummary }) {
 
         <div className="space-y-2">
           <Label htmlFor="ai-model">Default model</Label>
-          <Input
-            id="ai-model"
-            value={modelDraft}
-            onChange={(e) => setModelDraft(e.target.value)}
-            placeholder="anthropic/claude-3.5-haiku"
-            autoComplete="off"
-            spellCheck={false}
-          />
+          <ModelPicker value={modelDraft} onChange={setModelDraft} />
           <p className="text-xs text-fg-faint">
-            Any model your OpenRouter account can access. Examples:
-            <code className="ml-1 text-fg">anthropic/claude-3.5-haiku</code>,
-            <code className="ml-1 text-fg">openai/gpt-4o-mini</code>,
-            <code className="ml-1 text-fg">meta-llama/llama-3.1-70b-instruct</code>.
+            Pick any model from the OpenRouter catalogue. Models that expose
+            tool-calling are tagged{" "}
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-accent/10 px-1 py-0.5 text-[9px] uppercase tracking-wider text-accent">
+              tools
+            </span>{" "}
+            — those are the ones the chat assistant can use end-to-end.
           </p>
         </div>
 

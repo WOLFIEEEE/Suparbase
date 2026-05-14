@@ -15,7 +15,7 @@ export const runtime = "nodejs";
 
 const PutSchema = z.object({
   key: z.string().optional(),
-  defaultModel: z.string().trim().min(1).max(80).optional(),
+  defaultModel: z.string().trim().min(1).max(160).optional(),
 });
 
 export async function GET() {

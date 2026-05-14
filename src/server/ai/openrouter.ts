@@ -39,6 +39,102 @@ function authHeaders(apiKey: string): HeadersInit {
   };
 }
 
+export interface OpenRouterModelInfo {
+  id: string;
+  name: string;
+  description?: string;
+  contextLength: number | null;
+  pricing: {
+    /** USD per input token. */
+    prompt: number | null;
+    /** USD per output token. */
+    completion: number | null;
+  };
+  modality: string | null;
+  /** True when the model exposes tool/function calling. */
+  supportsTools: boolean;
+}
+
+interface RawModel {
+  id?: string;
+  name?: string;
+  description?: string;
+  context_length?: number;
+  pricing?: { prompt?: string | number; completion?: string | number };
+  architecture?: { modality?: string };
+  supported_parameters?: string[];
+}
+
+interface ModelsResponse {
+  data?: RawModel[];
+}
+
+/**
+ * Pull the OpenRouter model catalogue. The endpoint is public — auth is
+ * optional and only used to bias the response toward what the user's key
+ * can call. Throws OpenRouterError on transport / parse failures.
+ */
+export async function fetchOpenRouterModels(apiKey: string | null): Promise<OpenRouterModelInfo[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  let res: Response;
+  try {
+    res = await fetch(`${ENDPOINT}/models`, {
+      method: "GET",
+      headers: apiKey
+        ? authHeaders(apiKey)
+        : { Accept: "application/json", "HTTP-Referer": appOrigin(), "X-Title": "Suparbase" },
+      signal: controller.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    throw new OpenRouterError(
+      "network",
+      `Could not reach OpenRouter (${(e as Error).message ?? "unknown"}).`,
+    );
+  }
+  clearTimeout(timer);
+  if (res.status === 401 || res.status === 403) {
+    throw new OpenRouterError("unauthorized", "OpenRouter rejected this key.");
+  }
+  if (!res.ok) {
+    throw new OpenRouterError("server", `OpenRouter responded with ${res.status}.`);
+  }
+  let payload: ModelsResponse;
+  try {
+    payload = (await res.json()) as ModelsResponse;
+  } catch {
+    throw new OpenRouterError("malformed", "OpenRouter /models returned non-JSON.");
+  }
+  const raw = Array.isArray(payload.data) ? payload.data : [];
+  const out: OpenRouterModelInfo[] = [];
+  for (const m of raw) {
+    if (!m.id) continue;
+    out.push({
+      id: m.id,
+      name: m.name ?? m.id,
+      description: m.description,
+      contextLength: typeof m.context_length === "number" ? m.context_length : null,
+      pricing: {
+        prompt: parsePricing(m.pricing?.prompt),
+        completion: parsePricing(m.pricing?.completion),
+      },
+      modality: m.architecture?.modality ?? null,
+      supportsTools: Array.isArray(m.supported_parameters)
+        ? m.supported_parameters.includes("tools")
+        : false,
+    });
+  }
+  out.sort((a, b) => a.id.localeCompare(b.id));
+  return out;
+}
+
+function parsePricing(v: string | number | undefined): number | null {
+  if (v == null) return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 /**
  * Probe call. We hit /models with the user's key; a 200 means the key is
  * usable, a 401/403 means it isn't.

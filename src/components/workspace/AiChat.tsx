@@ -472,13 +472,13 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         </div>
       </header>
 
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-5">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
         {state.messages.length === 0 ? (
           <EmptyState onPick={send} />
         ) : (
           <ul className="space-y-4">
             {state.messages.map((m, i) => (
-              <li key={i}>
+              <li key={i} className="min-w-0">
                 <MessageBubble
                   msg={m}
                   onApply={applyProposal}
@@ -646,9 +646,13 @@ function MessageBubble({
           </div>
         </div>
       ) : null}
-      {(msg.proposals ?? []).map((p) => (
-        <ProposalCard key={p.id} entry={p} onApply={onApply} onDiscard={onDiscard} />
-      ))}
+      {msg.proposals && msg.proposals.length > 0 && (
+        <div className="min-w-0 space-y-2">
+          {msg.proposals.map((p) => (
+            <ProposalCard key={p.id} entry={p} onApply={onApply} onDiscard={onDiscard} />
+          ))}
+        </div>
+      )}
       {msg.model && !msg.pending && (
         <p className="px-1 text-[10px] text-fg-faint">via {msg.model}</p>
       )}
@@ -866,7 +870,7 @@ function ProposalCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-bg-raised shadow-sm",
+        "w-full min-w-0 max-w-full overflow-hidden rounded-lg border bg-bg-raised shadow-sm",
         proposal.kind === "proposed_delete"
           ? "border-danger/40"
           : proposal.kind === "proposed_update"
@@ -878,15 +882,15 @@ function ProposalCard({
     >
       <header className="flex items-center gap-2 border-b hairline px-3.5 py-2.5">
         <ProposalIcon kind={proposal.kind} />
-        <span className="font-display text-sm">
+        <span className="min-w-0 flex-1 truncate font-display text-sm">
           {kindLabel} <span className="font-mono text-fg-muted">{proposal.table}</span>
         </span>
-        <span className="ml-auto rounded-full bg-bg-sunken px-2 py-0.5 text-[10px] tabular-nums text-fg-muted">
+        <span className="shrink-0 rounded-full bg-bg-sunken px-2 py-0.5 text-[10px] tabular-nums text-fg-muted">
           {total} {total === 1 ? "row" : "rows"}
         </span>
       </header>
       <div className="space-y-3 px-3.5 py-3 text-xs">
-        <p className="text-fg">{proposal.summary}</p>
+        <p className="break-words text-fg">{proposal.summary}</p>
 
         {proposal.kind === "proposed_update" && (
           <>
@@ -897,7 +901,7 @@ function ProposalCard({
         {proposal.kind === "proposed_delete" && (
           <>
             <FiltersStrip filters={proposal.filters} />
-            <PreviewRows preview={proposal.preview} totalCount={proposal.totalCount} kind="delete" />
+            <PreviewTable preview={proposal.preview} totalCount={proposal.totalCount} kind="delete" />
           </>
         )}
         {proposal.kind === "proposed_insert" && (
@@ -911,7 +915,7 @@ function ProposalCard({
           </div>
         )}
       </div>
-      <footer className="flex items-center gap-2 border-t hairline px-3.5 py-2.5">
+      <footer className="flex flex-wrap items-center gap-2 border-t hairline px-3.5 py-2.5">
         {status === "applied" ? (
           <div className="inline-flex items-center gap-1.5 text-[11px] text-accent">
             <Check className="h-3 w-3" aria-hidden />
@@ -950,7 +954,7 @@ function ProposalCard({
             >
               Discard
             </Button>
-            <span className="ml-auto text-[10px] text-fg-faint">
+            <span className="basis-full text-[10px] text-fg-faint sm:ml-auto sm:basis-auto">
               Read-only by default — runs only on Apply.
             </span>
           </>
@@ -962,15 +966,15 @@ function ProposalCard({
 
 function FiltersStrip({ filters }: { filters: FilterShape[] }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex min-w-0 max-w-full flex-wrap gap-1.5">
       {filters.map((f, i) => (
         <code
           key={i}
-          className="inline-flex items-center gap-1 rounded surface-sunken px-1.5 py-0.5 font-mono text-[10px] text-fg-muted"
+          className="inline-flex max-w-full items-center gap-1 truncate rounded surface-sunken px-1.5 py-0.5 font-mono text-[10px] text-fg-muted"
         >
-          <span className="text-fg">{f.column}</span>
-          <span className="text-fg-faint">{f.op}</span>
-          <span className="text-fg">{prettyVal(f.value)}</span>
+          <span className="shrink-0 text-fg">{f.column}</span>
+          <span className="shrink-0 text-fg-faint">{f.op}</span>
+          <span className="truncate text-fg">{prettyVal(f.value)}</span>
         </code>
       ))}
     </div>
@@ -987,29 +991,35 @@ function PatchTable({
   const keys = Object.keys(patch);
   if (keys.length === 0) return null;
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       <p className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">Changes</p>
       <ul className="space-y-1">
         {keys.map((k) => {
           const current = preview[0]?.[k];
           const next = patch[k];
           return (
-            <li key={k} className="flex items-baseline gap-1.5 font-mono text-[11px]">
-              <span className="text-fg-muted">{k}</span>
-              <span className="text-fg-faint">:</span>
-              <span className="text-danger line-through">{prettyVal(current)}</span>
-              <span className="text-fg-faint">→</span>
-              <span className="text-accent">{prettyVal(next)}</span>
+            <li
+              key={k}
+              className="grid grid-cols-[auto_1fr] items-baseline gap-x-1.5 gap-y-0.5 font-mono text-[11px] sm:grid-cols-[auto_1fr_auto_1fr]"
+            >
+              <span className="truncate text-fg-muted">{k}</span>
+              <span className="min-w-0 truncate text-danger line-through" title={prettyVal(current)}>
+                {prettyVal(current)}
+              </span>
+              <span className="hidden text-fg-faint sm:inline">→</span>
+              <span className="min-w-0 truncate text-accent" title={prettyVal(next)}>
+                {prettyVal(next)}
+              </span>
             </li>
           );
         })}
       </ul>
-      <PreviewRows preview={preview} totalCount={null} kind="update" />
+      <PreviewTable preview={preview} totalCount={null} kind="update" />
     </div>
   );
 }
 
-function PreviewRows({
+function PreviewTable({
   preview,
   totalCount,
   kind,
@@ -1023,22 +1033,65 @@ function PreviewRows({
   }
   const remaining =
     totalCount != null && totalCount > preview.length ? totalCount - preview.length : 0;
+  // Cap displayed columns so the table never gets unbounded width.
+  const allKeys = new Set<string>();
+  for (const row of preview) for (const k of Object.keys(row)) allKeys.add(k);
+  const visibleCols = Array.from(allKeys).slice(0, 6);
+  const hiddenCols = allKeys.size - visibleCols.length;
+
   return (
-    <details className="rounded border hairline bg-bg-sunken/40 text-[11px]">
-      <summary className="cursor-pointer px-2 py-1 text-fg-muted hover:text-fg">
-        {kind === "delete" ? "Rows that would be deleted" : "Preview"}
-        <span className="ml-1 text-fg-faint">
+    <details className="min-w-0 max-w-full overflow-hidden rounded border hairline bg-bg-sunken/40 text-[11px]">
+      <summary className="flex cursor-pointer items-center gap-1 truncate px-2 py-1 text-fg-muted hover:text-fg">
+        <span className="truncate">
+          {kind === "delete" ? "Rows that would be deleted" : "Preview"}
+        </span>
+        <span className="ml-1 shrink-0 text-fg-faint">
           ({preview.length}
           {remaining > 0 ? ` of ${preview.length + remaining}` : ""})
         </span>
       </summary>
-      <ul className="space-y-1 border-t hairline px-2 py-1.5">
-        {preview.map((row, i) => (
-          <li key={i} className="truncate font-mono text-fg-muted">
-            {previewLine(row)}
-          </li>
-        ))}
-      </ul>
+      <div className="max-w-full overflow-x-auto border-t hairline">
+        <table className="w-full table-fixed border-collapse text-[11px]">
+          <thead>
+            <tr className="text-left text-fg-faint">
+              {visibleCols.map((c) => (
+                <th
+                  key={c}
+                  className="truncate border-b hairline px-2 py-1 font-mono text-[10px] font-normal"
+                  style={{ minWidth: "5.5rem", maxWidth: "10rem" }}
+                  title={c}
+                >
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {preview.map((row, i) => (
+              <tr key={i} className="align-top">
+                {visibleCols.map((c) => {
+                  const text = prettyVal(row[c]);
+                  return (
+                    <td
+                      key={c}
+                      className="truncate border-b hairline px-2 py-1 font-mono text-fg-muted"
+                      style={{ maxWidth: "10rem" }}
+                      title={text}
+                    >
+                      {text}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {hiddenCols > 0 && (
+        <p className="border-t hairline px-2 py-1 text-[10px] text-fg-faint">
+          {hiddenCols} more {hiddenCols === 1 ? "column" : "columns"} not shown.
+        </p>
+      )}
     </details>
   );
 }
@@ -1053,16 +1106,25 @@ function KeyValueBlock({
   const keys = Object.keys(values);
   if (keys.length === 0) return null;
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       <p className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">{title}</p>
       <ul className="space-y-1">
-        {keys.map((k) => (
-          <li key={k} className="flex items-baseline gap-1.5 font-mono text-[11px]">
-            <span className="text-fg-muted">{k}</span>
-            <span className="text-fg-faint">=</span>
-            <span className="text-accent">{prettyVal(values[k])}</span>
-          </li>
-        ))}
+        {keys.map((k) => {
+          const text = prettyVal(values[k]);
+          return (
+            <li
+              key={k}
+              className="grid grid-cols-[8rem_1fr] items-baseline gap-x-1.5 font-mono text-[11px]"
+            >
+              <span className="truncate text-fg-muted" title={k}>
+                {k}
+              </span>
+              <span className="min-w-0 truncate text-accent" title={text}>
+                = {text}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -1071,20 +1133,14 @@ function KeyValueBlock({
 function prettyVal(v: unknown): string {
   if (v === null || v === undefined) return "null";
   if (typeof v === "string") {
-    if (v.length > 30) return `"${v.slice(0, 30)}…"`;
+    if (v.length > 60) return `"${v.slice(0, 60)}…"`;
     return `"${v}"`;
   }
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   try {
     const s = JSON.stringify(v);
-    return s.length > 30 ? s.slice(0, 30) + "…" : s;
+    return s.length > 60 ? s.slice(0, 60) + "…" : s;
   } catch {
     return String(v);
   }
-}
-
-function previewLine(row: Record<string, unknown>): string {
-  // Show the first 3 columns of the row as `col=value`.
-  const entries = Object.entries(row).slice(0, 3);
-  return entries.map(([k, v]) => `${k}=${prettyVal(v)}`).join(" · ");
 }
