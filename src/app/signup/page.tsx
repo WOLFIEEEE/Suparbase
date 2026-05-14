@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isGithubEnabled } from "@/server/auth";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { SignUpForm } from "@/components/auth/SignUpForm";
-import { Wordmark } from "@/components/brand/Logo";
-import { AppFooter } from "@/components/workspace/AppFooter";
 
 interface SignUpPageProps {
   searchParams: Promise<{ next?: string }>;
@@ -15,30 +13,13 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   if (session?.user) redirect(next ?? "/connections");
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg">
-      <header className="px-6 py-6">
-        <Link
-          href="/"
-          aria-label="Suparbase home"
-          className="inline-flex transition-colors hover:text-accent"
-        >
-          <Wordmark size="md" />
-        </Link>
-      </header>
-      <main className="flex flex-1 items-center justify-center px-6 pb-12">
-        <div className="surface w-full max-w-md space-y-6 rounded-md p-8">
-          <div className="space-y-1">
-            <h1 className="font-display text-display-md">Create account</h1>
-            <p className="text-sm text-fg-muted">
-              Free, takes a few seconds. Your saved Supabase keys are encrypted with AES-256-GCM
-              before they touch the disk.
-            </p>
-          </div>
-
-          <SignUpForm githubEnabled={isGithubEnabled()} />
-        </div>
-      </main>
-      <AppFooter width="bare" className="mt-0" />
-    </div>
+    <AuthShell
+      eyebrow="Free · takes a minute"
+      title="Create your account"
+      subtitle="Bring a Supabase key after signup — we'll encrypt it before it touches disk and never expose it to a browser."
+      footnote="No credit card. No newsletter. The only outbound emails we send are password recovery links you trigger yourself."
+    >
+      <SignUpForm githubEnabled={isGithubEnabled()} />
+    </AuthShell>
   );
 }

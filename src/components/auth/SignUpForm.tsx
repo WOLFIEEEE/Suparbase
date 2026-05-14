@@ -1,12 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { ArrowRight, Eye, EyeOff, Github, Mail, User } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Github,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/ui/cn";
 
 interface Props {
   githubEnabled: boolean;
@@ -18,6 +26,8 @@ interface SignupError {
   field?: string;
 }
 
+const MIN_PASSWORD_LENGTH = 12;
+
 export function SignUpForm({ githubEnabled }: Props) {
   const params = useSearchParams();
   const next = params.get("next") ?? "/connections";
@@ -27,8 +37,13 @@ export function SignUpForm({ githubEnabled }: Props) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const strength = useMemo(() => scorePassword(password), [password]);
+  const passwordValid = password.length >= MIN_PASSWORD_LENGTH;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,14 +92,15 @@ export function SignUpForm({ githubEnabled }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="signup-name">
-            <span className="inline-flex items-center gap-1.5">
-              <User className="h-3 w-3" aria-hidden />
-              Name (optional)
-            </span>
+    <div className="space-y-5">
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="signup-name"
+            className="flex items-center justify-between text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+          >
+            <span>Name</span>
+            <span className="normal-case tracking-normal text-fg-faint">(optional)</span>
           </Label>
           <Input
             id="signup-name"
@@ -94,15 +110,17 @@ export function SignUpForm({ githubEnabled }: Props) {
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
             autoFocus
+            placeholder="What should we call you?"
+            className="!font-sans text-base sm:text-sm"
           />
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="signup-email">
-            <span className="inline-flex items-center gap-1.5">
-              <Mail className="h-3 w-3" aria-hidden />
-              Email
-            </span>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="signup-email"
+            className="text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+          >
+            Email
           </Label>
           <Input
             id="signup-email"
@@ -112,55 +130,87 @@ export function SignUpForm({ githubEnabled }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             required
             aria-invalid={fieldError?.field === "email"}
+            placeholder="you@company.com"
+            className={cn(
+              "!font-sans text-base sm:text-sm",
+              fieldError?.field === "email" && "border-danger/60",
+            )}
           />
           {fieldError?.field === "email" && (
             <p className="text-[11px] text-danger">{fieldError.message}</p>
           )}
         </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="signup-password">Password</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="signup-password"
+            className="text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+          >
+            Password
+          </Label>
+          <div className="relative">
+            <Input
+              id="signup-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={MIN_PASSWORD_LENGTH}
+              aria-invalid={fieldError?.field === "password"}
+              placeholder="••••••••••••"
+              className={cn(
+                "pr-10",
+                fieldError?.field === "password" && "border-danger/60",
+              )}
+            />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="text-xs text-fg-muted hover:text-fg"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-            >
-              {showPassword ? (
-                <span className="inline-flex items-center gap-1"><EyeOff className="h-3 w-3" /> hide</span>
-              ) : (
-                <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> show</span>
+              className={cn(
+                "absolute right-1 top-1/2 -translate-y-1/2 rounded p-1.5",
+                "text-fg-faint hover:bg-bg-sunken hover:text-fg",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               )}
+            >
+              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
             </button>
           </div>
-          <Input
-            id="signup-password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={12}
-            aria-invalid={fieldError?.field === "password"}
+          <PasswordStrengthMeter
+            strength={strength}
+            password={password}
+            error={fieldError?.field === "password" ? fieldError.message : null}
+            satisfied={passwordValid}
           />
-          {fieldError?.field === "password" ? (
-            <p className="text-[11px] text-danger">{fieldError.message}</p>
-          ) : (
-            <p className="text-[11px] text-fg-faint">At least 12 characters.</p>
-          )}
         </div>
 
         {formError && (
-          <div className="rounded border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {formError}
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
+          >
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{formError}</span>
           </div>
         )}
 
-        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-          {submitting ? "Creating account…" : (
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={submitting || githubLoading || !emailValid || !passwordValid}
+        >
+          {submitting ? (
             <>
-              Create account <ArrowRight className="h-4 w-4" aria-hidden />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Creating account…
+            </>
+          ) : (
+            <>
+              Create account
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </>
           )}
         </Button>
@@ -168,34 +218,143 @@ export function SignUpForm({ githubEnabled }: Props) {
 
       {githubEnabled && (
         <>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center" aria-hidden>
-              <span className="w-full border-t hairline" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-              <span className="bg-bg-raised px-2 text-fg-faint">or</span>
-            </div>
-          </div>
-
+          <Divider label="or continue with" />
           <Button
             type="button"
             variant="secondary"
             size="lg"
             className="w-full"
-            onClick={() => signIn("github", { callbackUrl: next })}
+            onClick={() => {
+              setGithubLoading(true);
+              void signIn("github", { callbackUrl: next });
+            }}
+            disabled={submitting || githubLoading}
           >
-            <Github className="h-4 w-4" aria-hidden />
-            Continue with GitHub
+            {githubLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <Github className="h-4 w-4" aria-hidden />
+            )}
+            GitHub
           </Button>
         </>
       )}
 
       <p className="text-center text-sm text-fg-muted">
         Already have an account?{" "}
-        <Link href={`/signin${next !== "/connections" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-accent hover:underline">
+        <Link
+          href={`/signin${next !== "/connections" ? `?next=${encodeURIComponent(next)}` : ""}`}
+          className="font-medium text-accent underline-offset-2 hover:underline"
+        >
           Sign in
         </Link>
       </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Password strength
+// ---------------------------------------------------------------------------
+
+interface Strength {
+  score: 0 | 1 | 2 | 3 | 4;
+  label: string;
+  tone: "danger" | "warn" | "accent";
+}
+
+function scorePassword(pw: string): Strength {
+  if (pw.length === 0) return { score: 0, label: "—", tone: "danger" };
+  let score = 0;
+  if (pw.length >= 12) score++;
+  if (pw.length >= 16) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  // Cap at 4.
+  const clamped = Math.min(4, score) as 0 | 1 | 2 | 3 | 4;
+  if (pw.length < MIN_PASSWORD_LENGTH) {
+    return { score: clamped, label: "Too short", tone: "danger" };
+  }
+  if (clamped <= 1) return { score: clamped, label: "Weak", tone: "danger" };
+  if (clamped === 2) return { score: clamped, label: "Okay", tone: "warn" };
+  if (clamped === 3) return { score: clamped, label: "Good", tone: "accent" };
+  return { score: clamped, label: "Strong", tone: "accent" };
+}
+
+function PasswordStrengthMeter({
+  strength,
+  password,
+  error,
+  satisfied,
+}: {
+  strength: Strength;
+  password: string;
+  error: string | null;
+  satisfied: boolean;
+}) {
+  // Hide the meter completely before the user has typed anything.
+  if (password.length === 0) {
+    return (
+      <p className="text-[11px] text-fg-faint">
+        At least {MIN_PASSWORD_LENGTH} characters. Longer is better.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-1.5">
+      <div className="flex h-1 gap-1" role="meter" aria-label="Password strength" aria-valuemin={0} aria-valuemax={4} aria-valuenow={strength.score}>
+        {[0, 1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={cn(
+              "flex-1 rounded-full transition-colors duration-200",
+              i < strength.score
+                ? strength.tone === "danger"
+                  ? "bg-danger"
+                  : strength.tone === "warn"
+                  ? "bg-warn"
+                  : "bg-accent"
+                : "bg-line/60",
+            )}
+          />
+        ))}
+      </div>
+      <p
+        className={cn(
+          "text-[11px]",
+          error
+            ? "text-danger"
+            : satisfied
+            ? "text-accent"
+            : strength.tone === "danger"
+            ? "text-danger"
+            : strength.tone === "warn"
+            ? "text-warn"
+            : "text-fg-muted",
+        )}
+      >
+        {error ??
+          (satisfied
+            ? `${strength.label} — looks good.`
+            : `${strength.label} · ${Math.max(0, MIN_PASSWORD_LENGTH - password.length)} more character${MIN_PASSWORD_LENGTH - password.length === 1 ? "" : "s"} to go.`)}
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared
+// ---------------------------------------------------------------------------
+
+function Divider({ label }: { label: string }) {
+  return (
+    <div className="relative my-2 flex items-center">
+      <span className="flex-1 border-t hairline" aria-hidden />
+      <span className="px-3 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
+        {label}
+      </span>
+      <span className="flex-1 border-t hairline" aria-hidden />
     </div>
   );
 }

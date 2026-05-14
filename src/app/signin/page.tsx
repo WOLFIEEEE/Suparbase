@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isGithubEnabled } from "@/server/auth";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { SignInForm } from "@/components/auth/SignInForm";
-import { Wordmark } from "@/components/brand/Logo";
-import { AppFooter } from "@/components/workspace/AppFooter";
 
 interface SignInPageProps {
   searchParams: Promise<{ next?: string; error?: string }>;
@@ -24,34 +22,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   if (session?.user) redirect(next ?? "/connections");
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg">
-      <header className="px-6 py-6">
-        <Link
-          href="/"
-          aria-label="Suparbase home"
-          className="inline-flex transition-colors hover:text-accent"
-        >
-          <Wordmark size="md" />
-        </Link>
-      </header>
-      <main className="flex flex-1 items-center justify-center px-6 pb-12">
-        <div className="surface w-full max-w-md space-y-6 rounded-md p-8">
-          <div className="space-y-1">
-            <h1 className="font-display text-display-md">Sign in</h1>
-            <p className="text-sm text-fg-muted">
-              Your saved Supabase keys stay encrypted on our servers — they never touch a browser.
-            </p>
-          </div>
-
-          <SignInForm githubEnabled={isGithubEnabled()} error={mapError(error)} />
-
-          <p className="text-[11px] text-fg-faint">
-            By signing in you agree to a basic operator-side audit log of writes performed through your
-            connections.
-          </p>
-        </div>
-      </main>
-      <AppFooter width="bare" className="mt-0" />
-    </div>
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Sign in"
+      subtitle="Pick up where you left off — your saved connections and AI history are waiting."
+      footnote="By signing in you agree to a basic operator-side audit log of writes performed through your connections."
+    >
+      <SignInForm githubEnabled={isGithubEnabled()} error={mapError(error)} />
+    </AuthShell>
   );
 }

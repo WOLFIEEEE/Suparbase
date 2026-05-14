@@ -3,10 +3,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { ArrowRight, Eye, EyeOff, Github, Mail } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Github,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/ui/cn";
 
 interface Props {
   githubEnabled: boolean;
@@ -21,6 +29,7 @@ export function SignInForm({ githubEnabled, error }: Props) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(error ?? null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -49,14 +58,14 @@ export function SignInForm({ githubEnabled, error }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="signin-email">
-            <span className="inline-flex items-center gap-1.5">
-              <Mail className="h-3 w-3" aria-hidden />
-              Email
-            </span>
+    <div className="space-y-5">
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="signin-email"
+            className="text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+          >
+            Email
           </Label>
           <Input
             id="signin-email"
@@ -66,45 +75,78 @@ export function SignInForm({ githubEnabled, error }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoFocus
+            placeholder="you@company.com"
+            className="!font-sans text-base sm:text-sm"
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="signin-password">Password</Label>
+            <Label
+              htmlFor="signin-password"
+              className="text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+            >
+              Password
+            </Label>
+            <span
+              title="Self-service password reset isn't wired up yet — contact your admin."
+              className="cursor-help text-[10px] uppercase tracking-wider text-fg-faint"
+            >
+              Forgot?
+            </span>
+          </div>
+          <div className="relative">
+            <Input
+              id="signin-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              className="pr-10"
+            />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="text-xs text-fg-muted hover:text-fg"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
-            >
-              {showPassword ? (
-                <span className="inline-flex items-center gap-1"><EyeOff className="h-3 w-3" /> hide</span>
-              ) : (
-                <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> show</span>
+              className={cn(
+                "absolute right-1 top-1/2 -translate-y-1/2 rounded p-1.5",
+                "text-fg-faint hover:bg-bg-sunken hover:text-fg",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               )}
+            >
+              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
             </button>
           </div>
-          <Input
-            id="signin-password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
         </div>
 
         {formError && (
-          <div className="rounded border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {formError}
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
+          >
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{formError}</span>
           </div>
         )}
 
-        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-          {submitting ? "Signing in…" : (
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={submitting || githubLoading || !email.trim() || !password}
+        >
+          {submitting ? (
             <>
-              Sign in <ArrowRight className="h-4 w-4" aria-hidden />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Signing in…
+            </>
+          ) : (
+            <>
+              Sign in
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </>
           )}
         </Button>
@@ -112,34 +154,49 @@ export function SignInForm({ githubEnabled, error }: Props) {
 
       {githubEnabled && (
         <>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center" aria-hidden>
-              <span className="w-full border-t hairline" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-              <span className="bg-bg-raised px-2 text-fg-faint">or</span>
-            </div>
-          </div>
-
+          <Divider label="or continue with" />
           <Button
             type="button"
             variant="secondary"
             size="lg"
             className="w-full"
-            onClick={() => signIn("github", { callbackUrl: next })}
+            onClick={() => {
+              setGithubLoading(true);
+              void signIn("github", { callbackUrl: next });
+            }}
+            disabled={submitting || githubLoading}
           >
-            <Github className="h-4 w-4" aria-hidden />
-            Continue with GitHub
+            {githubLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <Github className="h-4 w-4" aria-hidden />
+            )}
+            GitHub
           </Button>
         </>
       )}
 
       <p className="text-center text-sm text-fg-muted">
         New here?{" "}
-        <Link href={`/signup${next !== "/connections" ? `?next=${encodeURIComponent(next)}` : ""}`} className="text-accent hover:underline">
+        <Link
+          href={`/signup${next !== "/connections" ? `?next=${encodeURIComponent(next)}` : ""}`}
+          className="font-medium text-accent underline-offset-2 hover:underline"
+        >
           Create an account
         </Link>
       </p>
+    </div>
+  );
+}
+
+function Divider({ label }: { label: string }) {
+  return (
+    <div className="relative my-2 flex items-center">
+      <span className="flex-1 border-t hairline" aria-hidden />
+      <span className="px-3 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
+        {label}
+      </span>
+      <span className="flex-1 border-t hairline" aria-hidden />
     </div>
   );
 }
