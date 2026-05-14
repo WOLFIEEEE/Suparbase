@@ -4,7 +4,7 @@ import { auth } from "@/server/auth";
 import { getConnectionForUser } from "@/server/connections/repo";
 import { introspectConnection, IntrospectionError } from "@/server/schema-introspect";
 import { loadCachedAnalysis } from "@/server/ai/analyze";
-import { runChat, type ChatEvent, type ChatMessageIn } from "@/server/ai/chat";
+import { runChat, type ChatEvent } from "@/server/ai/chat";
 import { getUserSettings, readOpenrouterKey } from "@/server/settings/repo";
 import { checkAiRate } from "@/server/proxy/ratelimit";
 import { heuristicAnalysisFor } from "@/lib/presets/heuristic";
@@ -22,6 +22,14 @@ const BodySchema = z.object({
     )
     .min(1)
     .max(12),
+  /** Optional page context the agent uses to disambiguate "this table" etc. */
+  page: z
+    .object({
+      pathname: z.string().max(200).optional(),
+      tableName: z.string().max(120).optional(),
+      view: z.string().max(40).optional(),
+    })
+    .optional(),
 });
 
 interface Params {
@@ -42,7 +50,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     );
   }
 
-  let body: { messages: ChatMessageIn[] };
+  let body: z.infer<typeof BodySchema>;
   try {
     const json = await req.json();
     body = BodySchema.parse(json);
@@ -115,7 +123,8 @@ export async function POST(req: NextRequest, ctx: Params) {
           model,
           hostname: conn.hostname,
           history: body.messages,
-          ctx: { conn, schema, analyses },
+          ctx: { conn, schema, analyses, userId: session.user.id },
+          page: body.page,
           signal: req.signal,
         })) {
           write(ev);

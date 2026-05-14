@@ -51,7 +51,29 @@ interface OpenAIToolCall {
   function: { name: string; arguments: string };
 }
 
-function systemPrompt(hostname: string, tableCount: number): string {
+export interface PageContext {
+  /** Current page route, e.g. "/c/abc/tables/users/123". */
+  pathname?: string;
+  /** Name of the table currently being viewed, if any. */
+  tableName?: string;
+  /** Brief label of the current view: dashboard / tables / table / row / schema / storage / rls / sql / settings. */
+  view?: string;
+}
+
+function contextHint(ctx?: PageContext): string {
+  if (!ctx) return "";
+  const parts: string[] = [];
+  if (ctx.view) parts.push(`view: ${ctx.view}`);
+  if (ctx.tableName) parts.push(`focused table: ${ctx.tableName}`);
+  if (parts.length === 0) return "";
+  return `\n\nCurrent page context: ${parts.join(", ")}. When the user says "this table" / "this row" / "here", they probably mean the focused thing above.`;
+}
+
+function systemPrompt(
+  hostname: string,
+  tableCount: number,
+  page?: PageContext,
+): string {
   return `You are Suparbase's data-aware assistant for project ${hostname}.
 
 The user is an admin asking questions about their database (${tableCount} tables in public schema). You have these tools:
@@ -61,6 +83,9 @@ READ:
 - get_table_schema(table_name): full column list with types/PKs/FKs. Use this before constructing a query so you reference real column names.
 - query_rows({table_name, columns?, filters?, sort?, limit≤50}): fetches up to 50 rows. Use narrow column lists and filters.
 - count_rows({table_name, filters?}): aggregate count. Prefer over query_rows when you only need a total.
+- aggregate({table_name, op, column?, filters?, group_by?, limit?}): sum/avg/min/max/count with optional grouping. Use for analytics ("avg order total", "count by status").
+- list_indexes({table_name}): which indexes exist on a table. Use when the user asks about performance, missing indexes, or "why is this slow". (Requires the project's direct Postgres URL to be configured; tell the user politely if it's not.)
+- audit_summary({table_name?, hours?, limit?}): recent write activity from the audit log (this user + this connection). Use for "what changed", "who edited X", "what happened today".
 
 WRITE (proposal-only: you NEVER execute):
 - propose_update({table_name, filters, patch, summary}): drafts an update. Returns a preview of up to 5 affected rows. The user clicks Apply in the UI to actually commit.
@@ -71,6 +96,8 @@ Rules:
 - NEVER fabricate columns, tables, or values. If a requested column doesn't exist, call get_table_schema first.
 - For "how many X" questions, prefer count_rows over query_rows.
 - For "show me / find / list" questions, use query_rows with a sensible limit (default 10).
+- For "average / sum / max / by group" questions, use aggregate.
+- For "what changed / who did / what happened" questions, use audit_summary before reading rows.
 - When the user asks you to CHANGE / SET / UPDATE / ADD / DELETE rows, you MUST call the matching propose_* tool. Never claim a write was made: only the user's Apply click in the UI commits.
 - Before proposing a write, call get_table_schema and (when filtering) query_rows so you know the values are real. Validate column names exist.
 - When filtering on an enum, look at enumValues for the legal set.
@@ -78,8 +105,8 @@ Rules:
 - Combine multiple filters with AND by passing them as separate entries in the filters array.
 - If a tool returns an error, read it and try a corrected call rather than apologising.
 - After a propose_* tool returns, your next message should be one short sentence telling the user a proposal is ready to review. Do not list the patch contents in prose: the UI shows it.
-- For read questions, reply directly in plain English. Be concise. Quote numeric facts and column values exactly.
-- If the question is unrelated to this database, say so briefly.`;
+- For read questions, reply directly in plain English. Be concise. Quote numeric facts and column values exactly. Markdown is OK for code (\`\`\`sql blocks for SQL).
+- If the question is unrelated to this database, say so briefly.${contextHint(page)}`;
 }
 
 interface RunArgs {
@@ -88,6 +115,7 @@ interface RunArgs {
   hostname: string;
   history: ChatMessageIn[];
   ctx: ToolContext;
+  page?: PageContext;
   signal?: AbortSignal;
 }
 
@@ -100,7 +128,7 @@ export async function* runChat(args: RunArgs): AsyncGenerator<ChatEvent, void, v
     args.history.length > MAX_HISTORY ? args.history.slice(-MAX_HISTORY) : args.history;
 
   const messages: OpenAIChatMessage[] = [
-    { role: "system", content: systemPrompt(args.hostname, args.ctx.schema.tables.length) },
+    { role: "system", content: systemPrompt(args.hostname, args.ctx.schema.tables.length, args.page) },
     ...trimmed.map((m) => ({ role: m.role, content: m.content })),
   ];
 

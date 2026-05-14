@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,10 +8,12 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Copy,
   Database,
   Hash,
   Loader2,
   MessageSquare,
+  PanelLeft,
   Pencil,
   Plus,
   Send,
@@ -27,6 +30,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
+import {
+  type Conversation,
+  deriveTitle,
+  exportAsMarkdown,
+  loadBag,
+  newConversation,
+  saveBag,
+  serializeMessage,
+} from "@/lib/chat/storage";
+import type { ChatStoreMessage } from "@/lib/chat/types";
+import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatConversationSidebar } from "./ChatConversationSidebar";
 
 // ---------------------------------------------------------------------------
 // Event types: must mirror src/server/ai/chat.ts ChatEvent
@@ -94,7 +109,6 @@ type Proposal = UpdateProposal | InsertProposal | DeleteProposal;
 type ProposalStatus = "pending" | "applying" | "applied" | "discarded" | "failed";
 
 interface ProposalEntry {
-  /** Stable id we generate client-side from the tool_call id. */
   id: string;
   proposal: Proposal;
   status: ProposalStatus;
@@ -109,55 +123,166 @@ interface ChatMessage {
   proposals?: ProposalEntry[];
   model?: string;
   error?: { category: string; message: string };
-  /** Set while the assistant message is still streaming. */
   pending?: boolean;
   phase?: Phase;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
 }
 
 // ---------------------------------------------------------------------------
-// Reducer
+// Reducer — operates on the full bag of conversations
 // ---------------------------------------------------------------------------
 
 type Action =
+  | { type: "load"; conversations: Conversation[]; activeId: string | null }
+  | { type: "new" }
+  | { type: "select"; id: string }
+  | { type: "delete"; id: string }
   | { type: "user_send"; content: string }
   | { type: "assistant_begin" }
   | { type: "phase"; phase: Phase }
   | { type: "tool_start"; id: string; tool: string; args: unknown }
   | { type: "tool_end"; id: string; tool: string; result: unknown }
   | { type: "text"; delta: string }
-  | { type: "done"; model: string }
+  | {
+      type: "done";
+      model: string;
+      usage: { promptTokens: number; completionTokens: number; totalTokens: number };
+    }
   | { type: "error"; category: string; message: string }
-  | { type: "proposal_status"; id: string; status: ProposalStatus; error?: string; appliedCount?: number }
-  | { type: "reset" }
+  | {
+      type: "proposal_status";
+      id: string;
+      status: ProposalStatus;
+      error?: string;
+      appliedCount?: number;
+    }
   | { type: "stop" };
 
 interface State {
-  messages: ChatMessage[];
+  conversations: Array<Conversation & { runtimeMessages?: ChatMessage[] }>;
+  activeId: string | null;
+}
+
+function hydrateMessages(stored: ChatStoreMessage[]): ChatMessage[] {
+  return stored.map((m) => ({
+    role: m.role,
+    content: m.content,
+    steps: m.steps as ToolStep[] | undefined,
+    proposals: m.proposals as ProposalEntry[] | undefined,
+    model: m.model,
+    promptTokens: m.promptTokens,
+    completionTokens: m.completionTokens,
+    totalTokens: m.totalTokens,
+  }));
+}
+
+function activeIndex(s: State): number {
+  if (!s.activeId) return -1;
+  return s.conversations.findIndex((c) => c.id === s.activeId);
+}
+
+function updateActive(
+  s: State,
+  fn: (c: Conversation & { runtimeMessages?: ChatMessage[] }) => Conversation & {
+    runtimeMessages?: ChatMessage[];
+  },
+): State {
+  const idx = activeIndex(s);
+  if (idx < 0) return s;
+  const next = s.conversations.slice();
+  next[idx] = fn(next[idx]);
+  return { ...s, conversations: next };
+}
+
+function updateLastAssistant(s: State, fn: (m: ChatMessage) => ChatMessage): State {
+  return updateActive(s, (c) => {
+    const msgs = (c.runtimeMessages ?? hydrateMessages(c.messages)).slice();
+    if (msgs.length === 0) return c;
+    const last = msgs[msgs.length - 1];
+    if (!last || last.role !== "assistant") return c;
+    msgs[msgs.length - 1] = fn(last);
+    return { ...c, runtimeMessages: msgs, updatedAt: Date.now() };
+  });
 }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "user_send":
-      return { messages: [...state.messages, { role: "user", content: action.content }] };
-    case "assistant_begin":
+    case "load":
       return {
-        messages: [
-          ...state.messages,
-          { role: "assistant", content: "", steps: [], pending: true, phase: "thinking" },
-        ],
+        conversations: action.conversations.map((c) => ({
+          ...c,
+          runtimeMessages: hydrateMessages(c.messages),
+        })),
+        activeId: action.activeId,
       };
+
+    case "new": {
+      const conv = newConversation();
+      const wrapped = { ...conv, runtimeMessages: [] as ChatMessage[] };
+      return {
+        conversations: [wrapped, ...state.conversations],
+        activeId: conv.id,
+      };
+    }
+
+    case "select":
+      return { ...state, activeId: action.id };
+
+    case "delete": {
+      const remaining = state.conversations.filter((c) => c.id !== action.id);
+      const wasActive = state.activeId === action.id;
+      return {
+        conversations: remaining,
+        activeId: wasActive ? remaining[0]?.id ?? null : state.activeId,
+      };
+    }
+
+    case "user_send":
+      return updateActive(state, (c) => {
+        const msgs = c.runtimeMessages ?? hydrateMessages(c.messages);
+        const next = [...msgs, { role: "user" as const, content: action.content }];
+        const title =
+          c.messages.length === 0 && c.title === "New conversation"
+            ? deriveTitle([{ role: "user", content: action.content }])
+            : c.title;
+        return { ...c, title, runtimeMessages: next, updatedAt: Date.now() };
+      });
+
+    case "assistant_begin":
+      return updateActive(state, (c) => {
+        const msgs = c.runtimeMessages ?? hydrateMessages(c.messages);
+        return {
+          ...c,
+          runtimeMessages: [
+            ...msgs,
+            {
+              role: "assistant",
+              content: "",
+              steps: [],
+              pending: true,
+              phase: "thinking",
+            },
+          ],
+          updatedAt: Date.now(),
+        };
+      });
+
     case "phase":
-      return mapLastAssistant(state, (m) => ({ ...m, phase: action.phase }));
+      return updateLastAssistant(state, (m) => ({ ...m, phase: action.phase }));
+
     case "tool_start":
-      return mapLastAssistant(state, (m) => ({
+      return updateLastAssistant(state, (m) => ({
         ...m,
         steps: [
           ...(m.steps ?? []),
           { id: action.id, tool: action.tool, args: action.args, status: "running" },
         ],
       }));
+
     case "tool_end":
-      return mapLastAssistant(state, (m) => {
+      return updateLastAssistant(state, (m) => {
         const updatedSteps = (m.steps ?? []).map((s) =>
           s.id === action.id ? { ...s, result: action.result, status: "done" as const } : s,
         );
@@ -170,8 +295,9 @@ function reducer(state: State, action: Action): State {
           : m.proposals;
         return { ...m, steps: updatedSteps, proposals };
       });
+
     case "proposal_status":
-      return mapLastAssistant(state, (m) => ({
+      return updateLastAssistant(state, (m) => ({
         ...m,
         proposals: (m.proposals ?? []).map((p) =>
           p.id === action.id
@@ -179,24 +305,39 @@ function reducer(state: State, action: Action): State {
             : p,
         ),
       }));
+
     case "text":
-      return mapLastAssistant(state, (m) => ({ ...m, content: m.content + action.delta }));
-    case "done":
-      return mapLastAssistant(state, (m) => ({
+      return updateLastAssistant(state, (m) => ({ ...m, content: m.content + action.delta }));
+
+    case "done": {
+      const { model, usage } = action;
+      const next = updateLastAssistant(state, (m) => ({
         ...m,
         pending: false,
         phase: undefined,
-        model: action.model,
+        model,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+        totalTokens: usage.totalTokens,
       }));
+      // Roll up cumulative tokens onto the conversation.
+      return updateActive(next, (c) => ({
+        ...c,
+        totalTokens: c.totalTokens + (usage.totalTokens ?? 0),
+        lastModel: model,
+      }));
+    }
+
     case "error":
-      return mapLastAssistant(state, (m) => ({
+      return updateLastAssistant(state, (m) => ({
         ...m,
         pending: false,
         phase: undefined,
         error: { category: action.category, message: action.message },
       }));
+
     case "stop":
-      return mapLastAssistant(state, (m) =>
+      return updateLastAssistant(state, (m) =>
         m.pending
           ? {
               ...m,
@@ -206,20 +347,37 @@ function reducer(state: State, action: Action): State {
             }
           : m,
       );
-    case "reset":
-      return { messages: [] };
+
     default:
       return state;
   }
 }
 
-function mapLastAssistant(state: State, fn: (m: ChatMessage) => ChatMessage): State {
-  if (state.messages.length === 0) return state;
-  const last = state.messages[state.messages.length - 1];
-  if (!last || last.role !== "assistant") return state;
-  return {
-    messages: [...state.messages.slice(0, -1), fn(last)],
-  };
+// ---------------------------------------------------------------------------
+// Page context — give the agent a hint about where the user is
+// ---------------------------------------------------------------------------
+
+interface PageContext {
+  pathname?: string;
+  tableName?: string;
+  view?: string;
+}
+
+function detectPageContext(pathname: string | null): PageContext | undefined {
+  if (!pathname) return undefined;
+  const tableMatch = /^\/c\/[^/]+\/tables\/([^/?#]+)(?:\/([^/?#]+))?/.exec(pathname);
+  if (tableMatch) {
+    const tableName = decodeURIComponent(tableMatch[1] ?? "");
+    const sub = tableMatch[2];
+    const view =
+      sub === "new" ? "new-row" : sub ? "row-detail" : "table-list";
+    return { pathname, tableName, view };
+  }
+  const viewMatch = /^\/c\/[^/]+\/(rls|storage|schema|auth-users|sql|settings)/.exec(pathname);
+  if (viewMatch) {
+    return { pathname, view: viewMatch[1] };
+  }
+  return { pathname };
 }
 
 // ---------------------------------------------------------------------------
@@ -253,7 +411,7 @@ export function AiChat() {
         <DialogContent
           side="right"
           hideClose
-          className="!w-full sm:!max-w-md md:!max-w-lg !p-0 !gap-0 !overflow-hidden"
+          className="!w-full sm:!max-w-2xl md:!max-w-3xl !p-0 !gap-0 !overflow-hidden"
         >
           <DialogTitle className="sr-only">AI assistant</DialogTitle>
           <DialogDescription className="sr-only">
@@ -272,12 +430,53 @@ export function AiChat() {
 
 function ChatPanel({ onClose }: { onClose: () => void }) {
   const connectionId = useCurrentConnectionId();
-  const [state, dispatch] = useReducer(reducer, { messages: [] });
+  const pathname = usePathname();
+  const pageCtx = useMemo(() => detectPageContext(pathname), [pathname]);
+  const [state, dispatch] = useReducer(reducer, { conversations: [], activeId: null });
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const qc = useQueryClient();
+  const hydrated = useRef(false);
+
+  // Load from localStorage when the connection changes.
+  useEffect(() => {
+    if (!connectionId) return;
+    const bag = loadBag(connectionId);
+    if (bag.conversations.length === 0) {
+      const conv = newConversation();
+      dispatch({ type: "load", conversations: [conv], activeId: conv.id });
+    } else {
+      dispatch({
+        type: "load",
+        conversations: bag.conversations,
+        activeId: bag.activeId ?? bag.conversations[0]?.id ?? null,
+      });
+    }
+    hydrated.current = true;
+  }, [connectionId]);
+
+  // Persist on every state change once hydrated.
+  useEffect(() => {
+    if (!hydrated.current || !connectionId) return;
+    const toPersist: Conversation[] = state.conversations.map((c) => ({
+      id: c.id,
+      title: c.title,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      totalTokens: c.totalTokens,
+      lastModel: c.lastModel,
+      messages: (c.runtimeMessages ?? hydrateMessages(c.messages)).map(serializeMessage),
+    }));
+    saveBag(connectionId, { conversations: toPersist, activeId: state.activeId });
+  }, [connectionId, state]);
+
+  const active = state.conversations.find((c) => c.id === state.activeId);
+  const messages: ChatMessage[] = active
+    ? active.runtimeMessages ?? hydrateMessages(active.messages)
+    : [];
 
   const applyProposal = useCallback(
     async (entry: ProposalEntry) => {
@@ -310,7 +509,6 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         toast.success(
           `Applied to ${entry.proposal.table}: ${applied} row${applied === 1 ? "" : "s"}.`,
         );
-        // Invalidate cached row/list/count queries for the touched table.
         qc.invalidateQueries({
           queryKey: ["rows", connectionId, "public", entry.proposal.table],
         });
@@ -338,17 +536,15 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
     dispatch({ type: "proposal_status", id: entry.id, status: "discarded" });
   }, []);
 
-  // Auto-scroll on new content (use the actual content length to avoid
-  // re-render thrash; smooth for human-typed updates, instant for streams).
-  const lastMessage = state.messages[state.messages.length - 1];
-  const scrollKey = `${state.messages.length}:${lastMessage?.content.length ?? 0}:${lastMessage?.steps?.length ?? 0}`;
+  // Auto-scroll on new content
+  const lastMessage = messages[messages.length - 1];
+  const scrollKey = `${state.activeId}:${messages.length}:${lastMessage?.content.length ?? 0}:${lastMessage?.steps?.length ?? 0}`;
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [scrollKey]);
 
-  // Abort any in-flight stream when the panel unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const send = useCallback(
@@ -358,15 +554,15 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
       setInput("");
       setPending(true);
 
-      dispatch({ type: "user_send", content: trimmed });
-      dispatch({ type: "assistant_begin" });
-
       const history = [
-        ...state.messages
+        ...messages
           .filter((m) => !m.error && m.content)
           .map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: trimmed },
       ];
+
+      dispatch({ type: "user_send", content: trimmed });
+      dispatch({ type: "assistant_begin" });
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -375,7 +571,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         const res = await fetch(`/api/ai/chat/${encodeURIComponent(connectionId)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history }),
+          body: JSON.stringify({ messages: history, page: pageCtx }),
           signal: controller.signal,
         });
 
@@ -429,7 +625,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
         setPending(false);
       }
     },
-    [connectionId, pending, state.messages],
+    [connectionId, pending, messages, pageCtx],
   );
 
   const stop = useCallback(() => {
@@ -437,107 +633,158 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
     dispatch({ type: "stop" });
   }, []);
 
+  const onExportActive = () => {
+    if (!active) return;
+    const persisted: Conversation = {
+      id: active.id,
+      title: active.title,
+      createdAt: active.createdAt,
+      updatedAt: active.updatedAt,
+      totalTokens: active.totalTokens,
+      lastModel: active.lastModel,
+      messages: messages.map(serializeMessage),
+    };
+    const md = exportAsMarkdown(persisted);
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${active.title.replace(/[^\w\d-]+/g, "-").slice(0, 40) || "chat"}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="flex h-full min-h-0 flex-col bg-bg">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b hairline bg-bg/95 px-5 py-3.5 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <div className="grid h-7 w-7 place-items-center rounded-full bg-accent/15">
-            <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />
-          </div>
-          <div className="leading-tight">
-            <h2 className="font-display text-sm">AI assistant</h2>
-            <p className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">
-              read-only · tool-use
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {state.messages.length > 0 && !pending && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => dispatch({ type: "reset" })}
-            >
-              Clear
-            </Button>
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1.5 text-fg-muted hover:bg-bg-raised hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </div>
-      </header>
+    <div className="flex h-full min-h-0 bg-bg">
+      {sidebarOpen && (
+        <ChatConversationSidebar
+          conversations={state.conversations}
+          activeId={state.activeId}
+          onSelect={(id) => dispatch({ type: "select", id })}
+          onNew={() => dispatch({ type: "new" })}
+          onDelete={(id) => dispatch({ type: "delete", id })}
+        />
+      )}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
-        {state.messages.length === 0 ? (
-          <EmptyState onPick={send} />
-        ) : (
-          <ul className="space-y-4">
-            {state.messages.map((m, i) => (
-              <li key={i} className="min-w-0">
-                <MessageBubble
-                  msg={m}
-                  onApply={applyProposal}
-                  onDiscard={discardProposal}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <form
-        className="shrink-0 border-t hairline bg-bg-raised/30 p-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(input);
-        }}
-      >
-        <div className="flex items-end gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send(input);
-              }
-            }}
-            placeholder="Ask anything about your data…"
-            rows={2}
-            className="min-h-[44px] resize-none !font-sans"
-            disabled={pending}
-            aria-label="Chat message"
-          />
-          {pending ? (
-            <Button
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b hairline bg-bg/95 px-4 py-3 backdrop-blur">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
               type="button"
-              size="md"
-              variant="secondary"
-              onClick={stop}
-              aria-label="Stop"
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="rounded p-1.5 text-fg-muted hover:bg-bg-raised hover:text-fg"
+              aria-label="Toggle conversations"
+              title="Toggle conversations"
             >
-              <Square className="h-3.5 w-3.5" aria-hidden />
-            </Button>
+              <PanelLeft className="h-3.5 w-3.5" aria-hidden />
+            </button>
+            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent/15">
+              <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />
+            </div>
+            <div className="min-w-0 leading-tight">
+              <h2 className="truncate font-display text-sm">{active?.title ?? "AI assistant"}</h2>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">
+                {pageCtx?.tableName ? (
+                  <>context · {pageCtx.tableName}</>
+                ) : (
+                  <>read-only · tool-use</>
+                )}
+                {active && active.totalTokens > 0 && (
+                  <span className="ml-2 normal-case tracking-normal text-fg-faint">
+                    · {active.totalTokens.toLocaleString()} tokens
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {active && messages.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={onExportActive}>
+                Export
+              </Button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded p-1.5 text-fg-muted hover:bg-bg-raised hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+        </header>
+
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
+          {messages.length === 0 ? (
+            <EmptyState onPick={send} pageCtx={pageCtx} />
           ) : (
-            <Button
-              type="submit"
-              size="md"
-              disabled={!input.trim()}
-              aria-label="Send"
-            >
-              <Send className="h-4 w-4" aria-hidden />
-            </Button>
+            <ul className="space-y-4">
+              {messages.map((m, i) => (
+                <li key={i} className="min-w-0">
+                  <MessageBubble
+                    msg={m}
+                    onApply={applyProposal}
+                    onDiscard={discardProposal}
+                  />
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-        <p className="mt-1.5 px-1 text-[10px] text-fg-faint">
-          Read-only. Uses your OpenRouter key &amp; schema analysis.
-        </p>
-      </form>
+
+        <form
+          className="shrink-0 border-t hairline bg-bg-raised/30 p-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+        >
+          <div className="flex items-end gap-2">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send(input);
+                }
+              }}
+              placeholder={
+                pageCtx?.tableName
+                  ? `Ask about ${pageCtx.tableName}…`
+                  : "Ask anything about your data…"
+              }
+              rows={2}
+              className="min-h-[44px] resize-none !font-sans"
+              disabled={pending}
+              aria-label="Chat message"
+            />
+            {pending ? (
+              <Button
+                type="button"
+                size="md"
+                variant="secondary"
+                onClick={stop}
+                aria-label="Stop"
+              >
+                <Square className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                size="md"
+                disabled={!input.trim()}
+                aria-label="Send"
+              >
+                <Send className="h-4 w-4" aria-hidden />
+              </Button>
+            )}
+          </div>
+          <p className="mt-1.5 px-1 text-[10px] text-fg-faint">
+            Read-only by default · proposes writes for review · history saved locally.
+          </p>
+        </form>
+      </div>
     </div>
   );
 }
@@ -557,7 +804,7 @@ function applyEvent(ev: ChatEvent, dispatch: React.Dispatch<Action>) {
       dispatch({ type: "text", delta: ev.delta });
       return;
     case "done":
-      dispatch({ type: "done", model: ev.model });
+      dispatch({ type: "done", model: ev.model, usage: ev.usage });
       return;
     case "error":
       dispatch({ type: "error", category: ev.category, message: ev.message });
@@ -569,7 +816,21 @@ function applyEvent(ev: ChatEvent, dispatch: React.Dispatch<Action>) {
 // Empty state
 // ---------------------------------------------------------------------------
 
-function EmptyState({ onPick }: { onPick: (q: string) => void }) {
+function EmptyState({
+  onPick,
+  pageCtx,
+}: {
+  onPick: (q: string) => void;
+  pageCtx?: PageContext;
+}) {
+  const starters = pageCtx?.tableName
+    ? [
+        `How many rows are in ${pageCtx.tableName}?`,
+        `Show me the 5 most recent rows in ${pageCtx.tableName}.`,
+        `What columns does ${pageCtx.tableName} have?`,
+      ]
+    : STARTERS;
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 py-12 text-center">
       <div className="grid h-12 w-12 place-items-center rounded-full bg-accent/10">
@@ -583,7 +844,7 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }) {
         </p>
       </div>
       <ul className="w-full max-w-sm space-y-1.5">
-        {STARTERS.map((s) => (
+        {starters.map((s) => (
           <li key={s}>
             <button
               type="button"
@@ -632,14 +893,15 @@ function MessageBubble({
         <ErrorBubble category={msg.error.category} message={msg.error.message} />
       ) : msg.content || msg.pending ? (
         <div className="flex">
-          <div className="max-w-[88%] rounded-2xl rounded-bl-sm border hairline bg-bg-raised px-3.5 py-2.5 text-sm leading-relaxed text-fg shadow-sm">
+          <div className="group relative max-w-[88%] rounded-2xl rounded-bl-sm border hairline bg-bg-raised px-3.5 py-2.5 text-sm leading-relaxed text-fg shadow-sm">
             {msg.content ? (
-              <span className="whitespace-pre-wrap">
-                {msg.content}
+              <>
+                <ChatMarkdown source={msg.content} />
                 {msg.pending && msg.phase === "answering" && (
                   <span className="ml-0.5 inline-block h-3.5 w-[2px] -mb-[2px] animate-pulse bg-accent align-baseline" />
                 )}
-              </span>
+                {!msg.pending && <CopyButton text={msg.content} />}
+              </>
             ) : (
               <PhaseIndicator phase={msg.phase} />
             )}
@@ -654,9 +916,38 @@ function MessageBubble({
         </div>
       )}
       {msg.model && !msg.pending && (
-        <p className="px-1 text-[10px] text-fg-faint">via {msg.model}</p>
+        <p className="px-1 text-[10px] text-fg-faint">
+          via {msg.model}
+          {msg.totalTokens != null && (
+            <span> · {msg.totalTokens.toLocaleString()} tokens</span>
+          )}
+        </p>
       )}
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1400);
+        } catch {
+          /* ignore */
+        }
+      }}
+      className="absolute right-1.5 top-1.5 hidden rounded p-1 text-fg-faint hover:bg-bg-sunken hover:text-fg group-hover:inline-flex"
+      aria-label="Copy message"
+      title="Copy message"
+    >
+      {copied ? <Check className="h-3 w-3" aria-hidden /> : <Copy className="h-3 w-3" aria-hidden />}
+    </button>
   );
 }
 
@@ -761,7 +1052,7 @@ function ToolIcon({ name }: { name: string }) {
     return <Table2 className="h-3 w-3 shrink-0 text-fg-faint" aria-hidden />;
   if (name === "get_table_schema")
     return <Database className="h-3 w-3 shrink-0 text-fg-faint" aria-hidden />;
-  if (name === "count_rows")
+  if (name === "count_rows" || name === "aggregate")
     return <Hash className="h-3 w-3 shrink-0 text-fg-faint" aria-hidden />;
   return <Wrench className="h-3 w-3 shrink-0 text-fg-faint" aria-hidden />;
 }
@@ -772,6 +1063,7 @@ function summarizeArgs(args: unknown): string {
   const parts: string[] = [];
   if (typeof a.table_name === "string") parts.push(a.table_name);
   if (typeof a.category === "string" && a.category !== "all") parts.push(`category=${a.category}`);
+  if (typeof a.op === "string") parts.push(a.op as string);
   if (Array.isArray(a.filters) && a.filters.length > 0) {
     parts.push(`${a.filters.length} filter${a.filters.length === 1 ? "" : "s"}`);
   }
@@ -786,10 +1078,15 @@ function summarizeResult(result: unknown): string {
   if (typeof r.count === "number") return `count = ${r.count.toLocaleString()}`;
   if (typeof r.returned === "number")
     return `${r.returned} row${r.returned === 1 ? "" : "s"}`;
+  if (typeof r.value === "number") return `value = ${r.value.toLocaleString()}`;
   if (Array.isArray(r.tables))
     return `${(r.tables as unknown[]).length} table${(r.tables as unknown[]).length === 1 ? "" : "s"}`;
   if (Array.isArray(r.columns))
     return `${(r.columns as unknown[]).length} column${(r.columns as unknown[]).length === 1 ? "" : "s"}`;
+  if (Array.isArray(r.indexes))
+    return `${(r.indexes as unknown[]).length} index${(r.indexes as unknown[]).length === 1 ? "" : "es"}`;
+  if (Array.isArray(r.groups))
+    return `${(r.groups as unknown[]).length} group${(r.groups as unknown[]).length === 1 ? "" : "s"}`;
   return "ok";
 }
 
@@ -1033,7 +1330,6 @@ function PreviewTable({
   }
   const remaining =
     totalCount != null && totalCount > preview.length ? totalCount - preview.length : 0;
-  // Cap displayed columns so the table never gets unbounded width.
   const allKeys = new Set<string>();
   for (const row of preview) for (const k of Object.keys(row)) allKeys.add(k);
   const visibleCols = Array.from(allKeys).slice(0, 6);

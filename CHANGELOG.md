@@ -3,6 +3,35 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v2.0.0 · 2026-05-14 · AI chat overhaul
+
+Tag: `v2.0.0` · Spec: [`024`](specs/024-ai-chat-v2/)
+
+The AI chat went from a one-shot drawer to something you keep coming
+back to. Five upgrades, all additive.
+
+- **Persistent conversations**: per-connection localStorage holds up to
+  50 conversations with a left sidebar to switch / delete / export
+  each one. Titles are auto-derived from the first user message; the
+  header shows cumulative tokens for the active chat.
+- **Three new agent tools**: `aggregate` (count/sum/avg/min/max, with
+  optional `group_by`), `list_indexes` (read indexes from `pg_indexes`
+  to answer perf questions), and `audit_summary` (read the audit log
+  scoped to the current user + connection). All read-only, dispatched
+  through the same validated path as the v1 tools.
+- **Page-context awareness**: when you're viewing `/c/<id>/tables/<x>`
+  the chat sends `{ pathname, tableName, view }` to the agent so "this
+  table" resolves correctly. Starter prompts adapt accordingly.
+- **Markdown answers**: assistant messages render `**bold**`, inline
+  `` `code` ``, `[links](href)`, bullet lists, and ```fenced code```
+  blocks (with a copy button). Hand-written renderer, no extra deps.
+- **Copy + export**: each assistant message gets a copy button on
+  hover; each conversation can be exported as a self-contained
+  markdown file.
+
+Write proposals still require explicit Apply — the read-only-by-default
+contract is unchanged.
+
 ## v1.6.0 · 2026-05-14 · Content expansion
 
 Tag: `v1.6.0` · Spec: [`020`](specs/020-content-expansion/)

@@ -212,6 +212,96 @@ export const TOOL_DEFINITIONS = [
   {
     type: "function" as const,
     function: {
+      name: "aggregate",
+      description:
+        "Compute a single aggregate (count, sum, avg, min, max) over a table column, with optional filters and grouping. Cheap. Use for analytics questions like 'how many orders shipped last week' or 'average order total by status'.",
+      parameters: {
+        type: "object",
+        required: ["table_name", "op"],
+        properties: {
+          table_name: { type: "string" },
+          op: { type: "string", enum: ["count", "sum", "avg", "min", "max"] },
+          column: {
+            type: "string",
+            description:
+              "Column to aggregate. For count, omit to count rows. For sum/avg/min/max, required and must be a numeric column.",
+          },
+          filters: {
+            type: "array",
+            items: {
+              type: "object",
+              required: ["column", "op", "value"],
+              properties: {
+                column: { type: "string" },
+                op: { type: "string", enum: ["eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "is", "in"] },
+                value: {},
+              },
+            },
+          },
+          group_by: {
+            type: "string",
+            description: "Optional column to group by. When set, returns one row per group.",
+          },
+          limit: {
+            type: "integer",
+            minimum: 1,
+            maximum: 50,
+            description: "Max groups to return (when group_by is set).",
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "list_indexes",
+      description:
+        "List the indexes that exist on a table (name, columns, type, unique). Use when the user asks about performance, missing indexes, or why a query is slow. Read-only.",
+      parameters: {
+        type: "object",
+        required: ["table_name"],
+        properties: {
+          table_name: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "audit_summary",
+      description:
+        "Read the most recent audit-log entries for this connection. Use when the user asks 'who changed X', 'what happened recently', or wants to see write activity. Read-only.",
+      parameters: {
+        type: "object",
+        properties: {
+          table_name: {
+            type: "string",
+            description: "Optional: filter to a single table.",
+          },
+          hours: {
+            type: "integer",
+            minimum: 1,
+            maximum: 720,
+            description: "How many hours back to look. Default 24.",
+          },
+          limit: {
+            type: "integer",
+            minimum: 1,
+            maximum: 50,
+            description: "Max entries to return. Default 20.",
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
       name: "propose_delete",
       description:
         "Build a write proposal that deletes rows matching the filters. Returns a preview of up to 5 affected rows. NEVER executes without the user clicking Apply. Use sparingly and only when the user explicitly asked to delete something.",
@@ -285,6 +375,20 @@ const ProposeDeleteArgs = z.object({
   summary: z.string().min(1).max(280),
   filters: z.array(Filter).min(1).max(10),
 });
+const AggregateArgs = z.object({
+  table_name: z.string(),
+  op: z.enum(["count", "sum", "avg", "min", "max"]),
+  column: z.string().optional(),
+  filters: z.array(Filter).max(10).optional(),
+  group_by: z.string().optional(),
+  limit: z.number().int().positive().max(50).optional(),
+});
+const ListIndexesArgs = z.object({ table_name: z.string() });
+const AuditSummaryArgs = z.object({
+  table_name: z.string().optional(),
+  hours: z.number().int().positive().max(720).optional(),
+  limit: z.number().int().positive().max(50).optional(),
+});
 
 // ---------------------------------------------------------------------------
 // Dispatch
@@ -294,6 +398,8 @@ export interface ToolContext {
   conn: ConnectionRow;
   schema: Schema;
   analyses: TableAnalysis[];
+  /** The signed-in user's id. Required for tools that read audit_log. */
+  userId: string;
 }
 
 export interface ToolResult {
@@ -333,6 +439,12 @@ export async function executeTool(
         return proposeInsert(ProposeInsertArgs.parse(parsed), ctx);
       case "propose_delete":
         return await proposeDelete(ProposeDeleteArgs.parse(parsed), ctx);
+      case "aggregate":
+        return await aggregate(AggregateArgs.parse(parsed), ctx);
+      case "list_indexes":
+        return await listIndexes(ListIndexesArgs.parse(parsed), ctx);
+      case "audit_summary":
+        return await auditSummary(AuditSummaryArgs.parse(parsed), ctx);
       default:
         return error(`Unknown tool: ${name}.`);
     }
@@ -655,4 +767,244 @@ async function proposeDelete(
   } catch (e) {
     return error((e as Error).message ?? "Could not preview delete.");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Aggregate (count / sum / avg / min / max via PostgREST)
+// ---------------------------------------------------------------------------
+
+async function aggregate(
+  args: z.infer<typeof AggregateArgs>,
+  ctx: ToolContext,
+): Promise<ToolResult> {
+  const table = findTable(ctx, args.table_name);
+  if (!table) return error(`Table "${args.table_name}" does not exist.`);
+
+  // Validate column (when required by the op)
+  if (args.op !== "count") {
+    if (!args.column) return error(`Op ${args.op} requires a "column" argument.`);
+    const col = table.columns.find((c) => c.name === args.column);
+    if (!col) return error(`Column "${args.column}" does not exist on "${table.name}".`);
+    if (!["integer", "float"].includes(col.category)) {
+      return error(`Column "${args.column}" is ${col.category}, not numeric.`);
+    }
+  }
+  if (args.group_by) {
+    if (!table.columns.find((c) => c.name === args.group_by)) {
+      return error(`Group-by column "${args.group_by}" does not exist on "${table.name}".`);
+    }
+  }
+
+  const q = new URLSearchParams();
+  // PostgREST aggregate syntax: `select=col.op()` (since v12).
+  const aggExpr =
+    args.op === "count"
+      ? "count"
+      : `${args.column}.${args.op}()`;
+  if (args.group_by) {
+    q.set("select", `${args.group_by},${aggExpr}`);
+    q.set("order", `${aggExpr}.desc`);
+    q.set("limit", String(Math.min(args.limit ?? 25, 50)));
+  } else {
+    q.set("select", aggExpr);
+    q.set("limit", "1");
+  }
+  if (args.filters) {
+    for (const f of args.filters) {
+      const built = buildFilterParam(f, table);
+      if (!built.ok) return error(built.error);
+      q.append(built.key, built.val);
+    }
+  }
+
+  try {
+    const res = await pgrestServerGet<unknown[]>({
+      conn: ctx.conn,
+      path: encodeURIComponent(table.name),
+      query: q,
+    });
+    const rows = Array.isArray(res.data) ? res.data : [];
+    if (args.group_by) {
+      return {
+        payload: JSON.stringify({
+          table: table.name,
+          op: args.op,
+          group_by: args.group_by,
+          groups: rows,
+        }),
+        display: {
+          table: table.name,
+          op: args.op,
+          group_by: args.group_by,
+          returned: rows.length,
+        },
+      };
+    }
+    const single = (rows[0] as Record<string, unknown> | undefined) ?? {};
+    const valueKey =
+      args.op === "count"
+        ? "count"
+        : `${args.column}`;
+    return {
+      payload: JSON.stringify({
+        table: table.name,
+        op: args.op,
+        column: args.column ?? null,
+        value: single[valueKey] ?? Object.values(single)[0] ?? null,
+      }),
+      display: {
+        table: table.name,
+        op: args.op,
+        value: single[valueKey] ?? Object.values(single)[0] ?? null,
+      },
+    };
+  } catch (e) {
+    if (e instanceof PgRestServerError) {
+      return error(`PostgREST ${e.status}: ${e.message}`);
+    }
+    return error((e as Error).message ?? "Aggregate failed.");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// list_indexes (reads pg_indexes via direct Postgres — needs postgres_url)
+// ---------------------------------------------------------------------------
+
+async function listIndexes(
+  args: z.infer<typeof ListIndexesArgs>,
+  ctx: ToolContext,
+): Promise<ToolResult> {
+  const table = findTable(ctx, args.table_name);
+  if (!table) return error(`Table "${args.table_name}" does not exist.`);
+
+  if (!ctx.conn.encryptedPostgresUrl) {
+    return error(
+      "Direct Postgres URL not configured on this connection. Open the RLS page and paste a connection string to enable list_indexes.",
+    );
+  }
+
+  // Import inline to keep the cold path lazy.
+  const { default: postgres } = await import("postgres");
+  const { decryptKey } = await import("@/server/crypto/vault");
+  const url = decryptKey(ctx.conn.encryptedPostgresUrl);
+  const sql = postgres(url, { max: 1, idle_timeout: 5, connect_timeout: 8, prepare: false });
+  try {
+    const rows = await sql<
+      Array<{
+        indexname: string;
+        indexdef: string;
+        is_unique: boolean;
+        is_primary: boolean;
+        columns: string;
+      }>
+    >`
+      SELECT
+        i.indexname,
+        i.indexdef,
+        ix.indisunique AS is_unique,
+        ix.indisprimary AS is_primary,
+        pg_get_indexdef(ix.indexrelid, 0, true) AS columns
+      FROM pg_indexes i
+      JOIN pg_class c   ON c.relname  = i.indexname
+      JOIN pg_index ix  ON ix.indexrelid = c.oid
+      WHERE i.schemaname = 'public' AND i.tablename = ${args.table_name}
+      ORDER BY ix.indisprimary DESC, ix.indisunique DESC, i.indexname
+    `;
+    return {
+      payload: JSON.stringify({
+        table: args.table_name,
+        indexes: rows.map((r) => ({
+          name: r.indexname,
+          unique: !!r.is_unique,
+          primary: !!r.is_primary,
+          definition: r.indexdef,
+        })),
+      }),
+      display: {
+        table: args.table_name,
+        count: rows.length,
+        names: rows.map((r) => r.indexname),
+      },
+    };
+  } catch (e) {
+    return error((e as Error).message ?? "list_indexes failed.");
+  } finally {
+    await sql.end({ timeout: 2 });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// audit_summary (reads our own audit_log)
+// ---------------------------------------------------------------------------
+
+async function auditSummary(
+  args: z.infer<typeof AuditSummaryArgs>,
+  ctx: ToolContext,
+): Promise<ToolResult> {
+  const { db } = await import("@/server/db");
+  const { auditLog } = await import("@/server/schema/audit");
+  const { and, desc, eq, gte, sql } = await import("drizzle-orm");
+
+  const hours = args.hours ?? 24;
+  const limit = Math.min(args.limit ?? 20, 50);
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+  const conditions = [
+    eq(auditLog.userId, ctx.userId),
+    eq(auditLog.connectionId, ctx.conn.id),
+    gte(auditLog.createdAt, since),
+  ];
+  if (args.table_name) {
+    conditions.push(eq(auditLog.tableName, args.table_name));
+  }
+
+  // Drizzle-style: use `and(...conditions)`
+  const rows = await db
+    .select({
+      id: auditLog.id,
+      tableName: auditLog.tableName,
+      verb: auditLog.verb,
+      primaryKey: auditLog.primaryKey,
+      httpStatus: auditLog.httpStatus,
+      createdAt: auditLog.createdAt,
+    })
+    .from(auditLog)
+    .where(and(...conditions))
+    .orderBy(desc(auditLog.createdAt))
+    .limit(limit);
+
+  // Tally per-table per-verb for the model's summary.
+  const tally = new Map<string, { inserts: number; updates: number; deletes: number }>();
+  for (const r of rows) {
+    const key = r.tableName;
+    const t = tally.get(key) ?? { inserts: 0, updates: 0, deletes: 0 };
+    if (r.verb === "insert") t.inserts++;
+    else if (r.verb === "update") t.updates++;
+    else if (r.verb === "delete") t.deletes++;
+    tally.set(key, t);
+  }
+  const summary = Array.from(tally.entries()).map(([table, c]) => ({ table, ...c }));
+
+  // Touch `sql` to satisfy the importer's tree-shake without using it.
+  void sql;
+
+  return {
+    payload: JSON.stringify({
+      window_hours: hours,
+      total: rows.length,
+      summary,
+      entries: rows.map((r) => ({
+        verb: r.verb,
+        table: r.tableName,
+        pk: r.primaryKey,
+        at: r.createdAt.toISOString(),
+        status: r.httpStatus,
+      })),
+    }),
+    display: {
+      window_hours: hours,
+      total: rows.length,
+      by_table: summary.length,
+    },
+  };
 }
