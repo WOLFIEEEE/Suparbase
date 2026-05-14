@@ -12,6 +12,7 @@ const COLUMNS: Column[] = [
     heading: "Product",
     links: [
       { label: "Features", href: "/features" },
+      { label: "Use cases", href: "/use-cases" },
       { label: "Pricing", href: "/pricing" },
       { label: "Changelog", href: "/changelog" },
       { label: "Sign up", href: "/signup" },
@@ -21,6 +22,7 @@ const COLUMNS: Column[] = [
     heading: "Resources",
     links: [
       { label: "Docs", href: "/docs" },
+      { label: "Blog", href: "/blog" },
       { label: "Self-host guide", href: "/docs#self-host" },
       { label: "Security", href: "/docs#security" },
       { label: "GitHub", href: "https://github.com/WOLFIEEEE/Suparbase", external: true },

@@ -3,6 +3,38 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.5.0 · 2026-05-14 · Content + SEO release
+
+Tag: `v1.5.0` · Spec: [`019`](specs/019-seo-content/)
+
+A content-driven release that gives Suparbase a real publishing
+surface and the SEO infrastructure to make it discoverable.
+
+- **Eight long-form technical articles** on trending 2026 topics:
+  Row-Level Security in Postgres, Supabase vs self-hosted, building
+  multi-tenant SaaS on Postgres, pgvector for RAG in production,
+  zero-downtime Postgres migrations, the AI-assisted database admin,
+  JSONB vs tables, and connection pooling for modern Postgres. Each
+  one is a server React component (no MDX runtime) with structured
+  TOC, callouts, code blocks, and inline links to the relevant
+  Suparbase features.
+- **Three use-case landing pages**: SaaS founders, agencies managing
+  many client projects, and ops/support/product teams building
+  internal tools. Each one walks through the day-to-day flows we see
+  in real customer interviews.
+- **SEO infrastructure**: dynamic `sitemap.xml` covering every
+  public route plus all articles and use cases, `robots.txt` allowing
+  public pages and disallowing the authenticated app, per-route
+  metadata with canonical URLs and Open Graph + Twitter cards, and
+  JSON-LD structured data (`TechArticle`, `WebSite`,
+  `BreadcrumbList`) emitted on every page.
+- **Article system**: `ArticleLayout` with a sticky table of contents
+  generated from each article's `toc` array, related-articles footer
+  that respects the article's `related` slugs, and a CTA card linking
+  back to the product. `CodeBlock` and `Callout` primitives for
+  article content.
+- **PublicNav and PublicFooter** gained `Blog` and `Use cases` entries.
+
 ## v1.4.0 · 2026-05-14 · SQL playground
 
 Tag: `v1.4.0` · Spec: [`018`](specs/018-sql-playground/)

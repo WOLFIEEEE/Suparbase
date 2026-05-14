@@ -1,9 +1,11 @@
 <!-- SPECKIT START -->
-**Current**: v1.4.0 on `main` (tagged `v1.4.0`). SQL playground added
-: read-only by default (Postgres `SET TRANSACTION READ ONLY` plus a
-rollback), explicit toggle for write mode that burns the same
-rate-limit bucket as PostgREST writes and records to the audit log.
-Reuses the encrypted Postgres URL that the RLS debugger introduced.
+**Current**: v1.5.0 on `main` (tagged `v1.5.0`). Content + SEO release:
+eight long-form technical articles on Postgres, Supabase, RLS,
+multi-tenancy, RAG, AI-assisted ops, JSONB design, and connection
+pooling, plus three use-case landing pages, plus a full SEO
+infrastructure (sitemap.xml, robots.txt, JSON-LD per article and
+breadcrumb, canonical URLs, Open Graph and Twitter cards across every
+public route).
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -31,4 +33,5 @@ Spec-kit features (chronological):
 - [specs/016-storage-browser/](specs/016-storage-browser/) · v1.3, Supabase Storage bucket + object browser with signed URLs
 - [specs/017-auth-users/](specs/017-auth-users/) · v1.3, auth.users admin page (invite / recover / ban / delete)
 - [specs/018-sql-playground/](specs/018-sql-playground/) · v1.4, read-only-by-default SQL editor + results table
+- [specs/019-seo-content/](specs/019-seo-content/) · v1.5, content + SEO release: blog, use-cases, sitemap, JSON-LD
 <!-- SPECKIT END -->

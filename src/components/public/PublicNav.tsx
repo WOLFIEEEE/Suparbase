@@ -8,10 +8,10 @@ import { cn } from "@/lib/ui/cn";
 
 const NAV_LINKS = [
   { href: "/features", label: "Features" },
+  { href: "/use-cases", label: "Use cases" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
   { href: "/docs", label: "Docs" },
-  { href: "/changelog", label: "Changelog" },
-  { href: "/about", label: "About" },
 ] as const;
 
 interface Props {
