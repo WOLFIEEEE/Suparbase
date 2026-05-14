@@ -144,6 +144,106 @@ export const TOOL_DEFINITIONS = [
       },
     },
   },
+  {
+    type: "function" as const,
+    function: {
+      name: "propose_update",
+      description:
+        "Build a write proposal that the USER will confirm before anything happens. Use this whenever the user asks to change/set/update existing rows. Returns a preview of up to 5 affected rows plus the planned patch. NEVER executes — the user clicks Apply in the chat UI to commit.",
+      parameters: {
+        type: "object",
+        required: ["table_name", "filters", "patch", "summary"],
+        properties: {
+          table_name: { type: "string" },
+          summary: {
+            type: "string",
+            description: "One short sentence explaining the change in plain English.",
+          },
+          filters: {
+            type: "array",
+            description: "Filters identifying which rows to update. Combined with AND.",
+            items: {
+              type: "object",
+              required: ["column", "op", "value"],
+              properties: {
+                column: { type: "string" },
+                op: {
+                  type: "string",
+                  enum: ["eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "is", "in"],
+                },
+                value: {},
+              },
+              additionalProperties: false,
+            },
+            minItems: 1,
+          },
+          patch: {
+            type: "object",
+            description: "Object of column → new value, mirroring PostgREST PATCH payload.",
+            additionalProperties: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "propose_insert",
+      description:
+        "Build a write proposal that adds a new row. The USER must confirm in the chat UI before it commits. Validate column names against the schema first via get_table_schema.",
+      parameters: {
+        type: "object",
+        required: ["table_name", "values", "summary"],
+        properties: {
+          table_name: { type: "string" },
+          summary: { type: "string" },
+          values: {
+            type: "object",
+            description: "Object of column → value for the new row.",
+            additionalProperties: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "propose_delete",
+      description:
+        "Build a write proposal that deletes rows matching the filters. Returns a preview of up to 5 affected rows. NEVER executes without the user clicking Apply. Use sparingly and only when the user explicitly asked to delete something.",
+      parameters: {
+        type: "object",
+        required: ["table_name", "filters", "summary"],
+        properties: {
+          table_name: { type: "string" },
+          summary: { type: "string" },
+          filters: {
+            type: "array",
+            description: "Filters identifying which rows to delete. Combined with AND.",
+            items: {
+              type: "object",
+              required: ["column", "op", "value"],
+              properties: {
+                column: { type: "string" },
+                op: {
+                  type: "string",
+                  enum: ["eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "is", "in"],
+                },
+                value: {},
+              },
+              additionalProperties: false,
+            },
+            minItems: 1,
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -168,6 +268,22 @@ const QueryRowsArgs = z.object({
 const CountRowsArgs = z.object({
   table_name: z.string(),
   filters: z.array(Filter).max(10).optional(),
+});
+const ProposeUpdateArgs = z.object({
+  table_name: z.string(),
+  summary: z.string().min(1).max(280),
+  filters: z.array(Filter).min(1).max(10),
+  patch: z.record(z.unknown()),
+});
+const ProposeInsertArgs = z.object({
+  table_name: z.string(),
+  summary: z.string().min(1).max(280),
+  values: z.record(z.unknown()),
+});
+const ProposeDeleteArgs = z.object({
+  table_name: z.string(),
+  summary: z.string().min(1).max(280),
+  filters: z.array(Filter).min(1).max(10),
 });
 
 // ---------------------------------------------------------------------------
@@ -211,6 +327,12 @@ export async function executeTool(
         return await queryRows(QueryRowsArgs.parse(parsed), ctx);
       case "count_rows":
         return await countRows(CountRowsArgs.parse(parsed), ctx);
+      case "propose_update":
+        return await proposeUpdate(ProposeUpdateArgs.parse(parsed), ctx);
+      case "propose_insert":
+        return proposeInsert(ProposeInsertArgs.parse(parsed), ctx);
+      case "propose_delete":
+        return await proposeDelete(ProposeDeleteArgs.parse(parsed), ctx);
       default:
         return error(`Unknown tool: ${name}.`);
     }
@@ -409,4 +531,128 @@ async function countRows(
     payload: JSON.stringify({ table: table.name, count: res.totalCount ?? null }),
     display: { table: table.name, count: res.totalCount ?? null, filters: args.filters ?? [] },
   };
+}
+
+// ---------------------------------------------------------------------------
+// Write proposals — never execute on the server, only build a payload that
+// the user can confirm in the chat UI. The execute endpoint then applies it.
+// ---------------------------------------------------------------------------
+
+const MAX_PREVIEW_ROWS = 5;
+
+async function fetchAffectedPreview(
+  table: Table,
+  filters: z.infer<typeof Filter>[],
+  ctx: ToolContext,
+): Promise<{ preview: unknown[]; totalCount: number | null }> {
+  const q = new URLSearchParams();
+  q.set("select", "*");
+  for (const f of filters) {
+    const built = buildFilterParam(f, table);
+    if (!built.ok) throw new Error(built.error);
+    q.append(built.key, built.val);
+  }
+  const res = await pgrestServerGet<unknown[]>({
+    conn: ctx.conn,
+    path: encodeURIComponent(table.name),
+    query: q,
+    range: `0-${MAX_PREVIEW_ROWS - 1}`,
+    prefer: "count=exact",
+  });
+  return {
+    preview: Array.isArray(res.data) ? res.data : [],
+    totalCount: res.totalCount,
+  };
+}
+
+function validatePatchColumns(table: Table, patch: Record<string, unknown>): string | null {
+  for (const col of Object.keys(patch)) {
+    const tc = table.columns.find((c) => c.name === col);
+    if (!tc) return `Column "${col}" does not exist on "${table.name}".`;
+    if (tc.isGenerated) return `Column "${col}" is generated and cannot be set.`;
+    if (tc.isPrimaryKey)
+      return `Column "${col}" is a primary key — refusing to change it via the chat assistant.`;
+  }
+  return null;
+}
+
+async function proposeUpdate(
+  args: z.infer<typeof ProposeUpdateArgs>,
+  ctx: ToolContext,
+): Promise<ToolResult> {
+  const table = findTable(ctx, args.table_name);
+  if (!table) return error(`Table "${args.table_name}" does not exist.`);
+  if (table.kind === "view") return error(`"${table.name}" is a view — cannot update.`);
+  if (table.primaryKey.length === 0)
+    return error(`"${table.name}" has no primary key — refusing to issue writes.`);
+
+  const colErr = validatePatchColumns(table, args.patch);
+  if (colErr) return error(colErr);
+
+  try {
+    const { preview, totalCount } = await fetchAffectedPreview(table, args.filters, ctx);
+    const proposal = {
+      kind: "proposed_update" as const,
+      table: table.name,
+      schema: table.schema,
+      summary: args.summary,
+      filters: args.filters,
+      patch: args.patch,
+      preview,
+      totalCount,
+    };
+    return { payload: JSON.stringify(proposal), display: proposal };
+  } catch (e) {
+    return error((e as Error).message ?? "Could not preview update.");
+  }
+}
+
+function proposeInsert(
+  args: z.infer<typeof ProposeInsertArgs>,
+  ctx: ToolContext,
+): ToolResult {
+  const table = findTable(ctx, args.table_name);
+  if (!table) return error(`Table "${args.table_name}" does not exist.`);
+  if (table.kind === "view") return error(`"${table.name}" is a view — cannot insert.`);
+
+  for (const col of Object.keys(args.values)) {
+    const tc = table.columns.find((c) => c.name === col);
+    if (!tc) return error(`Column "${col}" does not exist on "${table.name}".`);
+    if (tc.isGenerated) return error(`Column "${col}" is generated and cannot be set.`);
+  }
+  const proposal = {
+    kind: "proposed_insert" as const,
+    table: table.name,
+    schema: table.schema,
+    summary: args.summary,
+    values: args.values,
+  };
+  return { payload: JSON.stringify(proposal), display: proposal };
+}
+
+async function proposeDelete(
+  args: z.infer<typeof ProposeDeleteArgs>,
+  ctx: ToolContext,
+): Promise<ToolResult> {
+  const table = findTable(ctx, args.table_name);
+  if (!table) return error(`Table "${args.table_name}" does not exist.`);
+  if (table.kind === "view") return error(`"${table.name}" is a view — cannot delete.`);
+  if (table.primaryKey.length === 0)
+    return error(`"${table.name}" has no primary key — refusing to issue writes.`);
+
+  try {
+    const { preview, totalCount } = await fetchAffectedPreview(table, args.filters, ctx);
+    const proposal = {
+      kind: "proposed_delete" as const,
+      table: table.name,
+      schema: table.schema,
+      summary: args.summary,
+      filters: args.filters,
+      preview,
+      totalCount,
+    };
+    return { payload: JSON.stringify(proposal), display: proposal };
+  } catch (e) {
+    return error((e as Error).message ?? "Could not preview delete.");
+  }
 }

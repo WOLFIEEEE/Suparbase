@@ -1,16 +1,23 @@
 "use client";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
+  Check,
   ChevronDown,
   ChevronRight,
   Database,
   Hash,
   Loader2,
   MessageSquare,
+  Pencil,
+  Plus,
   Send,
   Sparkles,
   Square,
   Table2,
+  Trash2,
   Wrench,
   X,
 } from "lucide-react";
@@ -18,6 +25,7 @@ import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 
 // ---------------------------------------------------------------------------
@@ -46,10 +54,59 @@ interface ToolStep {
   status: "running" | "done";
 }
 
+interface FilterShape {
+  column: string;
+  op: string;
+  value: unknown;
+}
+
+interface UpdateProposal {
+  kind: "proposed_update";
+  table: string;
+  schema?: string;
+  summary: string;
+  filters: FilterShape[];
+  patch: Record<string, unknown>;
+  preview: Array<Record<string, unknown>>;
+  totalCount: number | null;
+}
+
+interface InsertProposal {
+  kind: "proposed_insert";
+  table: string;
+  schema?: string;
+  summary: string;
+  values: Record<string, unknown>;
+}
+
+interface DeleteProposal {
+  kind: "proposed_delete";
+  table: string;
+  schema?: string;
+  summary: string;
+  filters: FilterShape[];
+  preview: Array<Record<string, unknown>>;
+  totalCount: number | null;
+}
+
+type Proposal = UpdateProposal | InsertProposal | DeleteProposal;
+
+type ProposalStatus = "pending" | "applying" | "applied" | "discarded" | "failed";
+
+interface ProposalEntry {
+  /** Stable id we generate client-side from the tool_call id. */
+  id: string;
+  proposal: Proposal;
+  status: ProposalStatus;
+  error?: string;
+  appliedCount?: number;
+}
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   steps?: ToolStep[];
+  proposals?: ProposalEntry[];
   model?: string;
   error?: { category: string; message: string };
   /** Set while the assistant message is still streaming. */
@@ -70,6 +127,7 @@ type Action =
   | { type: "text"; delta: string }
   | { type: "done"; model: string }
   | { type: "error"; category: string; message: string }
+  | { type: "proposal_status"; id: string; status: ProposalStatus; error?: string; appliedCount?: number }
   | { type: "reset" }
   | { type: "stop" };
 
@@ -99,10 +157,26 @@ function reducer(state: State, action: Action): State {
         ],
       }));
     case "tool_end":
+      return mapLastAssistant(state, (m) => {
+        const updatedSteps = (m.steps ?? []).map((s) =>
+          s.id === action.id ? { ...s, result: action.result, status: "done" as const } : s,
+        );
+        const proposal = toProposal(action.result);
+        const proposals = proposal
+          ? [
+              ...(m.proposals ?? []),
+              { id: action.id, proposal, status: "pending" as const },
+            ]
+          : m.proposals;
+        return { ...m, steps: updatedSteps, proposals };
+      });
+    case "proposal_status":
       return mapLastAssistant(state, (m) => ({
         ...m,
-        steps: (m.steps ?? []).map((s) =>
-          s.id === action.id ? { ...s, result: action.result, status: "done" } : s,
+        proposals: (m.proposals ?? []).map((p) =>
+          p.id === action.id
+            ? { ...p, status: action.status, error: action.error, appliedCount: action.appliedCount }
+            : p,
         ),
       }));
     case "text":
@@ -203,6 +277,66 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   const [pending, setPending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const qc = useQueryClient();
+
+  const applyProposal = useCallback(
+    async (entry: ProposalEntry) => {
+      if (entry.status === "applying" || entry.status === "applied") return;
+      dispatch({ type: "proposal_status", id: entry.id, status: "applying" });
+      try {
+        const res = await fetch(
+          `/api/ai/chat/${encodeURIComponent(connectionId)}/execute`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(entry.proposal),
+          },
+        );
+        const text = await res.text();
+        const data = text ? (JSON.parse(text) as Record<string, unknown>) : {};
+        if (!res.ok) {
+          throw new AppError(
+            (data.category as AppError["category"] | undefined) ?? "server",
+            (data.message as string | undefined) ?? "Apply failed.",
+          );
+        }
+        const applied = typeof data.applied === "number" ? data.applied : 0;
+        dispatch({
+          type: "proposal_status",
+          id: entry.id,
+          status: "applied",
+          appliedCount: applied,
+        });
+        toast.success(
+          `Applied to ${entry.proposal.table} — ${applied} row${applied === 1 ? "" : "s"}.`,
+        );
+        // Invalidate cached row/list/count queries for the touched table.
+        qc.invalidateQueries({
+          queryKey: ["rows", connectionId, "public", entry.proposal.table],
+        });
+        qc.invalidateQueries({
+          queryKey: ["rowCount", connectionId, "public", entry.proposal.table],
+        });
+        qc.invalidateQueries({
+          queryKey: ["row", connectionId, "public", entry.proposal.table],
+        });
+      } catch (e) {
+        const app = e instanceof AppError ? e : new AppError("client_bug", (e as Error).message);
+        dispatch({
+          type: "proposal_status",
+          id: entry.id,
+          status: "failed",
+          error: app.message,
+        });
+        toast.error(`Apply failed: ${app.message}`);
+      }
+    },
+    [connectionId, qc],
+  );
+
+  const discardProposal = useCallback((entry: ProposalEntry) => {
+    dispatch({ type: "proposal_status", id: entry.id, status: "discarded" });
+  }, []);
 
   // Auto-scroll on new content (use the actual content length to avoid
   // re-render thrash; smooth for human-typed updates, instant for streams).
@@ -345,7 +479,11 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           <ul className="space-y-4">
             {state.messages.map((m, i) => (
               <li key={i}>
-                <MessageBubble msg={m} />
+                <MessageBubble
+                  msg={m}
+                  onApply={applyProposal}
+                  onDiscard={discardProposal}
+                />
               </li>
             ))}
           </ul>
@@ -466,7 +604,15 @@ function EmptyState({ onPick }: { onPick: (q: string) => void }) {
 // Message bubble
 // ---------------------------------------------------------------------------
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
+function MessageBubble({
+  msg,
+  onApply,
+  onDiscard,
+}: {
+  msg: ChatMessage;
+  onApply: (entry: ProposalEntry) => void;
+  onDiscard: (entry: ProposalEntry) => void;
+}) {
   if (msg.role === "user") {
     return (
       <div className="flex justify-end">
@@ -500,6 +646,9 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
           </div>
         </div>
       ) : null}
+      {(msg.proposals ?? []).map((p) => (
+        <ProposalCard key={p.id} entry={p} onApply={onApply} onDiscard={onDiscard} />
+      ))}
       {msg.model && !msg.pending && (
         <p className="px-1 text-[10px] text-fg-faint">via {msg.model}</p>
       )}
@@ -663,4 +812,279 @@ function ErrorBubble({ category, message }: { category: string; message: string 
       )}
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Proposal detection + Apply card
+// ---------------------------------------------------------------------------
+
+function toProposal(result: unknown): Proposal | null {
+  if (!result || typeof result !== "object") return null;
+  const r = result as Record<string, unknown>;
+  if (
+    r.kind === "proposed_update" ||
+    r.kind === "proposed_insert" ||
+    r.kind === "proposed_delete"
+  ) {
+    return r as unknown as Proposal;
+  }
+  return null;
+}
+
+function ProposalIcon({ kind }: { kind: Proposal["kind"] }) {
+  if (kind === "proposed_update")
+    return <Pencil className="h-3.5 w-3.5 text-warn" aria-hidden />;
+  if (kind === "proposed_insert")
+    return <Plus className="h-3.5 w-3.5 text-accent" aria-hidden />;
+  return <Trash2 className="h-3.5 w-3.5 text-danger" aria-hidden />;
+}
+
+function ProposalCard({
+  entry,
+  onApply,
+  onDiscard,
+}: {
+  entry: ProposalEntry;
+  onApply: (entry: ProposalEntry) => void;
+  onDiscard: (entry: ProposalEntry) => void;
+}) {
+  const { proposal, status } = entry;
+  const kindLabel =
+    proposal.kind === "proposed_update"
+      ? "Update"
+      : proposal.kind === "proposed_insert"
+      ? "Insert"
+      : "Delete";
+
+  const total =
+    proposal.kind === "proposed_update" || proposal.kind === "proposed_delete"
+      ? proposal.totalCount ?? proposal.preview.length
+      : 1;
+
+  const isDisabled = status !== "pending";
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border bg-bg-raised shadow-sm",
+        proposal.kind === "proposed_delete"
+          ? "border-danger/40"
+          : proposal.kind === "proposed_update"
+          ? "border-warn/40"
+          : "border-accent/40",
+        status === "applied" && "opacity-90",
+        status === "discarded" && "opacity-60",
+      )}
+    >
+      <header className="flex items-center gap-2 border-b hairline px-3.5 py-2.5">
+        <ProposalIcon kind={proposal.kind} />
+        <span className="font-display text-sm">
+          {kindLabel} <span className="font-mono text-fg-muted">{proposal.table}</span>
+        </span>
+        <span className="ml-auto rounded-full bg-bg-sunken px-2 py-0.5 text-[10px] tabular-nums text-fg-muted">
+          {total} {total === 1 ? "row" : "rows"}
+        </span>
+      </header>
+      <div className="space-y-3 px-3.5 py-3 text-xs">
+        <p className="text-fg">{proposal.summary}</p>
+
+        {proposal.kind === "proposed_update" && (
+          <>
+            <FiltersStrip filters={proposal.filters} />
+            <PatchTable patch={proposal.patch} preview={proposal.preview} />
+          </>
+        )}
+        {proposal.kind === "proposed_delete" && (
+          <>
+            <FiltersStrip filters={proposal.filters} />
+            <PreviewRows preview={proposal.preview} totalCount={proposal.totalCount} kind="delete" />
+          </>
+        )}
+        {proposal.kind === "proposed_insert" && (
+          <KeyValueBlock title="New row" values={proposal.values} />
+        )}
+
+        {status === "failed" && entry.error && (
+          <div className="flex items-start gap-1.5 rounded border border-danger/40 bg-danger/10 px-2 py-1.5 text-[11px] text-danger">
+            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+            <span>{entry.error}</span>
+          </div>
+        )}
+      </div>
+      <footer className="flex items-center gap-2 border-t hairline px-3.5 py-2.5">
+        {status === "applied" ? (
+          <div className="inline-flex items-center gap-1.5 text-[11px] text-accent">
+            <Check className="h-3 w-3" aria-hidden />
+            Applied
+            {entry.appliedCount != null && (
+              <span className="text-fg-muted">· {entry.appliedCount} row{entry.appliedCount === 1 ? "" : "s"}</span>
+            )}
+          </div>
+        ) : status === "discarded" ? (
+          <span className="text-[11px] text-fg-faint">Discarded.</span>
+        ) : (
+          <>
+            <Button
+              size="sm"
+              variant={proposal.kind === "proposed_delete" ? "danger" : "primary"}
+              onClick={() => onApply(entry)}
+              disabled={isDisabled}
+            >
+              {status === "applying" ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                  Applying…
+                </>
+              ) : (
+                <>
+                  <Check className="h-3 w-3" aria-hidden />
+                  Apply
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onDiscard(entry)}
+              disabled={isDisabled}
+            >
+              Discard
+            </Button>
+            <span className="ml-auto text-[10px] text-fg-faint">
+              Read-only by default — runs only on Apply.
+            </span>
+          </>
+        )}
+      </footer>
+    </div>
+  );
+}
+
+function FiltersStrip({ filters }: { filters: FilterShape[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {filters.map((f, i) => (
+        <code
+          key={i}
+          className="inline-flex items-center gap-1 rounded surface-sunken px-1.5 py-0.5 font-mono text-[10px] text-fg-muted"
+        >
+          <span className="text-fg">{f.column}</span>
+          <span className="text-fg-faint">{f.op}</span>
+          <span className="text-fg">{prettyVal(f.value)}</span>
+        </code>
+      ))}
+    </div>
+  );
+}
+
+function PatchTable({
+  patch,
+  preview,
+}: {
+  patch: Record<string, unknown>;
+  preview: Array<Record<string, unknown>>;
+}) {
+  const keys = Object.keys(patch);
+  if (keys.length === 0) return null;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">Changes</p>
+      <ul className="space-y-1">
+        {keys.map((k) => {
+          const current = preview[0]?.[k];
+          const next = patch[k];
+          return (
+            <li key={k} className="flex items-baseline gap-1.5 font-mono text-[11px]">
+              <span className="text-fg-muted">{k}</span>
+              <span className="text-fg-faint">:</span>
+              <span className="text-danger line-through">{prettyVal(current)}</span>
+              <span className="text-fg-faint">→</span>
+              <span className="text-accent">{prettyVal(next)}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <PreviewRows preview={preview} totalCount={null} kind="update" />
+    </div>
+  );
+}
+
+function PreviewRows({
+  preview,
+  totalCount,
+  kind,
+}: {
+  preview: Array<Record<string, unknown>>;
+  totalCount: number | null;
+  kind: "delete" | "update";
+}) {
+  if (preview.length === 0) {
+    return <p className="text-[11px] text-fg-faint">No matching rows.</p>;
+  }
+  const remaining =
+    totalCount != null && totalCount > preview.length ? totalCount - preview.length : 0;
+  return (
+    <details className="rounded border hairline bg-bg-sunken/40 text-[11px]">
+      <summary className="cursor-pointer px-2 py-1 text-fg-muted hover:text-fg">
+        {kind === "delete" ? "Rows that would be deleted" : "Preview"}
+        <span className="ml-1 text-fg-faint">
+          ({preview.length}
+          {remaining > 0 ? ` of ${preview.length + remaining}` : ""})
+        </span>
+      </summary>
+      <ul className="space-y-1 border-t hairline px-2 py-1.5">
+        {preview.map((row, i) => (
+          <li key={i} className="truncate font-mono text-fg-muted">
+            {previewLine(row)}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function KeyValueBlock({
+  title,
+  values,
+}: {
+  title: string;
+  values: Record<string, unknown>;
+}) {
+  const keys = Object.keys(values);
+  if (keys.length === 0) return null;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">{title}</p>
+      <ul className="space-y-1">
+        {keys.map((k) => (
+          <li key={k} className="flex items-baseline gap-1.5 font-mono text-[11px]">
+            <span className="text-fg-muted">{k}</span>
+            <span className="text-fg-faint">=</span>
+            <span className="text-accent">{prettyVal(values[k])}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function prettyVal(v: unknown): string {
+  if (v === null || v === undefined) return "null";
+  if (typeof v === "string") {
+    if (v.length > 30) return `"${v.slice(0, 30)}…"`;
+    return `"${v}"`;
+  }
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  try {
+    const s = JSON.stringify(v);
+    return s.length > 30 ? s.slice(0, 30) + "…" : s;
+  } catch {
+    return String(v);
+  }
+}
+
+function previewLine(row: Record<string, unknown>): string {
+  // Show the first 3 columns of the row as `col=value`.
+  const entries = Object.entries(row).slice(0, 3);
+  return entries.map(([k, v]) => `${k}=${prettyVal(v)}`).join(" · ");
 }
