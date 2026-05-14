@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Database, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { Database, Github, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
 import { AuthHeroArt } from "@/components/auth/AuthHeroArt";
+import { ThemeToggle } from "@/components/workspace/ThemeToggle";
 import { cn } from "@/lib/ui/cn";
 
 interface AuthShellProps {
@@ -27,7 +28,7 @@ export function AuthShell({ children, title, subtitle, eyebrow, footnote }: Auth
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       {/* Form column */}
       <div className="relative flex flex-col bg-bg">
-        <header className="flex items-center justify-between px-6 py-6 sm:px-10">
+        <header className="flex items-center justify-between gap-3 px-6 py-6 sm:px-10">
           <Link
             href="/"
             aria-label="Suparbase home"
@@ -35,6 +36,19 @@ export function AuthShell({ children, title, subtitle, eyebrow, footnote }: Auth
           >
             <Wordmark size="md" />
           </Link>
+          <div className="flex items-center gap-1">
+            <a
+              href="https://github.com/WOLFIEEEE/Suparbase"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
+              className="hidden h-9 items-center gap-1.5 rounded px-2.5 text-xs text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg sm:inline-flex"
+            >
+              <Github className="h-3.5 w-3.5" aria-hidden />
+              <span>Star on GitHub</span>
+            </a>
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex flex-1 items-start justify-center px-6 pb-12 pt-6 sm:px-10 sm:pt-10">
@@ -58,22 +72,61 @@ export function AuthShell({ children, title, subtitle, eyebrow, footnote }: Auth
           </div>
         </main>
 
-        <footer className="border-t hairline px-6 py-4 text-[11px] text-fg-faint sm:px-10">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span>© Suparbase: encrypted credentials, server-side proxy.</span>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 transition-colors hover:text-fg"
-            >
-              ← back to home
-            </Link>
-          </div>
-        </footer>
+        <AuthFooter />
       </div>
 
       {/* Brand column */}
       <BrandPane />
     </div>
+  );
+}
+
+function AuthFooter() {
+  const year = new Date().getFullYear();
+  return (
+    <footer className="border-t hairline bg-bg-raised/30 px-6 py-5 sm:px-10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 text-[11px] text-fg-faint">
+          <span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_rgb(var(--accent))]"
+          />
+          <span>
+            <span className="text-fg-muted">Suparbase</span> ·
+            <span className="ml-1">encrypted credentials · server-side proxy</span>
+          </span>
+        </div>
+        <nav
+          aria-label="Auth page footer"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-fg-muted"
+        >
+          <Link href="/" className="transition-colors hover:text-fg">
+            Home
+          </Link>
+          <Link href="/docs" className="transition-colors hover:text-fg">
+            Docs
+          </Link>
+          <Link href="/privacy" className="transition-colors hover:text-fg">
+            Privacy
+          </Link>
+          <Link href="/terms" className="transition-colors hover:text-fg">
+            Terms
+          </Link>
+          <a
+            href="https://github.com/WOLFIEEEE/Suparbase"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 transition-colors hover:text-fg"
+          >
+            <Github className="h-3 w-3" aria-hidden />
+            GitHub
+          </a>
+        </nav>
+      </div>
+      <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
+        © {year} Suparbase · MIT licensed · self-host free
+      </p>
+    </footer>
   );
 }
 
@@ -164,8 +217,8 @@ function BrandPane() {
 
         <div className="space-y-2 text-[11px] text-fg-faint">
           <p className="font-mono">
-            v1.4 &middot; SQL playground, storage browser, auth users, RLS
-            debugger
+            v2.0 &middot; persistent AI chat, page-aware tools, indexes &amp;
+            audit-log introspection
           </p>
           <p>
             Self-hosted? See the{" "}

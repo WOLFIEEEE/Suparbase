@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { writeThemeCookie } from "@/lib/theme/cookie";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/ui/cn";
 
 type Resolved = "light" | "dark";
 
@@ -17,19 +18,44 @@ function readResolvedTheme(): Resolved {
   return "dark";
 }
 
-export function ThemeToggle() {
+interface Props {
+  /** Tooltip-only buttons in cramped headers can hide the label. */
+  className?: string;
+}
+
+export function ThemeToggle({ className }: Props) {
   const [theme, setTheme] = useState<Resolved>("dark");
   // Resolve once mounted; on the server we don't know the OS pref and must
   // not assume one (server-render the default icon and update on mount).
   useEffect(() => {
     setTheme(readResolvedTheme());
+
+    // React to OS-preference changes when the user hasn't explicitly chosen.
+    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
+    if (!mq) return;
+    const handler = () => {
+      if (!document.documentElement.dataset.theme) {
+        setTheme(readResolvedTheme());
+      }
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
   }, []);
 
   function toggle() {
     const next: Resolved = theme === "light" ? "dark" : "light";
-    document.documentElement.dataset.theme = next;
+    const root = document.documentElement;
+
+    // Add the transition class just for the duration of the swap so the
+    // colour-driven properties (bg, border, text, fill, stroke) animate
+    // smoothly. We never leave it on, to keep idle hover transitions snappy.
+    root.classList.add("theme-transitioning");
+    root.dataset.theme = next;
     writeThemeCookie(next);
     setTheme(next);
+    window.setTimeout(() => {
+      root.classList.remove("theme-transitioning");
+    }, 260);
   }
 
   const isDark = theme === "dark";
@@ -44,12 +70,28 @@ export function ThemeToggle() {
       aria-pressed={isDark}
       aria-label={nextLabel}
       title={nextLabel}
+      className={cn("relative overflow-hidden", className)}
     >
-      {isDark ? (
-        <Sun className="h-4 w-4" aria-hidden />
-      ) : (
-        <Moon className="h-4 w-4" aria-hidden />
-      )}
+      <span className="relative inline-block h-4 w-4">
+        <Sun
+          className={cn(
+            "absolute inset-0 h-4 w-4 transition-all duration-300 ease-out",
+            isDark
+              ? "rotate-0 scale-100 opacity-100"
+              : "-rotate-90 scale-0 opacity-0",
+          )}
+          aria-hidden
+        />
+        <Moon
+          className={cn(
+            "absolute inset-0 h-4 w-4 transition-all duration-300 ease-out",
+            isDark
+              ? "rotate-90 scale-0 opacity-0"
+              : "rotate-0 scale-100 opacity-100",
+          )}
+          aria-hidden
+        />
+      </span>
     </Button>
   );
 }

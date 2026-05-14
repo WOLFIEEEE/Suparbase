@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Github, Menu, X } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
+import { ThemeToggle } from "@/components/workspace/ThemeToggle";
 import { cn } from "@/lib/ui/cn";
 
 const NAV_LINKS = [
@@ -49,6 +50,7 @@ export function PublicNav({ isSignedIn = false }: Props) {
             <Github className="h-3.5 w-3.5" aria-hidden />
             GitHub
           </a>
+          <ThemeToggle />
           {isSignedIn ? (
             <Link
               href="/connections"
@@ -74,15 +76,18 @@ export function PublicNav({ isSignedIn = false }: Props) {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-label="Toggle menu"
-          className="rounded p-2 text-fg-muted hover:bg-bg-raised hover:text-fg md:hidden"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label="Toggle menu"
+            className="rounded p-2 text-fg-muted hover:bg-bg-raised hover:text-fg"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (

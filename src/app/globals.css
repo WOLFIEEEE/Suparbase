@@ -10,6 +10,7 @@
      (explicit user choice) or `prefers-color-scheme: light` when the user
      has not chosen yet. */
   :root {
+    color-scheme: dark;
     --bg: 10 10 11;
     --bg-raised: 18 18 20;
     --bg-sunken: 6 6 7;
@@ -28,6 +29,7 @@
 
   /* Explicit light theme (via cookie/toggle) — wins regardless of OS preference. */
   [data-theme="light"] {
+    color-scheme: light;
     --bg: 252 252 250;
     --bg-raised: 255 255 255;
     --bg-sunken: 244 244 240;
@@ -47,6 +49,7 @@
   /* Fallback to OS preference only when no explicit cookie was set. */
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]):not([data-theme="light"]) {
+      color-scheme: light;
       --bg: 252 252 250;
       --bg-raised: 255 255 255;
       --bg-sunken: 244 244 240;
@@ -62,6 +65,19 @@
       --warn: 158 105 0;
       --warn-fg: 255 255 255;
     }
+  }
+
+  /* Theme-switch animation: ThemeToggle adds .theme-transitioning to
+     <html> for ~220ms while toggling, so we animate just the colour
+     properties during that window. We deliberately exclude transform
+     and opacity (left to component hover transitions) and we skip
+     ::before/::after to keep the cost low. */
+  html.theme-transitioning,
+  html.theme-transitioning body,
+  html.theme-transitioning *:not(.no-theme-transition) {
+    transition: background-color 220ms ease, border-color 220ms ease,
+      color 220ms ease, fill 220ms ease, stroke 220ms ease,
+      box-shadow 220ms ease !important;
   }
 
   html, body {

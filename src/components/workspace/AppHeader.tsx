@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Database, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/workspace/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,7 @@ export function AppHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {session?.user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
