@@ -50,6 +50,38 @@ import {
   Article as PoolingArticle,
   meta as poolingMeta,
 } from "./content/postgres-connection-pooling-2026";
+import {
+  Article as WhichDbArticle,
+  meta as whichDbMeta,
+} from "./content/which-database-for-vibe-coding-2026";
+import {
+  Article as MongoVsPgArticle,
+  meta as mongoVsPgMeta,
+} from "./content/mongodb-vs-postgres-2026";
+import {
+  Article as AiFriendlyArticle,
+  meta as aiFriendlyMeta,
+} from "./content/best-ai-friendly-database-2026";
+import {
+  Article as VectorsArticle,
+  meta as vectorsMeta,
+} from "./content/vector-databases-ranked-2026";
+import {
+  Article as SqliteEdgeArticle,
+  meta as sqliteEdgeMeta,
+} from "./content/sqlite-at-the-edge-2026";
+import {
+  Article as VibePatternsArticle,
+  meta as vibePatternsMeta,
+} from "./content/vibe-coding-database-patterns";
+import {
+  Article as SupabaseAgentsArticle,
+  meta as supabaseAgentsMeta,
+} from "./content/why-supabase-for-ai-agents";
+import {
+  Article as EdgeCompareArticle,
+  meta as edgeCompareMeta,
+} from "./content/edge-databases-comparison-2026";
 
 const REGISTRY: ArticleMeta[] = [
   { ...rlsMeta, body: RlsArticle },
@@ -60,6 +92,14 @@ const REGISTRY: ArticleMeta[] = [
   { ...aiAdminMeta, body: AiAdminArticle },
   { ...jsonbMeta, body: JsonbArticle },
   { ...poolingMeta, body: PoolingArticle },
+  { ...whichDbMeta, body: WhichDbArticle },
+  { ...mongoVsPgMeta, body: MongoVsPgArticle },
+  { ...aiFriendlyMeta, body: AiFriendlyArticle },
+  { ...vectorsMeta, body: VectorsArticle },
+  { ...sqliteEdgeMeta, body: SqliteEdgeArticle },
+  { ...vibePatternsMeta, body: VibePatternsArticle },
+  { ...supabaseAgentsMeta, body: SupabaseAgentsArticle },
+  { ...edgeCompareMeta, body: EdgeCompareArticle },
 ];
 
 export function listArticles(): ArticleMeta[] {

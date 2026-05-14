@@ -1,11 +1,12 @@
 <!-- SPECKIT START -->
-**Current**: v1.5.0 on `main` (tagged `v1.5.0`). Content + SEO release:
-eight long-form technical articles on Postgres, Supabase, RLS,
-multi-tenancy, RAG, AI-assisted ops, JSONB design, and connection
-pooling, plus three use-case landing pages, plus a full SEO
-infrastructure (sitemap.xml, robots.txt, JSON-LD per article and
-breadcrumb, canonical URLs, Open Graph and Twitter cards across every
-public route).
+**Current**: v1.6.0 on `main` (tagged `v1.6.0`). Content expansion:
+16 long-form articles (eight new ones on vibe-coding-era topics:
+which DB for vibe coding, MongoDB vs Postgres, AI-friendly databases,
+vector DBs ranked, SQLite at the edge, vibe-coding patterns, why
+Supabase for AI agents, edge DB comparison), plus three head-to-head
+comparison pages at `/compare/<slug>` (Supabase vs Firebase, Postgres
+vs MongoDB, Supabase vs Neon) with feature matrices and TL;DR
+verdicts.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -34,4 +35,5 @@ Spec-kit features (chronological):
 - [specs/017-auth-users/](specs/017-auth-users/) · v1.3, auth.users admin page (invite / recover / ban / delete)
 - [specs/018-sql-playground/](specs/018-sql-playground/) · v1.4, read-only-by-default SQL editor + results table
 - [specs/019-seo-content/](specs/019-seo-content/) · v1.5, content + SEO release: blog, use-cases, sitemap, JSON-LD
+- [specs/020-content-expansion/](specs/020-content-expansion/) · v1.6, eight vibe-coding-era articles + three comparison pages
 <!-- SPECKIT END -->

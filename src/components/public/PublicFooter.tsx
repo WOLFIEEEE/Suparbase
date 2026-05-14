@@ -28,6 +28,7 @@ const COLUMNS: Column[] = [
     links: [
       { label: "Docs", href: "/docs" },
       { label: "Blog", href: "/blog" },
+      { label: "Compare", href: "/compare" },
       { label: "Self-host", href: "/docs#self-host" },
       { label: "Security", href: "/docs#security" },
       { label: "GitHub", href: SITE.github, external: true },

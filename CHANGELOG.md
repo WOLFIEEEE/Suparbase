@@ -3,6 +3,32 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.6.0 · 2026-05-14 · Content expansion
+
+Tag: `v1.6.0` · Spec: [`020`](specs/020-content-expansion/)
+
+A content-heavy release that doubles the article library and adds a
+new comparison surface for high-intent search.
+
+- **Eight new articles**: which database for vibe-coding in 2026,
+  MongoDB vs Postgres in 2026, the best AI-friendly database, vector
+  databases ranked (pgvector / Pinecone / Qdrant / Weaviate /
+  LanceDB / Chroma / Milvus), SQLite at the edge in 2026 (Turso /
+  libSQL / D1), vibe-coding database patterns (10 that survive
+  AI-paired work), why Supabase is the AI agent's favourite Postgres,
+  and edge databases compared (Turso vs Neon vs D1). Each article
+  follows the v1.5 shape: server component, typed meta, structured
+  TOC, related-articles footer, internal links to product features
+  where natural.
+- **Three head-to-head comparison pages** at `/compare/<slug>`:
+  Supabase vs Firebase, Postgres vs MongoDB, Supabase vs Neon. Each
+  has a TL;DR card, "winner for X" callouts, a feature matrix table,
+  an honest "when each one wins" section, and a closing take.
+- **`/compare` hub** page that surfaces all comparisons in a two-
+  column card grid.
+- **Sitemap, footer, and JSON-LD** updated for the new routes. The
+  Resources footer column gains a Compare link.
+
 ## v1.5.0 · 2026-05-14 · Content + SEO release
 
 Tag: `v1.5.0` · Spec: [`019`](specs/019-seo-content/)
