@@ -16,13 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { RowForm } from "@/components/row/RowForm";
+import { EditableField } from "@/components/row/EditableField";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { StatusPill } from "./shared/StatusPill";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
-import { formatCellValue } from "@/lib/table/cellFormat";
 import { relativeFromNow } from "@/lib/ui/time";
-import { cn } from "@/lib/ui/cn";
 import { AppError } from "@/lib/errors";
 import type { Column, Schema, Table } from "@/lib/types/schema";
 import type { TableAnalysis } from "@/lib/types/analysis";
@@ -325,7 +324,7 @@ export function UserDetail({ connectionId, table, schema, analysis, pkSegment }:
                 <h3 className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">{s.title}</h3>
                 <dl className="grid grid-cols-1 gap-y-2 sm:grid-cols-[10rem_1fr]">
                   {s.cols.map((col) => (
-                    <FieldRow key={col.name} col={col} value={row[col.name]} />
+                    <EditableField key={col.name} col={col} value={row[col.name]} connectionId={connectionId} table={table} pk={pkValue} />
                   ))}
                 </dl>
               </section>
@@ -340,7 +339,7 @@ export function UserDetail({ connectionId, table, schema, analysis, pkSegment }:
                   {table.columns
                     .filter((c) => hidden.has(c.name))
                     .map((col) => (
-                      <FieldRow key={col.name} col={col} value={row[col.name]} />
+                      <EditableField key={col.name} col={col} value={row[col.name]} connectionId={connectionId} table={table} pk={pkValue} />
                     ))}
                 </dl>
               </details>
@@ -408,44 +407,6 @@ export function UserDetail({ connectionId, table, schema, analysis, pkSegment }:
   );
 }
 
-function FieldRow({ col, value }: { col: Column; value: unknown }) {
-  const formatted = formatCellValue(col, value);
-  return (
-    <div className="contents">
-      <dt className="font-mono text-xs text-fg-muted">{col.name}</dt>
-      <dd
-        className={cn(
-          "min-w-0 font-mono text-xs",
-          formatted.isNull && "italic text-fg-faint",
-        )}
-      >
-        {col.category === "json" && value != null ? (
-          <pre className="max-h-64 overflow-auto rounded surface-sunken p-2 text-[11px] leading-relaxed">
-            {(() => {
-              try {
-                const parsed = typeof value === "string" ? JSON.parse(value) : value;
-                return JSON.stringify(parsed, null, 2);
-              } catch {
-                return String(value);
-              }
-            })()}
-          </pre>
-        ) : col.category === "boolean" && value != null ? (
-          <span
-            className={cn(
-              "inline-block rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider",
-              value ? "bg-accent/10 text-accent" : "bg-line/40 text-fg-muted",
-            )}
-          >
-            {String(value)}
-          </span>
-        ) : (
-          <span className="whitespace-pre-wrap break-words">{formatted.text}</span>
-        )}
-      </dd>
-    </div>
-  );
-}
 
 // Default export so the dispatcher can lazy-load it via next/dynamic.
 export default UserDetail;

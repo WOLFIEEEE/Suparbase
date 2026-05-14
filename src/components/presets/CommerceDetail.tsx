@@ -19,10 +19,10 @@ import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { RowForm } from "@/components/row/RowForm";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
+import { EditableField } from "@/components/row/EditableField";
 import { StatusPill } from "./shared/StatusPill";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
-import { formatCellValue } from "@/lib/table/cellFormat";
 import { relativeFromNow } from "@/lib/ui/time";
 import {
   COMMERCE_STEP_LABELS,
@@ -32,9 +32,9 @@ import {
   isMoneyColumnName,
   pipelineStepFor,
 } from "@/lib/ui/money";
-import { cn } from "@/lib/ui/cn";
 import { AppError } from "@/lib/errors";
-import type { Column, Schema, Table } from "@/lib/types/schema";
+import { cn } from "@/lib/ui/cn";
+import type { Column, PrimaryKeyValue, Schema, Table } from "@/lib/types/schema";
 import type { TableAnalysis } from "@/lib/types/analysis";
 
 const META_RE = /^(created_at|updated_at|inserted_at|deleted_at|placed_at|ordered_at|paid_at|shipped_at|delivered_at)$/i;
@@ -363,6 +363,9 @@ export function CommerceDetail({ connectionId, table, schema, analysis, pkSegmen
                       value={row[col.name]}
                       isMoney={moneyCols.has(col.name)}
                       currency={currency}
+                      connectionId={connectionId}
+                      table={table}
+                      pk={pkValue}
                     />
                   ))}
                 </dl>
@@ -383,6 +386,9 @@ export function CommerceDetail({ connectionId, table, schema, analysis, pkSegmen
                         value={row[col.name]}
                         isMoney={moneyCols.has(col.name)}
                         currency={currency}
+                        connectionId={connectionId}
+                        table={table}
+                        pk={pkValue}
                       />
                     ))}
                 </dl>
@@ -449,48 +455,31 @@ function FieldRow({
   value,
   isMoney,
   currency,
+  connectionId,
+  table,
+  pk,
 }: {
   col: Column;
   value: unknown;
   isMoney: boolean;
   currency: string | null;
+  connectionId: string;
+  table: Table;
+  pk: PrimaryKeyValue | null;
 }) {
-  const formatted = formatCellValue(col, value);
-  const renderMoney = isMoney && value != null;
-  return (
-    <div className="contents">
-      <dt className="font-mono text-xs text-fg-muted">{col.name}</dt>
-      <dd className={cn("min-w-0 font-mono text-xs", formatted.isNull && "italic text-fg-faint")}>
-        {renderMoney ? (
+  if (isMoney && value != null) {
+    return (
+      <div className="contents">
+        <dt className="font-mono text-xs text-fg-muted">{col.name}</dt>
+        <dd className="min-w-0 font-mono text-xs">
           <span className="font-display text-sm tabular-nums">
             {formatMoney(value, currency, isCentsColumnName(col.name))}
           </span>
-        ) : col.category === "json" && value != null ? (
-          <pre className="max-h-64 overflow-auto rounded surface-sunken p-2 text-[11px] leading-relaxed">
-            {(() => {
-              try {
-                const parsed = typeof value === "string" ? JSON.parse(value) : value;
-                return JSON.stringify(parsed, null, 2);
-              } catch {
-                return String(value);
-              }
-            })()}
-          </pre>
-        ) : col.category === "boolean" && value != null ? (
-          <span
-            className={cn(
-              "inline-block rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider",
-              value ? "bg-accent/10 text-accent" : "bg-line/40 text-fg-muted",
-            )}
-          >
-            {String(value)}
-          </span>
-        ) : (
-          <span className="whitespace-pre-wrap break-words">{formatted.text}</span>
-        )}
-      </dd>
-    </div>
-  );
+        </dd>
+      </div>
+    );
+  }
+  return <EditableField col={col} value={value} connectionId={connectionId} table={table} pk={pk} />;
 }
 
 export default CommerceDetail;
