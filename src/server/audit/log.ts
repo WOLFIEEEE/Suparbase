@@ -10,6 +10,8 @@ export interface AuditInput {
   primaryKey: Record<string, unknown> | null;
   verb: "insert" | "update" | "delete";
   httpStatus: number;
+  beforeRow?: Record<string, unknown> | null;
+  afterRow?: Record<string, unknown> | null;
 }
 
 /**
@@ -27,6 +29,8 @@ export async function auditWrite(input: AuditInput): Promise<void> {
       primaryKey: input.primaryKey ?? {},
       verb: input.verb,
       httpStatus: input.httpStatus,
+      beforeRow: input.beforeRow ?? null,
+      afterRow: input.afterRow ?? null,
     });
   } catch {
     // never let an audit failure surface to the user

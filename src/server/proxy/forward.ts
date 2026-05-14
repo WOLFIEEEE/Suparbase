@@ -135,6 +135,8 @@ export async function proxyForward({ request, method, connectionId, userId, path
         primaryKey: auditMeta.primaryKey,
         verb: auditMeta.verb,
         httpStatus: upstream.status,
+        beforeRow: auditMeta.beforeRow,
+        afterRow: auditMeta.afterRow,
       });
       await touch(connectionId);
     })();
@@ -153,6 +155,8 @@ async function readBoundedBody(req: Request): Promise<BodyInit | Response | unde
 interface AuditMeta {
   primaryKey: Record<string, unknown> | null;
   verb: "insert" | "update" | "delete";
+  beforeRow: Record<string, unknown> | null;
+  afterRow: Record<string, unknown> | null;
 }
 
 async function extractAuditFromRequest(args: {
@@ -163,28 +167,39 @@ async function extractAuditFromRequest(args: {
   const verb: AuditMeta["verb"] =
     args.method === "POST" ? "insert" : args.method === "DELETE" ? "delete" : "update";
 
-  // For UPDATE/DELETE the PK is in the query string filters like ?id=eq.abc.
-  if (verb !== "insert") {
-    return { primaryKey: extractPkFromFilters(args.search), verb };
-  }
-
-  // For INSERT we read the cloned response body which carries the inserted row
-  // (when the client set `Prefer: return=representation`).
+  // Pull the upstream body if it carries a row representation (client used
+  // `Prefer: return=representation`). Whether that snapshot represents the
+  // BEFORE or AFTER state depends on the verb.
+  let row: Record<string, unknown> | null = null;
   try {
     if ((args.cloned.headers.get("content-type") ?? "").includes("application/json")) {
       const text = await args.cloned.text();
       const parsed = safeParseJson(text);
       if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object" && parsed[0]) {
-        return { primaryKey: parsed[0] as Record<string, unknown>, verb };
-      }
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return { primaryKey: parsed as Record<string, unknown>, verb };
+        row = parsed[0] as Record<string, unknown>;
+      } else if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        row = parsed as Record<string, unknown>;
       }
     }
   } catch {
     // audit is best-effort
   }
-  return { primaryKey: null, verb };
+
+  if (verb === "insert") {
+    return {
+      primaryKey: row,
+      verb,
+      beforeRow: null,
+      afterRow: row,
+    };
+  }
+
+  const pk = extractPkFromFilters(args.search);
+  if (verb === "update") {
+    return { primaryKey: pk, verb, beforeRow: null, afterRow: row };
+  }
+  // delete
+  return { primaryKey: pk, verb, beforeRow: row, afterRow: null };
 }
 
 function extractPkFromFilters(search: string): Record<string, unknown> | null {

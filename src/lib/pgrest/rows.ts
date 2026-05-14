@@ -188,10 +188,14 @@ export async function updateRow(
 
 export async function deleteRow(connectionId: string, table: Table, pk: PrimaryKeyValue): Promise<void> {
   const query = pkToFilters(pk);
-  await pgrest<null>({
+  await pgrest<Row[] | null>({
     connectionId,
     method: "DELETE",
     path: encodeURIComponent(table.name),
     query,
+    // Ask the upstream to echo the deleted row back so the audit log can
+    // capture the before-state — used by the row history panel and AI
+    // write-action preview.
+    headers: { Prefer: "return=representation" },
   });
 }

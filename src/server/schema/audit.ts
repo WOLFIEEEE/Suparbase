@@ -13,6 +13,10 @@ export const auditLog = pgTable(
     primaryKey: jsonb("primary_key").$type<Record<string, unknown>>(),
     verb: text("verb").$type<"insert" | "update" | "delete">().notNull(),
     httpStatus: smallint("http_status").notNull(),
+    /** Pre-write snapshot. Populated for DELETE and (when available) UPDATE. */
+    beforeRow: jsonb("before_row").$type<Record<string, unknown>>(),
+    /** Post-write snapshot. Populated for INSERT and UPDATE. */
+    afterRow: jsonb("after_row").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({

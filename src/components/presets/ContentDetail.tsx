@@ -10,6 +10,7 @@ import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { RowForm } from "@/components/row/RowForm";
 import { EditableField } from "@/components/row/EditableField";
+import { RowHistoryPanel } from "@/components/row/RowHistoryPanel";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { StatusPill } from "./shared/StatusPill";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
@@ -340,7 +341,8 @@ export function ContentDetail({ connectionId, table, schema, analysis, pkSegment
                 <p className="leading-relaxed">{analysis.notes}</p>
               </section>
             )}
-          </aside>
+            <RowHistoryPanel connectionId={connectionId} table={table} pk={pkValue} />
+            </aside>
         </div>
       )}
 

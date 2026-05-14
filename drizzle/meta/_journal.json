@@ -29,6 +29,13 @@
       "when": 1778687852632,
       "tag": "0003_saved_views",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778734609219,
+      "tag": "0004_faithful_rattler",
+      "breakpoints": true
     }
   ]
 }

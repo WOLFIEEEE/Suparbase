@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/workspace/PageHeader";
 import { RowForm } from "@/components/row/RowForm";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { EditableField } from "@/components/row/EditableField";
+import { RowHistoryPanel } from "@/components/row/RowHistoryPanel";
 import { StatusPill } from "./shared/StatusPill";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
@@ -434,7 +435,8 @@ export function CommerceDetail({ connectionId, table, schema, analysis, pkSegmen
                 <p className="leading-relaxed">{analysis.notes}</p>
               </section>
             )}
-          </aside>
+            <RowHistoryPanel connectionId={connectionId} table={table} pk={pkValue} />
+            </aside>
         </div>
       )}
 

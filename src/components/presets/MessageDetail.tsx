@@ -18,6 +18,7 @@ import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { RowForm } from "@/components/row/RowForm";
 import { EditableField } from "@/components/row/EditableField";
+import { RowHistoryPanel } from "@/components/row/RowHistoryPanel";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
@@ -363,7 +364,8 @@ export function MessageDetail({ connectionId, table, schema, analysis, pkSegment
                 <p className="leading-relaxed">{analysis.notes}</p>
               </section>
             )}
-          </aside>
+            <RowHistoryPanel connectionId={connectionId} table={table} pk={pkValue} />
+            </aside>
         </div>
       )}
 
