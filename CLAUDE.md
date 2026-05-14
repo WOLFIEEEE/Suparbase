@@ -1,9 +1,9 @@
 <!-- SPECKIT START -->
-**Current**: v1.2.0 on `main` (tagged `v1.2.0`). Five major features
-landed together: inline cell editing, global row search in the command
-palette, per-row history panel with column-level diffs, AI write
-actions with a confirm-before-execute diff card, and an RLS policy
-debugger that simulates requests inside a rolled-back transaction.
+**Current**: v1.3.0 on `main` (tagged `v1.3.0`). Two new top-level
+workspace pages: a Storage browser that talks to `/storage/v1/*` and
+an Auth users admin page that wraps Supabase's `/auth/v1/admin/*` API
+(needs a service_role key on the connection, gracefully degrades
+otherwise).
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -19,7 +19,7 @@ Spec-kit features (chronological):
 - [specs/003-ai-augmented-admin/](specs/003-ai-augmented-admin/) — v0.3, AI presets
 - [specs/004-deploy-coolify/](specs/004-deploy-coolify/) — v0.4, Coolify deploy
 - [specs/005-bootstrap-and-credentials/](specs/005-bootstrap-and-credentials/) — v0.5, self-bootstrap + email/password auth
-- [specs/006-product-workspace/](specs/006-product-workspace/) — v0.6, workspace UX overhaul (shipped)
+- [specs/006-product-workspace/](specs/006-product-workspace/) — v0.6, workspace UX overhaul
 - [specs/007-power-data-ops/](specs/007-power-data-ops/) — v0.7 MVP, power-user data ops (bulk + export + import)
 - [specs/008-v1-polish/](specs/008-v1-polish/) — v1.0, polish release + v0.7 final (saved views + filter chips)
 - [specs/010-more-archetypes/](specs/010-more-archetypes/) — v1.1, archetype taxonomy widened (commerce + tasks + messages)
@@ -28,4 +28,6 @@ Spec-kit features (chronological):
 - [specs/013-row-history/](specs/013-row-history/) — v1.2, audit-log diffs surfaced on every detail page
 - [specs/014-ai-write-actions/](specs/014-ai-write-actions/) — v1.2, AI assistant drafts writes; user confirms in a diff card
 - [specs/015-rls-debugger/](specs/015-rls-debugger/) — v1.2, RLS policy browser + simulator (needs direct Postgres URL)
+- [specs/016-storage-browser/](specs/016-storage-browser/) — v1.3, Supabase Storage bucket + object browser with signed URLs
+- [specs/017-auth-users/](specs/017-auth-users/) — v1.3, auth.users admin page (invite / recover / ban / delete)
 <!-- SPECKIT END -->

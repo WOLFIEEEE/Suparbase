@@ -3,6 +3,33 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v1.3.0 — 2026-05-14 — Storage + Auth users
+
+Tag: `v1.3.0` · Specs: [`016`](specs/016-storage-browser/), [`017`](specs/017-auth-users/)
+
+Two big surface-area additions that close the most-asked gaps in v1.2:
+
+- **Storage browser.** New `Storage` workspace page that talks to
+  Supabase's `/storage/v1/*` API with the same encrypted connection
+  key used for PostgREST. Bucket list on the left, object browser on
+  the right with prefix breadcrumbs and drag-drop upload. Multi-file
+  upload with `upsert: true`, multi-select bulk delete, per-file
+  Sign button that copies a 1h signed URL, and a Copy button on
+  public buckets for the constructed public URL. Create + cascade-
+  delete buckets from the UI (delete uses the `empty=1` endpoint to
+  wipe contents first). Uploads are capped at 50 MB and burn write-
+  rate tokens from the same bucket as PostgREST writes.
+- **Auth users page.** New `Auth users` workspace page that wraps the
+  Supabase Admin API (`/auth/v1/admin/*` and `/auth/v1/invite`). List
+  with pagination, client-side filter, and a detail pane showing the
+  full timeline + providers + metadata + status. Actions: invite a
+  new user, generate a recovery link (copied to clipboard), ban or
+  unban (1-year `ban_duration`), and delete. Every helper enforces
+  `requireServiceRole(conn)` server-side; when the connection's
+  stored key is anon/authenticated, the page renders a clear
+  "service_role key required" banner with a link to the connection
+  settings instead of failing with an opaque 403.
+
 ## v1.2.0 — 2026-05-14 — Power-user release
 
 Tag: `v1.2.0` · Specs: [`011`](specs/011-inline-cell-editing/), [`012`](specs/012-global-row-search/), [`013`](specs/013-row-history/), [`014`](specs/014-ai-write-actions/), [`015`](specs/015-rls-debugger/)
