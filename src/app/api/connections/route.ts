@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
 import { createConnection, listConnections } from "@/server/connections/repo";
+import { countOwnedConnections, getActivePlan } from "@/server/billing/repo";
+import { PlanLimitError, requireFeature } from "@/server/billing/plans";
 import { redact } from "@/lib/redact";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +38,31 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
+
+  // Plan limits: Free tier is capped at 1 owned connection. The
+  // resolver treats lapsed paid rows as Free, so an expired
+  // subscription doesn't keep multiple connections alive.
+  try {
+    const [active, count] = await Promise.all([
+      getActivePlan(session.user.id),
+      countOwnedConnections(session.user.id),
+    ]);
+    requireFeature(active, "addConnection", { currentConnectionCount: count });
+  } catch (e) {
+    if (e instanceof PlanLimitError) {
+      return NextResponse.json(
+        {
+          category: "plan_limit",
+          message: e.message,
+          feature: e.feature,
+          plan: e.plan,
+          upgradeUrl: "/settings/billing",
+        },
+        { status: 402 },
+      );
+    }
+    throw e;
+  }
 
   let body: unknown;
   try {

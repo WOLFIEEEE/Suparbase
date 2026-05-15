@@ -10,6 +10,8 @@ import { renderInvitationEmail } from "@/server/email/templates/invitation";
 import { sendEmail } from "@/server/email/resend";
 import { AppError } from "@/lib/errors";
 import { limitOr429 } from "@/server/security/route-guards";
+import { getActivePlan } from "@/server/billing/repo";
+import { PlanLimitError, requireFeature } from "@/server/billing/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,29 @@ export async function POST(req: NextRequest, ctx: Params) {
     const limited = limitOr429(session.user.id, "write");
     if (limited) return limited;
   }
+
+  // Plan limits: team invitations are a Hosted-tier feature. The
+  // check is on the *owner's* plan, not the invitee's — the invitee
+  // doesn't have an account yet.
+  try {
+    const active = await getActivePlan(session.user.id);
+    requireFeature(active, "canInviteTeam");
+  } catch (e) {
+    if (e instanceof PlanLimitError) {
+      return NextResponse.json(
+        {
+          category: "plan_limit",
+          message: e.message,
+          feature: e.feature,
+          plan: e.plan,
+          upgradeUrl: "/settings/billing",
+        },
+        { status: 402 },
+      );
+    }
+    throw e;
+  }
+
   let body: unknown;
   try {
     body = await req.json();

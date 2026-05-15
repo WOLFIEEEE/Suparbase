@@ -3,6 +3,69 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.4.0 · 2026-05-15 · Dodo Payments billing + admin panel
+
+The free tier becomes actually limited, the paid tier becomes
+actually billable, and the operator gets a window to see what's
+happening. Spec: [`specs/032-dodo-billing-admin/`](specs/032-dodo-billing-admin/).
+
+**Billing.** New `subscriptions` and `billing_events` tables. The
+`Hosted` plan ($12/user/mo, 7-day trial) is sold via Dodo Payments'
+hosted checkout (product `pdt_0Nev0FKdzw0UxPeUBKItA` — "Supar Saver").
+The checkout call lives in `src/server/billing/dodo.ts`; the webhook
+handler at `POST /api/webhooks/dodo` verifies the Standard Webhooks
+signature (HMAC-SHA256 of `${webhook-id}.${webhook-timestamp}.${body}`,
+5-min replay tolerance), dedupes by `webhook-id`, and applies state
+changes for `subscription.active`, `.renewed`, `.on_hold`,
+`.cancelled`, `.expired`, `.failed`, `.updated`, `.plan_changed`.
+Integration is env-driven (`DODO_API_KEY`, `DODO_WEBHOOK_SECRET`,
+`DODO_HOSTED_PRODUCT_ID`, `DODO_MODE`) — without those, the billing
+UI shows "coming soon" and the app still boots.
+
+**Hard limits.** Free tier is now capped at 1 connection (further
+`POST /api/connections` returns 402 with `category: "plan_limit"`)
+and 0 team invites (`POST .../members/invitations` returns 402 for
+free-tier owners). The plan resolver (`src/server/billing/plans.ts`)
+treats lapsed paid statuses (cancelled / expired / on_hold / failed)
+as Free, so an expired sub doesn't keep extras alive.
+
+**Customer billing surface.** New `/settings/billing` page shows
+current plan, trial cliff or renewal date, and a plan-comparison
+table with a "Start 7-day trial" CTA that kicks off Dodo checkout.
+Cancel / payment-method updates go through Dodo's customer flow via
+the receipt email — we don't duplicate that form in-app.
+
+**Admin panel.** New `/admin` surface, gated by an env allowlist
+`SUPARBASE_ADMIN_EMAILS` (CSV, lowercased compare). 404s for
+everyone else — we don't acknowledge it exists. Pages:
+- `/admin` — dashboard: total users, signups in last 7 days, paying
+  users, est. MRR.
+- `/admin/users` — searchable list of all users with their plan,
+  status, connection count.
+- `/admin/users/[id]` — grant a plan (Hosted or Team, with an
+  optional cliff + note — recorded as comped, no Dodo charge), reset
+  a subscription back to Free, view recent billing events for this
+  user.
+- `/admin/billing` — last 200 webhook receipts for debugging.
+Every admin action writes an `admin_actions` audit row BEFORE the
+mutation so half-failures still leave a trace.
+
+**New tests** (3 new files, 33 new tests, total 95 passing):
+- `tests/dodo-webhook.test.ts` — signature verification (valid,
+  tampered, wrong secret, stale, missing headers, multi-version
+  header, whsec_ prefix handling).
+- `tests/billing-plans.test.ts` — `resolvePlan` collapses lapsed
+  statuses to Free; `requireFeature` enforces per-plan caps for
+  every (plan, status, feature) cell.
+- `tests/admin-guard.test.ts` — env CSV parsing case-insensitivity,
+  whitespace tolerance, empty handling.
+
+**Plumbing.** New `/api/webhooks/*` middleware exemption (webhooks
+are auth'd by HMAC, not by Origin). Migration
+`drizzle/0011_adorable_tombstone.sql` adds the three new tables
+(`subscription`, `billing_event`, `admin_action`) — additive only,
+no destructive change.
+
 ## v3.3.1 · 2026-05-15 · GitHub links removed + Signal panel refresh
 
 Follow-up to v3.3.0. With the product repositioned as privately held,

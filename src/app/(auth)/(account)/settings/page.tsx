@@ -1,5 +1,20 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, CreditCard, Sparkles } from "lucide-react";
+
+const ITEMS = [
+  {
+    href: "/settings/ai",
+    icon: Sparkles,
+    title: "AI assistance",
+    body: "Add your OpenRouter API key. Suparbase will classify each table and route it to a purpose-built admin preset.",
+  },
+  {
+    href: "/settings/billing",
+    icon: CreditCard,
+    title: "Billing & plan",
+    body: "Your current plan, upgrade options, and recent billing events.",
+  },
+] as const;
 
 export default function SettingsIndexPage() {
   return (
@@ -10,24 +25,23 @@ export default function SettingsIndexPage() {
       </header>
 
       <ul className="space-y-3">
-        <li>
-          <Link
-            href="/settings/ai"
-            className="group flex items-center justify-between gap-3 rounded border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong"
-          >
-            <div className="flex items-start gap-3">
-              <Sparkles className="mt-0.5 h-4 w-4 text-accent" aria-hidden />
-              <div className="space-y-1">
-                <h2 className="font-medium">AI assistance</h2>
-                <p className="text-sm text-fg-muted">
-                  Add your OpenRouter API key. Suparbase will classify each
-                  table and route it to a purpose-built admin preset.
-                </p>
+        {ITEMS.map(({ href, icon: Icon, title, body }) => (
+          <li key={href}>
+            <Link
+              href={href}
+              className="group flex items-center justify-between gap-3 rounded border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong"
+            >
+              <div className="flex items-start gap-3">
+                <Icon className="mt-0.5 h-4 w-4 text-accent" aria-hidden />
+                <div className="space-y-1">
+                  <h2 className="font-medium">{title}</h2>
+                  <p className="text-sm text-fg-muted">{body}</p>
+                </div>
               </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
-          </Link>
-        </li>
+              <ArrowRight className="h-4 w-4 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
+            </Link>
+          </li>
+        ))}
       </ul>
     </div>
   );

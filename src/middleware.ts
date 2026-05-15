@@ -28,6 +28,11 @@ export function middleware(req: NextRequest) {
   // NextAuth handles its own CSRF for sign-in / sign-out via the
   // built-in csrfToken endpoint. Don't second-guess it.
   if (path.startsWith("/api/auth/")) return NextResponse.next();
+  // Inbound webhooks are server-to-server (no Origin header) and
+  // authenticated by their HMAC signature. Letting an unrelated
+  // Origin policy block them would silently stall billing — fail
+  // open here and rely on the signature check inside the handler.
+  if (path.startsWith("/api/webhooks/")) return NextResponse.next();
 
   const origin = req.headers.get("origin");
   if (!origin) return NextResponse.next();
