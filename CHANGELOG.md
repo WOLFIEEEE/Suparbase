@@ -3,6 +3,44 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.2.1 · 2026-05-15 · AI-powered action builder
+
+Same shape as v3.2's widget AI, applied to custom actions. Describe
+the button in English, the AI builds the SQL template or webhook
+config, you review and save.
+
+- **`src/server/ai/action-generate.ts`**: focused prompt returning a
+  strict Zod-validated `GeneratedAction` shape covering name (slug),
+  label, description, scope (global/table/row), kind (sql/webhook),
+  sqlTemplate with `$1..$N` placeholders, params array, danger flag,
+  webhookUrl/Method. Defensive code-fence stripping. The system
+  prompt covers all the action conventions: row-scope uses $1 for
+  the PK payload, params start at $2 in row-scope, ALWAYS WHERE for
+  row actions, danger=true for irreversible ops, webhook URLs must
+  be public hosts.
+- **`POST /api/connections/[id]/actions/ai-generate`**: editor+
+  role, AI rate-limit bucket. Loads OpenRouter key, introspects
+  the schema (surfaces the focus table in full when the UI provides
+  one), generates the action, then runs three structural safety
+  passes:
+  - `validateScopeShape`: scope ≠ "global" must have a tableName
+  - `validateSqlPlaceholders`: counts `$N` in SQL, confirms it
+    agrees with `params.length + (1 if row-scope)`
+  - `validateGeneratedWebhook`: routes the URL through the same
+    `validateWebhookUrl` the save path uses (blocks SSRF targets +
+    cloud-metadata + IPv6 loopback)
+  A 422 still returns the generated action so the UI can populate
+  the form anyway — the user can fix the issue inline.
+- **Editor UI**: collapsible "Generate with AI" panel above the
+  action form, mirrors the widget editor's pattern. Default open
+  for new actions, closed on edit. Passes the form's current
+  scope/kind/table context so the model gets pre-narrowed defaults;
+  the model can override. Errors show a danger pill but the form
+  is still populated so the user can fix and save.
+
+No new dependency, no new key. Reuses the existing OpenRouter
+integration the chat + widget builder already use.
+
 ## v3.2.0 · 2026-05-15 · AI-powered widget builder
 
 Tag: `v3.2.0`

@@ -13,9 +13,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
   Pencil,
   Play,
   Plus,
+  Sparkles,
   Trash2,
   Webhook,
   Zap,
@@ -283,6 +287,22 @@ interface FormDialogProps {
   onSaved: () => void;
 }
 
+interface GeneratedActionShape {
+  name: string;
+  label: string;
+  description?: string | null;
+  scope: ActionScope;
+  tableSchema?: string | null;
+  tableName?: string | null;
+  kind: ActionKind;
+  sqlTemplate?: string | null;
+  readOnly?: boolean;
+  webhookUrl?: string | null;
+  webhookMethod?: ActionWebhookMethod | null;
+  params?: ActionParam[];
+  danger?: boolean;
+}
+
 interface FormState {
   name: string;
   label: string;
@@ -341,6 +361,95 @@ function ActionFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
 
   const isEdit = !!initial;
 
+  // AI-generate state. Same shape as the widget builder — collapsible
+  // panel, prompt textarea, populate the form on success. There's no
+  // executable preview here (writes would actually fire, webhooks
+  // would actually call third-party hosts), so the safety pass is
+  // structural validation on the server side only.
+  const [aiOpen, setAiOpen] = useState(!isEdit);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiModel, setAiModel] = useState<string | null>(null);
+
+  const runAi = useCallback(async () => {
+    if (aiBusy || aiPrompt.trim().length < 3) return;
+    setAiBusy(true);
+    setAiError(null);
+    try {
+      const res = await fetch(
+        `/api/connections/${encodeURIComponent(connectionId)}/actions/ai-generate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: aiPrompt,
+            // Pass the form's current context so the model gets
+            // pre-narrowed defaults. The model can still override.
+            scope: form.scope,
+            kind: form.kind,
+            tableSchema: form.scope !== "global" ? form.tableSchema : undefined,
+            tableName: form.scope !== "global" ? form.tableName || undefined : undefined,
+          }),
+        },
+      );
+      const j = (await res.json().catch(() => ({}))) as {
+        action?: {
+          name: string;
+          label: string;
+          description?: string | null;
+          scope: ActionScope;
+          tableSchema?: string | null;
+          tableName?: string | null;
+          kind: ActionKind;
+          sqlTemplate?: string | null;
+          readOnly?: boolean;
+          webhookUrl?: string | null;
+          webhookMethod?: ActionWebhookMethod | null;
+          params?: ActionParam[];
+          danger?: boolean;
+        };
+        message?: string;
+        model?: string;
+      };
+      if (!res.ok || !j.action) {
+        setAiError(j.message ?? `HTTP ${res.status}`);
+        // Even on a 422 the body carries the action, so the user can
+        // see what the model produced and edit it inline.
+        if (j.action) {
+          populateFromGenerated(j.action);
+        }
+        return;
+      }
+      populateFromGenerated(j.action);
+      setAiModel(j.model ?? null);
+      toast.success("Action generated. Review and save.");
+    } catch (e) {
+      setAiError((e as Error).message ?? "Generation failed.");
+    } finally {
+      setAiBusy(false);
+    }
+
+    function populateFromGenerated(a: GeneratedActionShape): void {
+      setForm((prev) => ({
+        ...prev,
+        name: a.name.slice(0, 40),
+        label: a.label.slice(0, 60),
+        description: (a.description ?? "").slice(0, 200),
+        scope: a.scope,
+        tableSchema: a.tableSchema ?? prev.tableSchema,
+        tableName: a.tableName ?? prev.tableName,
+        kind: a.kind,
+        sqlTemplate: a.sqlTemplate ?? prev.sqlTemplate,
+        readOnly: a.readOnly ?? prev.readOnly,
+        webhookUrl: a.webhookUrl ?? prev.webhookUrl,
+        webhookMethod: a.webhookMethod ?? prev.webhookMethod,
+        params: a.params ?? prev.params,
+        danger: a.danger ?? prev.danger,
+      }));
+    }
+  }, [aiBusy, aiPrompt, connectionId, form.kind, form.scope, form.tableName, form.tableSchema]);
+
   const save = useCallback(async () => {
     setSaving(true);
     setError(null);
@@ -390,6 +499,80 @@ function ActionFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
         <DialogDescription>
           A button on table or row pages that runs SQL or fires a webhook.
         </DialogDescription>
+
+        {/* AI-generate panel. Default open on create, closed on edit.
+            No live preview here — actions write to the project, so the
+            safety pass is structural validation (placeholder counts,
+            webhook URL safety) done server-side. */}
+        <section className="rounded-lg border hairline bg-bg-sunken/40">
+          <button
+            type="button"
+            onClick={() => setAiOpen((v) => !v)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-bg-sunken/60"
+            aria-expanded={aiOpen}
+          >
+            {aiOpen ? (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-fg-faint" aria-hidden />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-fg-faint" aria-hidden />
+            )}
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+            <span className="font-display">Generate with AI</span>
+            <span className="ml-1 text-xs text-fg-faint">
+              describe what the button should do, we build the SQL or webhook config
+            </span>
+          </button>
+          {aiOpen && (
+            <div className="space-y-2 border-t hairline px-3 py-3">
+              <Textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                rows={2}
+                placeholder="e.g. 'mark this order as shipped' or 'refund this order via Stripe webhook' or 'archive all users not seen in 90 days'"
+                className="!text-sm"
+                aria-label="Describe the action you want"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] text-fg-faint">
+                  Uses your OpenRouter key on the model set in{" "}
+                  <a href="/settings/ai" className="text-accent hover:underline">
+                    Settings &rarr; AI
+                  </a>
+                  . SQL placeholder counts + webhook URL safety are validated server-side.
+                  {aiModel && (
+                    <span className="ml-1 font-mono text-fg-muted">
+                      via {aiModel}
+                    </span>
+                  )}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={runAi}
+                  disabled={aiBusy || aiPrompt.trim().length < 3}
+                >
+                  {aiBusy ? (
+                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                  ) : (
+                    <Sparkles className="h-3 w-3" aria-hidden />
+                  )}
+                  {aiBusy ? "Generating…" : "Generate"}
+                </Button>
+              </div>
+              {aiError && (
+                <div className="flex items-start gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-2.5 py-1.5 text-[11px] text-danger">
+                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+                  <span>
+                    {aiError}{" "}
+                    <span className="text-fg-muted">
+                      The form below was populated with the model&apos;s output so you can edit it directly.
+                    </span>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
 
         <form
           onSubmit={(e) => {
