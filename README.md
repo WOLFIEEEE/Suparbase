@@ -5,102 +5,17 @@
 > rest and proxied: it never reaches the browser.
 
 [![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v1.1.0-0A0A0B?labelColor=B6FF3C)](https://github.com/WOLFIEEEE/Suparbase/releases)
+[![Version](https://img.shields.io/github/package-json/v/WOLFIEEEE/Suparbase?color=0A0A0B&labelColor=B6FF3C&label=version)](https://github.com/WOLFIEEEE/Suparbase/releases)
+[![License](https://img.shields.io/github/license/WOLFIEEEE/Suparbase?color=0A0A0B&labelColor=B6FF3C)](LICENSE)
 [![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
 [![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
 [![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
-[![OpenRouter](https://img.shields.io/badge/ai-OpenRouter-0A0A0B?labelColor=B6FF3C)](#)
 
-## What's new in v1.1
-
-The archetype taxonomy widens. v1.0 shipped four categories
-(Users / Content / Logs / Generic); v1.1 adds three more: each with a
-list view + a dedicated detail view, each automatically applied to any
-matching table from the AI analysis or the heuristic fallback.
-
-- **Commerce** for orders / invoices / transactions / payments / charges
-  / receipts / carts / checkouts. Money columns are formatted via
-  `Intl.NumberFormat` (currency picked up from a `currency` column when
-  present; `_cents` columns divided by 100 automatically); detail page
-  shows the total at display size with a four-step pipeline (Placed →
-  Paid → Shipped → Delivered) driven from the canonical status
-  vocabulary, with terminal states (refunded / cancelled / failed)
-  collapsed to a single note.
-- **Tasks** for tickets / issues / todos / cards / jobs / reminders.
-  List view groups rows by canonical status bucket (To do / In progress
-  / Done / Blocked / Other), collapsing synonyms like `in_progress` /
-  `doing` / `active` / `started` / `review`; detail page surfaces
-  assignee (linked when the FK is set) + priority chip + overdue badge.
-- **Messages** for comments / threads / conversations / replies / notes.
-  List rows render as compact chat cards (author + body snippet + reply
-  badge); detail page is a single chat bubble with an "in reply to"
-  pointer for replies. Distinguished from Content by the absence of a
-  slug column.
-
-The OpenRouter prompt + Zod response schema teach the model the new
-categories with concrete signals; the heuristic fallback matches the
-same shapes so first paint never waits on the model. No new
-dependencies. Largest authenticated route stays at 186 KB First Load
-JS: well under the 520 KB gz budget.
-
-Spec: [`specs/010-more-archetypes/`](specs/010-more-archetypes/). Full
-notes: [`CHANGELOG.md`](CHANGELOG.md).
-
-## What's new in v1.0
-
-The GA release. Polished every previously-rough surface and finished the
-v0.7 power-user backlog (saved views + filter chips). Highlights:
-
-- **Unified typography.** Dropped Fraunces; the entire app now uses Inter
-  Variable for both body and display (heavier weight + tighter tracking
-  on display). One fewer font family loaded; cleaner, more professional
-  hierarchy.
-- **Generic admin lift.** Every non-archetype table now renders with the
-  same chrome as Users/Content/Logs: PageHeader, row cards, BulkBar,
-  Export + Import, and a dedicated detail page with hero + sectioned
-  identity + Linked-records sidebar. The HTML-table + drawer pattern is
-  gone.
-- **Schema view rebuild.** Archetype-grouped tables, expandable column
-  groups (Identifiers / Fields / Metadata), FK chips that navigate to
-  the referenced table.
-- **Connection flows polish.** Connections list cards redesigned;
-  new-connection page wrapped in `PageHeader`; per-connection Settings
-  reorganized into Identity / Security / Danger Zone sections.
-- **Saved views.** Save a filter+sort combination as a named view; tabs
-  appear in `PageHeader` on every list page; persists per (user,
-  connection, table). Capped at 5 custom views per table.
-- **Filter chips.** Click `+ Filter` → pick column → pick operator →
-  enter value. Multiple chips combine with AND. URL is the canonical
-  state; chips are shareable + bookmark-able.
-
-Spec: [`specs/008-v1-polish/`](specs/008-v1-polish/). Full notes:
-[`CHANGELOG.md`](CHANGELOG.md).
-
-## What's new in v0.6
-
-A coherent visual + UX overhaul of every workspace surface: the app
-reads as a product, not a database admin tool. Highlights:
-
-- **Archetype-grouped Dashboard** that explains the project (Audience /
-  Library / Activity) instead of listing "N tables / N views".
-- **Tables list** grouped by archetype with a cross-section search; the
-  `auth.*` / `storage.*` tables collapse behind a "System tables"
-  disclosure.
-- **Users, Content, Logs** archetypes have opinionated row cards and
-  dedicated detail pages: no more drawer-as-detail.
-- **Cmd / Ctrl + K command palette** jumps to any table, connection,
-  setting, or action with the keyboard.
-- **Dark / light theme toggle** that reads the system preference, paints
-  the chosen theme during SSR (no flash on reload).
-- **Sticky sidebar + topbar** with backdrop blur. Every authenticated
-  page now has a consistent header + footer.
-- **AI analysis extension**: `TableAnalysis` now carries primary
-  identity (avatar, badge, subtitle), columns to hide by default, and
-  FK relations annotated for detail-page surfacing.
-
-Spec: [`specs/006-product-workspace/`](specs/006-product-workspace/).
-Full notes: [`CHANGELOG.md`](CHANGELOG.md).
+> Release notes for every version live in [`CHANGELOG.md`](CHANGELOG.md).
+> The most recent push (v2.0 → v2.4) added persistent AI chat, custom
+> actions, connection dashboards, customer impersonation, team
+> workspace, and Resend-powered invitation emails.
 
 ## What this is
 

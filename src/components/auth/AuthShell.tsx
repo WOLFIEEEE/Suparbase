@@ -3,6 +3,7 @@ import { Database, Github, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
 import { AuthHeroArt } from "@/components/auth/AuthHeroArt";
 import { ThemeToggle } from "@/components/workspace/ThemeToggle";
+import { SITE } from "@/lib/seo/site";
 import { cn } from "@/lib/ui/cn";
 
 interface AuthShellProps {
@@ -216,14 +217,11 @@ function BrandPane() {
         </ul>
 
         <div className="space-y-2 text-[11px] text-fg-faint">
-          <p className="font-mono">
-            v2.0 &middot; persistent AI chat, page-aware tools, indexes &amp;
-            audit-log introspection
-          </p>
+          <p className="font-mono">v{SITE.version} &middot; open source &middot; MIT licensed</p>
           <p>
             Self-hosted? See the{" "}
             <a
-              href="https://github.com/WOLFIEEEE/Suparbase"
+              href={SITE.github}
               target="_blank"
               rel="noreferrer"
               className="text-accent hover:underline"

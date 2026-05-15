@@ -16,6 +16,7 @@ import { auth } from "@/server/auth";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { CTABand, FeatureCard, SectionHeading } from "@/components/public/sections";
+import { SITE } from "@/lib/seo/site";
 
 const STEPS = [
   {
@@ -143,7 +144,7 @@ export default async function HomePage() {
             <SectionHeading
               eyebrow="What you get"
               title="A working admin, not a wrapper."
-              subtitle="Every feature below ships in v1.4. None of them are coming soon."
+              subtitle="Every feature below ships today. None of them are coming soon."
             />
             <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {FEATURE_PREVIEWS.map((f) => (
@@ -195,7 +196,7 @@ export default async function HomePage() {
                 <Lock className="h-3 w-3" aria-hidden /> Read the security model
               </Link>
               <span className="ml-auto inline-flex items-center gap-1 font-mono text-xs text-fg-faint">
-                <Database className="h-3 w-3" aria-hidden /> v1.4.0
+                <Database className="h-3 w-3" aria-hidden /> v{SITE.version}
               </span>
             </div>
           </div>

@@ -79,10 +79,11 @@ export default async function AboutPage() {
                 authenticated, server-side, encrypted, with the affordances of a real product.
               </p>
               <p>
-                Six months and twenty-odd specs later, here we are. v1.4 ships SQL playground, RLS debugger, AI write
-                actions with diff cards, row history, storage browser, auth users, inline cell editing, global search,
-                and seven archetype list views (Users, Content, Logs, Commerce, Tasks, Messages, plus a Generic fallback).
-                Every one of these is in <code>specs/0XX-name/spec.md</code>.
+                Twenty-plus specs later, here we are. The product ships an SQL playground, RLS debugger, AI write
+                actions with diff cards, row history, storage browser, auth users with session inspector, custom
+                actions, connection dashboards, team workspace, inline cell editing, global search, and seven
+                archetype list views (Users, Content, Logs, Commerce, Tasks, Messages, plus a Generic fallback).
+                Every one of these lives in <code>specs/0XX-name/spec.md</code>.
               </p>
               <p>
                 The product is opinionated where being opinionated saves the user time: archetype detection picks the

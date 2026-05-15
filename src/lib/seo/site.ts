@@ -9,7 +9,13 @@
  *
  * Localhost values are rejected so dev builds can't poison the
  * deployed sitemap / robots / canonical metadata.
+ *
+ * The version is read straight from package.json at build time so
+ * there's a single source of truth — bumping package.json updates
+ * every footer, badge, and JSON-LD reference automatically.
  */
+
+import pkg from "../../../package.json";
 
 const FALLBACK_URL = "https://suparbase.com";
 
@@ -34,7 +40,7 @@ export const SITE = {
   url: resolveSiteUrl(),
   twitter: "@suparbase",
   github: "https://github.com/WOLFIEEEE/Suparbase",
-  version: "2.0.0",
+  version: pkg.version,
   authorName: "Suparbase",
   authorUrl: `${resolveSiteUrl()}/about`,
 } as const;

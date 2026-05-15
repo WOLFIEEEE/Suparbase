@@ -2,7 +2,21 @@
   "name": "suparbase",
   "private": true,
   "version": "2.4.1",
+  "license": "MIT",
   "description": "Authenticated SaaS admin for any Supabase. Email+password or GitHub auth, encrypted vault, server-side PostgREST proxy, OpenRouter-powered preset routing, zero-config Coolify deploy.",
+  "homepage": "https://github.com/WOLFIEEEE/Suparbase",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WOLFIEEEE/Suparbase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WOLFIEEEE/Suparbase/issues"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build && pnpm build:migrator",
