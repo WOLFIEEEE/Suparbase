@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Menu, RefreshCw, LogOut } from "lucide-react";
+import { Menu, RefreshCw, LogOut, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -15,9 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { fetchSchemaWithMeta } from "@/lib/api/hooks";
+import { AppError } from "@/lib/errors";
+import { cn } from "@/lib/ui/cn";
 import { SidebarNav } from "./Sidebar";
 import { ThemeToggle } from "./ThemeToggle";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
+import type { Schema } from "@/lib/types/schema";
 
 const ROLE_TONE: Record<KeyRole, "neutral" | "accent" | "warn" | "danger"> = {
   anon: "accent",
@@ -37,12 +42,50 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
   const { data: session } = useSession();
   const qc = useQueryClient();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  function refreshSchema() {
-    qc.invalidateQueries({
-      predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[1] === connection.id,
-    });
-  }
+  /**
+   * Refresh schema, properly:
+   *   1. Ask PostgREST to drop its OpenAPI cache via NOTIFY pgrst,
+   *      'reload schema' (server side, gated by direct PG URL).
+   *   2. Re-fetch the OpenAPI doc with cache: no-store so the browser
+   *      can't serve the stale response.
+   *   3. Seed the React Query cache directly with the fresh schema
+   *      and invalidate every other query keyed to this connection
+   *      so dependent UI (table lists, dashboards, schema view)
+   *      re-renders with the new data.
+   *   4. Toast the result so the user sees the action landed.
+   */
+  const refreshSchema = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const { schema, postgrestReloaded } = await fetchSchemaWithMeta(
+        connection.id,
+        { force: true },
+      );
+      // Prime the cache with the fresh result + bump every dependent
+      // query so subsequent reads pick up the new schema-derived state.
+      qc.setQueryData<Schema>(["schema", connection.id], schema);
+      await qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) &&
+          q.queryKey[1] === connection.id &&
+          q.queryKey[0] !== "schema",
+      });
+      const tableCount = schema.tables.length;
+      toast.success(
+        postgrestReloaded
+          ? `Schema reloaded · ${tableCount} table${tableCount === 1 ? "" : "s"}`
+          : `Schema refreshed · ${tableCount} table${tableCount === 1 ? "" : "s"} (PostgREST cache may take ~10 min to clear; add a Direct Postgres URL on the connection to bypass)`,
+      );
+    } catch (e) {
+      const msg = e instanceof AppError ? e.message : (e as Error).message ?? "Refresh failed.";
+      toast.error(`Refresh failed: ${msg}`);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [connection.id, qc, refreshing]);
 
   return (
     <>
@@ -71,9 +114,26 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="secondary" size="sm" onClick={refreshSchema}>
-            <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-            <span className="hidden sm:inline">Refresh schema</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={refreshSchema}
+            disabled={refreshing}
+            aria-label="Refresh schema"
+            title={
+              connection.hasPostgresUrl
+                ? "Re-introspect the project. Asks PostgREST to drop its OpenAPI cache first."
+                : "Re-introspect the project. Add a Direct Postgres URL on connection settings to also drop PostgREST's cache."
+            }
+          >
+            {refreshing ? (
+              <Loader2 className={cn("h-3.5 w-3.5 animate-spin")} aria-hidden />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            )}
+            <span className="hidden sm:inline">
+              {refreshing ? "Refreshing…" : "Refresh schema"}
+            </span>
           </Button>
           {session?.user && (
             <DropdownMenu>

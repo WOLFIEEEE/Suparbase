@@ -7,10 +7,43 @@ import { lookupReferenceLabels } from "@/lib/pgrest/reference";
 import { AppError } from "@/lib/errors";
 import { pgrest } from "@/lib/pgrest/client";
 
-async function fetchSchema(connectionId: string): Promise<Schema> {
+export interface FetchSchemaOptions {
+  /** Force PostgREST to reload its schema cache before introspecting. */
+  force?: boolean;
+}
+
+export interface FetchSchemaResult {
+  schema: Schema;
+  /** True when the force flag triggered a server-side NOTIFY pgrst reload. */
+  postgrestReloaded: boolean;
+}
+
+async function fetchSchema(connectionId: string, opts: FetchSchemaOptions = {}): Promise<Schema> {
+  const result = await fetchSchemaWithMeta(connectionId, opts);
+  return result.schema;
+}
+
+/**
+ * Public wrapper that exposes the `postgrestReloaded` flag, so the UI
+ * can show "we asked PostgREST to drop its cache and waited for it" vs.
+ * "we re-introspected against possibly-stale PostgREST data". Used by
+ * the Refresh schema button.
+ */
+export async function fetchSchemaWithMeta(
+  connectionId: string,
+  opts: FetchSchemaOptions = {},
+): Promise<FetchSchemaResult> {
+  const url = `/api/v/${encodeURIComponent(connectionId)}/introspect${opts.force ? "?force=true" : ""}`;
   let res: Response;
   try {
-    res = await fetch(`/api/v/${encodeURIComponent(connectionId)}/introspect`, { method: "GET" });
+    res = await fetch(url, {
+      method: "GET",
+      // Belt-and-braces: in addition to the server's Cache-Control:
+      // no-store, instruct the browser to bypass HTTP cache. Stale
+      // OpenAPI from a CDN edge has caused "refresh schema doesn't
+      // work" reports historically.
+      cache: "no-store",
+    });
   } catch (cause) {
     throw new AppError("network", "Could not reach the server.", { cause });
   }
@@ -22,8 +55,8 @@ async function fetchSchema(connectionId: string): Promise<Schema> {
     }
     throw new AppError("server", `Server responded with ${res.status}.`);
   }
-  const data = (await res.json()) as { schema: Schema };
-  return data.schema;
+  const data = (await res.json()) as { schema: Schema; postgrestReloaded?: boolean };
+  return { schema: data.schema, postgrestReloaded: !!data.postgrestReloaded };
 }
 
 export function useSchema(connectionId: string | undefined) {
