@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Database,
@@ -8,9 +9,11 @@ import {
   Lock,
   Pencil,
   Search,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   SquareCode,
+  Undo2,
 } from "lucide-react";
 import { auth } from "@/server/auth";
 import { LandingHero } from "@/components/landing/LandingHero";
@@ -108,6 +111,9 @@ export default async function HomePage() {
           <div className="py-12 md:py-16">
             <LandingHero />
           </div>
+
+          {/* Agent Sentry CTA banner — the v3 differentiator */}
+          <SentryBanner />
 
           {/* Three-step explainer */}
           <section className="grid grid-cols-1 gap-y-8 py-10 md:grid-cols-[auto_1fr] md:gap-x-12 md:py-16">
@@ -210,5 +216,66 @@ export default async function HomePage() {
         secondary={{ href: "/features", label: "See features" }}
       />
     </PublicLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Agent Sentry banner — sits between the hero and the three-step explainer.
+// Compact, accent-coloured, hooks the v3 narrative without dragging out the
+// page. Tap-target wraps the whole card on mobile.
+// ---------------------------------------------------------------------------
+
+function SentryBanner() {
+  return (
+    <section className="relative">
+      <Link
+        href="/agent-sentry"
+        className="group block rounded-xl border hairline bg-bg-raised p-5 transition-colors hover:border-line-strong md:p-6"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-accent/10 via-transparent to-transparent opacity-60"
+        />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+          <div className="space-y-2 md:max-w-2xl">
+            <div className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-fg-faint">
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-accent">
+                <Sparkles className="h-3 w-3" aria-hidden /> new · v3
+              </span>
+              Agent Sentry
+            </div>
+            <h2 className="font-display text-xl leading-tight md:text-2xl">
+              Catch the next <span className="text-accent">Moltbook</span> before
+              the headline. Undo the next <span className="text-accent">PocketOS</span>{" "}
+              before lunch.
+            </h2>
+            <p className="text-sm leading-relaxed text-fg-muted">
+              Continuous anon-key probe + per-AI-agent session attribution + one-click
+              undo. Nothing else on the market combines all three.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full border hairline bg-bg px-2.5 py-1 text-[11px] text-fg-muted">
+                <ShieldAlert className="h-3 w-3 text-danger" aria-hidden />
+                1.5M API keys leaked · Jan 2026
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border hairline bg-bg px-2.5 py-1 text-[11px] text-fg-muted">
+                <AlertTriangle className="h-3 w-3 text-warn" aria-hidden />
+                170 apps · Lovable CVE
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border hairline bg-bg px-2.5 py-1 text-[11px] text-fg-muted">
+                <Undo2 className="h-3 w-3 text-accent" aria-hidden />
+                9s to delete prod · Apr 2026
+              </span>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <span className="inline-flex h-11 items-center gap-1.5 rounded-md bg-accent px-5 text-sm font-medium text-accent-fg transition-transform group-hover:scale-[1.02]">
+              See how it works
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </div>
+        </div>
+      </Link>
+    </section>
   );
 }
