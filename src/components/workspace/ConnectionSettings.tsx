@@ -19,6 +19,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { TeamMembers } from "@/components/team/TeamMembers";
+import { PostgresUrlSection } from "@/components/connections/PostgresUrlSection";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
@@ -252,6 +253,8 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PostgresUrlSection connection={connection} />
 
       <section className="surface rounded-md p-6">
         <TeamMembers connectionId={connection.id} />

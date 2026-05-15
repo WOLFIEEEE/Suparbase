@@ -119,11 +119,17 @@ interface CreateInput {
   url: string;
   hostname: string;
   key: string;
+  /** Optional direct Postgres URL — unlocks RLS debugger, SQL playground, sessions inspector. */
+  postgresUrl?: string | null;
 }
 
 export async function createConnection(input: CreateInput): Promise<ConnectionSummary> {
   const role = decodeJwtRole(input.key);
   const encryptedKey = encryptKey(input.key);
+  const encryptedPostgresUrl =
+    input.postgresUrl && input.postgresUrl.length > 0
+      ? encryptKey(input.postgresUrl)
+      : null;
   const [row] = await db
     .insert(connections)
     .values({
@@ -132,6 +138,7 @@ export async function createConnection(input: CreateInput): Promise<ConnectionSu
       url: input.url,
       hostname: input.hostname,
       role,
+      encryptedPostgresUrl,
       encryptedKey,
     })
     .returning();

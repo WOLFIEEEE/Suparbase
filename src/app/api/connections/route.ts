@@ -8,11 +8,22 @@ export const dynamic = "force-dynamic";
 
 const URL_REGEX = /^https:\/\/[a-z0-9-]+\.supabase\.(co|in)\/?$/i;
 const JWT_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const PG_URL_REGEX = /^postgres(?:ql)?:\/\/.+/i;
 
 const CreateConnectionSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
   url: z.string().trim().regex(URL_REGEX, "URL must be a https://*.supabase.co project URL"),
   key: z.string().trim().regex(JWT_REGEX, "API key must be a JWT (three dot-separated segments)"),
+  postgresUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .nullable()
+    .refine(
+      (v) => !v || v.length === 0 || PG_URL_REGEX.test(v),
+      "Postgres URL must start with postgres:// or postgresql://.",
+    ),
 });
 
 export async function GET() {
@@ -44,7 +55,7 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-  const { name, url, key } = parsed.data;
+  const { name, url, key, postgresUrl } = parsed.data;
   const parsedUrl = new URL(url);
 
   // Verify the credentials actually work before storing.
@@ -85,6 +96,7 @@ export async function POST(req: NextRequest) {
       url: parsedUrl.origin,
       hostname: parsedUrl.hostname,
       key,
+      postgresUrl: postgresUrl && postgresUrl.length > 0 ? postgresUrl : null,
     });
     return NextResponse.json(summary, { status: 201 });
   } catch (e) {
