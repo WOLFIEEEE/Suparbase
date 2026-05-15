@@ -21,8 +21,11 @@ import { AppError } from "@/lib/errors";
  */
 
 function policyName(findingId: string): string {
-  // 32-char safe name; underscores only, prefixed so users can spot it.
-  const safe = findingId.replace(/-/g, "_").slice(0, 18);
+  // Full 36-char UUID (hyphens → underscores) so the name is globally
+  // unique. Postgres identifiers go up to 63 bytes; "suparbase_sentry_"
+  // is 17 bytes + 36 hex/underscore chars = 53 bytes, well under cap.
+  // Prefixed so users can spot Sentry-managed policies in their schema.
+  const safe = findingId.replace(/-/g, "_");
   return `suparbase_sentry_${safe}`;
 }
 

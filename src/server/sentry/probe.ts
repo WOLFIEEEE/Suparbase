@@ -110,7 +110,27 @@ export async function runSentryScan(
     });
 
     // ── 2. Anon REST probe per public table ──
-    const apiKey = decryptKey(conn.encryptedKey);
+    //
+    // CRITICAL: if the connection's stored key is `service_role`, that key
+    // bypasses RLS server-side, so probing with it would report every
+    // table as anon-readable — pure noise. Skip the REST channel entirely
+    // and surface an explanatory finding. The pg_policies channel above
+    // still runs and produces real findings.
+    const skipAnonProbe = conn.role === "service_role";
+    if (skipAnonProbe) {
+      findings.push({
+        kind: "scan_error",
+        severity: "info",
+        schemaName: null,
+        tableName: null,
+        columnName: null,
+        details: {
+          message:
+            "Anon-probe skipped: stored key is service_role, which bypasses RLS. Replace it with an anon key on the connection settings page to enable the anonymous-readability probe.",
+        },
+      });
+    }
+    const apiKey = skipAnonProbe ? null : decryptKey(conn.encryptedKey);
     const baseUrl = `${conn.url}/rest/v1`;
 
     for (const t of userTables) {
@@ -164,7 +184,10 @@ export async function runSentryScan(
         }
       }
 
-      // Anon REST probe
+      // Anon REST probe — skipped entirely when the stored key is
+      // service_role (it would bypass RLS and report every table as
+      // anon-readable).
+      if (!apiKey) continue;
       const probeResult = await probeAnonRead(baseUrl, apiKey, t.name);
       if (!probeResult.reachable) continue;
       if (probeResult.anonReadable) {

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { requireRole } from "@/server/connections/repo";
 import { undoSession } from "@/server/sentry/undo";
 import { AppError } from "@/lib/errors";
 
@@ -16,10 +16,17 @@ export async function POST(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, sessionId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  // Destructive: re-runs the audit log in reverse. Viewers can read the
+  // session timeline but cannot mutate the database from it.
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to undo sessions." },
+      { status: 403 },
+    );
+  }
   try {
-    const result = await undoSession(session.user.id, conn, sessionId);
+    const result = await undoSession(session.user.id, access.conn, sessionId);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof AppError) {

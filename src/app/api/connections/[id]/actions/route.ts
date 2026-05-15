@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForUser, requireRole } from "@/server/connections/repo";
 import { createAction, listActionsForConnection } from "@/server/actions/repo";
 import { AppError } from "@/lib/errors";
 
@@ -52,8 +52,15 @@ export async function POST(req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  // Creating an action persists SQL templates / webhook URLs that anyone
+  // with access can then execute. Editor or owner only.
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to create actions." },
+      { status: 403 },
+    );
+  }
 
   let body: unknown;
   try {

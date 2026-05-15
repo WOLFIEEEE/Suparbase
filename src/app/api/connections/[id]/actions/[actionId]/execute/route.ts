@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { requireRole } from "@/server/connections/repo";
 import { getAction } from "@/server/actions/repo";
 import { runAction } from "@/server/actions/execute";
 import { checkAiRate } from "@/server/proxy/ratelimit";
@@ -24,8 +24,16 @@ export async function POST(req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, actionId } = await ctx.params;
 
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  // Action execution runs arbitrary SQL or fires a webhook against the
+  // project — same blast as a manual SQL playground query. Editor+ only.
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to run actions." },
+      { status: 403 },
+    );
+  }
+  const conn = access.conn;
 
   const action = await getAction(session.user.id, id, actionId);
   if (!action) return NextResponse.json({ category: "not_found" }, { status: 404 });

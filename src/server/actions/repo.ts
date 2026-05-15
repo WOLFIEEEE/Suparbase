@@ -118,18 +118,44 @@ function validate(input: ActionInput): void {
       if (u.protocol !== "https:" && u.protocol !== "http:") {
         throw new Error("scheme");
       }
-      // Block obvious SSRF targets. Self-hosters can lift this if desired.
-      const host = u.hostname.toLowerCase();
-      if (
-        host === "localhost" ||
-        host === "0.0.0.0" ||
-        host.startsWith("127.") ||
-        host.startsWith("10.") ||
-        host.startsWith("169.254.") ||
-        host.startsWith("192.168.") ||
-        /^172\.(1[6-9]|2\d|3[01])\./.test(host)
-      ) {
-        throw new AppError("validation", "Webhook URL must not target a private network.");
+      // Block obvious SSRF targets. Self-hosters can lift this if they
+      // really need to call internal hosts — the comment above the regex
+      // hints at the trade-off.
+      //
+      // Hostname comes from URL parsing, so IPv6 addresses have already
+      // had their surrounding `[...]` stripped. We strip again defensively
+      // and lower-case for case-insensitive name matches.
+      const raw = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+      // Cloud-metadata IPs (AWS / GCP / Azure / DO / Oracle all use
+      // 169.254.169.254). Already covered by the `169.254.` prefix below
+      // for the AWS/GCP shape, but call it out explicitly so the rule
+      // is obvious to readers.
+      const isCloudMetadataHost =
+        raw === "metadata.google.internal" ||
+        raw === "metadata.azure.com" ||
+        raw === "instance-data" ||
+        raw === "169.254.169.254";
+      const isIpv6Loopback =
+        raw === "::1" ||
+        raw === "::" ||
+        raw === "::ffff:0:0" ||
+        raw.startsWith("::ffff:127.") ||
+        raw.startsWith("fe80:") ||
+        raw.startsWith("fc00:") ||
+        raw.startsWith("fd00:");
+      const isIpv4Private =
+        raw === "localhost" ||
+        raw === "0.0.0.0" ||
+        raw.startsWith("127.") ||
+        raw.startsWith("10.") ||
+        raw.startsWith("169.254.") ||
+        raw.startsWith("192.168.") ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(raw);
+      if (isCloudMetadataHost || isIpv6Loopback || isIpv4Private) {
+        throw new AppError(
+          "validation",
+          "Webhook URL must not target a private network or cloud-metadata service.",
+        );
       }
     } catch (e) {
       if (e instanceof AppError) throw e;

@@ -3,6 +3,57 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.1.1 · 2026-05-15 · Hardening pass
+
+Tag: `v3.1.1` · No new feature work — locking the v3 surface before
+opening for outside contributors. Audit findings fixed:
+
+- **[CRIT] Sentry anon probe false positives on service_role keys**:
+  the probe used the stored apikey to fire unauthenticated GETs, but
+  if that key is `service_role` it bypasses RLS, so every public table
+  would be reported "anon-readable". When the connection's role is
+  `service_role`, Sentry now skips the anon-probe channel and emits an
+  explanatory `scan_error` finding instead. The pg_policies channel
+  still runs.
+- **[HIGH] Authorization gaps for team viewers**: every destructive
+  endpoint added in v2.1 → v3.1 used `getConnectionForUser()` (which
+  returns the conn for any member). A `viewer` could therefore
+  quarantine, undo agent sessions, create / edit / delete custom
+  actions and dashboard widgets, mutate Sentry findings, or run
+  webhook actions. All of those are now gated behind
+  `requireRole(..., "editor")`:
+    - `POST /sentry/findings/[id]/quarantine` + `DELETE` (lift)
+    - `PATCH /sentry/findings/[id]`
+    - `POST /sessions/[id]/undo`
+    - `POST / PUT / DELETE /actions` + `actions/[id]`
+    - `POST /actions/[id]/execute`
+    - `POST / PUT / DELETE /widgets` + `widgets/[id]`
+  GET endpoints stay open to viewers as before — read access for
+  support people is the whole point of the team feature.
+- **[HIGH] Webhook SSRF blocklist gaps in custom actions**: extended
+  the URL validator in `src/server/actions/repo.ts` to also reject
+  IPv6 loopback (`::1`, `::`, `::ffff:127.*`), IPv4-mapped IPv6,
+  link-local IPv6 (`fe80:`), private IPv6 (`fc00:`, `fd00:`),
+  `metadata.google.internal`, `metadata.azure.com`, and `instance-data`
+  cloud-metadata hostnames. (`169.254.169.254` was already covered by
+  the existing `169.254.` prefix but is now also listed explicitly.)
+- **[HIGH] Undo engine: null byte handling + comment**: PG can't store
+  U+0000 in text columns. `jsonValueToSqlLiteral()` now strips null
+  bytes from string values before quoting. Added a docstring covering
+  what's safe and where (jsonb fallback, no-escape semantics under
+  `standard_conforming_strings`).
+- **[LOW] Quarantine policy name collisions**: previously truncated
+  the finding UUID to 18 chars when building the policy name, which
+  invites birthday-paradox collisions on large connections. Now uses
+  the full 36-char UUID — fits comfortably in Postgres's 63-byte
+  identifier limit.
+
+Deferred to a later patch: race in `attachToSession()` SELECT-then-
+INSERT can produce duplicate active sessions for one logical agent
+burst. Documented in the source; needs a unique partial index to fix
+properly. DNS-rebinding defence for webhook actions also out of
+scope here — requires hostname resolution + IP-level checks.
+
 ## v3.1.0 · 2026-05-15 · Agent sessions + one-click undo
 
 Tag: `v3.1.0` · Spec: [`031`](specs/031-agent-sessions/)

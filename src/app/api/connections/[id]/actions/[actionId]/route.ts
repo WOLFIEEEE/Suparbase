@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForUser, requireRole } from "@/server/connections/repo";
 import { deleteAction, getAction, updateAction } from "@/server/actions/repo";
 import { AppError } from "@/lib/errors";
 
@@ -53,8 +53,13 @@ export async function PUT(req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, actionId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to edit actions." },
+      { status: 403 },
+    );
+  }
 
   let body: unknown;
   try {
@@ -89,8 +94,13 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, actionId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to delete actions." },
+      { status: 403 },
+    );
+  }
   const ok = await deleteAction(session.user.id, id, actionId);
   if (!ok) return NextResponse.json({ category: "not_found" }, { status: 404 });
   return new NextResponse(null, { status: 204 });

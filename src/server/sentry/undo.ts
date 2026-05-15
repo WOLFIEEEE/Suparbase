@@ -224,6 +224,22 @@ export function buildReverseSql(row: AuditRowMinimal): string | null {
   return null;
 }
 
+/**
+ * Convert a JSON-derived value to a Postgres literal that can be safely
+ * embedded into the reverse-SQL we build.
+ *
+ * Single quotes inside strings are doubled (`''`) per the standard.
+ * Postgres rejects U+0000 (NUL) inside text columns regardless of
+ * encoding, so we strip null bytes before they reach the driver — this
+ * keeps the undo transaction from failing on a single rogue character.
+ * `standard_conforming_strings` is on by default in Postgres 9.1+, so
+ * backslashes inside a regular single-quoted string are taken literally
+ * (no escape sequences). We don't need an E-prefixed literal.
+ *
+ * For objects / arrays we cast a JSON dump to jsonb. Postgres implicitly
+ * casts jsonb to most column types (text, json) on UPDATE; for columns
+ * that need a different shape, the transaction surfaces the error.
+ */
 function jsonValueToSqlLiteral(v: unknown): string {
   if (v === null || v === undefined) return "NULL";
   if (typeof v === "number") {
@@ -231,11 +247,9 @@ function jsonValueToSqlLiteral(v: unknown): string {
   }
   if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
   if (typeof v === "string") {
-    return `'${v.replace(/'/g, "''")}'`;
+    // Strip U+0000 (null bytes) — Postgres can't store them in text.
+    const safe = v.replace(/\u0000/g, "").replace(/'/g, "''");
+    return `'${safe}'`;
   }
-  // Objects / arrays → JSON, cast to jsonb. Postgres can implicitly
-  // cast jsonb to most column types (text via ::text, jsonb to json,
-  // etc.). For columns that need a different cast, the user will see
-  // a clear error from the transaction.
   return jsonbLit(v);
 }

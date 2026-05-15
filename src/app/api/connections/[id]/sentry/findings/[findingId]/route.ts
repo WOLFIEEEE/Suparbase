@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { requireRole } from "@/server/connections/repo";
 import { setFindingStatus } from "@/server/sentry/repo";
 import { AppError } from "@/lib/errors";
 
@@ -19,8 +19,13 @@ export async function PATCH(req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, findingId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to mutate findings." },
+      { status: 403 },
+    );
+  }
 
   let body: unknown;
   try {

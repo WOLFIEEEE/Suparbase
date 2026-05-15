@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { requireRole } from "@/server/connections/repo";
 import { dismissQuarantine, quarantineFinding } from "@/server/sentry/quarantine";
 import { AppError } from "@/lib/errors";
 
@@ -15,10 +15,17 @@ export async function POST(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, findingId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  // Quarantine writes DDL + CREATE POLICY to the project database.
+  // Owner or editor only.
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to quarantine." },
+      { status: 403 },
+    );
+  }
   try {
-    await quarantineFinding(session.user.id, conn, findingId);
+    await quarantineFinding(session.user.id, access.conn, findingId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof AppError) {
@@ -43,10 +50,17 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, findingId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  // Dismissing quarantine drops the deny-all policy — same blast as
+  // applying it, gate the same.
+  const access = await requireRole(session.user.id, id, "editor");
+  if (!access) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor or owner role required to dismiss quarantine." },
+      { status: 403 },
+    );
+  }
   try {
-    await dismissQuarantine(session.user.id, conn, findingId);
+    await dismissQuarantine(session.user.id, access.conn, findingId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof AppError) {
