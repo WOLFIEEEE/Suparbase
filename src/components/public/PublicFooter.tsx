@@ -2,8 +2,6 @@ import Link from "next/link";
 import { ArrowUpRight, Github, Heart, Server, Shield } from "lucide-react";
 import { listArticles } from "@/lib/blog/articles";
 import { Logo } from "@/components/brand/Logo";
-import { FooterArt } from "@/components/public/FooterArt";
-import { TypingPrompt } from "@/components/public/TypingPrompt";
 import { SITE } from "@/lib/seo/site";
 import { cn } from "@/lib/ui/cn";
 
@@ -55,43 +53,32 @@ export function PublicFooter() {
       <div className="relative mx-auto w-full max-w-6xl px-6">
         <StatusBar />
 
-        {/* Panoramic art panel above the manifesto */}
-        <div className="relative -mx-6 mt-10 mb-2 sm:mt-14">
-          <FooterArt />
-        </div>
-
-        {/* Manifesto block */}
-        <section className="grid grid-cols-1 gap-10 py-10 md:grid-cols-[1fr_minmax(0,18rem)] md:py-14">
-          <div className="space-y-6">
-            <TypingPrompt />
-            <h2 className="font-display text-3xl leading-[1.05] sm:text-4xl md:text-[2.75rem]">
-              Encrypted credentials.
-              <br />
-              Server-side proxy.
-              <br />
+        {/* Compact manifesto block: short headline + signal panel */}
+        <section className="grid grid-cols-1 gap-8 py-10 md:grid-cols-[1fr_minmax(0,18rem)]">
+          <div className="space-y-4">
+            <h2 className="font-display text-2xl leading-tight sm:text-3xl">
+              Encrypted credentials, server-side proxy,{" "}
               <span className="text-accent">AI-assisted admin.</span>
             </h2>
             <p className="max-w-md text-sm leading-relaxed text-fg-muted">
-              The database tool you would have built &mdash; if you weren&apos;t
-              busy shipping the rest of the product. Free to self-host, open
-              under MIT, with a hosted plan when you don&apos;t want to operate
-              it yourself.
+              Free to self-host, open under MIT. Hosted plan when you don&apos;t
+              want to operate it yourself.
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <Link
                 href="/signup"
-                className="inline-flex h-11 items-center gap-1.5 rounded-md bg-accent px-5 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent px-4 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90"
               >
                 Get started
-                <ArrowUpRight className="h-4 w-4" aria-hidden />
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
               </Link>
               <a
                 href={SITE.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-11 items-center gap-1.5 rounded-md border hairline px-5 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
               >
-                <Github className="h-4 w-4" aria-hidden />
+                <Github className="h-3.5 w-3.5" aria-hidden />
                 Star on GitHub
               </a>
             </div>
@@ -102,7 +89,7 @@ export function PublicFooter() {
         </section>
 
         {/* Three structured columns */}
-        <section className="grid grid-cols-2 gap-x-8 gap-y-10 border-t hairline py-12 sm:grid-cols-4">
+        <section className="grid grid-cols-2 gap-x-8 gap-y-10 border-t hairline py-10 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">
             <Link
               href="/"
@@ -149,8 +136,6 @@ export function PublicFooter() {
         </section>
       </div>
 
-      {/* SIGNATURE: massive wordmark across the full width */}
-      <GiantWordmark />
     </footer>
   );
 }
@@ -410,63 +395,3 @@ function FooterBackdrop() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// The signature: a massive, partially-clipped wordmark spanning the viewport
-// ---------------------------------------------------------------------------
-
-function GiantWordmark() {
-  const wordmarkClass = cn(
-    "font-display font-bold leading-[0.85] tracking-[-0.06em]",
-    "text-[clamp(5rem,18vw,16rem)]",
-    "select-none",
-  );
-  return (
-    <div
-      aria-hidden
-      className="relative -mb-2 mt-4 flex items-end justify-center overflow-hidden"
-    >
-      {/* Layer 1: gradient fill — base value. */}
-      <span
-        className={cn(
-          wordmarkClass,
-          "block bg-gradient-to-b from-fg/[0.08] via-fg/[0.04] to-transparent bg-clip-text text-transparent",
-        )}
-      >
-        suparbase
-        <span className="footer-period inline-block translate-y-[0.04em] text-accent/50">.</span>
-      </span>
-
-      {/* Layer 2: stroke outline — sits exactly on top via absolute positioning
-          inside the same flex parent. Two layers produce a faint chromatic
-          dimension without the cost of a real chroma filter. */}
-      <span
-        className={cn(
-          wordmarkClass,
-          "absolute inset-x-0 bottom-0 flex justify-center text-transparent",
-          "[-webkit-text-stroke:1px_rgb(var(--accent)_/_0.22)]",
-        )}
-      >
-        <span>
-          suparbase
-          <span className="footer-period-glow [-webkit-text-stroke:0] text-accent/70">.</span>
-        </span>
-      </span>
-
-      <style>{`
-        @keyframes footer-period-pulse {
-          0%, 100% { opacity: 0.55; transform: translateY(0); }
-          50%      { opacity: 1;    transform: translateY(-0.02em); }
-        }
-        @keyframes footer-period-glow-pulse {
-          0%, 100% { text-shadow: 0 0 16px rgb(var(--accent) / 0.0); }
-          50%      { text-shadow: 0 0 28px rgb(var(--accent) / 0.55); }
-        }
-        .footer-period       { animation: footer-period-pulse 3.4s ease-in-out infinite; }
-        .footer-period-glow  { animation: footer-period-glow-pulse 3.4s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .footer-period, .footer-period-glow { animation: none; }
-        }
-      `}</style>
-    </div>
-  );
-}
