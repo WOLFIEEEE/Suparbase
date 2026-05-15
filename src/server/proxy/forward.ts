@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { connections } from "@/server/schema/connections";
 import { decryptKey } from "@/server/crypto/vault";
 import { auditWrite } from "@/server/audit/log";
+import { attachToSession } from "@/server/sentry/sessions";
 import { checkWriteRate } from "./ratelimit";
 
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
@@ -121,22 +122,36 @@ export async function proxyForward({ request, method, connectionId, userId, path
   // Audit log fires asynchronously after we already have the outgoing response
   // ready: never blocks the user-visible reply.
   if (auditClone) {
+    // Capture the incoming User-Agent now (we can't read it later — the
+    // request object is gone by the time the async block runs).
+    const userAgent = request.headers.get("user-agent");
+    const tableName = pathParts[0] ?? "";
     void (async () => {
-      const auditMeta = await extractAuditFromRequest({
-        method,
-        search: url.search,
-        cloned: auditClone,
-      });
+      const [auditMeta, session] = await Promise.all([
+        extractAuditFromRequest({
+          method,
+          search: url.search,
+          cloned: auditClone,
+        }),
+        attachToSession({
+          userId,
+          connectionId,
+          userAgent,
+          schemaName: "public",
+          tableName,
+        }),
+      ]);
       await auditWrite({
         userId,
         connectionId,
         schemaName: "public",
-        tableName: pathParts[0] ?? "",
+        tableName,
         primaryKey: auditMeta.primaryKey,
         verb: auditMeta.verb,
         httpStatus: upstream.status,
         beforeRow: auditMeta.beforeRow,
         afterRow: auditMeta.afterRow,
+        sessionId: session?.id ?? null,
       });
       await touch(connectionId);
     })();

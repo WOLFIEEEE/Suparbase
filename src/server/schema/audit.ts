@@ -17,12 +17,17 @@ export const auditLog = pgTable(
     beforeRow: jsonb("before_row").$type<Record<string, unknown>>(),
     /** Post-write snapshot. Populated for INSERT and UPDATE. */
     afterRow: jsonb("after_row").$type<Record<string, unknown>>(),
+    /** Agent session this write belongs to (v3.1+). Nullable for writes
+     *  that happened before Sentry was wired or for writes the
+     *  fingerprinter couldn't bucket. */
+    sessionId: uuid("session_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
     userIdx: index("audit_user_idx").on(t.userId),
     connectionIdx: index("audit_connection_idx").on(t.connectionId),
     createdAtIdx: index("audit_created_at_idx").on(t.createdAt),
+    sessionIdx: index("audit_session_idx").on(t.sessionId),
   }),
 );
 

@@ -12,6 +12,8 @@ export interface AuditInput {
   httpStatus: number;
   beforeRow?: Record<string, unknown> | null;
   afterRow?: Record<string, unknown> | null;
+  /** Agent session this write belongs to (v3.1+). Null when no session was attached. */
+  sessionId?: string | null;
 }
 
 /**
@@ -31,6 +33,7 @@ export async function auditWrite(input: AuditInput): Promise<void> {
       httpStatus: input.httpStatus,
       beforeRow: input.beforeRow ?? null,
       afterRow: input.afterRow ?? null,
+      sessionId: input.sessionId ?? null,
     });
   } catch {
     // never let an audit failure surface to the user

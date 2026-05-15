@@ -1,14 +1,14 @@
 <!-- SPECKIT START -->
-**Current**: v3.0.0 on `main` (tagged `v3.0.0`). Agent Sentry — the
-security-watchdog half of a feature nothing else in market has.
-On-demand probe combines an anon REST probe (one GET per public
-user table) with `pg_policies` inspection (when a direct PG URL is
-set) to detect RLS drift, anon-readable tables, and overly-permissive
-policies. PII-flavoured columns escalate findings to `critical`.
-One-click quarantine applies a temporary deny-all RLS policy. UI at
-`/c/[id]/sentry`, sidebar entry, auto-refresh. v3.1 ships the
-AI-seatbelt half: per-agent session attribution + session undo for
-PocketOS-style nukes.
+**Current**: v3.1.0 on `main` (tagged `v3.1.0`). Agent Sentry's
+safety-net half. Every authenticated write through the proxy is
+fingerprinted from its User-Agent and bucketed into an
+`agent_session` row (Cursor / Claude Code / Replit Agent / Lovable
+/ v0 / Vercel AI SDK / Suparbase's own OpenRouter, with `ai_unknown`
+/ `browser` / `cli` fallbacks). Each session links to every
+audit_log row it produced. One-click "Undo session" replays the
+audit log in reverse inside one transaction. New `/c/[id]/agents`
+page. Requires the Direct Postgres URL for undo. v3.0 base = the
+RLS-drift watchdog. DDL capture deferred to v3.1.x.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -45,4 +45,5 @@ Spec-kit features (chronological):
 - [specs/028-team-workspace/](specs/028-team-workspace/) · v2.4, team workspace (multi-user connections with editor / viewer roles)
 - [specs/029-resend-email/](specs/029-resend-email/) · v2.4.1, Resend transactional email (invitations delivered via email when configured)
 - [specs/030-agent-sentry/](specs/030-agent-sentry/) · v3.0, Agent Sentry security watchdog (anon-probe + pg_policies inspector + one-click quarantine)
+- [specs/031-agent-sessions/](specs/031-agent-sessions/) · v3.1, agent session attribution + one-click session undo (PocketOS-class safety net)
 <!-- SPECKIT END -->

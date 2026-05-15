@@ -7,4 +7,5 @@ export * from "./custom-actions";
 export * from "./dashboard-widgets";
 export * from "./team";
 export * from "./sentry";
+export * from "./agent-sessions";
 export * from "../views/schema";

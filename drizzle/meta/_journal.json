@@ -71,6 +71,13 @@
       "when": 1778840590313,
       "tag": "0009_shallow_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778841746458,
+      "tag": "0010_third_makkari",
+      "breakpoints": true
     }
   ]
 }

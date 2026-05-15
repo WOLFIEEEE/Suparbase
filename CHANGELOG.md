@@ -3,6 +3,47 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.1.0 · 2026-05-15 · Agent sessions + one-click undo
+
+Tag: `v3.1.0` · Spec: [`031`](specs/031-agent-sessions/)
+
+Second half of Agent Sentry. v3.0 caught RLS drift; v3.1 catches the
+PocketOS / Replit-Agent class of incident: an AI agent doing a bulk
+mutation you didn't intend.
+
+- **Agent fingerprinter**: identifies Cursor, Claude Code, Replit
+  Agent, Lovable, v0, Vercel AI SDK, and Suparbase's own OpenRouter
+  calls from the request User-Agent. Falls through to `ai_unknown` /
+  `browser` / `cli` for everything else.
+- **Session bucketing**: every authenticated write through the proxy
+  is grouped into an `agent_session` row via a 5-minute rolling
+  window per (user, connection, agent_kind). Existing audit-log
+  semantics preserved; bucketing runs in parallel with audit
+  extraction and never blocks the response.
+- **One-click session undo**: walks every `audit_log` row linked to
+  the session, builds reverse SQL (INSERT→DELETE, DELETE→INSERT
+  beforeRow, UPDATE→UPDATE back to beforeRow), and runs every
+  reversal in a single transaction via the existing executeSql path.
+  Bypasses RLS via the Direct Postgres URL (explicit admin op).
+- **New `/c/[id]/agents` page** in the sidebar between Actions and
+  Sentry. Sessions grouped by agent kind; click any session for a
+  drawer showing the mutation list, raw User-Agent, and the Undo
+  button. Status badges (active / closed / undone / undo_partial /
+  undo_failed) tell you where each session sits.
+
+Schema (drizzle 0010):
+- `agent_session` (15 cols, indexed by user+conn+lastSeenAt and by
+  user+conn+kind+status)
+- `audit_log.session_id` (nullable; pre-existing rows stay null)
+
+API:
+- `GET /api/connections/[id]/sessions` → list + canUndo
+- `GET /api/connections/[id]/sessions/[sessionId]` → detail + writes
+- `POST /api/connections/[id]/sessions/[sessionId]/undo` → reverse
+
+DDL capture (schema changes) and per-write diff preview are deferred
+to v3.1.x.
+
 ## v3.0.0 · 2026-05-15 · Agent Sentry — security watchdog
 
 Tag: `v3.0.0` · Spec: [`030`](specs/030-agent-sentry/)

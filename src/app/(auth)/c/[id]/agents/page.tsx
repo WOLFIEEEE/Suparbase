@@ -1,0 +1,41 @@
+import { notFound } from "next/navigation";
+import { auth } from "@/server/auth";
+import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { PageHeader } from "@/components/workspace/PageHeader";
+import { AgentSessions } from "@/components/sentry/AgentSessions";
+
+export const dynamic = "force-dynamic";
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function AgentSessionsPage({ params }: Props) {
+  const session = await auth();
+  if (!session?.user) notFound();
+  const { id } = await params;
+  const row = await getConnectionForUser(session.user.id, id);
+  if (!row) notFound();
+  const connection = toSummary(row);
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: connection.name, href: `/c/${connection.id}` },
+          { label: "Agents" },
+        ]}
+        title="Agent sessions"
+        subtitle={
+          <span className="text-xs text-fg-muted">
+            Every AI write to this database, grouped into sessions you can
+            review and one-click undo. Designed for when Cursor / Claude
+            Code / Replit Agent / Lovable / v0 does something you
+            didn&apos;t intend.
+          </span>
+        }
+      />
+      <AgentSessions connectionId={connection.id} />
+    </div>
+  );
+}
