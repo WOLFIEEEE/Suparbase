@@ -270,7 +270,7 @@ export function UserDetail({ connectionId, userId }: Props) {
         <div className="relative grid grid-cols-2 gap-x-4 gap-y-1.5 border-t hairline px-6 py-3 text-[11px] sm:grid-cols-4">
           <Kv label="Created" value={fmtAbs(user.createdAt)} />
           <Kv label="Last sign-in" value={fmtAbs(user.lastSignInAt)} />
-          <Kv label="Phone" value={user.phone ?? "—"} />
+          <Kv label="Phone" value={user.phone ?? "-"} />
           <Kv label="Updated" value={fmtAbs(user.updatedAt)} />
         </div>
       </section>
@@ -434,7 +434,7 @@ function Kv({ label, value }: { label: string; value: string | null }) {
     <div className="min-w-0">
       <div className="text-fg-faint uppercase tracking-[0.16em] text-[10px]">{label}</div>
       <div className={cn("truncate font-mono", value ? "text-fg-muted" : "text-fg-faint")}>
-        {value ?? "—"}
+        {value ?? "-"}
       </div>
     </div>
   );

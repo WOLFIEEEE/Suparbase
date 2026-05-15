@@ -262,7 +262,7 @@ SELECT count(*) FROM orders WHERE provider_data ->> 'status' = 'paid';`}</CodeBl
         spellings of the same key (<code>userId</code>, <code>user_id</code>,{" "}
         <code>uid</code>) across rows because nothing enforces consistency.
         The fix is a CHECK constraint with <code>jsonb_typeof</code> or a
-        function that runs on INSERT — or just promote it to a column.
+        function that runs on INSERT, or just promote it to a column.
       </p>
 
       <h3>4. The TOAST chunking surprise</h3>

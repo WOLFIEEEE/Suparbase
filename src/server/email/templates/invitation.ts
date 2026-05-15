@@ -50,12 +50,12 @@ export function renderInvitationEmail(input: InvitationEmailInput): RenderedEmai
     url,
     ``,
     `This link expires on ${expiresHuman}. Sign in with`,
-    `${input.recipientEmail} to accept — the email on the invitation`,
+    `${input.recipientEmail} to accept, the email on the invitation`,
     `must match the email on your Suparbase account.`,
     ``,
     `If you weren't expecting this invite, you can safely ignore it.`,
     ``,
-    `— Suparbase`,
+    `- Suparbase`,
     `${getSiteUrl()}`,
   ].join("\n");
 

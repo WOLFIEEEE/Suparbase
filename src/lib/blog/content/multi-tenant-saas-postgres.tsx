@@ -109,7 +109,7 @@ CREATE POLICY "Members write projects" ON projects FOR ALL TO authenticated
       <ul>
         <li>One schema. Migrations apply once.</li>
         <li>Reporting and analytics over &quot;all tenants&quot; is a single SQL query.</li>
-        <li>Connection pooling is straightforward — every request hits the same pool.</li>
+        <li>Connection pooling is straightforward, every request hits the same pool.</li>
         <li>You can move a tenant to another shard later by introducing a routing layer; the schema stays the same.</li>
       </ul>
 
@@ -262,7 +262,7 @@ await sql.end();`}</CodeBlock>
         For Supabase specifically, &quot;database per tenant&quot; usually
         means &quot;Supabase project per tenant&quot;. This is what some
         agencies do for clients who need full isolation. The admin overhead
-        of managing dozens of dashboards is significant — which is why{" "}
+        of managing dozens of dashboards is significant, which is why{" "}
         <Link href="/use-cases/agency-multi-client">multi-project admin</Link>{" "}
         is one of the most common reasons people pick our workspace.
       </p>

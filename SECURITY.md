@@ -20,7 +20,7 @@ Use GitHub's private vulnerability reporting:
    issues get a same-week patch.
 
 If you can't use the GitHub form, open a normal issue saying *only*
-"security report — please contact me privately" and we'll reach out.
+"security report, please contact me privately" and we'll reach out.
 
 ## What's in scope
 
@@ -34,7 +34,7 @@ If you can't use the GitHub form, open a normal issue saying *only*
 ## What's not in scope
 
 - Issues in third-party services (Supabase itself, Resend, OpenRouter,
-  Coolify) — report those to the respective vendors.
+  Coolify), report those to the respective vendors.
 - Self-hosters' own deployments running outdated dependencies. Please
   upgrade first and re-test.
 - Social-engineering, physical attacks, or rate-limit findings without

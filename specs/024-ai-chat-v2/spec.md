@@ -1,4 +1,4 @@
-# AI chat v2.0 — persistent multi-conversation + richer toolbelt
+# AI chat v2.0, persistent multi-conversation + richer toolbelt
 
 ## Goal
 The v1 chat was a one-shot, single-conversation drawer with three
@@ -35,7 +35,7 @@ existing tools and only operate inside the user's scope.
 - Inline `**bold**`, `` `code` ``, `[links](href)`.
 - Fenced ```code blocks``` get a copy button.
 - Bullet lists and paragraphs.
-- Hand-written renderer (no `react-markdown`) — trusted server-side
+- Hand-written renderer (no `react-markdown`), trusted server-side
   text, kept tiny.
 
 ### 5. Copy / export / token totals
@@ -48,7 +48,7 @@ existing tools and only operate inside the user's scope.
 - The read-only-by-default contract: write tools still produce
   `proposed_*` results and require an explicit Apply.
 - The NDJSON streaming wire format (phase / tool_start / tool_end /
-  text / done / error) — additive `usage` payload was already there.
+  text / done / error), additive `usage` payload was already there.
 - Rate limit, OpenRouter key handling, schema introspection, cached
   analysis fallback.
 

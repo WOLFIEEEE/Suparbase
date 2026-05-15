@@ -26,7 +26,7 @@ export function Article() {
       <p>
         Three databases. Three takes on &quot;data close to your users&quot;.
         All three matured significantly in 2025. In 2026 the question
-        isn&apos;t which one is technically best — it&apos;s which one
+        isn&apos;t which one is technically best, it&apos;s which one
         matches your application&apos;s shape.
       </p>
 
@@ -266,7 +266,7 @@ export function Article() {
       </p>
 
       <p>
-        If no — most B2B SaaS, internal tools, regional consumer apps —
+        If no, most B2B SaaS, internal tools, regional consumer apps -
         a regular Postgres on Supabase or Neon is faster, simpler, and
         cheaper than any of the three. The edge story is a real win for a
         real set of workloads, but it&apos;s not most workloads. Optimise

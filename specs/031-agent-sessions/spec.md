@@ -13,7 +13,7 @@ The 2026 incident pattern that v3.0 doesn't cover:
 - Replit Agent (July 2025): wiped a production DB during a
   conversation. Same shape.
 
-In every case, the writes existed in some audit log somewhere — what
+In every case, the writes existed in some audit log somewhere, what
 was missing was a button that said *"undo every change that agent
 made in this session"*. v3.1 builds that button.
 
@@ -49,7 +49,7 @@ or to `browser` / `cli` / `unknown` otherwise.
 - Outside the window or to a different kind, a new session opens.
 - Session counters (`mutationCount`, `tablesTouched`) are bumped via
   an atomic `UPDATE … SET mutation_count = mutation_count + 1`.
-- Never throws — proxy hot path is more important than perfect
+- Never throws, proxy hot path is more important than perfect
   attribution.
 
 ### Proxy integration
@@ -57,7 +57,7 @@ or to `browser` / `cli` / `unknown` otherwise.
   before the audit-log block, calls `attachToSession()` in parallel
   with `extractAuditFromRequest()`, then stamps the resulting
   `sessionId` onto every `auditWrite()`.
-- All existing audit semantics preserved — we never block the
+- All existing audit semantics preserved, we never block the
   user-visible response on session work.
 
 ### Undo engine (`src/server/sentry/undo.ts`)
@@ -68,7 +68,7 @@ or to `browser` / `cli` / `unknown` otherwise.
   - `delete` → `INSERT INTO <table> (cols) VALUES (...)`
 - Runs every reversal in a single transaction via `executeSql()` so
   partial failures roll back.
-- Bypasses RLS via the Direct Postgres URL — this is an admin
+- Bypasses RLS via the Direct Postgres URL, this is an admin
   operation the user explicitly authorised.
 - Schema mutations (DDL) are out of scope; we don't yet capture them
   in the audit log. A follow-up will catch DDL via `pg_event_trigger`.
@@ -92,11 +92,11 @@ or to `browser` / `cli` / `unknown` otherwise.
 - `POST /api/connections/[id]/sessions/[sessionId]/undo` → reverse
 
 ## Out of scope for v3.1
-- **DDL capture + reverse** — schema changes (ALTER TABLE, DROP, etc.)
+- **DDL capture + reverse**, schema changes (ALTER TABLE, DROP, etc.)
   aren't audited yet, so they can't be undone. v3.1.x will add
   `pg_event_trigger`-driven capture + an "auto-generated reverse
   migration" suggestion for the simple cases.
-- **Session-level alerting** — emailing the owner when an AI session
+- **Session-level alerting**, emailing the owner when an AI session
   mutates more than N rows / hits a sensitive table.
 - **Per-session diff preview** before undo. The mutation list shows
   the verbs + PKs but not the per-column before/after diff. The data
@@ -105,7 +105,7 @@ or to `browser` / `cli` / `unknown` otherwise.
 
 ## Safety
 - Undo requires Direct Postgres URL. We're explicit in UI about why.
-- Reversals run in one transaction — either all succeed or none.
+- Reversals run in one transaction, either all succeed or none.
 - We never include the AI's original key in the reverse SQL; we only
   re-execute SQL we constructed from the audit log snapshots.
 - Sessions that have already been undone are blocked from re-undo.

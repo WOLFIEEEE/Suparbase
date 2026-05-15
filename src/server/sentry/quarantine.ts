@@ -31,7 +31,7 @@ function policyName(findingId: string): string {
 
 function qualifiedIdent(schemaName: string, tableName: string): string {
   // Quote identifiers so unusual names don't break the policy SQL. Inputs
-  // come from introspection — we never echo user-supplied table names.
+  // come from introspection, we never echo user-supplied table names.
   return `"${schemaName.replace(/"/g, '""')}"."${tableName.replace(/"/g, '""')}"`;
 }
 
@@ -68,7 +68,7 @@ export async function quarantineFinding(
 
   // The execution order is important:
   //   1. ALTER TABLE … ENABLE RLS (no-op if already enabled)
-  //   2. DROP POLICY IF EXISTS (defensive — should never be present)
+  //   2. DROP POLICY IF EXISTS (defensive, should never be present)
   //   3. CREATE POLICY … USING (false)
   // Wrapped in a single SQL string so it runs inside one transaction.
   const sql = [

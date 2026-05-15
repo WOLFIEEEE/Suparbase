@@ -60,7 +60,7 @@ export function Article() {
         <li>
           <strong>Lovable CVE-2025-48757 (February)</strong>: a scan of 1,764
           vibe-coded apps found 453 with critical vulnerabilities. 170 had
-          inverted RLS — &ldquo;if you&apos;re logged in, you can read every
+          inverted RLS, &ldquo;if you&apos;re logged in, you can read every
           row.&rdquo; 80% of vibe-coded apps share that exact mistake.{" "}
           <a
             href="https://dev.to/stefan_lederer_8b1bbcef01/we-scanned-1764-vibe-coded-apps-453-had-critical-vulnerabilities-heres-what-we-found-beyond-464e"
@@ -97,7 +97,7 @@ export function Article() {
 
       <ArticleH2 id="why-existing-tools-miss">Why existing tools miss them</ArticleH2>
       <p>
-        There&apos;s a whole cottage industry of Supabase scanners now — and
+        There&apos;s a whole cottage industry of Supabase scanners now, and
         every single one shares the same shape. They&apos;re point-in-time
         scans, or they&apos;re loggers, or they&apos;re both. None of them
         combine continuous probing with the kill-switch.
@@ -126,7 +126,7 @@ export function Article() {
 
       <ArticleH2 id="what-sentry-does">What Agent Sentry does</ArticleH2>
       <p>
-        Two halves. Together they cover both incident classes — the RLS-leak
+        Two halves. Together they cover both incident classes, the RLS-leak
         class (Moltbook, Lovable) and the agent-nuke class (PocketOS).
       </p>
 
@@ -143,7 +143,7 @@ export function Article() {
         reads <code>pg_class.relrowsecurity</code> + <code>pg_policy</code>{" "}
         to catch tables where RLS is off outright, tables with zero
         policies, and policies whose <code>USING</code> clause is just{" "}
-        <code>true</code> — the inverted-logic mistake from CVE-2025-48757.
+        <code>true</code>, the inverted-logic mistake from CVE-2025-48757.
       </p>
       <CodeBlock language="sql">{`SELECT n.nspname, c.relname, c.relrowsecurity,
        jsonb_agg(json_build_object('policy', p.polname,
@@ -218,7 +218,7 @@ CREATE POLICY suparbase_sentry_<id>
           <Link href="/signup">Suparbase</Link> and add the API key.
         </li>
         <li>
-          Add the optional Direct Postgres URL on the connection page —{" "}
+          Add the optional Direct Postgres URL on the connection page -{" "}
           <Link href="/agent-sentry">Sentry</Link>&apos;s pg_policies
           inspector and the undo engine both use it.
         </li>
@@ -233,7 +233,7 @@ CREATE POLICY suparbase_sentry_<id>
         </li>
       </ol>
       <p>
-        Suparbase is MIT-licensed and self-host-friendly — drop your own
+        Suparbase is MIT-licensed and self-host-friendly, drop your own
         deployment behind Coolify and the whole thing runs on a single
         Postgres + Node container. The full <Link href="/agent-sentry">Sentry
         feature page</Link> has the FAQ + a side-by-side with the existing

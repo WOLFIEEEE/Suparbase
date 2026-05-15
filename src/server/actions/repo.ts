@@ -105,7 +105,7 @@ export function validateWebhookUrl(raw: string): void {
     host === "metadata.azure.com" ||
     host === "instance-data" ||
     host === "169.254.169.254";
-  // IPv6 forms — note `new URL()` canonicalises addresses, e.g.
+  // IPv6 forms, note `new URL()` canonicalises addresses, e.g.
   // `::ffff:127.0.0.1` becomes `[::ffff:7f00:1]` and `fd12:3456::1`
   // stays roughly intact. Patterns below survive canonicalisation:
   const isIpv6Loopback =
@@ -116,9 +116,9 @@ export function validateWebhookUrl(raw: string): void {
     host.startsWith("::ffff:127.") ||
     // Same as above after canonical compression to hex pairs.
     /^::ffff:7f[0-9a-f]{2}:/.test(host) ||
-    // Link-local fe80::/10 — fe80 through febf.
+    // Link-local fe80::/10, fe80 through febf.
     /^fe[89ab][0-9a-f]?:/.test(host) ||
-    // Unique-local fc00::/7 — any address starting fc.. or fd..
+    // Unique-local fc00::/7, any address starting fc.. or fd..
     /^f[cd][0-9a-f]{2}:/.test(host);
   const isIpv4Private =
     host === "localhost" ||

@@ -87,7 +87,7 @@ export function Article() {
           id&quot;? <strong>Either one works.</strong>
         </li>
         <li>
-          Is your data genuinely polymorphic — a stream of events with
+          Is your data genuinely polymorphic, a stream of events with
           different schemas, content management with arbitrary embedded
           structures, IoT payloads with vendor-specific keys?{" "}
           <strong>You probably want a document store.</strong>
@@ -205,7 +205,7 @@ export function Article() {
 
       <p>
         E-commerce catalogs where every category has different attributes
-        (screen size on TVs, thread count on sheets) — the EAV pattern in
+        (screen size on TVs, thread count on sheets), the EAV pattern in
         Postgres is awkward; a document per product with category-specific
         keys is natural. Stripe-style catalogs.
       </p>

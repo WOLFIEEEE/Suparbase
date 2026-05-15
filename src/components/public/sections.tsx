@@ -3,7 +3,7 @@ import { ArrowRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 
 // ---------------------------------------------------------------------------
-// Page shell — consistent vertical rhythm across every public page
+// Page shell, consistent vertical rhythm across every public page
 // ---------------------------------------------------------------------------
 
 export function PageShell({
@@ -21,7 +21,7 @@ export function PageShell({
 }
 
 // ---------------------------------------------------------------------------
-// PageHeader — eyebrow + headline + subtitle
+// PageHeader, eyebrow + headline + subtitle
 // ---------------------------------------------------------------------------
 
 interface PageHeaderProps {
@@ -51,7 +51,7 @@ export function PageHeader({ eyebrow, title, subtitle, actions, className }: Pag
 }
 
 // ---------------------------------------------------------------------------
-// SectionHeading — for sub-sections within a page
+// SectionHeading, for sub-sections within a page
 // ---------------------------------------------------------------------------
 
 interface SectionHeadingProps {
@@ -90,7 +90,7 @@ export function SectionHeading({ eyebrow, title, subtitle, align = "left", class
 }
 
 // ---------------------------------------------------------------------------
-// FeatureCard — used on /features and /docs hubs
+// FeatureCard, used on /features and /docs hubs
 // ---------------------------------------------------------------------------
 
 interface FeatureCardProps {
@@ -141,7 +141,7 @@ export function FeatureCard({ icon: Icon, title, body, href, tone = "default" }:
 }
 
 // ---------------------------------------------------------------------------
-// CTABand — the "ready to ship?" footer band on most pages
+// CTABand, the "ready to ship?" footer band on most pages
 // ---------------------------------------------------------------------------
 
 interface CTABandProps {
@@ -184,7 +184,7 @@ export function CTABand({ title, body, primary, secondary }: CTABandProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Prose — typography reset for long-form pages (docs, privacy, terms)
+// Prose, typography reset for long-form pages (docs, privacy, terms)
 // ---------------------------------------------------------------------------
 
 export function Prose({ children, className }: { children: React.ReactNode; className?: string }) {

@@ -84,7 +84,7 @@ ALTER TABLE orders ADD COLUMN currency text NOT NULL DEFAULT 'USD';`}</CodeBlock
 
       <Callout variant="watch-out" title="Volatile defaults still rewrite">
         A default like <code>DEFAULT now()</code> or{" "}
-        <code>DEFAULT gen_random_uuid()</code> is volatile — every existing
+        <code>DEFAULT gen_random_uuid()</code> is volatile, every existing
         row needs a distinct value, so Postgres rewrites the whole table.
         That&apos;s an <code>ACCESS EXCLUSIVE</code> lock for as long as the
         rewrite takes. Don&apos;t do this on a hot table.
@@ -128,7 +128,7 @@ ALTER TABLE orders DROP CONSTRAINT orders_region_not_null;`}</CodeBlock>
 
       <p>
         <code>ALTER TABLE ... DROP COLUMN</code> takes an <code>ACCESS
-        EXCLUSIVE</code> lock but the work itself is instant — Postgres just
+        EXCLUSIVE</code> lock but the work itself is instant, Postgres just
         marks the column dead, doesn&apos;t reclaim the space. The space comes
         back via the next VACUUM.
       </p>
@@ -294,7 +294,7 @@ ALTER TABLE invoices DROP COLUMN total;`}</CodeBlock>
           A SQL playground that&apos;s already authed and read-only by default
           beats fumbling with <code>psql</code> when something stalls. The{" "}
           <Link href="/features">SQL playground</Link> in Suparbase is built
-          for exactly this — read-only by default with a clear write-mode
+          for exactly this, read-only by default with a clear write-mode
           toggle and statement timeout.
         </li>
         <li>

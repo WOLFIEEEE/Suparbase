@@ -194,7 +194,7 @@ export async function removeMember(
 }
 
 // ---------------------------------------------------------------------------
-// Invitation acceptance — used by /invitations/[token]
+// Invitation acceptance, used by /invitations/[token]
 // ---------------------------------------------------------------------------
 
 export interface ResolvedInvitation {

@@ -43,9 +43,9 @@ export function Article() {
 
       <p>
         The dedicated vector databases (Pinecone, Qdrant, Weaviate, Milvus)
-        are all good products. But for typical RAG workloads — millions, not
+        are all good products. But for typical RAG workloads, millions, not
         billions, of vectors; sub-200ms query budgets; need to join against
-        your business data — the calculus tipped toward Postgres for three
+        your business data, the calculus tipped toward Postgres for three
         reasons:
       </p>
 
@@ -121,7 +121,7 @@ CREATE INDEX chunks_content_trgm
         <li>
           <strong>tenant_id denormalised onto chunks</strong>. RLS can filter
           by tenant before the HNSW index is consulted. Without this, the
-          planner does the vector search first, then filters — much slower.
+          planner does the vector search first, then filters, much slower.
         </li>
         <li>
           <strong>model column</strong>. Switching embedding models is the
@@ -146,17 +146,17 @@ CREATE INDEX chunks_content_trgm
 
       <ul>
         <li>
-          <code>m</code> (default 16) — number of connections per node.
+          <code>m</code> (default 16), number of connections per node.
           Higher = better recall, more memory, slower build. 16-32 is the
           right range for most workloads.
         </li>
         <li>
-          <code>ef_construction</code> (default 64) — quality of the index
+          <code>ef_construction</code> (default 64), quality of the index
           during build. Higher = better recall, much slower build. 64-200
           for quality-sensitive applications.
         </li>
         <li>
-          <code>ef_search</code> — query-time parameter (set per session).
+          <code>ef_search</code>, query-time parameter (set per session).
           Higher = better recall, slower query. <code>SET LOCAL hnsw.ef_search
           = 100</code> for the queries where you care about recall.
         </li>
@@ -194,8 +194,8 @@ CREATE INDEX chunks_content_trgm
 
       <p>
         A chunk that says &quot;The threshold is 500ms&quot; is useless on its
-        own. Prepend a synthesised header — the document title and the
-        section&apos;s heading path — to every chunk before embedding it:
+        own. Prepend a synthesised header, the document title and the
+        section&apos;s heading path, to every chunk before embedding it:
       </p>
 
       <CodeBlock language="ts" filename="enrich-chunk.ts">{`function enrichChunk(doc: Doc, section: Section, body: string): string {

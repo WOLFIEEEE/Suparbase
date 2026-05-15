@@ -27,8 +27,8 @@ export function Article() {
       <p>
         Supabase didn&apos;t set out to be the AI-friendliest Postgres
         platform. It set out to be &quot;Firebase for Postgres&quot; in
-        2020. The features that made that pitch work — automatic API
-        from your schema, RLS as the security model, JWT-based auth —
+        2020. The features that made that pitch work, automatic API
+        from your schema, RLS as the security model, JWT-based auth -
         turn out to be exactly the features an AI agent needs to operate
         a database without hallucinating.
       </p>

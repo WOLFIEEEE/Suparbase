@@ -50,7 +50,7 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, findingId } = await ctx.params;
-  // Dismissing quarantine drops the deny-all policy — same blast as
+  // Dismissing quarantine drops the deny-all policy, same blast as
   // applying it, gate the same.
   const access = await requireRole(session.user.id, id, "editor");
   if (!access) {

@@ -61,7 +61,7 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
 }
 
 /**
- * Resolve the caller's role on a connection — owner, member role, or null.
+ * Resolve the caller's role on a connection, owner, member role, or null.
  * Use this when a route needs to know the caller's permissions.
  */
 export async function getConnectionAccess(
@@ -119,7 +119,7 @@ interface CreateInput {
   url: string;
   hostname: string;
   key: string;
-  /** Optional direct Postgres URL — unlocks RLS debugger, SQL playground, sessions inspector. */
+  /** Optional direct Postgres URL, unlocks RLS debugger, SQL playground, sessions inspector. */
   postgresUrl?: string | null;
 }
 

@@ -2,7 +2,7 @@ import { AlertTriangle, Info, Lightbulb, Sparkles } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 
 /**
- * Code block — server component. We don't run syntax highlighting at the
+ * Code block, server component. We don't run syntax highlighting at the
  * runtime layer to keep articles SSR-fast; the inline styling below gives
  * code a calm, readable look without a 200KB shiki dependency.
  */

@@ -64,7 +64,7 @@ export function saveBag(connectionId: string, bag: Bag): void {
       window.localStorage.removeItem(key(connectionId, "active"));
     }
   } catch {
-    /* localStorage full / private mode — fail silently */
+    /* localStorage full / private mode, fail silently */
   }
 }
 
@@ -141,7 +141,7 @@ export function serializeMessage(m: {
       tool: s.tool,
       args: s.args,
       result: s.result,
-      // After persistence, all steps are "done" — running state is transient.
+      // After persistence, all steps are "done", running state is transient.
       status: "done",
     })),
     proposals: (m.proposals ?? []).map((p) => ({

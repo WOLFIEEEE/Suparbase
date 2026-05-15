@@ -7,10 +7,10 @@ import { Resend } from "resend";
  * each request (useful in dev / Coolify when toggling the key).
  *
  * Configuration:
- *   RESEND_API_KEY   — required. Get one at https://resend.com/api-keys
- *   EMAIL_FROM       — required. Must be a verified sender, e.g.
+ *   RESEND_API_KEY  , required. Get one at https://resend.com/api-keys
+ *   EMAIL_FROM      , required. Must be a verified sender, e.g.
  *                      "Suparbase <invites@yourdomain.com>"
- *   EMAIL_REPLY_TO   — optional. Where replies are routed.
+ *   EMAIL_REPLY_TO  , optional. Where replies are routed.
  *
  * `isEmailConfigured()` returns false when the key/from address is
  * missing, so calling code can fall back gracefully.

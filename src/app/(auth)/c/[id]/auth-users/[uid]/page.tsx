@@ -30,7 +30,7 @@ export default async function AuthUserDetailPage({ params }: Props) {
         subtitle={
           <span className="text-xs text-fg-muted">
             Profile, active sessions, and every table that references this
-            user — one screen, no SQL needed.
+            user, one screen, no SQL needed.
           </span>
         }
       />

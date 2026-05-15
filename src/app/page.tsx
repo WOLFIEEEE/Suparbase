@@ -112,7 +112,7 @@ export default async function HomePage() {
             <LandingHero />
           </div>
 
-          {/* Agent Sentry CTA banner — the v3 differentiator */}
+          {/* Agent Sentry CTA banner, the v3 differentiator */}
           <SentryBanner />
 
           {/* Three-step explainer */}
@@ -220,7 +220,7 @@ export default async function HomePage() {
 }
 
 // ---------------------------------------------------------------------------
-// Agent Sentry banner — sits between the hero and the three-step explainer.
+// Agent Sentry banner, sits between the hero and the three-step explainer.
 // Compact, accent-coloured, hooks the v3 narrative without dragging out the
 // page. Tap-target wraps the whole card on mobile.
 // ---------------------------------------------------------------------------

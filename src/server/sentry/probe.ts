@@ -15,14 +15,14 @@ import { executeSql } from "@/server/proxy/sql-playground";
 import { introspectConnection } from "@/server/schema-introspect";
 
 /**
- * Sentry probe — the security watchdog.
+ * Sentry probe, the security watchdog.
  *
  * Two channels:
- *   1. **Anon REST probe** — fires unauthenticated GETs at the project's
+ *   1. **Anon REST probe**, fires unauthenticated GETs at the project's
  *      PostgREST endpoint for every table in `public`. If a table
  *      responds 200 with rows (or even an empty array), that table is
  *      anon-readable. This catches the Moltbook / Lovable CVE pattern.
- *   2. **pg_policies inspection** — when the connection has a direct
+ *   2. **pg_policies inspection**, when the connection has a direct
  *      Postgres URL, we read pg_policies + pg_class to identify tables
  *      where rls is *disabled* outright, or tables with no policies at
  *      all (the default-permissive trap).
@@ -95,7 +95,7 @@ export async function runSentryScan(
 
     // ── 1. pg_policies inspection (only when direct PG is wired) ──
     const policyMap = await readPolicyMap(conn).catch((e) => {
-      // Not fatal — the probe still runs, we just lose the policy view.
+      // Not fatal, the probe still runs, we just lose the policy view.
       findings.push({
         kind: "scan_error",
         severity: "info",
@@ -113,7 +113,7 @@ export async function runSentryScan(
     //
     // CRITICAL: if the connection's stored key is `service_role`, that key
     // bypasses RLS server-side, so probing with it would report every
-    // table as anon-readable — pure noise. Skip the REST channel entirely
+    // table as anon-readable, pure noise. Skip the REST channel entirely
     // and surface an explanatory finding. The pg_policies channel above
     // still runs and produces real findings.
     const skipAnonProbe = conn.role === "service_role";
@@ -177,14 +177,14 @@ export async function runSentryScan(
                 policyName: pol.policyName,
                 policyDefinition: pol.qual ?? undefined,
                 message:
-                  "Policy uses `USING (true)` — every authenticated user can read every row.",
+                  "Policy uses `USING (true)`, every authenticated user can read every row.",
               },
             });
           }
         }
       }
 
-      // Anon REST probe — skipped entirely when the stored key is
+      // Anon REST probe, skipped entirely when the stored key is
       // service_role (it would bypass RLS and report every table as
       // anon-readable).
       if (!apiKey) continue;
@@ -302,7 +302,7 @@ async function probeAnonRead(
       /* not JSON */
     }
     // PostgREST returns 200 with [] when RLS evaluates but excludes every row.
-    // That's the "RLS is silently rejecting you" case — anon is not actually
+    // That's the "RLS is silently rejecting you" case, anon is not actually
     // reading data, so we don't flag it. Only when rowCount > 0 do we flag.
     return {
       reachable: true,
@@ -408,7 +408,7 @@ async function persistFindings(
 ): Promise<void> {
   // For now: insert each finding as a new row. A v3.0.x follow-up will
   // de-dupe by (user, conn, kind, schema, table) so repeat scans don't
-  // create N rows for the same issue — but inserting fresh is correct
+  // create N rows for the same issue, but inserting fresh is correct
   // for v3.0 (the UI groups by table) and keeps the schema simple.
   if (found.length === 0) return;
   await db.insert(sentryFindings).values(

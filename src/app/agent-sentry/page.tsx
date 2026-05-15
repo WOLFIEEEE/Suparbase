@@ -70,7 +70,7 @@ const INCIDENTS: Incident[] = [
     vendor: "Lovable (170 production apps)",
     blast: "CVE-2025-48757: inverted access logic exposed user rows across 170 live apps in a single scan",
     rootCause:
-      `RLS was on, but the policy was inverted — "if you're logged in, you can read every row." 80% of vibe-coded apps share this exact mistake.`,
+      `RLS was on, but the policy was inverted, "if you're logged in, you can read every row." 80% of vibe-coded apps share this exact mistake.`,
     citation: {
       label: "We scanned 1,764 apps",
       href: "https://dev.to/stefan_lederer_8b1bbcef01/we-scanned-1764-vibe-coded-apps-453-had-critical-vulnerabilities-heres-what-we-found-beyond-464e",
@@ -94,7 +94,7 @@ const HOW_IT_WORKS = [
     icon: ShieldAlert,
     title: "1. Probe with the actual anon key",
     body:
-      "Sentry continuously fires unauthenticated GETs at every public-schema table through your project's REST endpoint. If anything that was hidden yesterday starts returning rows — RLS got disabled, a permissive policy slipped through, a brand-new table never had policies wired — you find out before someone's HN frontpage moment does.",
+      "Sentry continuously fires unauthenticated GETs at every public-schema table through your project's REST endpoint. If anything that was hidden yesterday starts returning rows, RLS got disabled, a permissive policy slipped through, a brand-new table never had policies wired, you find out before someone's HN frontpage moment does.",
   },
   {
     icon: AlertTriangle,
@@ -112,7 +112,7 @@ const HOW_IT_WORKS = [
     icon: Bot,
     title: "4. Fingerprint every AI write",
     body:
-      "Cursor, Claude Code, Replit Agent, Lovable, v0, Vercel AI SDK — Suparbase identifies them all from the User-Agent on every authenticated proxy write. Writes within a 5-minute window from the same agent get grouped into a single `agent_session` row, with mutation counts and tables touched.",
+      "Cursor, Claude Code, Replit Agent, Lovable, v0, Vercel AI SDK, Suparbase identifies them all from the User-Agent on every authenticated proxy write. Writes within a 5-minute window from the same agent get grouped into a single `agent_session` row, with mutation counts and tables touched.",
   },
   {
     icon: Undo2,
@@ -159,7 +159,7 @@ const COMPARE = [
 const FAQ = [
   {
     q: "Do I have to share my database password to use this?",
-    a: "No — Sentry runs in two modes. The anon REST probe needs only your existing stored apikey (already encrypted in the vault). The pg_policies inspection and the one-click undo both need the optional Direct Postgres URL, which you can add when you create the connection or on the settings page later. The plaintext URL is AES-256-GCM encrypted at rest the same way the apikey is.",
+    a: "No, Sentry runs in two modes. The anon REST probe needs only your existing stored apikey (already encrypted in the vault). The pg_policies inspection and the one-click undo both need the optional Direct Postgres URL, which you can add when you create the connection or on the settings page later. The plaintext URL is AES-256-GCM encrypted at rest the same way the apikey is.",
   },
   {
     q: "What does \"undo a session\" actually do?",
@@ -167,19 +167,19 @@ const FAQ = [
   },
   {
     q: "Will Sentry catch schema changes (CREATE TABLE, ALTER, DROP)?",
-    a: "Sentry will *quarantine* the affected table when a probe detects new anon-readable rows, even if it was just created. We don't currently undo DDL — those statements aren't in the audit log yet — but a follow-up release will capture them via pg_event_trigger and offer reverse migrations for the simple cases (add column, drop column, etc.).",
+    a: "Sentry will *quarantine* the affected table when a probe detects new anon-readable rows, even if it was just created. We don't currently undo DDL, those statements aren't in the audit log yet, but a follow-up release will capture them via pg_event_trigger and offer reverse migrations for the simple cases (add column, drop column, etc.).",
   },
   {
     q: "What happens if my AI tool sends a custom User-Agent?",
-    a: "If it matches a known pattern (Cursor, Claude Code, Replit Agent, Lovable, v0, Vercel AI SDK, OpenRouter), Sentry attributes the session correctly. If it just mentions an LLM (openai / anthropic / agent / llm / etc.), it lands in `ai_unknown` so you still get a single bucket to undo. If nothing matches, it falls through to browser / cli / unknown — useful so you can spot a human bash session vs an agent's fetch.",
+    a: "If it matches a known pattern (Cursor, Claude Code, Replit Agent, Lovable, v0, Vercel AI SDK, OpenRouter), Sentry attributes the session correctly. If it just mentions an LLM (openai / anthropic / agent / llm / etc.), it lands in `ai_unknown` so you still get a single bucket to undo. If nothing matches, it falls through to browser / cli / unknown, useful so you can spot a human bash session vs an agent's fetch.",
   },
   {
     q: "Is this only for Supabase?",
-    a: "Today, yes. Sentry is built on Suparbase's existing PostgREST proxy + Direct Postgres URL plumbing, which Supabase projects ship with out of the box. The probe + undo logic isn't Supabase-specific — if there's interest in adapting it for plain PostgREST / pg-meta / Hasura / Nhost, drop us an issue.",
+    a: "Today, yes. Sentry is built on Suparbase's existing PostgREST proxy + Direct Postgres URL plumbing, which Supabase projects ship with out of the box. The probe + undo logic isn't Supabase-specific, if there's interest in adapting it for plain PostgREST / pg-meta / Hasura / Nhost, drop us an issue.",
   },
   {
     q: "How do I know the probe didn't miss something?",
-    a: "Every scan writes a `sentry_scan` row with the list of tables it touched, the duration, and any errors. You can inspect the scan history collapsible at the bottom of /c/<id>/sentry to see exactly what was checked. If a critical finding ever lands silently, it'll still show up under Open findings — Sentry never auto-resolves a finding without your action.",
+    a: "Every scan writes a `sentry_scan` row with the list of tables it touched, the duration, and any errors. You can inspect the scan history collapsible at the bottom of /c/<id>/sentry to see exactly what was checked. If a critical finding ever lands silently, it'll still show up under Open findings, Sentry never auto-resolves a finding without your action.",
   },
 ];
 
@@ -212,7 +212,7 @@ export default async function AgentSentryPage() {
                 <span className="text-accent">eventually.</span>
               </>
             }
-            subtitle="Agent Sentry watches your Supabase project with the actual anon key, attributes every write to the agent that made it, and gives you one button to undo a whole Cursor / Claude Code / Replit Agent session — before it ends up on the Hacker News frontpage."
+            subtitle="Agent Sentry watches your Supabase project with the actual anon key, attributes every write to the agent that made it, and gives you one button to undo a whole Cursor / Claude Code / Replit Agent session, before it ends up on the Hacker News frontpage."
             actions={
               <>
                 <Link
@@ -285,7 +285,7 @@ export default async function AgentSentryPage() {
           <SectionHeading
             eyebrow="What it looks like"
             title="One panel. One button. One transaction."
-            subtitle="The Sentry page surfaces findings by severity. The Agents page groups every AI write into named sessions. Both live in the connection sidebar — nothing else to install."
+            subtitle="The Sentry page surfaces findings by severity. The Agents page groups every AI write into named sessions. Both live in the connection sidebar, nothing else to install."
           />
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             <SentryMock />
@@ -299,7 +299,7 @@ export default async function AgentSentryPage() {
         <div className="mx-auto w-full max-w-5xl px-6 py-16 md:py-20">
           <SectionHeading
             eyebrow="vs. everything else"
-            title="What other tools catch — and what they miss."
+            title="What other tools catch, and what they miss."
             subtitle="Most existing options are scanners (point-in-time) or loggers (no remediation). Sentry is the only one combining continuous probing, agent attribution, and one-click undo."
           />
           <div className="mt-10 overflow-hidden rounded-lg border hairline">
@@ -345,7 +345,7 @@ export default async function AgentSentryPage() {
           <SectionHeading
             eyebrow="What's in the box"
             title="Two surfaces, the same telemetry."
-            subtitle="Sentry and Agents are sibling pages inside every connection workspace. They share the audit log, the encrypted vault, and the Direct Postgres URL — no extra credentials, no extra installs."
+            subtitle="Sentry and Agents are sibling pages inside every connection workspace. They share the audit log, the encrypted vault, and the Direct Postgres URL, no extra credentials, no extra installs."
           />
           <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <li>
@@ -551,6 +551,6 @@ function MutationRow({
 
 // Reference (unused but kept so tree-shaking is explicit):
 //   CircleCheck, Sparkles, Zap imports are deliberately left out at the
-//   moment — feel free to add accent icons to additional sections.
+//   moment, feel free to add accent icons to additional sections.
 const _kept = [CircleCheck, Sparkles, Zap];
 void _kept;

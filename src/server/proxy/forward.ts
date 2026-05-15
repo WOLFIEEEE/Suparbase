@@ -122,7 +122,7 @@ export async function proxyForward({ request, method, connectionId, userId, path
   // Audit log fires asynchronously after we already have the outgoing response
   // ready: never blocks the user-visible reply.
   if (auditClone) {
-    // Capture the incoming User-Agent now (we can't read it later — the
+    // Capture the incoming User-Agent now (we can't read it later, the
     // request object is gone by the time the async block runs).
     const userAgent = request.headers.get("user-agent");
     const tableName = pathParts[0] ?? "";

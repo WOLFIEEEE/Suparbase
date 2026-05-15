@@ -91,7 +91,7 @@ export function ActionsManager({ connectionId }: ManagerProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-fg-muted">
-          Buttons that run business logic on this connection — SQL templates or
+          Buttons that run business logic on this connection, SQL templates or
           webhooks, surfaced on tables and rows.
         </p>
         <Button size="sm" onClick={() => setEditing("new")}>
@@ -260,7 +260,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       </div>
       <h3 className="mt-3 font-display text-base">No actions yet</h3>
       <p className="mx-auto mt-1 max-w-md text-xs text-fg-muted">
-        Define a button that runs a SQL template or fires a webhook —
+        Define a button that runs a SQL template or fires a webhook -
         &quot;Refund&quot;, &quot;Approve&quot;, &quot;Resend invite&quot;, etc.
         It&apos;ll appear on the table or row page you scope it to.
       </p>

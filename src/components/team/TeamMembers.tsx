@@ -135,7 +135,7 @@ export function TeamMembers({ connectionId }: Props) {
       } else {
         toast.message(
           j.reason === "no_key"
-            ? "Email not configured — share the link instead."
+            ? "Email not configured, share the link instead."
             : `Email send failed: ${j.error ?? j.reason}`,
         );
       }
@@ -366,7 +366,7 @@ function InviteDialog({
         toast.success(`Invitation emailed to ${email}.`);
       } else if (created.delivery && created.delivery.reason !== "no_key") {
         toast.message(
-          `Invitation created — email send failed (${created.delivery.error ?? created.delivery.reason}). Share the link manually.`,
+          `Invitation created, email send failed (${created.delivery.error ?? created.delivery.reason}). Share the link manually.`,
         );
       }
       onCreated(created);
@@ -434,7 +434,7 @@ function InviteDialog({
             </Select>
             <p className="text-[10px] text-fg-faint">
               Editors can write; viewers can read. (Server-side write
-              gating lands in v2.4.x — for now the UI hides edit
+              gating lands in v2.4.x, for now the UI hides edit
               buttons for viewers.)
             </p>
           </div>

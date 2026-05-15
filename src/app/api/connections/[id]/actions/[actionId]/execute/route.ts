@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   const { id, actionId } = await ctx.params;
 
   // Action execution runs arbitrary SQL or fires a webhook against the
-  // project — same blast as a manual SQL playground query. Editor+ only.
+  // project, same blast as a manual SQL playground query. Editor+ only.
   const access = await requireRole(session.user.id, id, "editor");
   if (!access) {
     return NextResponse.json(

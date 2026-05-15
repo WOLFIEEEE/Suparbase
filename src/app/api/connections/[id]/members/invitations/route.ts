@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     const inv = await createInvitation(id, session.user.id, parsed.data.email, parsed.data.role);
 
     // Try to email the invitation. If Resend isn't configured, this is a
-    // no-op — the owner still gets a copy-link in the UI as before.
+    // no-op, the owner still gets a copy-link in the UI as before.
     const [connRow] = await db
       .select({ name: connections.name })
       .from(connections)

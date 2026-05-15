@@ -44,7 +44,7 @@ const PRIMARY_FEATURES = [
     icon: Undo2,
     title: "Agent sessions · one-click undo",
     body:
-      "Every write through the proxy gets fingerprinted to the AI tool that made it (Cursor, Claude Code, Replit Agent, Lovable, v0). Undo a whole session — every INSERT / UPDATE / DELETE reversed atomically.",
+      "Every write through the proxy gets fingerprinted to the AI tool that made it (Cursor, Claude Code, Replit Agent, Lovable, v0). Undo a whole session, every INSERT / UPDATE / DELETE reversed atomically.",
     href: "/agent-sentry",
   },
   {

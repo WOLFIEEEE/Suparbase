@@ -68,7 +68,7 @@ export function Article() {
       <p>
         A client gets a dedicated upstream connection for the lifetime of its
         session. When the client disconnects, the upstream is returned to the
-        pool. Same as having no pooler, basically — just with reuse across
+        pool. Same as having no pooler, basically, just with reuse across
         client sessions.
       </p>
 
@@ -376,7 +376,7 @@ const sql = postgres(process.env.DATABASE_URL!, {
           read/write split.
         </li>
         <li>
-          <strong>Database per tenant</strong>: Supavisor — its multi-tenant
+          <strong>Database per tenant</strong>: Supavisor, its multi-tenant
           architecture is the killer feature.
         </li>
         <li>
@@ -395,7 +395,7 @@ const sql = postgres(process.env.DATABASE_URL!, {
 
       <p>
         And once you&apos;re past the pool decision, use the rest of your
-        Postgres toolbox to actually see what&apos;s happening — connection
+        Postgres toolbox to actually see what&apos;s happening, connection
         counts in <code>pg_stat_activity</code>, queue depth in your pooler&apos;s
         admin console, slow queries in <code>pg_stat_statements</code>. The
         pool is a means; the database&apos;s health is the end. Tools like{" "}

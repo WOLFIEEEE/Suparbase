@@ -81,11 +81,11 @@ CREATE POLICY "Authors read their own posts"
 
       <ul>
         <li>
-          <code>request.jwt.claim.role</code> — the JWT&apos;s role claim, e.g.{" "}
+          <code>request.jwt.claim.role</code>, the JWT&apos;s role claim, e.g.{" "}
           <code>authenticated</code>.
         </li>
         <li>
-          <code>request.jwt.claims</code> — the full claims object as a JSON
+          <code>request.jwt.claims</code>, the full claims object as a JSON
           string.
         </li>
       </ul>
@@ -105,7 +105,7 @@ CREATE POLICY "Authors read their own posts"
         Two things to notice. First, <code>TO authenticated</code> scopes the
         policy to the <em>Postgres role</em> the request is using; anon
         requests will still get denied. Second, <code>WITH CHECK</code> matters
-        for writes — without it, an authenticated user could create rows with
+        for writes, without it, an authenticated user could create rows with
         a <code>author_id</code> that isn&apos;t theirs.
       </p>
 
@@ -185,7 +185,7 @@ CREATE POLICY "Author updates their own draft"
       <h3>3. The implicit join across tables</h3>
 
       <p>
-        Policies that join through related tables look right and feel right —
+        Policies that join through related tables look right and feel right -
         until a malicious user constructs a query that brings the related row
         in via a different path. The mitigation: when your policy references
         another table, that table also needs an RLS policy that the same user
@@ -256,7 +256,7 @@ ROLLBACK;`}</CodeBlock>
 
       <p>
         RLS adds a predicate to every query plan. For ownership checks like{" "}
-        <code>auth.uid() = author_id</code>, this is essentially free — the
+        <code>auth.uid() = author_id</code>, this is essentially free, the
         planner pushes the predicate down and uses your existing index on{" "}
         <code>author_id</code>.
       </p>

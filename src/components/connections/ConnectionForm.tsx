@@ -249,7 +249,7 @@ export function ConnectionForm() {
                   Find this in <strong className="text-fg">Project Settings → Database → Connection
                   string</strong>. Encrypted at rest with the same AES-256-GCM
                   vault as the API key. Required for the RLS debugger, SQL
-                  playground, and the per-user sessions inspector — you can
+                  playground, and the per-user sessions inspector, you can
                   also add it later from connection settings.
                 </>
               )}

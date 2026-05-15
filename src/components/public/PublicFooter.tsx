@@ -170,7 +170,7 @@ function StatusBar() {
 }
 
 // ---------------------------------------------------------------------------
-// Signal panel — the right-hand "live" pane in the manifesto block
+// Signal panel, the right-hand "live" pane in the manifesto block
 // ---------------------------------------------------------------------------
 
 interface SignalPanelProps {
@@ -352,7 +352,7 @@ function FooterBackdrop() {
         }}
       />
 
-      {/* Traveling accent dots — drift across the grid lines so the
+      {/* Traveling accent dots, drift across the grid lines so the
           background never feels static. Different durations to keep them
           out of sync. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">

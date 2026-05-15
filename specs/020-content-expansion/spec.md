@@ -67,6 +67,6 @@ New:
 
 ## Out of scope
 
-- Glossary pages (`/learn/rls` etc.) — defer to v1.7 if needed.
-- Tag pages, author pages, RSS — defer.
-- Long-form ebooks / PDF guides — defer.
+- Glossary pages (`/learn/rls` etc.), defer to v1.7 if needed.
+- Tag pages, author pages, RSS, defer.
+- Long-form ebooks / PDF guides, defer.

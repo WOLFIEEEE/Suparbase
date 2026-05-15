@@ -57,7 +57,7 @@ export default async function ArticlePage({ params }: Params) {
     .filter((a) => relatedSlugs.includes(a.slug))
     .map(({ body: _body, ...rest }) => rest);
 
-  // Strip the body function from meta before passing — ArticleLayout shouldn't see it.
+  // Strip the body function from meta before passing, ArticleLayout shouldn't see it.
   const { body: BodyComponent, ...metaOnly } = article;
 
   return (

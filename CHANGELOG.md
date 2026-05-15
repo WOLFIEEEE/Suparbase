@@ -3,9 +3,32 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.1.3 · 2026-05-15 · Em-dash sweep + jargon explainers
+
+No feature work. Two consistency passes:
+
+**Em-dash sweep.** Replaced every em-dash (U+2014) in the repo with
+either a comma (when surrounded by spaces) or a hyphen (when bare).
+Affected ~70 files across `src/`, `specs/`, `CHANGELOG.md`, and the
+root-level `*.md` files. Pure typography change, no behaviour.
+
+**Jargon explainers on Sentry + Agents pages.** Both pages now ship
+with a "What do these mean?" disclosure card sitting between the
+PageHeader and the data:
+
+- Sentry: defines Finding, Severity, Quarantine, Acknowledge,
+  Resolve, Scan.
+- Agents: defines Session, Mutation, Agent kind, Undo session,
+  Active, Closed / Undone (+ undo_partial / undo_failed).
+
+New reusable `TermsExplainer` component using native `<details>` for
+keyboard accessibility, remembers open/closed state per-page via
+localStorage. Open by default the first time a user lands on the
+page.
+
 ## v3.1.2 · 2026-05-15 · Performance, viewer UX, tests, CI
 
-Follow-up to the v3.1.1 audit. No feature work — strictly polish +
+Follow-up to the v3.1.1 audit. No feature work, strictly polish +
 infrastructure. Found 2 real SSRF gaps along the way and fixed them.
 
 **Performance** · proxy hot-path session cache
@@ -28,11 +51,11 @@ infrastructure. Found 2 real SSRF gaps along the way and fixed them.
 **Tests** · vitest bootstrap + 53 unit tests
 - `vitest.config.ts` + `tests/` with stubs for `server-only` and
   `@/server/db` so pure helpers can be loaded without booting Postgres.
-- `tests/fingerprint.test.ts` — every UA pattern + the `ai_unknown` /
+- `tests/fingerprint.test.ts`, every UA pattern + the `ai_unknown` /
   `browser` / `cli` / `unknown` fallthroughs.
-- `tests/undo-sql.test.ts` — every verb branch, identifier quoting,
+- `tests/undo-sql.test.ts`, every verb branch, identifier quoting,
   embedded quotes, null-byte stripping, jsonb fallback.
-- `tests/webhook-ssrf.test.ts` — 20 blocked URLs + 5 allowed.
+- `tests/webhook-ssrf.test.ts`, 20 blocked URLs + 5 allowed.
 - **Two real bugs caught by the tests**: `::ffff:127.0.0.1` canonical
   form (`[::ffff:7f00:1]`) and `fdXX::/8` ULA range weren't matched
   by the v3.1.1 patterns. Fixed.
@@ -48,7 +71,7 @@ infrastructure. Found 2 real SSRF gaps along the way and fixed them.
 
 ## v3.1.1 · 2026-05-15 · Hardening pass
 
-Tag: `v3.1.1` · No new feature work — locking the v3 surface before
+Tag: `v3.1.1` · No new feature work, locking the v3 surface before
 opening for outside contributors. Audit findings fixed:
 
 - **[CRIT] Sentry anon probe false positives on service_role keys**:
@@ -71,7 +94,7 @@ opening for outside contributors. Audit findings fixed:
     - `POST / PUT / DELETE /actions` + `actions/[id]`
     - `POST /actions/[id]/execute`
     - `POST / PUT / DELETE /widgets` + `widgets/[id]`
-  GET endpoints stay open to viewers as before — read access for
+  GET endpoints stay open to viewers as before, read access for
   support people is the whole point of the team feature.
 - **[HIGH] Webhook SSRF blocklist gaps in custom actions**: extended
   the URL validator in `src/server/actions/repo.ts` to also reject
@@ -88,14 +111,14 @@ opening for outside contributors. Audit findings fixed:
 - **[LOW] Quarantine policy name collisions**: previously truncated
   the finding UUID to 18 chars when building the policy name, which
   invites birthday-paradox collisions on large connections. Now uses
-  the full 36-char UUID — fits comfortably in Postgres's 63-byte
+  the full 36-char UUID, fits comfortably in Postgres's 63-byte
   identifier limit.
 
 Deferred to a later patch: race in `attachToSession()` SELECT-then-
 INSERT can produce duplicate active sessions for one logical agent
 burst. Documented in the source; needs a unique partial index to fix
 properly. DNS-rebinding defence for webhook actions also out of
-scope here — requires hostname resolution + IP-level checks.
+scope here, requires hostname resolution + IP-level checks.
 
 ## v3.1.0 · 2026-05-15 · Agent sessions + one-click undo
 
@@ -138,7 +161,7 @@ API:
 DDL capture (schema changes) and per-write diff preview are deferred
 to v3.1.x.
 
-## v3.0.0 · 2026-05-15 · Agent Sentry — security watchdog
+## v3.0.0 · 2026-05-15 · Agent Sentry, security watchdog
 
 Tag: `v3.0.0` · Spec: [`030`](specs/030-agent-sentry/)
 
@@ -179,7 +202,7 @@ Tag: `v2.4.1` · Spec: [`029`](specs/029-resend-email/)
 
 Closes v2.4's email gap. Team invitations now get emailed directly
 via Resend when configured, and gracefully fall back to copy-link
-when not — no breakage either way.
+when not, no breakage either way.
 
 - New `src/server/email/resend.ts`: reusable `sendEmail()` wrapper
   returning `{ delivered, reason, error }` so callers can branch on
@@ -353,7 +376,7 @@ back to. Five upgrades, all additive.
   hover; each conversation can be exported as a self-contained
   markdown file.
 
-Write proposals still require explicit Apply — the read-only-by-default
+Write proposals still require explicit Apply, the read-only-by-default
 contract is unchanged.
 
 ## v1.6.0 · 2026-05-14 · Content expansion

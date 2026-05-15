@@ -867,7 +867,7 @@ async function aggregate(
 }
 
 // ---------------------------------------------------------------------------
-// list_indexes (reads pg_indexes via direct Postgres — needs postgres_url)
+// list_indexes (reads pg_indexes via direct Postgres, needs postgres_url)
 // ---------------------------------------------------------------------------
 
 async function listIndexes(

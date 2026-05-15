@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Agent Sessions — every AI mutation against your database, grouped
+ * Agent Sessions, every AI mutation against your database, grouped
  * into named sessions, with one-click undo.
  *
  * UI:

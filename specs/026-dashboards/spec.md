@@ -1,9 +1,9 @@
-# Dashboards — charts and pinned queries (v2.2)
+# Dashboards, charts and pinned queries (v2.2)
 
 ## Why
 Suparbase is great at individual tables but has no overview. Every
-team eventually wants one screen with their numbers — signups, MRR,
-top products, error rate, weekly trends — and most build a custom
+team eventually wants one screen with their numbers, signups, MRR,
+top products, error rate, weekly trends, and most build a custom
 React dashboard just to host four chart cards.
 
 ## What
@@ -15,18 +15,18 @@ connection dashboard.
 ```
 dashboard_widget {
   id, user_id, connection_id,
-  type        — "kpi" | "bar" | "line" | "list"
-  title       — card heading
-  description — short caption, optional
-  sql         — read-only query, run via executeSql()
-  vis_config  — type-specific JSON config:
+  type       , "kpi" | "bar" | "line" | "list"
+  title      , card heading
+  description, short caption, optional
+  sql        , read-only query, run via executeSql()
+  vis_config , type-specific JSON config:
     kpi:  { valueColumn, format?, unit?, prefix? }
     bar:  { labelColumn, valueColumn }
     line: { labelColumn, valueColumn }     // labelColumn is the x-axis
     list: { columns: string[] }            // visible columns, in order
-  position    — integer (used to order widgets on the grid)
-  span        — "1" | "2" | "full"        // 1=1 col, 2=2 cols, full=row
-  refresh_sec — how often the client should re-fetch (0 = on demand)
+  position   , integer (used to order widgets on the grid)
+  span       , "1" | "2" | "full"        // 1=1 col, 2=2 cols, full=row
+  refresh_sec, how often the client should re-fetch (0 = on demand)
   created_at, updated_at
 }
 ```
@@ -34,10 +34,10 @@ dashboard_widget {
 ### Surfaces
 - New section on the connection dashboard (`/c/[id]`) above the
   table groups, rendered as a responsive grid (1 / 2 / 3 cols).
-- `/c/[id]/dashboard/edit` — management page (list, add, edit,
+- `/c/[id]/dashboard/edit`, management page (list, add, edit,
   delete, reorder).
 - Hover any widget to get a quick "Edit" / "Refresh" / "Delete"
-  menu — keeps the dashboard editable without a context switch.
+  menu, keeps the dashboard editable without a context switch.
 
 ### Execution
 - Every widget runs through the same `executeSql()` used by SQL

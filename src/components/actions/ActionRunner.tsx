@@ -323,7 +323,7 @@ function ParamForm({
                   value={String(values[p.name] ?? "")}
                   onChange={(e) => onChange({ ...values, [p.name]: e.target.value })}
                 >
-                  <option value="">—</option>
+                  <option value="">-</option>
                   <option value="true">true</option>
                   <option value="false">false</option>
                 </select>

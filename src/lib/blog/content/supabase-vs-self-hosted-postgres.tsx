@@ -47,18 +47,18 @@ export function Article() {
 
       <ol>
         <li>
-          <strong>Managed Supabase</strong> — supabase.com hosts your database,
+          <strong>Managed Supabase</strong>, supabase.com hosts your database,
           your auth, your storage, your edge functions. You hit the dashboard;
           they handle the boxes.
         </li>
         <li>
-          <strong>Self-hosted Supabase</strong> — you run the open-source
+          <strong>Self-hosted Supabase</strong>, you run the open-source
           Supabase stack (GoTrue, PostgREST, Storage, Realtime, Studio,
           Kong) on your own infrastructure. Same APIs as managed; you operate
           the boxes.
         </li>
         <li>
-          <strong>DIY Postgres + assembled stack</strong> — managed Postgres
+          <strong>DIY Postgres + assembled stack</strong>, managed Postgres
           (Neon, RDS, Crunchy, Fly Postgres) plus pieces you pick yourself for
           auth (Clerk, Auth.js, your own table), storage (S3, R2), and so on.
           No Supabase code anywhere.
@@ -151,7 +151,7 @@ export function Article() {
           monitoring are now yours.
         </li>
         <li>
-          The realtime service is the trickiest piece to operate at scale —
+          The realtime service is the trickiest piece to operate at scale -
           it&apos;s a separate Elixir app with its own quirks.
         </li>
         <li>
@@ -295,7 +295,7 @@ export async function listMyPosts() {
         Suparbase ourselves is a Next.js app talking to Postgres (Neon for
         production, Postgres-in-a-Docker for local dev) with NextAuth handling
         sessions. We don&apos;t run any Supabase services for our own product
-        because we don&apos;t need them — the whole point of the product is
+        because we don&apos;t need them, the whole point of the product is
         to operate <em>other people&apos;s</em> Supabase projects.
       </p>
 

@@ -46,7 +46,7 @@ Each is a single-page landing under `src/app/use-cases/[slug]/page.tsx`.
 ## SEO infrastructure
 
 - `src/app/sitemap.ts` (Next metadata route): emits sitemap.xml for
-  every public route — static pages, articles, use-cases.
+  every public route, static pages, articles, use-cases.
 - `src/app/robots.ts`: emits robots.txt allowing public routes,
   disallowing `/api`, `/c/*`, `/connections`, `/settings`, the auth
   paths.

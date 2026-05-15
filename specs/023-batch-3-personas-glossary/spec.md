@@ -5,10 +5,10 @@ Finish the planned 28-page content expansion. Four new use-case
 pages and a new glossary surface with ten short-form definitions.
 
 ## Use cases (4 new)
-- `indie-hackers` — solo founders shipping side projects
-- `ai-startups` — RAG / agent product teams
-- `healthcare-saas` — compliance-adjacent SaaS
-- `ecommerce-operators` — order ops / customer support
+- `indie-hackers`, solo founders shipping side projects
+- `ai-startups`, RAG / agent product teams
+- `healthcare-saas`, compliance-adjacent SaaS
+- `ecommerce-operators`, order ops / customer support
 
 Wired into the existing /use-cases hub via the registry.
 

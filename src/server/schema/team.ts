@@ -36,7 +36,7 @@ export type ConnectionMemberRow = typeof connectionMembers.$inferSelect;
 
 /**
  * Pending invitations. Tokens are url-safe random strings created in the
- * invite handler and stored verbatim — the URL is the bearer credential
+ * invite handler and stored verbatim, the URL is the bearer credential
  * until it's accepted.
  */
 export const connectionInvitations = pgTable(

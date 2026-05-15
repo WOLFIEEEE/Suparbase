@@ -289,7 +289,7 @@ type UpdateProposal = ProposeUpdate & {
         <li>
           <strong>Schema-aware refactoring proposals.</strong> &quot;This
           column has the wrong type&quot; or &quot;these two tables should be
-          one&quot; — surfaced by the agent reviewing the schema, not by a
+          one&quot;, surfaced by the agent reviewing the schema, not by a
           query. Useful for migrations.
         </li>
         <li>

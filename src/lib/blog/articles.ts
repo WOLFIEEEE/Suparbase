@@ -20,9 +20,9 @@ export interface ArticleMeta {
   tags: ReadonlyArray<string>;
   /** Slugs of related articles to surface in the footer. */
   related?: ReadonlyArray<string>;
-  /** Table of contents — H2 ids + labels. Used by ArticleLayout. */
+  /** Table of contents, H2 ids + labels. Used by ArticleLayout. */
   toc: ReadonlyArray<TocEntry>;
-  /** The article body — a server React component. */
+  /** The article body, a server React component. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: () => React.JSX.Element;
 }

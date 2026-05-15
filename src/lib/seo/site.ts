@@ -3,7 +3,7 @@
  * sitemap, robots, and Open Graph helpers.
  *
  * URL resolution order:
- *   1. NEXT_PUBLIC_SITE_URL  (preferred — explicit canonical)
+ *   1. NEXT_PUBLIC_SITE_URL  (preferred, explicit canonical)
  *   2. AUTH_URL              (legacy compat)
  *   3. https://suparbase.com (fallback)
  *
@@ -11,7 +11,7 @@
  * deployed sitemap / robots / canonical metadata.
  *
  * The version is read straight from package.json at build time so
- * there's a single source of truth — bumping package.json updates
+ * there's a single source of truth, bumping package.json updates
  * every footer, badge, and JSON-LD reference automatically.
  */
 

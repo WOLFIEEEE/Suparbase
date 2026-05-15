@@ -1,4 +1,4 @@
-# Team workspace — multi-user connections (v2.4)
+# Team workspace, multi-user connections (v2.4)
 
 ## Why
 The single-user model has been the biggest adoption ceiling. Support
@@ -77,12 +77,12 @@ sources of truth.
   invitation and renders accept / reject UI.
 
 ## API
-- `GET /api/connections/[id]/members` — list members + pending invites
-- `POST /api/connections/[id]/members/invitations` — create an invite
-- `DELETE /api/connections/[id]/members/invitations/[invId]` — revoke
-- `PATCH /api/connections/[id]/members/[memberId]` — change role
-- `DELETE /api/connections/[id]/members/[memberId]` — remove member
-- `POST /api/invitations/[token]/accept` — accept (callable by the
+- `GET /api/connections/[id]/members`, list members + pending invites
+- `POST /api/connections/[id]/members/invitations`, create an invite
+- `DELETE /api/connections/[id]/members/invitations/[invId]`, revoke
+- `PATCH /api/connections/[id]/members/[memberId]`, change role
+- `DELETE /api/connections/[id]/members/[memberId]`, remove member
+- `POST /api/invitations/[token]/accept`, accept (callable by the
   signed-in user whose email matches the invitation)
 
 All connection-member admin routes require the **owner** role.

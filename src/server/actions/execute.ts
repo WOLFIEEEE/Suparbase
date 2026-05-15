@@ -32,7 +32,7 @@ export interface ActionExecuteResult {
 
 /**
  * Coerce a param value to its declared shape. Anything that doesn't fit
- * throws — actions are intended to be reproducible, so we don't silently
+ * throws, actions are intended to be reproducible, so we don't silently
  * cast garbage. Returns the canonical JS value to pass into the SQL
  * driver or webhook body.
  */
@@ -93,7 +93,7 @@ export async function runAction(input: ActionExecuteInput): Promise<ActionExecut
     if (!action.sqlTemplate) {
       throw new AppError("validation", "Action has no SQL template.");
     }
-    // Interpolate $1, $2, … via parametrised query — postgres.js handles
+    // Interpolate $1, $2, … via parametrised query, postgres.js handles
     // binding, so the SQL template is never string-concatenated.
     const values = buildSqlValues(action, input.params, input.primaryKey);
 

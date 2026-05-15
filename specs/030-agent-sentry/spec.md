@@ -1,4 +1,4 @@
-# Agent Sentry — security watchdog for vibe-coded Supabase projects (v3.0)
+# Agent Sentry, security watchdog for vibe-coded Supabase projects (v3.0)
 
 ## Why
 2026's dominant Supabase failure mode is **RLS drift introduced by AI
@@ -35,11 +35,11 @@ attribution + one-click session undo.
 ### Probe (`src/server/sentry/probe.ts`)
 Two channels per scan:
 
-1. **Anon REST probe** — for every public-schema user table, fires
+1. **Anon REST probe**, for every public-schema user table, fires
    `GET /rest/v1/<table>?limit=3` with the stored API key. If the
    response is `200` with rows, the table is anon-readable. Empty
    arrays don't trigger findings (RLS is correctly hiding rows).
-2. **`pg_policies` inspection** — when the connection has a direct
+2. **`pg_policies` inspection**, when the connection has a direct
    Postgres URL, reads `pg_class.relrowsecurity` + `pg_policy` to
    detect tables with RLS disabled, tables with no policies, and
    policies whose `USING` clause is `true`.
@@ -54,12 +54,12 @@ Page at `/c/[id]/sentry`. Hero card counts by severity, with a
 "Scan now" button. Findings list groups by status with per-finding
 actions:
 
-- **Quarantine** — applies `ALTER TABLE ENABLE RLS` + a
+- **Quarantine**, applies `ALTER TABLE ENABLE RLS` + a
   `CREATE POLICY suparbase_sentry_<id> ... USING (false)` policy so
   anon + authenticated are denied until the owner fixes the
   underlying issue. Reversible via the same UI.
-- **Acknowledge** — keeps the finding visible but archived.
-- **Resolve** — drops the finding from the open list.
+- **Acknowledge**, keeps the finding visible but archived.
+- **Resolve**, drops the finding from the open list.
 
 Scan history collapsible at the bottom shows the last 10 scans with
 table count + duration + finding count.
@@ -75,7 +75,7 @@ Rate-limited on the `checkAiRate` bucket (scans are heavier than a
 typical row read).
 
 ## Safety
-- The probe uses the user's existing stored apikey — it doesn't
+- The probe uses the user's existing stored apikey, it doesn't
   introduce a new credential surface.
 - Quarantine policies have a fixed prefix (`suparbase_sentry_`) and
   store their name on the finding row, so they can be dropped
@@ -102,4 +102,4 @@ typical row read).
 - **Email alerts on critical findings**. The Resend pipe is already
   wired (v2.4.1); a `criticalFindingAlert` template is a 50-line
   follow-up.
-- **AI-agent attribution + session undo** — that's the v3.1 half.
+- **AI-agent attribution + session undo**, that's the v3.1 half.

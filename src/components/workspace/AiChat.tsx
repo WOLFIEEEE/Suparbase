@@ -131,7 +131,7 @@ interface ChatMessage {
 }
 
 // ---------------------------------------------------------------------------
-// Reducer — operates on the full bag of conversations
+// Reducer, operates on the full bag of conversations
 // ---------------------------------------------------------------------------
 
 type Action =
@@ -354,7 +354,7 @@ function reducer(state: State, action: Action): State {
 }
 
 // ---------------------------------------------------------------------------
-// Page context — give the agent a hint about where the user is
+// Page context, give the agent a hint about where the user is
 // ---------------------------------------------------------------------------
 
 interface PageContext {

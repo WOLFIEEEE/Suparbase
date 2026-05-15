@@ -8,7 +8,7 @@ import { executeSql } from "@/server/proxy/sql-playground";
 import { AppError } from "@/lib/errors";
 
 /**
- * Undo engine — reverses every write in an agent_session by replaying
+ * Undo engine, reverses every write in an agent_session by replaying
  * the audit log in reverse.
  *
  * Strategy: load every audit_log row attached to the session, sort
@@ -16,7 +16,7 @@ import { AppError } from "@/lib/errors";
  * them inside a single transaction via executeSql (which the SQL
  * playground already uses).
  *
- * Requires the direct Postgres URL — we deliberately bypass PostgREST
+ * Requires the direct Postgres URL, we deliberately bypass PostgREST
  * + RLS here because this is an admin operation the user has
  * explicitly authorised. PostgREST + RLS would refuse to write rows
  * the anon / authenticated role can't see anyway.
@@ -51,7 +51,7 @@ export async function undoSession(
   if (!conn.encryptedPostgresUrl) {
     throw new AppError(
       "no_postgres_url",
-      "Session undo needs the Direct Postgres URL — set it on connection settings.",
+      "Session undo needs the Direct Postgres URL, set it on connection settings.",
     );
   }
   const session = await getSession(userId, conn.id, sessionId);
@@ -80,7 +80,7 @@ export async function undoSession(
     )
     .orderBy(asc(auditLog.createdAt));
 
-  // Reverse order — most recent change undone first.
+  // Reverse order, most recent change undone first.
   const ordered = rows.slice().reverse();
 
   let skipped = 0;
@@ -111,7 +111,7 @@ export async function undoSession(
 
   // Wrap every statement in a single explicit transaction. executeSql
   // already starts a transaction, but it expects one logical statement
-  // — so we concatenate with semicolons. Postgres handles a multi-
+  //, so we concatenate with semicolons. Postgres handles a multi-
   // statement string when wrapped this way.
   const sql = statements.join(";\n") + ";";
 
@@ -156,7 +156,7 @@ function qualified(schemaName: string, tableName: string): string {
 
 function jsonbLit(value: unknown): string {
   // Pass jsonb through the SQL driver with proper escaping. We embed
-  // the JSON as a string literal and cast to jsonb — postgres handles
+  // the JSON as a string literal and cast to jsonb, postgres handles
   // the conversion. Single-quote escaping is enough because we never
   // interpolate user-controlled JS code.
   const json = JSON.stringify(value ?? null).replace(/'/g, "''");
@@ -230,7 +230,7 @@ export function buildReverseSql(row: AuditRowMinimal): string | null {
  *
  * Single quotes inside strings are doubled (`''`) per the standard.
  * Postgres rejects U+0000 (NUL) inside text columns regardless of
- * encoding, so we strip null bytes before they reach the driver — this
+ * encoding, so we strip null bytes before they reach the driver, this
  * keeps the undo transaction from failing on a single rogue character.
  * `standard_conforming_strings` is on by default in Postgres 9.1+, so
  * backslashes inside a regular single-quoted string are taken literally
@@ -247,7 +247,7 @@ function jsonValueToSqlLiteral(v: unknown): string {
   }
   if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
   if (typeof v === "string") {
-    // Strip U+0000 (null bytes) — Postgres can't store them in text.
+    // Strip U+0000 (null bytes), Postgres can't store them in text.
     const safe = v.replace(/\u0000/g, "").replace(/'/g, "''");
     return `'${safe}'`;
   }

@@ -29,12 +29,12 @@ const SESSION_WINDOW_MS = 5 * 60 * 1000;
  *      slow burst (one write every few minutes) keeps the same id.
  *   2. We still asynchronously bump the session row in the DB so the
  *      authoritative `mutation_count` + `tables_touched` stay accurate
- *      — fire-and-forget, never blocks the proxy reply.
+ *     , fire-and-forget, never blocks the proxy reply.
  *   3. On a cache miss we hit the DB once, then prime the cache.
  *
  * Trade-offs:
  *   - The cache is per-process. Multiple Next.js / serverless instances
- *     get their own copies; that's fine — duplicate sessions across
+ *     get their own copies; that's fine, duplicate sessions across
  *     processes are equivalent to the race the v3.1.0 spec already
  *     documented, and they don't break undo.
  *   - Memory is bounded by (active users × connections × agent kinds).
@@ -70,7 +70,7 @@ export interface AttachedSession {
 /**
  * Reserve a session slot for the incoming write and bump its counters.
  * Returns the session id so the caller can stamp it on the audit_log
- * insert. Never throws — the proxy hot-path is more important than
+ * insert. Never throws, the proxy hot-path is more important than
  * perfect attribution, so we swallow any DB error and return null.
  */
 export async function attachToSession(
@@ -286,7 +286,7 @@ export async function markUndoResult(
     })
     .where(eq(agentSessions.id, sessionId));
 
-  // Drop any cache entries pointing at this session — future writes
+  // Drop any cache entries pointing at this session, future writes
   // from the same fingerprint should open a fresh session.
   for (const [k, v] of sessionCache) {
     if (v.sessionId === sessionId) sessionCache.delete(k);

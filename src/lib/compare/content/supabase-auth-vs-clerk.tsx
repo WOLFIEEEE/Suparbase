@@ -8,7 +8,7 @@ export const meta = {
   description:
     "Bundled-with-the-DB auth vs the specialist auth platform. Honest 2026 comparison of Supabase Auth (GoTrue) and Clerk: when each one wins.",
   tldr:
-    "Supabase Auth ships with your database, integrates with RLS, and is free at any reasonable scale. Clerk is the polished specialist — superior UI components, mature SSO, multi-tenant orgs. Pick Supabase Auth if you want one platform; pick Clerk if auth is a first-class concern of your business.",
+    "Supabase Auth ships with your database, integrates with RLS, and is free at any reasonable scale. Clerk is the polished specialist, superior UI components, mature SSO, multi-tenant orgs. Pick Supabase Auth if you want one platform; pick Clerk if auth is a first-class concern of your business.",
   callouts: [
     { context: "Bundled-with-Postgres workflow", winner: "Supabase Auth" },
     { context: "Polished pre-built UI components", winner: "Clerk" },

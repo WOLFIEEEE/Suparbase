@@ -13,7 +13,7 @@ The longer form, in case anyone needs the specifics:
 - Disagree about code, not about people. The author of a PR is not
   the PR.
 - Default to "yes, and" over "no, but" when reviewing proposals from
-  newcomers — they're more useful even when wrong than they look.
+  newcomers, they're more useful even when wrong than they look.
 - Credit the people whose work you build on, even when it's small.
 
 ## Unacceptable behaviour

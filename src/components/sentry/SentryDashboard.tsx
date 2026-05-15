@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Sentry — security watchdog UI.
+ * Sentry, security watchdog UI.
  *
  * Three sections:
  *   1. Header card: last-scan timestamp, total findings by severity, "Scan now" button.
@@ -290,7 +290,7 @@ function Hero({
             Sentry probes your project with the anon REST key and reads{" "}
             <code className="font-mono text-xs">pg_policies</code> to catch
             RLS drift before it leaks. If a table starts returning rows to anon
-            that shouldn&apos;t, you&apos;ll see it here — and you can
+            that shouldn&apos;t, you&apos;ll see it here, and you can
             one-click quarantine it.
           </p>
           {!canQuarantine && (
@@ -523,7 +523,7 @@ function defaultMessage(f: FindingSummary): string {
     case "rls_disabled":
       return "Row-Level Security is off for this table.";
     case "policy_overly_permissive":
-      return "Policy uses USING (true) — every authed user can read every row.";
+      return "Policy uses USING (true), every authed user can read every row.";
     default:
       return "Sentry finding.";
   }

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * vs "copy this link").
  *
  * We require auth so randoms can't probe whether Resend is wired up;
- * we don't return any secrets — just `configured` + `reason`.
+ * we don't return any secrets, just `configured` + `reason`.
  */
 export async function GET() {
   const session = await auth();

@@ -4,14 +4,14 @@ import type { AgentKind } from "@/server/schema/agent-sessions";
 /**
  * Identify the AI agent behind a request from its User-Agent header.
  *
- * Patterns are conservative — when in doubt we fall through to
+ * Patterns are conservative, when in doubt we fall through to
  * `ai_unknown` (probably an unknown LLM tool) or `browser` (a normal
  * web client). The goal is correct attribution for the common case,
  * not perfect detection of every long-tail tool.
  *
  * Vendor patterns gathered from public traffic samples + each vendor's
  * own docs as of mid-2026. If you spot a pattern that mis-attributes,
- * add a test case — this file is the canonical source of truth.
+ * add a test case, this file is the canonical source of truth.
  */
 
 export interface AgentFingerprint {
@@ -54,13 +54,13 @@ const PATTERNS: Array<{
     kind: "v0",
     label: () => "v0",
   },
-  // Vercel AI SDK — `vercel-ai-sdk/X` or `ai-sdk`.
+  // Vercel AI SDK, `vercel-ai-sdk/X` or `ai-sdk`.
   {
     rx: /\b(?:vercel-ai-sdk|ai-sdk)[/ ]?([0-9.]+)?/i,
     kind: "vercel_ai_sdk",
     label: (m) => (m[1] ? `Vercel AI SDK ${m[1]}` : "Vercel AI SDK"),
   },
-  // OpenRouter passthrough — our own AI chat calls this from the
+  // OpenRouter passthrough, our own AI chat calls this from the
   // server. Useful so users can see "Suparbase AI did X".
   {
     rx: /\b(?:OpenRouter|openrouter\.ai)\b/i,
@@ -73,7 +73,7 @@ const PATTERNS: Array<{
  *  we couldn't pin down the vendor. Better to flag it than hide. */
 const AI_HINTS = /\b(?:openai|anthropic|claude|gpt|llm|copilot|assistant|agent|bot|crawler)\b/i;
 
-/** CLI tools (axios / curl / fetch / node / python) — show as "cli" so
+/** CLI tools (axios / curl / fetch / node / python), show as "cli" so
  *  the user can spot human curl traffic vs an AI session that happens
  *  to be using fetch under the hood. */
 const CLI_HINTS = /\b(?:curl|wget|axios|node-fetch|undici|python-requests|python-urllib|httpx|reqwest|HTTPie|insomnia|Postman)\b/i;

@@ -1,14 +1,14 @@
 # Resend transactional email (v2.4.1)
 
 ## Why
-v2.4 introduced team invitations but shipped invite-by-link only —
+v2.4 introduced team invitations but shipped invite-by-link only -
 owners had to copy a URL and paste it somewhere. This release wires
 Resend in so invitations get emailed directly, without removing the
 copy-link fallback (so self-hosters with no email infra still work).
 
 ## What
 
-### Email module — reusable
+### Email module, reusable
 - `src/server/email/resend.ts`
   - `getEmailConfig()`: reads `RESEND_API_KEY` + `EMAIL_FROM` from
     env, returns `{ configured, from, reason }` so callers can branch.
@@ -30,7 +30,7 @@ copy-link fallback (so self-hosters with no email infra still work).
 - New `POST /api/connections/[id]/members/invitations/[invId]/resend`
   for re-sending an existing invitation (e.g. delivery failed once
   or invitee asked for it again).
-- New `GET /api/email/status` — auth-gated, returns
+- New `GET /api/email/status`, auth-gated, returns
   `{ configured, reason, from }` so the UI can show the right copy.
 
 ### UI changes
@@ -49,9 +49,9 @@ copy-link fallback (so self-hosters with no email infra still work).
   this link with ...") and shows whichever copy fits the state.
 
 ### Configuration
-- `RESEND_API_KEY` — required for email delivery
-- `EMAIL_FROM` — required, must be a verified Resend sender
-- `EMAIL_REPLY_TO` — optional, Reply-To header
+- `RESEND_API_KEY`, required for email delivery
+- `EMAIL_FROM`, required, must be a verified Resend sender
+- `EMAIL_REPLY_TO`, optional, Reply-To header
 - All three documented in `.env.example` and exposed via
   `docker-compose.yaml` for Coolify.
 

@@ -27,7 +27,7 @@
     --warn-fg: 10 10 11;
   }
 
-  /* Explicit light theme (via cookie/toggle) — wins regardless of OS preference. */
+  /* Explicit light theme (via cookie/toggle), wins regardless of OS preference. */
   [data-theme="light"] {
     color-scheme: light;
     --bg: 252 252 250;

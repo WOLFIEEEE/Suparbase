@@ -32,8 +32,8 @@ export function Article() {
         Two and a half years into the LLM era, the vector database market
         has consolidated. Some players that were essential in 2023 are
         legacy by 2026. Some that looked like dark horses won the indie
-        share. And one option that didn&apos;t exist as a real player —
-        Postgres with pgvector — became the default for production RAG.
+        share. And one option that didn&apos;t exist as a real player -
+        Postgres with pgvector, became the default for production RAG.
       </p>
 
       <p>This is our honest, opinionated ranking.</p>
@@ -182,8 +182,8 @@ export function Article() {
 
       <p>
         The 2023 winner that priced itself out of the indie market.
-        Pinecone&apos;s product is genuinely good — serverless tier was
-        innovative — but the cost story doesn&apos;t justify it over
+        Pinecone&apos;s product is genuinely good, serverless tier was
+        innovative, but the cost story doesn&apos;t justify it over
         pgvector for sub-100M-vector workloads.
       </p>
 

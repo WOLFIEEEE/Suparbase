@@ -144,7 +144,7 @@ export function Page() {
             />
             <Win
               title="One bill, many projects"
-              body="Hosted plan is per-user, not per-connection. Add as many client Supabase projects as you want — your bill scales with your team, not your client list."
+              body="Hosted plan is per-user, not per-connection. Add as many client Supabase projects as you want, your bill scales with your team, not your client list."
             />
           </ul>
         </div>

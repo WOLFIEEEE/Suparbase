@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Hand-written SVG chart primitives. Intentionally tiny — these are used
+ * Hand-written SVG chart primitives. Intentionally tiny, these are used
  * inside small widget cards (~280x180) so the cost of pulling in a chart
  * library would dwarf the actual rendering. Renders the data we care
  * about (top-N bars, area+line series, KPI tile) and nothing else.
@@ -95,7 +95,7 @@ export function KpiTile({
       <div className="flex items-baseline gap-1">
         {prefix && <span className="font-display text-2xl text-fg-faint">{prefix}</span>}
         <span className="font-display text-4xl leading-none">
-          {ok ? formatValue(value, format) : "—"}
+          {ok ? formatValue(value, format) : "-"}
         </span>
         {unit && <span className="text-sm text-fg-muted">{unit}</span>}
       </div>

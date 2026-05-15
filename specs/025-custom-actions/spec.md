@@ -1,4 +1,4 @@
-# Custom actions — row workflows and table-level buttons (v2.1)
+# Custom actions, row workflows and table-level buttons (v2.1)
 
 ## Why
 Suparbase is great at the generic CRUD shape: list rows, filter, edit,
@@ -23,27 +23,27 @@ they apply.
 ```
 custom_action {
   id, user_id, connection_id,
-  name        — slug-style, used in URLs and audit
-  label       — human label on the button
-  description — one-liner shown in tooltip / management page
-  scope       — "global" | "table" | "row"
-  table_schema, table_name  — required when scope ≠ "global"
-  kind        — "sql" | "webhook"
-  sql_template       — for kind="sql": parametrised SQL ($1, $2 …)
-  webhook_url        — for kind="webhook"
-  webhook_method     — "POST" | "PATCH" | "DELETE"
-  webhook_headers    — JSON object, optional
-  params      — JSON Schema array: [{ name, label, type, required }]
-  danger      — boolean: forces a confirm dialog and red styling
-  read_only   — boolean: if true, the action runs in a READ ONLY tx
+  name       , slug-style, used in URLs and audit
+  label      , human label on the button
+  description, one-liner shown in tooltip / management page
+  scope      , "global" | "table" | "row"
+  table_schema, table_name , required when scope ≠ "global"
+  kind       , "sql" | "webhook"
+  sql_template      , for kind="sql": parametrised SQL ($1, $2 …)
+  webhook_url       , for kind="webhook"
+  webhook_method    , "POST" | "PATCH" | "DELETE"
+  webhook_headers   , JSON object, optional
+  params     , JSON Schema array: [{ name, label, type, required }]
+  danger     , boolean: forces a confirm dialog and red styling
+  read_only  , boolean: if true, the action runs in a READ ONLY tx
   created_at, updated_at
 }
 ```
 
 Scopes:
-- **global** — button shows on the connection dashboard
-- **table** — button shows in the table header
-- **row** — button shows on the row detail page; the row's primary
+- **global**, button shows on the connection dashboard
+- **table**, button shows in the table header
+- **row**, button shows on the row detail page; the row's primary
   key is auto-bound to the first SQL `$1` / first webhook path
   segment
 
@@ -66,9 +66,9 @@ Scopes:
 
 ### Surface
 - Sidebar gains "Actions" (next to "Auth users").
-- `/c/[id]/actions` — management page (list, create, edit, delete).
-- Table header — action button group (table-scoped only).
-- Row detail page — action button group (row-scoped + table-scoped
+- `/c/[id]/actions`, management page (list, create, edit, delete).
+- Table header, action button group (table-scoped only).
+- Row detail page, action button group (row-scoped + table-scoped
   that don't require a row PK).
 
 ## Safety

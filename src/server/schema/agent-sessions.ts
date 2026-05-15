@@ -3,13 +3,13 @@ import { users } from "./auth";
 import { connections } from "./connections";
 
 /**
- * Agent sessions — the unit of attribution + undo. Every write that flows
+ * Agent sessions, the unit of attribution + undo. Every write that flows
  * through the proxy is fingerprinted from the User-Agent + token-bound
  * caller and bucketed into an `agent_session` row. Subsequent writes from
  * the same (user, connection, agent_kind, ua_hash) within the rolling
  * window extend the same session.
  *
- * Sessions are the atom of "Undo this Cursor session" — every audit_log
+ * Sessions are the atom of "Undo this Cursor session", every audit_log
  * row links back via `audit_log.session_id` so the undo engine can replay
  * every mutation in reverse from a single button.
  */
