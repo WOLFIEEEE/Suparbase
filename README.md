@@ -7,15 +7,23 @@
 [![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/package-json/v/WOLFIEEEE/Suparbase?color=0A0A0B&labelColor=B6FF3C&label=version)](https://github.com/WOLFIEEEE/Suparbase/releases)
 [![License](https://img.shields.io/github/license/WOLFIEEEE/Suparbase?color=0A0A0B&labelColor=B6FF3C)](LICENSE)
+[![Status](https://img.shields.io/badge/status-public_beta-0A0A0B?labelColor=B6FF3C)](PRODUCTION.md)
 [![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
-[![Drizzle](https://img.shields.io/badge/orm-drizzle-0A0A0B?labelColor=B6FF3C)](#)
 [![AES-256-GCM at rest](https://img.shields.io/badge/vault-AES--256--GCM-0A0A0B?labelColor=B6FF3C)](#)
 
+> **Status: public beta (v3.1.5).** The code, the tests, and the
+> automation are production-shaped: typed end-to-end, 62 unit tests on
+> the highest-risk paths, CSRF defence at the edge, rate limits on
+> every destructive route, audit-log retention helper, structured
+> redacted logging, encrypted-at-rest credentials, migration smoke test
+> in CI. What's missing is end-to-end validation against a real
+> Supabase project for the v3 surface (Agent Sentry, agent sessions,
+> undo). See [PRODUCTION.md](PRODUCTION.md) for the validation
+> checklist — about 90 minutes against a throw-away project gets you
+> the rest of the way to confident production.
+>
 > Release notes for every version live in [`CHANGELOG.md`](CHANGELOG.md).
-> The most recent push (v2.0 → v2.4) added persistent AI chat, custom
-> actions, connection dashboards, customer impersonation, team
-> workspace, and Resend-powered invitation emails.
 
 ## What this is
 

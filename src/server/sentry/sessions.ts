@@ -24,32 +24,64 @@ const SESSION_WINDOW_MS = 5 * 60 * 1000;
  *
  * Each entry stores the session id + last-seen-at-cache-time. When a
  * write comes in:
- *   1. If the cached entry is fresher than SESSION_WINDOW_MS, attribute
+ *   1. If the cached entry is fresher than CACHE_TTL_MS, attribute
  *      the write to it instantly. Bump the cached `lastSeenAt` so a
  *      slow burst (one write every few minutes) keeps the same id.
  *   2. We still asynchronously bump the session row in the DB so the
- *      authoritative `mutation_count` + `tables_touched` stay accurate
- *     , fire-and-forget, never blocks the proxy reply.
+ *      authoritative `mutation_count` + `tables_touched` stay accurate,
+ *      fire-and-forget, never blocks the proxy reply.
  *   3. On a cache miss we hit the DB once, then prime the cache.
  *
- * Trade-offs:
+ * Trade-offs + correctness:
  *   - The cache is per-process. Multiple Next.js / serverless instances
- *     get their own copies; that's fine, duplicate sessions across
- *     processes are equivalent to the race the v3.1.0 spec already
- *     documented, and they don't break undo.
- *   - Memory is bounded by (active users × connections × agent kinds).
- *     We also evict expired entries opportunistically on each lookup.
+ *     get their own copies, so a session undo on one instance doesn't
+ *     invalidate cached entries on others. To bound that window of
+ *     incorrectness we keep CACHE_TTL_MS short (60s, well below the
+ *     5-minute SESSION_WINDOW_MS). After 60s every instance re-checks
+ *     the DB, so a closed/undone session can attract at most ~60s of
+ *     mis-attributed writes per orphan cache.
+ *   - Memory is hard-capped at MAX_CACHE_ENTRIES with simple LRU
+ *     eviction on insert. Bounded under sustained load even if hot
+ *     callers never trigger the cold-path opportunistic sweep.
+ *   - For a single-instance Coolify deploy (the default) none of this
+ *     matters — the cache is exact. The TTL exists only to keep
+ *     multi-instance deployments correct enough.
  */
+/** Cache TTL — kept well below SESSION_WINDOW_MS so cross-instance
+ *  stale-cache windows are bounded to 60s in the worst case. */
+const CACHE_TTL_MS = 60 * 1000;
+/** Hard cap; LRU-evict on insert past this. Realistic upper bound for
+ *  a single process serving several hundred concurrent user-sessions
+ *  across a handful of connections + agent kinds. */
+const MAX_CACHE_ENTRIES = 2048;
+
 interface CachedSession {
   sessionId: string;
   kind: AgentKind;
   label: string;
   lastSeenAt: number;
 }
+// JS Map preserves insertion order, which we exploit for LRU: every
+// time we read or write an entry, we delete + reinsert so the freshest
+// key is at the tail. The oldest key (head) is the LRU eviction target.
 const sessionCache = new Map<string, CachedSession>();
 
 function cacheKey(userId: string, connectionId: string, kind: AgentKind): string {
   return `${userId}:${connectionId}:${kind}`;
+}
+
+function touchLru(key: string, entry: CachedSession): void {
+  sessionCache.delete(key);
+  sessionCache.set(key, entry);
+}
+
+function setLru(key: string, entry: CachedSession): void {
+  if (sessionCache.size >= MAX_CACHE_ENTRIES) {
+    // Map iteration order = insertion order, so the first key is LRU.
+    const firstKey = sessionCache.keys().next().value;
+    if (firstKey !== undefined) sessionCache.delete(firstKey);
+  }
+  sessionCache.set(key, entry);
 }
 
 export interface AttachToSessionInput {
@@ -84,11 +116,13 @@ export async function attachToSession(
     const key = cacheKey(input.userId, input.connectionId, fp.kind);
 
     // ── Cache hot path ──────────────────────────────────────────────
+    // TTL is intentionally short (60s) so cross-instance stale-cache
+    // windows are bounded. See top-of-file comment for the trade-off.
     const cached = sessionCache.get(key);
-    if (cached && now - cached.lastSeenAt < SESSION_WINDOW_MS) {
-      // Refresh the in-memory timestamp so a slow burst stays in the
-      // same session, and bump the DB row asynchronously.
+    if (cached && now - cached.lastSeenAt < CACHE_TTL_MS) {
+      // Refresh the timestamp + mark this key as most-recently-used.
       cached.lastSeenAt = now;
+      touchLru(key, cached);
       const sessionId = cached.sessionId;
       void (async () => {
         try {
@@ -108,10 +142,12 @@ export async function attachToSession(
     }
 
     // Opportunistically evict any other expired entries we noticed along
-    // the way. Cheap: only iterates when the cache is non-trivial.
+    // the way. Cheap: only iterates when the cache is non-trivial. The
+    // hard cap above guarantees memory can't blow up; this just keeps
+    // the working set fresh.
     if (sessionCache.size > 64) {
       for (const [k, v] of sessionCache) {
-        if (now - v.lastSeenAt >= SESSION_WINDOW_MS) sessionCache.delete(k);
+        if (now - v.lastSeenAt >= CACHE_TTL_MS) sessionCache.delete(k);
       }
     }
 
@@ -134,7 +170,7 @@ export async function attachToSession(
 
     if (existing) {
       await bumpSession(existing, tableLabel);
-      sessionCache.set(key, {
+      setLru(key, {
         sessionId: existing.id,
         kind: existing.kind,
         label: existing.label,
@@ -155,14 +191,23 @@ export async function attachToSession(
         tablesTouched: [tableLabel],
       })
       .returning();
-    sessionCache.set(key, {
+    setLru(key, {
       sessionId: created.id,
       kind: created.kind,
       label: created.label,
       lastSeenAt: now,
     });
     return { id: created.id, kind: created.kind, label: created.label };
-  } catch {
+  } catch (e) {
+    // Hot-path failure should never block the user-visible response,
+    // but we do want telemetry on it — without this, a silent crash
+    // here means no audit attribution and no visible signal.
+    const { log } = await import("@/server/log");
+    log.warn("attachToSession failed (writes will land without session_id)", {
+      err: e,
+      userId: input.userId,
+      connectionId: input.connectionId,
+    });
     return null;
   }
 }

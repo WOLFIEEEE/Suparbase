@@ -3,6 +3,54 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.1.5 · 2026-05-15 · Production hardening pass
+
+Eight items closed, every gap from the production audit that's
+fixable without a real Supabase project to validate against. The
+remaining "actually run it" steps live in the new
+[PRODUCTION.md](PRODUCTION.md).
+
+**Session cache** — TTL dropped from 5 min to 60 s so cross-instance
+staleness windows are bounded; hard `MAX_CACHE_ENTRIES = 2048` cap
+with LRU eviction on insert; `touchLru` on read.
+
+**Rate limits everywhere destructive** — new
+`src/server/security/route-guards.ts` with `limitOr429()`. Applied
+to action create / update / delete, widget create / update / delete,
+sentry finding mutate, quarantine apply + dismiss, member mutate +
+remove, invitation create + revoke. Undo session uses the AI bucket.
+
+**Audit retention** — new `src/server/audit/retention.ts` prunes
+audit_log / sentry_scan / resolved sentry_findings / closed
+agent_sessions on configurable windows. New `/api/cron/retention`
+route gated by `CRON_SECRET` Bearer auth; fail-closed when secret
+isn't set.
+
+**Structured redacted logger** — new `src/server/log.ts` emits JSON
+lines with `level / msg / ts / ctx`. Every value runs through the
+existing `redact()` so JWTs and provider tokens never reach the log
+stream. Levels honour `LOG_LEVEL` env. Sentry / Logflare / Datadog
+plug-in is a five-line `emit()` swap.
+
+**CSRF at the edge** — new `src/middleware.ts` rejects cross-origin
+POST / PUT / PATCH / DELETE on `/api/**`, `/c/**`, `/connections/**`,
+`/settings/**`. Exempts `/api/auth/*` so NextAuth callbacks pass.
+
+**Test coverage** — 9 new undo-SQL tests covering timestamptz, uuid,
+bigint as string, numeric with decimals, text[] / int[] through
+jsonb cast, jsonb with nested objects, Infinity / NaN → NULL,
+composite primary keys, identifier + value quoting combined.
+**62 tests total, all passing.**
+
+**PRODUCTION.md** — 90-minute end-to-end validation checklist for
+the v3 surface, plus launch-day hardening, observability,
+backups, multi-instance gotchas, and deferred caveats.
+
+**README** — "public beta (v3.1.5)" status badge + honest paragraph
+about what's tested vs. what isn't, linking PRODUCTION.md.
+
+**.env.example** — documents `CRON_SECRET` and `LOG_LEVEL`.
+
 ## v3.1.4 · 2026-05-15 · Two new marketing pages
 
 Adding the only two pages with measurable ROI from the marketing

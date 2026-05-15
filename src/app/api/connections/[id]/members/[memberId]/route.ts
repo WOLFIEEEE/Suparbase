@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/server/auth";
 import { requireRole } from "@/server/connections/repo";
 import { removeMember, updateMemberRole } from "@/server/team/repo";
+import { limitOr429 } from "@/server/security/route-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,10 @@ export async function PATCH(req: NextRequest, ctx: Params) {
       { category: "forbidden", message: "Only the connection owner can change member roles." },
       { status: 403 },
     );
+  }
+  {
+    const limited = limitOr429(session.user.id, "write");
+    if (limited) return limited;
   }
   let body: unknown;
   try {
@@ -53,6 +58,10 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
       { category: "forbidden", message: "Only the connection owner can remove members." },
       { status: 403 },
     );
+  }
+  {
+    const limited = limitOr429(session.user.id, "write");
+    if (limited) return limited;
   }
   const ok = await removeMember(id, memberId);
   if (!ok) return NextResponse.json({ category: "not_found" }, { status: 404 });

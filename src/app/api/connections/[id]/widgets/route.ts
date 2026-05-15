@@ -4,6 +4,7 @@ import { auth } from "@/server/auth";
 import { getConnectionForUser, requireRole } from "@/server/connections/repo";
 import { createWidget, listWidgets } from "@/server/dashboards/repo";
 import { AppError } from "@/lib/errors";
+import { limitOr429 } from "@/server/security/route-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,10 @@ export async function POST(req: NextRequest, ctx: Params) {
       { category: "forbidden", message: "Editor or owner role required to create widgets." },
       { status: 403 },
     );
+  }
+  {
+    const limited = limitOr429(session.user.id, "write");
+    if (limited) return limited;
   }
 
   let body: unknown;

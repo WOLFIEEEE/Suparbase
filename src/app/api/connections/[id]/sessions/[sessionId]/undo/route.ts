@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
 import { requireRole } from "@/server/connections/repo";
 import { undoSession } from "@/server/sentry/undo";
+import { checkAiRate } from "@/server/proxy/ratelimit";
 import { AppError } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,15 @@ export async function POST(_req: NextRequest, ctx: Params) {
     return NextResponse.json(
       { category: "forbidden", message: "Editor or owner role required to undo sessions." },
       { status: 403 },
+    );
+  }
+  // Undo runs a multi-statement transaction. Hammer-protection on the
+  // AI bucket which is the right shape for this load class.
+  const limit = checkAiRate(session.user.id);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { category: "rate_limited", message: "Too many undo attempts, try again shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
     );
   }
   try {

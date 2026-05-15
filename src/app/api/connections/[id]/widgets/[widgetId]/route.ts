@@ -4,6 +4,7 @@ import { auth } from "@/server/auth";
 import { getConnectionForUser, requireRole } from "@/server/connections/repo";
 import { deleteWidget, getWidget, updateWidget } from "@/server/dashboards/repo";
 import { AppError } from "@/lib/errors";
+import { limitOr429 } from "@/server/security/route-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,10 @@ export async function PUT(req: NextRequest, ctx: Params) {
       { status: 403 },
     );
   }
+  {
+    const limited = limitOr429(session.user.id, "write");
+    if (limited) return limited;
+  }
 
   let body: unknown;
   try {
@@ -97,6 +102,10 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
       { category: "forbidden", message: "Editor or owner role required to delete widgets." },
       { status: 403 },
     );
+  }
+  {
+    const limited = limitOr429(session.user.id, "write");
+    if (limited) return limited;
   }
   const ok = await deleteWidget(session.user.id, id, widgetId);
   if (!ok) return NextResponse.json({ category: "not_found" }, { status: 404 });

@@ -9,6 +9,7 @@ import { createInvitation } from "@/server/team/repo";
 import { renderInvitationEmail } from "@/server/email/templates/invitation";
 import { sendEmail } from "@/server/email/resend";
 import { AppError } from "@/lib/errors";
+import { limitOr429 } from "@/server/security/route-guards";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,10 @@ export async function POST(req: NextRequest, ctx: Params) {
       { category: "forbidden", message: "Only the connection owner can invite members." },
       { status: 403 },
     );
+  }
+  {
+    const limited = limitOr429(session.user.id, "write");
+    if (limited) return limited;
   }
   let body: unknown;
   try {
