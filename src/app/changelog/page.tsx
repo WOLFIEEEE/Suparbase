@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { readFileSync } from "fs";
 import { join } from "path";
 import Link from "next/link";
-import { ArrowUpRight, GitCommit } from "lucide-react";
+import { GitCommit } from "lucide-react";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 
@@ -65,16 +65,6 @@ export default async function ChangelogPage() {
           eyebrow="Changelog"
           title="Every release, since v0.1."
           subtitle="Each version maps to a spec-kit feature directory and a git tag. Most recent first."
-          actions={
-            <a
-              href="https://github.com/WOLFIEEEE/Suparbase/releases"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
-            >
-              GitHub releases <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
-            </a>
-          }
         />
 
         <ol className="mt-16 space-y-14">
@@ -87,14 +77,6 @@ export default async function ChangelogPage() {
                 </div>
                 <p className="font-mono text-[11px] text-fg-faint">{formatDate(r.date)}</p>
                 <h2 className="font-display text-lg leading-tight">{r.title}</h2>
-                <a
-                  href={`https://github.com/WOLFIEEEE/Suparbase/releases/tag/${r.version}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 text-[11px] text-fg-faint transition-colors hover:text-accent"
-                >
-                  release notes <ArrowUpRight className="h-3 w-3" aria-hidden />
-                </a>
               </aside>
 
               <article className="min-w-0 border-l hairline pl-6 md:pl-8">

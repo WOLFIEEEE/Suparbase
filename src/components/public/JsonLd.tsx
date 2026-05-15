@@ -31,7 +31,6 @@ export function organizationLd() {
     url: SITE.url,
     description: SITE.description,
     logo: absoluteUrl("/icon.svg"),
-    sameAs: [SITE.github],
   };
 }
 

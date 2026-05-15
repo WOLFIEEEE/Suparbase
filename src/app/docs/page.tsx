@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Activity,
-  ArrowUpRight,
   BookOpen,
   Database,
   FolderOpen,
   KeyRound,
-  Server,
   ShieldCheck,
   Sparkles,
   SquareCode,
@@ -18,7 +16,7 @@ import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "Docs · Suparbase",
   description:
-    "Quickstart, security model, connections, AI assistant, RLS debugger, SQL playground, self-hosting. Everything you need to operate Suparbase.",
+    "Quickstart, security model, connections, AI assistant, RLS debugger, SQL playground, audit log. Everything you need to operate Suparbase.",
 };
 
 interface TocEntry {
@@ -37,7 +35,6 @@ const TOC: TocEntry[] = [
   { id: "storage", label: "Storage", icon: FolderOpen },
   { id: "auth-users", label: "Auth users", icon: KeyRound },
   { id: "audit", label: "Audit log", icon: Activity },
-  { id: "self-host", label: "Self-host", icon: Server },
 ];
 
 export default async function DocsPage() {
@@ -241,47 +238,12 @@ export default async function DocsPage() {
                 </ul>
               </section>
 
-              <section id="self-host">
-                <h2>Self-host</h2>
-                <p>
-                  Suparbase is one Next.js app and one Postgres database. The repo ships with a{" "}
-                  <code>docker-compose.yaml</code> and a Coolify-friendly <code>Dockerfile</code>.
-                </p>
-                <h3>Required env vars</h3>
-                <ul>
-                  <li><code>SUPARBASE_DATABASE_URL</code>: Postgres connection string for Suparbase's own tables.</li>
-                  <li><code>SUPARBASE_ENCRYPTION_KEY</code>: 32-byte hex string used for AES-256-GCM.</li>
-                  <li><code>AUTH_SECRET</code>: random secret for NextAuth.</li>
-                  <li><code>AUTH_URL</code> (production): the public origin of your instance.</li>
-                </ul>
-                <h3>Optional</h3>
-                <ul>
-                  <li><code>AUTH_GITHUB_ID</code> + <code>AUTH_GITHUB_SECRET</code>: enables the GitHub OAuth button.</li>
-                  <li><code>SUPARBASE_AI_DEFAULT_MODEL</code>: pre-fill the AI model dropdown.</li>
-                </ul>
-                <p>
-                  See the{" "}
-                  <a href="https://github.com/WOLFIEEEE/Suparbase" target="_blank" rel="noopener noreferrer">
-                    repo README
-                  </a>{" "}
-                  for the up-to-date docker-compose and the Coolify recipe.
-                </p>
-              </section>
             </Prose>
 
             <div className="mt-16 rounded-lg border hairline bg-bg-raised/40 p-5 text-sm">
               <p className="text-fg">Question not answered here?</p>
               <p className="mt-1 text-fg-muted">
-                Open an issue on{" "}
-                <a
-                  href="https://github.com/WOLFIEEEE/Suparbase/issues"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 text-accent hover:underline"
-                >
-                  GitHub <ArrowUpRight className="h-3 w-3" aria-hidden />
-                </a>{" "}
-                or email <a href="mailto:hello@suparbase.com" className="text-accent hover:underline">hello@suparbase.com</a>.
+                Email <a href="mailto:hello@suparbase.com" className="text-accent hover:underline">hello@suparbase.com</a> and we&apos;ll get back to you.
               </p>
             </div>
           </div>

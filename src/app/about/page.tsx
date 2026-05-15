@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ArrowUpRight, Code2, FileText, Github, GitMerge, Heart, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, Code2, FileText, GitMerge, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { CTABand, PageHeader, PageShell, Prose, SectionHeading } from "@/components/public/sections";
 
@@ -149,18 +150,16 @@ export default async function AboutPage() {
               <h3 className="font-display text-base">The spec-kit workflow</h3>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">
-              Each feature starts as <code>specs/0XX-name/spec.md</code>. The spec answers: goal, scope, server design,
-              API surface, UX, security, what's out of scope. Implementation follows. The commit message references
-              the spec.
+              Each feature starts as a markdown spec that answers: goal, scope, server design, API surface, UX,
+              security, what&apos;s out of scope. Implementation follows. The commit message references the spec.
+              Thirty features have shipped this way.
             </p>
-            <a
-              href="https://github.com/WOLFIEEEE/Suparbase/tree/main/specs"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/changelog"
               className="mt-4 inline-flex items-center gap-1 text-xs text-accent hover:underline"
             >
-              Browse the specs <ArrowUpRight className="h-3 w-3" aria-hidden />
-            </a>
+              See the changelog <ArrowUpRight className="h-3 w-3" aria-hidden />
+            </Link>
           </div>
           <div className="rounded-lg border hairline bg-bg-raised p-6">
             <div className="flex items-center gap-2">
@@ -169,15 +168,13 @@ export default async function AboutPage() {
             </div>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">
               One Supabase connection, the full admin surface, no credit card. Paid plans cover teams and unlimited
-              projects. Bug reports and feedback are always welcome on GitHub.
+              projects. Feedback always welcome.
             </p>
             <a
-              href="https://github.com/WOLFIEEEE/Suparbase/issues"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:hello@suparbase.com"
               className="mt-4 inline-flex items-center gap-1 text-xs text-accent hover:underline"
             >
-              <Github className="h-3 w-3" aria-hidden /> Report an issue
+              hello@suparbase.com <ArrowUpRight className="h-3 w-3" aria-hidden />
             </a>
           </div>
         </div>

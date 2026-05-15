@@ -39,7 +39,6 @@ export const SITE = {
     "Suparbase is an admin workspace for Supabase: encrypted credentials, server-side PostgREST proxy, RLS debugger, SQL playground, AI chat with diff-confirmed writes, row history, and Storage / Auth-users management. Free tier for solo projects.",
   url: resolveSiteUrl(),
   twitter: "@suparbase",
-  github: "https://github.com/WOLFIEEEE/Suparbase",
   version: pkg.version,
   authorName: "Suparbase",
   authorUrl: `${resolveSiteUrl()}/about`,

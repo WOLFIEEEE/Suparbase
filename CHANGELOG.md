@@ -3,6 +3,42 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.3.1 · 2026-05-15 · GitHub links removed + Signal panel refresh
+
+Follow-up to v3.3.0. With the product repositioned as privately held,
+the remaining public GitHub links no longer fit. All source-repo links
+removed site-wide; the footer Signal panel rewritten with concrete,
+current numbers.
+
+- **`PublicNav`**: top-right "GitHub" button removed.
+- **`PublicFooter`**: legal-strip "issues" link removed (now "Contact");
+  Resources column's "Report an issue" entry replaced with "Contact"
+  (mailto). The Signal panel rewritten:
+  - "Latest release" now shows the version + release month.
+  - "Just published" renamed to "From the blog".
+  - Stale "Features 9 in production" replaced with "Shipped 30
+    features across 30 specs" (links to the changelog).
+  - Redundant "Plans" row replaced with "Free tier · 1 project · no card".
+  - Live indicator updated to a pulsing dot for stronger affordance.
+  - Trailing copy reworked to focus on shipping cadence rather than
+    repeating the pricing CTA.
+- **About page**: "Browse the specs" card link → /changelog. "Report
+  an issue" card link → mailto.
+- **Blog index page**: "follow the GitHub repo for release notes" line
+  removed.
+- **Changelog page**: top-right "GitHub releases" button and per-release
+  "release notes" deep links removed (changelog is now the canonical
+  release surface).
+- **Docs page**: "Self-host" section + sidebar entry removed (self-hosting
+  is no longer a public option; Team plans get single-tenant deployments
+  via sales). Help callout points to email instead of GitHub issues.
+- **`organizationLd`** (structured data): `sameAs` array removed; the
+  GitHub URL is no longer surfaced to search engines.
+- **`SITE.github`**: constant removed from `src/lib/seo/site.ts`.
+
+GitHub OAuth on the sign-in / sign-up pages is **unchanged** — that's
+the social-login provider, not a link to the source.
+
 ## v3.3.0 · 2026-05-15 · Proprietary licensing + free hosted tier
 
 Repositioning release. Suparbase is now a privately held product with

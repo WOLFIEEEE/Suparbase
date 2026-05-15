@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/workspace/ThemeToggle";
 import { cn } from "@/lib/ui/cn";
@@ -40,16 +40,6 @@ export function PublicNav({ isSignedIn = false }: Props) {
         </nav>
 
         <div className="hidden items-center gap-1.5 md:flex">
-          <a
-            href="https://github.com/WOLFIEEEE/Suparbase"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub repository"
-            className="inline-flex h-9 items-center gap-1.5 rounded px-2.5 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
-          >
-            <Github className="h-3.5 w-3.5" aria-hidden />
-            GitHub
-          </a>
           <ThemeToggle />
           {isSignedIn ? (
             <Link

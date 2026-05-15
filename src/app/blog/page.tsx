@@ -66,11 +66,7 @@ export default async function BlogHubPage() {
         <p className="mt-12 text-xs text-fg-faint">
           We publish on average two long-form articles per month. Subscribe via
           your favourite RSS reader at{" "}
-          <code>{SITE.url}/rss.xml</code> (coming Q3 2026), or follow the{" "}
-          <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-            GitHub repo
-          </a>{" "}
-          for release notes.
+          <code>{SITE.url}/rss.xml</code> (coming Q3 2026).
         </p>
       </PageShell>
     </PublicLayout>

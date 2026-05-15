@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Github, Heart, Server, Shield } from "lucide-react";
+import { ArrowUpRight, Heart, Server, Shield } from "lucide-react";
 import { listArticles } from "@/lib/blog/articles";
 import { Logo } from "@/components/brand/Logo";
 import { SITE } from "@/lib/seo/site";
@@ -30,7 +30,7 @@ const COLUMNS: Column[] = [
       { label: "Guides", href: "/guides" },
       { label: "Compare", href: "/compare" },
       { label: "Learn", href: "/learn" },
-      { label: "Report an issue", href: `${SITE.github}/issues`, external: true },
+      { label: "Contact", href: "mailto:hello@suparbase.com", external: true },
     ],
   },
   {
@@ -124,14 +124,8 @@ export function PublicFooter() {
             <Link href="/terms" className="hover:text-fg">
               Terms
             </Link>
-            <a
-              href={`${SITE.github}/issues`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:text-fg"
-            >
-              <Github className="h-3 w-3" aria-hidden />
-              issues
+            <a href="mailto:hello@suparbase.com" className="hover:text-fg">
+              Contact
             </a>
             <span className="font-mono">v{SITE.version}</span>
           </div>
@@ -187,49 +181,59 @@ function SignalPanel({ latestArticleTitle, latestArticleSlug }: SignalPanelProps
           Signal
         </span>
         <span className="inline-flex items-center gap-1 text-[10px] text-fg-faint">
-          <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-accent" /> live
+          <span aria-hidden className="relative inline-flex h-1.5 w-1.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-60" />
+            <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+          </span>
+          live
         </span>
       </div>
       <SignalRow
         label="Latest release"
         value={`v${SITE.version}`}
+        sub={LATEST_RELEASE_DATE}
         href="/changelog"
         valueTone="accent"
       />
       {latestArticleTitle && latestArticleSlug && (
         <SignalRow
-          label="Just published"
-          value={truncate(latestArticleTitle, 38)}
+          label="From the blog"
+          value={truncate(latestArticleTitle, 36)}
           href={`/blog/${latestArticleSlug}`}
         />
       )}
       <SignalRow
-        label="Features"
-        value="9 in production"
-        href="/features"
+        label="Shipped"
+        value={`${FEATURES_SHIPPED} features`}
+        sub="across 30 specs"
+        href="/changelog"
       />
       <SignalRow
-        label="Plans"
-        value="Free + paid tiers"
+        label="Free tier"
+        value="1 project · no card"
         href="/pricing"
       />
       <p className="border-t hairline pt-3 text-[10px] leading-relaxed text-fg-faint">
-        Free tier for solo projects, paid plans for teams. See{" "}
-        <Link href="/pricing" className="text-fg-muted hover:text-fg">pricing</Link>.
+        Every release is a tagged git commit. No vapourware, no "coming soon."
       </p>
     </aside>
   );
 }
 
+const LATEST_RELEASE_DATE = "May 2026";
+const FEATURES_SHIPPED = 30;
+
 function SignalRow({
   label,
   value,
+  sub,
   href,
   external,
   valueTone,
 }: {
   label: string;
   value: string;
+  sub?: string;
   href: string;
   external?: boolean;
   valueTone?: "accent";
@@ -241,13 +245,16 @@ function SignalRow({
   const body = (
     <>
       <span className="text-fg-faint">{label}</span>
-      <span className="flex items-center gap-1">
-        <span className={valueClass}>{value}</span>
-        <ArrowUpRight className="h-3 w-3 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
+      <span className="flex flex-col items-end gap-0.5 text-right">
+        <span className="inline-flex items-center gap-1">
+          <span className={valueClass}>{value}</span>
+          <ArrowUpRight className="h-3 w-3 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
+        </span>
+        {sub && <span className="font-mono text-[9px] uppercase tracking-wider text-fg-faint">{sub}</span>}
       </span>
     </>
   );
-  const classes = "group flex items-center justify-between gap-3 text-[11px] transition-colors hover:text-fg";
+  const classes = "group flex items-start justify-between gap-3 text-[11px] transition-colors hover:text-fg";
   return external ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
       {body}
