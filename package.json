@@ -1,7 +1,7 @@
 {
   "name": "suparbase",
   "private": true,
-  "version": "2.4.1",
+  "version": "3.0.0",
   "license": "MIT",
   "description": "Authenticated SaaS admin for any Supabase. Email+password or GitHub auth, encrypted vault, server-side PostgREST proxy, OpenRouter-powered preset routing, zero-config Coolify deploy.",
   "homepage": "https://github.com/WOLFIEEEE/Suparbase",

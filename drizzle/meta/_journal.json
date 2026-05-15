@@ -64,6 +64,13 @@
       "when": 1778825809447,
       "tag": "0008_rich_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778840590313,
+      "tag": "0009_shallow_tempest",
+      "breakpoints": true
     }
   ]
 }

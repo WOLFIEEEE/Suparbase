@@ -1,11 +1,14 @@
 <!-- SPECKIT START -->
-**Current**: v2.4.1 on `main` (tagged `v2.4.1`). Resend integration:
-team invitations are now emailed directly when `RESEND_API_KEY` +
-`EMAIL_FROM` are set, with a copy-link fallback when not. Reusable
-`sendEmail()` wrapper at `src/server/email/resend.ts` + HTML+text
-invitation template. New `/api/email/status` so the UI shows the
-right copy. v2.4 base = team workspace with editor / viewer roles
-(per-route viewer-vs-editor write gating still deferred to v2.4.x).
+**Current**: v3.0.0 on `main` (tagged `v3.0.0`). Agent Sentry — the
+security-watchdog half of a feature nothing else in market has.
+On-demand probe combines an anon REST probe (one GET per public
+user table) with `pg_policies` inspection (when a direct PG URL is
+set) to detect RLS drift, anon-readable tables, and overly-permissive
+policies. PII-flavoured columns escalate findings to `critical`.
+One-click quarantine applies a temporary deny-all RLS policy. UI at
+`/c/[id]/sentry`, sidebar entry, auto-refresh. v3.1 ships the
+AI-seatbelt half: per-agent session attribution + session undo for
+PocketOS-style nukes.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -41,4 +44,5 @@ Spec-kit features (chronological):
 - [specs/027-impersonation/](specs/027-impersonation/) · v2.3, per-user detail page (sessions inspector + related-records discovery)
 - [specs/028-team-workspace/](specs/028-team-workspace/) · v2.4, team workspace (multi-user connections with editor / viewer roles)
 - [specs/029-resend-email/](specs/029-resend-email/) · v2.4.1, Resend transactional email (invitations delivered via email when configured)
+- [specs/030-agent-sentry/](specs/030-agent-sentry/) · v3.0, Agent Sentry security watchdog (anon-probe + pg_policies inspector + one-click quarantine)
 <!-- SPECKIT END -->

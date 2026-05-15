@@ -6,4 +6,5 @@ export * from "./schema-analysis";
 export * from "./custom-actions";
 export * from "./dashboard-widgets";
 export * from "./team";
+export * from "./sentry";
 export * from "../views/schema";

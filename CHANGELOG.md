@@ -3,6 +3,41 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.0.0 · 2026-05-15 · Agent Sentry — security watchdog
+
+Tag: `v3.0.0` · Spec: [`030`](specs/030-agent-sentry/)
+
+The first half of a feature nothing else in market has: a continuous
+security watchdog for vibe-coded Supabase projects, designed around
+the 2026 incident pattern (Moltbook, Lovable CVE-2025-48757, PocketOS).
+
+- **Two-channel probe**: anon REST probe fires `GET /rest/v1/<table>`
+  per public-schema user table to detect anon-readable tables, plus
+  `pg_policies` + `pg_class.relrowsecurity` inspection through the
+  direct Postgres URL to catch RLS-disabled tables and overly-
+  permissive `USING (true)` policies.
+- **PII heuristic**: every anon-readable table is column-name matched
+  against patterns for password / secret / api_key / refresh_token
+  / ssn / credit_card / phone / email / address / dob / passport;
+  matches are escalated from `warn` to `critical`.
+- **One-click quarantine**: per finding, apply a temporary
+  `CREATE POLICY suparbase_sentry_<id> ... USING (false)` to deny
+  anon + authenticated access while you fix the root cause. Lifting
+  the quarantine drops the policy cleanly.
+- **New `/c/[id]/sentry` page** with severity-counter hero, open-
+  findings list, archived section, and scan history. Auto-refreshes
+  every 30s.
+
+Schema: `sentry_scan` + `sentry_finding` (drizzle migration 0009).
+API: `GET / POST /api/connections/[id]/sentry`, scan + ack + resolve
++ quarantine + dismiss endpoints, rate-limited on the AI bucket.
+
+What's deferred to v3.0.x: scheduled scans (currently on-demand
+only), finding deduplication across scans, public-bucket probe,
+email alerts on critical findings. **v3.1** ships the AI-seatbelt
+half: per-agent session attribution + one-click session undo for
+PocketOS-style incidents.
+
 ## v2.4.1 · 2026-05-15 · Resend transactional email
 
 Tag: `v2.4.1` · Spec: [`029`](specs/029-resend-email/)
