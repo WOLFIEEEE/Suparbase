@@ -96,8 +96,10 @@ import { Article as BackupArticle, meta as backupMeta } from "./content/database
 import { Article as ObsArticle, meta as obsMeta } from "./content/postgres-observability-stack-2026";
 import { Article as PrestGqlArticle, meta as prestGqlMeta } from "./content/postgrest-vs-graphql-vs-trpc";
 import { Article as EventArticle, meta as eventMeta } from "./content/event-driven-on-postgres-2026";
+import { Article as SentryArticle, meta as sentryMeta } from "./content/agent-sentry-2026";
 
 const REGISTRY: ArticleMeta[] = [
+  { ...sentryMeta, body: SentryArticle },
   { ...rlsMeta, body: RlsArticle },
   { ...supabaseVsMeta, body: SupabaseVsArticle },
   { ...multiTenantMeta, body: MultiTenantArticle },

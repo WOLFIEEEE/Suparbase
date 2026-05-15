@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }> = [
   { path: "/", priority: 1.0, changeFrequency: "weekly" },
   { path: "/features", priority: 0.9, changeFrequency: "monthly" },
+  { path: "/agent-sentry", priority: 0.92, changeFrequency: "monthly" },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
   { path: "/docs", priority: 0.9, changeFrequency: "monthly" },
   { path: "/guides", priority: 0.85, changeFrequency: "monthly" },

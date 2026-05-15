@@ -15,6 +15,7 @@ const COLUMNS: Column[] = [
     heading: "Product",
     links: [
       { label: "Features", href: "/features" },
+      { label: "Agent Sentry", href: "/agent-sentry" },
       { label: "Use cases", href: "/use-cases" },
       { label: "Pricing", href: "/pricing" },
       { label: "Changelog", href: "/changelog" },

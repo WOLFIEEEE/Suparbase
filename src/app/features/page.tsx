@@ -8,10 +8,12 @@ import {
   KeyRound,
   Pencil,
   Search,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   SquareCode,
   Table2,
+  Undo2,
   UserCog,
   Users,
 } from "lucide-react";
@@ -31,6 +33,20 @@ export const metadata: Metadata = {
 };
 
 const PRIMARY_FEATURES = [
+  {
+    icon: ShieldAlert,
+    title: "Agent Sentry · security watchdog",
+    body:
+      "Continuous probe of your project with the actual anon key plus pg_policies inspection. Catches RLS drift, anon-readable PII, and overly-permissive policies. One-click quarantine applies a temporary deny-all policy.",
+    href: "/agent-sentry",
+  },
+  {
+    icon: Undo2,
+    title: "Agent sessions · one-click undo",
+    body:
+      "Every write through the proxy gets fingerprinted to the AI tool that made it (Cursor, Claude Code, Replit Agent, Lovable, v0). Undo a whole session — every INSERT / UPDATE / DELETE reversed atomically.",
+    href: "/agent-sentry",
+  },
   {
     icon: Sparkles,
     title: "AI chat with tool-use",
