@@ -7,7 +7,6 @@ import {
   CircleCheck,
   Clock,
   Eye,
-  Github,
   Lock,
   Pencil,
   Plus,
@@ -222,15 +221,12 @@ export default async function AgentSentryPage() {
                   Protect a project
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
-                <a
-                  href={SITE.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/pricing"
                   className="inline-flex h-11 items-center gap-1.5 rounded-md border hairline px-5 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
                 >
-                  <Github className="h-4 w-4" aria-hidden />
-                  Read the source
-                </a>
+                  See pricing
+                </Link>
               </>
             }
           />
@@ -397,7 +393,7 @@ export default async function AgentSentryPage() {
 
       <CTABand
         title="The button you wish PocketOS had."
-        body="Five minutes to set up. Free to self-host. Open source under MIT. Probe today, undo tomorrow."
+        body="Five minutes to set up. Free hosted tier for solo projects. Probe today, undo tomorrow."
         primary={{ href: "/signup", label: "Start free" }}
         secondary={{ href: "/blog/agent-sentry-2026", label: "Read the incident retro" }}
       />

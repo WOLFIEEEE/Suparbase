@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { SITE } from "@/lib/seo/site";
 import { cn } from "@/lib/ui/cn";
 
@@ -67,20 +67,11 @@ export function AppFooter({ width = "narrow", className }: Props) {
                 {l.label}
               </Link>
             ))}
-            <a
-              href={SITE.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 transition-colors hover:text-fg"
-            >
-              <Github className="h-3 w-3" aria-hidden />
-              GitHub
-            </a>
           </nav>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t hairline pt-3 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
           <span>
-            © {new Date().getFullYear()} Suparbase · MIT licensed
+            © {new Date().getFullYear()} Suparbase · All rights reserved
           </span>
           <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
             <Shield className="h-3 w-3 text-accent" aria-hidden />

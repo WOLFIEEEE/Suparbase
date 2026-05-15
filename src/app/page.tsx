@@ -44,7 +44,7 @@ const PROMISES = [
   "Every PostgREST call is proxied through an authenticated route. The browser holds only a session cookie.",
   "Every write hits an audit log keyed to your account, connection, table, primary key, and verb.",
   "JWT-shaped substrings and provider keys are defensively redacted before any log line is written.",
-  "Self-hostable on Coolify or any docker-compose host with zero env vars typed.",
+  "Free hosted tier for solo projects. No credit card, no time limit.",
 ] as const;
 
 const FEATURE_PREVIEWS = [
@@ -211,7 +211,7 @@ export default async function HomePage() {
 
       <CTABand
         title="Drop in your key and ship."
-        body="Five minutes to set up. Free to self-host. No credit card on the hosted plan."
+        body="Five minutes to set up. Free tier for solo projects. No credit card."
         primary={{ href: "/signup", label: "Get started" }}
         secondary={{ href: "/features", label: "See features" }}
       />

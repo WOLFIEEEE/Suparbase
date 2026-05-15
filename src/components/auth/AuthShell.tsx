@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Database, Github, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { Database, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
 import { AuthHeroArt } from "@/components/auth/AuthHeroArt";
 import { ThemeToggle } from "@/components/workspace/ThemeToggle";
@@ -38,16 +38,12 @@ export function AuthShell({ children, title, subtitle, eyebrow, footnote }: Auth
             <Wordmark size="md" />
           </Link>
           <div className="flex items-center gap-1">
-            <a
-              href="https://github.com/WOLFIEEEE/Suparbase"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository"
+            <Link
+              href="/pricing"
               className="hidden h-9 items-center gap-1.5 rounded px-2.5 text-xs text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg sm:inline-flex"
             >
-              <Github className="h-3.5 w-3.5" aria-hidden />
-              <span>Star on GitHub</span>
-            </a>
+              <span>Pricing</span>
+            </Link>
             <ThemeToggle />
           </div>
         </header>
@@ -113,19 +109,13 @@ function AuthFooter() {
           <Link href="/terms" className="transition-colors hover:text-fg">
             Terms
           </Link>
-          <a
-            href="https://github.com/WOLFIEEEE/Suparbase"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 transition-colors hover:text-fg"
-          >
-            <Github className="h-3 w-3" aria-hidden />
-            GitHub
-          </a>
+          <Link href="/pricing" className="transition-colors hover:text-fg">
+            Pricing
+          </Link>
         </nav>
       </div>
       <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
-        © {year} Suparbase · MIT licensed · self-host free
+        © {year} Suparbase · Free tier, no credit card
       </p>
     </footer>
   );
@@ -217,17 +207,12 @@ function BrandPane() {
         </ul>
 
         <div className="space-y-2 text-[11px] text-fg-faint">
-          <p className="font-mono">v{SITE.version} &middot; open source &middot; MIT licensed</p>
+          <p className="font-mono">v{SITE.version} &middot; free tier, no credit card</p>
           <p>
-            Self-hosted? See the{" "}
-            <a
-              href={SITE.github}
-              target="_blank"
-              rel="noreferrer"
-              className="text-accent hover:underline"
-            >
-              repo &amp; deploy guide
-            </a>
+            New here?{" "}
+            <Link href="/pricing" className="text-accent hover:underline">
+              See pricing
+            </Link>
             .
           </p>
         </div>

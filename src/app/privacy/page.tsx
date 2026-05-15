@@ -17,7 +17,7 @@ export default async function PrivacyPage() {
         <PageHeader
           eyebrow="Privacy"
           title="What we collect, why, and how to delete it."
-          subtitle={`Last updated: ${LAST_UPDATED}. We are not lawyers; this is the plain-English summary. The same rules apply to self-hosters who run the open-source build for their own users.`}
+          subtitle={`Last updated: ${LAST_UPDATED}. We are not lawyers; this is the plain-English summary.`}
         />
         <div className="mt-12 max-w-3xl">
           <Prose>
@@ -112,8 +112,7 @@ export default async function PrivacyPage() {
               </li>
             </ul>
             <p>
-              All three are GDPR-compatible and have signed our Data Processing Agreement. Self-hosters use their own
-              infrastructure.
+              All three are GDPR-compatible and have signed our Data Processing Agreement.
             </p>
 
             <h2>Encryption</h2>

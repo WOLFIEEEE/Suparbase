@@ -165,19 +165,19 @@ export default async function AboutPage() {
           <div className="rounded-lg border hairline bg-bg-raised p-6">
             <div className="flex items-center gap-2">
               <Heart className="h-4 w-4 text-accent" aria-hidden />
-              <h3 className="font-display text-base">Open-source, MIT</h3>
+              <h3 className="font-display text-base">Free tier, forever</h3>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">
-              The full source lives on GitHub. Issues, PRs, and questions welcome. The hosted plan funds maintenance;
-              if you self-host you get every feature, forever.
+              One Supabase connection, the full admin surface, no credit card. Paid plans cover teams and unlimited
+              projects. Bug reports and feedback are always welcome on GitHub.
             </p>
             <a
-              href="https://github.com/WOLFIEEEE/Suparbase"
+              href="https://github.com/WOLFIEEEE/Suparbase/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-1 text-xs text-accent hover:underline"
             >
-              <Github className="h-3 w-3" aria-hidden /> github.com/WOLFIEEEE/Suparbase
+              <Github className="h-3 w-3" aria-hidden /> Report an issue
             </a>
           </div>
         </div>

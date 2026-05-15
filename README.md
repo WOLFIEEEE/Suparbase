@@ -6,7 +6,6 @@
 
 [![CI](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml/badge.svg)](https://github.com/WOLFIEEEE/Suparbase/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/package-json/v/WOLFIEEEE/Suparbase?color=0A0A0B&labelColor=B6FF3C&label=version)](https://github.com/WOLFIEEEE/Suparbase/releases)
-[![License](https://img.shields.io/github/license/WOLFIEEEE/Suparbase?color=0A0A0B&labelColor=B6FF3C)](LICENSE)
 [![Status](https://img.shields.io/badge/status-public_beta-0A0A0B?labelColor=B6FF3C)](PRODUCTION.md)
 [![Next.js 15](https://img.shields.io/badge/next-15-0A0A0B?labelColor=B6FF3C)](#)
 [![NextAuth v5](https://img.shields.io/badge/auth-nextauth_v5-0A0A0B?labelColor=B6FF3C)](#)
@@ -308,11 +307,13 @@ audit_log       id, user_id, connection_id, schema, table_name, primary_key (jso
 See [`drizzle/0000_chief_lily_hollister.sql`](drizzle/) for the
 generated migration.
 
-## Contributing
+## Feedback
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). Significant features ship via
-the Spec-Kit workflow; small fixes and polish can land via a focused PR.
-CI runs `tsc --noEmit` + `next build` on every PR.
+Suparbase is privately held; external code contributions are not
+accepted. Bug reports, feature requests, and security disclosures are
+welcome via the [issue tracker](https://github.com/WOLFIEEEE/Suparbase/issues).
+Significant features ship via the internal Spec-Kit workflow; CI runs
+`tsc --noEmit` + `next build` on every change.
 
 ## Spec-Kit artifacts
 
@@ -388,11 +389,9 @@ Content, Logs, Commerce, Tasks, Messages, Generic: each with list +
 detail views automatically applied from the AI analysis (heuristic
 fallback when offline). Builds on v1.0's unified visual language;
 bulk operations + CSV/JSON export + import + saved views + filter chips
-all carry over. Self-host with zero env vars on Coolify or any
-docker-compose host.
+all carry over.
 
-**Planned next** (see [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to
-help):
+**Planned next**:
 
 - **v1.2 "Inline editing"**: click-to-edit cells in the data grid
   with type-appropriate editors, the last piece of the v0.7 backlog
@@ -409,4 +408,5 @@ beyond OpenRouter.
 
 ## License
 
-MIT.
+Proprietary. Copyright (c) 2026 Suparbase. All rights reserved.
+See [`LICENSE`](LICENSE).

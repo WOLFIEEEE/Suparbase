@@ -135,7 +135,7 @@ export function Page() {
       <section className="border-t hairline bg-bg-raised/40">
         <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 px-6 py-16 md:grid-cols-3 md:py-20">
           <StatBlock label="Time to first connection" value="~5 min" />
-          <StatBlock label="Cost if you self-host" value="$0" sub="MIT, forever" />
+          <StatBlock label="Cost to start" value="$0" sub="Free tier, no card" />
           <StatBlock label="Lines of admin you maintain" value="0" />
         </div>
       </section>

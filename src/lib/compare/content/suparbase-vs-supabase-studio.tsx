@@ -7,7 +7,7 @@ export const meta = {
   rightName: "Supabase Studio",
   title: "Suparbase vs Supabase Studio: When to use which (2026)",
   description:
-    "Supabase Studio is the official dashboard. Suparbase is the open-source admin tool you self-host on top. Honest 2026 comparison: when Studio is enough, when Suparbase wins.",
+    "Supabase Studio is the official dashboard. Suparbase is the dedicated admin workspace you point at the same project. Honest 2026 comparison: when Studio is enough, when Suparbase wins.",
   tldr:
     "Studio is the dashboard you get with every Supabase project. Suparbase is the admin layer for the gaps Studio doesn't cover: encrypted credential vault for team access, RLS simulator, custom action buttons, dashboard widgets, customer impersonation, AI agent attribution, and one-click session undo. Use both. Studio for project administration; Suparbase for day-to-day operations.",
   callouts: [
@@ -37,8 +37,8 @@ export const meta = {
     { feature: "One-click session undo (rewind a Cursor agent's writes)", left: "Yes (Sentry v3.1)", right: "No" },
     { feature: "Continuous RLS drift probe + auto-quarantine", left: "Yes (Sentry v3.0)", right: "No (Security Advisors are weekly)" },
     { feature: "API key in browser?", left: "No, encrypted vault + server-side proxy", right: "Service role is in the dashboard session" },
-    { feature: "Open source", left: "MIT", right: "Apache 2.0 (Studio source available)" },
-    { feature: "Self-hostable independently", left: "Yes (zero env vars on Coolify)", right: "Yes, with the rest of Supabase" },
+    { feature: "Licensing", left: "Proprietary (hosted SaaS, free tier)", right: "Apache 2.0 (Studio source available)" },
+    { feature: "Hosted free tier", left: "Yes (one connection, no credit card)", right: "Yes (Supabase free plan)" },
   ],
 } as const;
 
@@ -159,16 +159,9 @@ export function Body() {
         good at.
       </p>
       <p>
-        Suparbase is{" "}
-        <a
-          href="https://github.com/WOLFIEEEE/Suparbase"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          MIT-licensed and self-hostable
-        </a>
-        ; nothing leaves your infrastructure. The hosted plan exists for
-        teams that don&apos;t want to run a Coolify deploy.
+        Suparbase has a free hosted tier for solo projects and paid plans for
+        teams. Team plans include single-tenant deployments for organisations
+        with strict residency or compliance needs.
       </p>
     </>
   );

@@ -30,7 +30,7 @@ const COLUMNS: Column[] = [
       { label: "Guides", href: "/guides" },
       { label: "Compare", href: "/compare" },
       { label: "Learn", href: "/learn" },
-      { label: "GitHub", href: SITE.github, external: true },
+      { label: "Report an issue", href: `${SITE.github}/issues`, external: true },
     ],
   },
   {
@@ -62,8 +62,8 @@ export function PublicFooter() {
               <span className="text-accent">AI-assisted admin.</span>
             </h2>
             <p className="max-w-md text-sm leading-relaxed text-fg-muted">
-              Free to self-host, open under MIT. Hosted plan when you don&apos;t
-              want to operate it yourself.
+              Free hosted tier for solo projects. Paid plans when your team needs
+              unlimited connections, SSO, and longer retention.
             </p>
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <Link
@@ -73,15 +73,12 @@ export function PublicFooter() {
                 Get started
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
               </Link>
-              <a
-                href={SITE.github}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/pricing"
                 className="inline-flex h-9 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
               >
-                <Github className="h-3.5 w-3.5" aria-hidden />
-                Star on GitHub
-              </a>
+                See pricing
+              </Link>
             </div>
           </div>
 
@@ -101,14 +98,13 @@ export function PublicFooter() {
               <span className="font-display tracking-tight">suparbase</span>
             </Link>
             <p className="mt-3 max-w-xs text-[11px] leading-relaxed text-fg-muted">
-              An open-source admin workspace for Supabase. Same encryption,
-              same proxy, same AI-assisted writes whether you self-host or
-              use the hosted plan.
+              An admin workspace for Supabase. Encrypted credentials, server-side
+              proxy, AI-assisted writes, free tier for individuals.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] text-fg-faint">
               <Badge icon={Shield} label="AES-256-GCM" />
               <Badge icon={Server} label="server-side proxy" />
-              <Badge icon={Heart} label="MIT" />
+              <Badge icon={Heart} label="free tier" />
             </div>
           </div>
           {COLUMNS.map((col) => (
@@ -119,7 +115,7 @@ export function PublicFooter() {
         {/* Legal strip */}
         <section className="flex flex-wrap items-center justify-between gap-3 border-t hairline py-6 text-[11px] text-fg-faint">
           <span>
-            © {new Date().getFullYear()} Suparbase. Open source, MIT-licensed. Hosted with care.
+            © {new Date().getFullYear()} Suparbase. All rights reserved.
           </span>
           <div className="flex items-center gap-5">
             <Link href="/privacy" className="hover:text-fg">
@@ -128,9 +124,14 @@ export function PublicFooter() {
             <Link href="/terms" className="hover:text-fg">
               Terms
             </Link>
-            <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-fg">
+            <a
+              href={`${SITE.github}/issues`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-fg"
+            >
               <Github className="h-3 w-3" aria-hidden />
-              github
+              issues
             </a>
             <span className="font-mono">v{SITE.version}</span>
           </div>
@@ -203,19 +204,18 @@ function SignalPanel({ latestArticleTitle, latestArticleSlug }: SignalPanelProps
         />
       )}
       <SignalRow
-        label="Open features"
+        label="Features"
         value="9 in production"
         href="/features"
       />
       <SignalRow
-        label="Specs in repo"
-        value="19, public"
-        href={SITE.github}
-        external
+        label="Plans"
+        value="Free + paid tiers"
+        href="/pricing"
       />
       <p className="border-t hairline pt-3 text-[10px] leading-relaxed text-fg-faint">
-        Every release maps to a markdown spec in the open repo. The roadmap is
-        just <code className="font-mono text-fg-muted">specs/0XX-name/</code>.
+        Free tier for solo projects, paid plans for teams. See{" "}
+        <Link href="/pricing" className="text-fg-muted hover:text-fg">pricing</Link>.
       </p>
     </aside>
   );

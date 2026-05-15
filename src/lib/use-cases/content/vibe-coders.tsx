@@ -220,7 +220,7 @@ export function Page() {
 
       <CTABand
         title="Catch the next one before the headline."
-        body="Free to self-host under MIT. Five minutes to set up. The seat-belt your AI agent doesn't have."
+        body="Free tier for solo projects. Five minutes to set up. The seat-belt your AI agent doesn't have."
         primary={{ href: "/signup", label: "Start free" }}
         secondary={{ href: "/agent-sentry", label: "How Sentry works" }}
       />

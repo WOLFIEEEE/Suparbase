@@ -4,8 +4,7 @@
 
 Suparbase is a single-trunk project: only the latest tagged release
 on `main` receives security fixes. Older tags exist as historical
-references; if you self-host an older version, upgrade before
-reporting.
+references only.
 
 ## Reporting a vulnerability
 
@@ -35,8 +34,8 @@ If you can't use the GitHub form, open a normal issue saying *only*
 
 - Issues in third-party services (Supabase itself, Resend, OpenRouter,
   Coolify), report those to the respective vendors.
-- Self-hosters' own deployments running outdated dependencies. Please
-  upgrade first and re-test.
+- Dedicated single-tenant Team deployments running outdated builds.
+  Please ensure you're on the latest release before reporting.
 - Social-engineering, physical attacks, or rate-limit findings without
   a concrete impact path.
 

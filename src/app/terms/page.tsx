@@ -4,7 +4,7 @@ import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 
 export const metadata: Metadata = {
   title: "Terms · Suparbase",
-  description: "The terms of service for Suparbase's hosted plan and the open-source build.",
+  description: "The terms of service for Suparbase's hosted plan.",
 };
 
 const LAST_UPDATED = "2026-05-14";
@@ -20,16 +20,6 @@ export default async function TermsPage() {
         />
         <div className="mt-12 max-w-3xl">
           <Prose>
-            <h2>Open-source build (MIT)</h2>
-            <p>
-              The open-source build at{" "}
-              <a href="https://github.com/WOLFIEEEE/Suparbase" target="_blank" rel="noopener noreferrer">
-                github.com/WOLFIEEEE/Suparbase
-              </a>{" "}
-              is licensed under MIT. Use it, fork it, modify it, deploy it, sell access to it: no terms below
-              constrain that.
-            </p>
-
             <h2>Hosted plan</h2>
             <p>
               When you sign up at <a href="https://suparbase.com">suparbase.com</a> and use the hosted version, the
@@ -38,8 +28,8 @@ export default async function TermsPage() {
 
             <h3>1. The service</h3>
             <p>
-              We host and operate Suparbase for you. Features available on the hosted plan match the open-source
-              build feature-for-feature, patched in lockstep with the public repo.
+              We host and operate Suparbase for you. The product is proprietary software offered on a free hosted
+              tier (with paid plans for higher limits and team features).
             </p>
 
             <h3>2. Your account</h3>
@@ -57,8 +47,7 @@ export default async function TermsPage() {
               <li>Store data that violates the law of any jurisdiction you or we operate in.</li>
               <li>Spam, phish, or distribute malware via the auth-users invite flow.</li>
               <li>
-                Reverse-engineer the hosted service to extract another tenant&apos;s data. (The open-source build is,
-                of course, fair game to reverse-engineer.)
+                Reverse-engineer the hosted service, scrape it, or attempt to extract another tenant&apos;s data.
               </li>
             </ul>
 
@@ -89,9 +78,9 @@ export default async function TermsPage() {
 
             <h3>7. Warranties</h3>
             <p>
-              We provide the hosted service &quot;as is&quot;. The open-source build is provided &quot;as is&quot;
-              under MIT. We don&apos;t warrant that the service will be uninterrupted, error-free, or perfectly
-              secure: we operate it carefully and patch quickly when issues arise, but software is software.
+              We provide the hosted service &quot;as is&quot;. We don&apos;t warrant that the service will be
+              uninterrupted, error-free, or perfectly secure: we operate it carefully and patch quickly when
+              issues arise, but software is software.
             </p>
 
             <h3>8. Limitation of liability</h3>

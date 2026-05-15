@@ -87,9 +87,9 @@ export function ArticleLayout({ meta, related, children }: Props) {
 
           <div className="mt-12 rounded-lg border hairline bg-bg-raised/40 p-5">
             <p className="text-xs text-fg-muted">
-              Suparbase is an open-source admin workspace for Supabase. Encrypted
-              credentials, server-side proxy, RLS debugger, SQL playground, AI
-              assistant with diff-confirmed writes.
+              Suparbase is an admin workspace for Supabase. Encrypted credentials,
+              server-side proxy, RLS debugger, SQL playground, AI assistant with
+              diff-confirmed writes. Free tier for solo projects.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Link

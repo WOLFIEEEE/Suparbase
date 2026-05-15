@@ -28,7 +28,7 @@ export function Page() {
               <br className="hidden sm:inline" /> passes the compliance review.
             </>
           }
-          subtitle="If you handle PHI or PHI-adjacent data, your admin tool has to satisfy auditors. Suparbase is open-source, self-hostable, encrypts credentials at rest, and audits every write. The bones of a compliant operations stack."
+          subtitle="If you handle PHI or PHI-adjacent data, your admin tool has to satisfy auditors. Suparbase encrypts credentials at rest, proxies every request server-side, and audits every write. The bones of a compliant operations stack."
           actions={
             <>
               <Link
@@ -83,8 +83,8 @@ export function Page() {
             />
             <Need
               icon={FileText}
-              title="Self-hostable"
-              body="MIT licensed. Your data, your infrastructure, your retention policy. We don't see your customers' data."
+              title="Dedicated deployments"
+              body="Team plans include single-tenant deployment with custom data retention and a DPA. Your data, your retention policy."
             />
           </ul>
         </div>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Github, HelpCircle, Lock, Server } from "lucide-react";
+import { ArrowRight, Check, HelpCircle, Lock, Server, Sparkles } from "lucide-react";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import {
   CTABand,
@@ -13,7 +13,7 @@ import { cn } from "@/lib/ui/cn";
 export const metadata: Metadata = {
   title: "Pricing · Suparbase",
   description:
-    "Suparbase is free to self-host (MIT) and has a hosted plan for teams who'd rather not run their own infra.",
+    "Suparbase has a free hosted tier for individuals and paid plans for teams. Same encryption, same proxy, same features.",
 };
 
 interface Tier {
@@ -30,39 +30,39 @@ interface Tier {
 
 const TIERS: Tier[] = [
   {
-    name: "Self-host",
-    price: "Free",
+    name: "Free",
+    price: "$0",
     cadence: "forever",
     blurb:
-      "Clone the repo, point it at a Postgres database, and run it on Coolify, Vercel, Fly, Railway, or any Node host.",
-    cta: { label: "Open the repo", href: "https://github.com/WOLFIEEEE/Suparbase" },
+      "For individuals running a single Supabase project. Same encrypted proxy, same admin surface, just capped.",
+    cta: { label: "Create free account", href: "/signup" },
     features: [
-      { text: "Every feature on this site" },
-      { text: "Unlimited connections" },
-      { text: "Unlimited users (you own the auth table)" },
+      { text: "1 Supabase connection" },
+      { text: "Solo workspace (1 user)" },
       { text: "AES-256-GCM credential vault" },
+      { text: "Full admin surface (data grid, schema view, audit log)" },
       { text: "BYO OpenRouter key for AI chat" },
-      { text: "BYO Postgres URL for SQL playground / RLS debugger" },
-      { text: "MIT licensed" },
+      { text: "30-day audit log retention" },
     ],
-    note: "You run the host. You own the data.",
+    note: "No credit card. No time limit.",
   },
   {
     name: "Hosted",
     price: "$12",
     cadence: "per user / month",
     blurb:
-      "Same Suparbase, managed by us. Patched in lockstep with the open-source release, with credentials in our encrypted vault.",
+      "For teams running real Supabase workloads. Unlimited connections, team workspace, longer retention, support.",
     cta: { label: "Get started", href: "/signup" },
     highlight: true,
     badge: "Most popular",
     features: [
-      { text: "Everything in Self-host" },
-      { text: "Hosted Postgres for sessions + audit log" },
+      { text: "Everything in Free" },
+      { text: "Unlimited connections" },
+      { text: "Team workspace (editor / viewer roles)" },
       { text: "Background workers (long-running exports, imports)" },
+      { text: "90-day audit log retention" },
+      { text: "Agent Sentry continuous scans" },
       { text: "Email support, 1 business day" },
-      { text: "Per-org rate limits + role-based access (Q3 roadmap)" },
-      { text: "Audit log retention beyond 90 days (Q3 roadmap)", muted: true },
     ],
     note: "Free 14-day trial. No credit card.",
   },
@@ -85,8 +85,8 @@ const TIERS: Tier[] = [
 
 const FAQ = [
   {
-    q: "Is the self-host version really the full product?",
-    a: "Yes. Every feature you see on the website is in the public repo. Hosted exists for teams who don't want to operate the infra themselves.",
+    q: "Is the Free tier really free forever?",
+    a: "Yes. One connection, one user, no time limit, no credit card. Upgrade to Hosted when you need a team or unlimited projects.",
   },
   {
     q: "Will my Supabase keys ever touch a browser?",
@@ -94,15 +94,15 @@ const FAQ = [
   },
   {
     q: "What happens to my data if I cancel?",
-    a: "On the hosted plan you can export everything (connections, audit log, saved views) as JSON from your account page. We hard-delete your row 30 days after cancellation.",
+    a: "You can export everything (connections, audit log, saved views) as JSON from your account page. We hard-delete your row 30 days after cancellation.",
   },
   {
-    q: "Why per-seat pricing for hosted?",
+    q: "Why per-seat pricing for Hosted?",
     a: "Most of our cost scales with active humans, not requests. Per-seat keeps it simple, predictable, and stays cheaper than every other Supabase admin tool we've seen.",
   },
   {
     q: "What does \"BYO OpenRouter key\" mean?",
-    a: "You bring your own OpenRouter API key. We never proxy token spend, so AI usage doesn't show up on your Suparbase bill. Self-host or hosted, same model.",
+    a: "You bring your own OpenRouter API key. We never proxy token spend, so AI usage doesn't show up on your Suparbase bill. Same model on every tier.",
   },
   {
     q: "Can I upgrade or downgrade later?",
@@ -118,11 +118,11 @@ export default async function PricingPage() {
           eyebrow="Pricing"
           title={
             <>
-              Free if you self-host.
-              <br className="hidden sm:inline" /> Reasonable if you don&apos;t.
+              Free for individuals.
+              <br className="hidden sm:inline" /> Reasonable for teams.
             </>
           }
-          subtitle="Suparbase is open-source under MIT. The hosted plan covers the cost of running it for teams who'd rather not."
+          subtitle="A free hosted tier for solo projects, paid plans when your team needs unlimited connections, SSO, and longer retention."
         />
       </PageShell>
 
@@ -140,10 +140,10 @@ export default async function PricingPage() {
               <Lock className="h-3 w-3 text-accent" aria-hidden /> All tiers, same encryption
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Server className="h-3 w-3 text-accent" aria-hidden /> All tiers, same features
+              <Server className="h-3 w-3 text-accent" aria-hidden /> All tiers, same admin surface
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Github className="h-3 w-3 text-accent" aria-hidden /> Patched in lockstep with the repo
+              <Sparkles className="h-3 w-3 text-accent" aria-hidden /> Free tier never expires
             </span>
           </div>
         </div>
@@ -180,10 +180,10 @@ export default async function PricingPage() {
       </section>
 
       <CTABand
-        title="14 days free on hosted. Forever free if you self-host."
+        title="Free for one project. 14-day Hosted trial for teams."
         body="Either way, you're five minutes from your first connection."
-        primary={{ href: "/signup", label: "Start free trial" }}
-        secondary={{ href: "/docs#self-host", label: "Self-host guide" }}
+        primary={{ href: "/signup", label: "Start free" }}
+        secondary={{ href: "/docs", label: "Read the docs" }}
       />
     </PublicLayout>
   );

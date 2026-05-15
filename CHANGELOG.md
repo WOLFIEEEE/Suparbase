@@ -3,6 +3,58 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.3.0 · 2026-05-15 · Proprietary licensing + free hosted tier
+
+Repositioning release. Suparbase is now a privately held product with
+a free hosted tier — not an open-source MIT project. No code-behaviour
+changes; all updates are to licensing, copy, and marketing surfaces.
+
+- **`LICENSE`**: replaced MIT grant with a proprietary copyright
+  notice. All rights reserved.
+- **`package.json`**: `"license"` field changed from `"MIT"` to
+  `"UNLICENSED"`.
+- **`README.md`**: removed the License shield, removed the License
+  section ("MIT."), renamed Contributing section to Feedback (points
+  to the issue tracker for bug reports; no external code
+  contributions accepted).
+- **`CONTRIBUTING.md`**: rewritten as a short issue-reporting guide.
+  External code contributions are no longer accepted; bug reports and
+  security disclosures are still welcomed.
+- **Pricing page** (`src/app/pricing/page.tsx`): the "Self-host" tier
+  was replaced with a **Free** hosted tier (1 connection, 1 user, no
+  card, no expiry). Hosted and Team tiers retained. Subtitle, signal
+  badges, FAQ entries, and final CTA all reworded.
+- **Terms page** (`src/app/terms/page.tsx`): removed the
+  "Open-source build (MIT)" section. Service description and warranty
+  clauses reworded.
+- **Privacy page** (`src/app/privacy/page.tsx`): removed the
+  self-hoster carve-out from the subtitle and subprocessor section.
+- **About page** (`src/app/about/page.tsx`): "Open-source, MIT" card
+  replaced with "Free tier, forever". GitHub link repositioned to
+  /issues for bug reports.
+- **Agent Sentry page** (`src/app/agent-sentry/page.tsx`): CTA body
+  no longer mentions "free to self-host / MIT". "Read the source"
+  button replaced with "See pricing".
+- **Landing page** (`src/app/page.tsx`): promise list and final CTA
+  reworded to lead with the free hosted tier.
+- **Footers** (`AuthShell`, `AppFooter`, `PublicFooter`): MIT badge
+  and "Open source, MIT-licensed" legal strip removed. GitHub repo
+  links repositioned to the issues page where they remain visible.
+- **Site metadata** (`src/lib/seo/site.ts`): page description no
+  longer claims "open-source" or "MIT".
+- **Article CTA** (`src/components/public/ArticleLayout.tsx`): card
+  shown beneath every blog post / guide reworded.
+- **Marketing content**: agent-sentry-2026 blog, healthcare-saas /
+  saas-admin / vibe-coders use-case pages, and the suparbase-vs-
+  supabase-studio comparison all dropped self-referential MIT / OSS
+  claims. Third-party OSS mentions (Postgres, Supabase, libSQL,
+  Weaviate, etc.) preserved — they describe other products.
+- **`SECURITY.md`**: minor reword to remove self-hoster references
+  from the supported-versions and out-of-scope sections.
+
+No runtime, schema, or behavioural changes. Existing customers see
+new pricing copy on the website; nothing in the product changes.
+
 ## v3.2.2 · 2026-05-15 · Widget AI: forbid `$N` placeholders
 
 Bugfix. The widget-builder model occasionally leaked the actions-style

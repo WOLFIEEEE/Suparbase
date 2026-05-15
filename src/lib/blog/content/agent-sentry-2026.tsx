@@ -233,11 +233,9 @@ CREATE POLICY suparbase_sentry_<id>
         </li>
       </ol>
       <p>
-        Suparbase is MIT-licensed and self-host-friendly, drop your own
-        deployment behind Coolify and the whole thing runs on a single
-        Postgres + Node container. The full <Link href="/agent-sentry">Sentry
-        feature page</Link> has the FAQ + a side-by-side with the existing
-        scanner cottage industry.
+        Suparbase has a free hosted tier for solo projects, no credit card
+        required. The full <Link href="/agent-sentry">Sentry feature page</Link>{" "}
+        has the FAQ + a side-by-side with the existing scanner cottage industry.
       </p>
     </>
   );
