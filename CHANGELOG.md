@@ -3,6 +3,35 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v2.2.0 · 2026-05-15 · Dashboards
+
+Tag: `v2.2.0` · Spec: [`026`](specs/026-dashboards/)
+
+The second of four releases (v2.1 → v2.4) closing the "we'll just
+build our own admin panel" gap. v2.2 turns the connection home into a
+real dashboard.
+
+- **Widget registry**: per-connection `dashboard_widget` table holding
+  saved SQL queries plus a visualisation hint (kpi / bar / line /
+  list), span (1 / 2 / full column), optional auto-refresh, and a
+  free-form `vis_config`. Up to 24 widgets per connection.
+- **Widget grid on the connection dashboard**: hand-written SVG
+  charts so we don't ship a chart library. KPI tiles autoformat
+  (number / currency / percent), pick up a `previous` column for
+  delta hints. Bar charts render top-N rows, line charts a small
+  area+line over time, lists a tiny table with chosen columns.
+- **Editor at `/c/[id]/dashboard/edit`**: list / create / edit /
+  delete widgets with a type-aware form (KPI gets format + unit +
+  prefix; bar / line get label + value column; list gets column
+  picker; refresh-interval for all).
+- **Execution**: every widget runs through `executeSql()` with
+  `readOnly: true`, a 5s statement timeout, and the same row/cell
+  caps as the SQL playground. Rate-limited.
+
+Widgets are wired into the existing connection dashboard above the
+table-archetype groups, so the new home page is "metrics + tables"
+instead of just tables.
+
 ## v2.1.0 · 2026-05-15 · Custom actions
 
 Tag: `v2.1.0` · Spec: [`025`](specs/025-custom-actions/)

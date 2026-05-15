@@ -1,11 +1,12 @@
 <!-- SPECKIT START -->
-**Current**: v2.1.0 on `main` (tagged `v2.1.0`). Custom actions: a
-per-connection registry of named buttons backed by SQL templates or
-webhooks, with global / table / row scope. Surfaced on the connection
-dashboard, table headers, and row detail pages. Param-aware dialog at
-run time; danger actions require typed confirmation. First of four
-releases (v2.1 → v2.4) closing the "we'll just build our own panel"
-gap (dashboards / impersonation / teams come next).
+**Current**: v2.2.0 on `main` (tagged `v2.2.0`). Dashboards: per-
+connection widget registry (KPI tiles, bar / line charts, lists)
+backed by saved SQL queries. Hand-written SVG charts, ≤ 24 widgets
+per connection, optional auto-refresh, 5s read-only timeout per
+widget. Editor at `/c/[id]/dashboard/edit`; widgets render on the
+connection home above the table groups. Second of four releases
+(v2.1 → v2.4) closing the "we'll just build our own panel" gap
+(impersonation / teams come next).
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -37,4 +38,5 @@ Spec-kit features (chronological):
 - [specs/020-content-expansion/](specs/020-content-expansion/) · v1.6, eight vibe-coding-era articles + three comparison pages
 - [specs/024-ai-chat-v2/](specs/024-ai-chat-v2/) · v2.0, AI chat overhaul: persistent conversations + 3 new tools + page context + markdown
 - [specs/025-custom-actions/](specs/025-custom-actions/) · v2.1, custom actions (SQL / webhook buttons surfaced on tables + rows)
+- [specs/026-dashboards/](specs/026-dashboards/) · v2.2, connection dashboards (KPI / bar / line / list widgets with SVG charts)
 <!-- SPECKIT END -->
