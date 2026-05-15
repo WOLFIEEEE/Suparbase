@@ -41,10 +41,32 @@ export const DialogContent = forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 grid surface shadow-2xl",
+          // Common: flex column so children size predictably; min-w-0 lets
+          // long unbreakable strings (URLs, SQL, hashes) wrap instead of
+          // pushing the dialog wider than its max-w.
+          "fixed z-50 flex min-w-0 flex-col surface shadow-2xl outline-none",
           side === "center"
-            ? "left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg p-6"
-            : "right-0 top-0 h-full w-full max-w-xl gap-4 border-l p-6 overflow-y-auto",
+            ? [
+                // Width: full width minus a 1rem viewport gutter on each side,
+                // capped at max-w-lg by default; callers can pass max-w-md /
+                // max-w-2xl / max-w-3xl to override (tailwind-merge wins).
+                "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2",
+                // Height: cap at 90vh and scroll internally so long forms
+                // (widget editor, action editor, invite dialog) never get
+                // clipped off the viewport on short screens.
+                "max-h-[90vh] overflow-y-auto overscroll-contain",
+                // Chrome
+                "gap-3 rounded-lg p-5 sm:p-6",
+                // Open/close animation: light scale + fade so it doesn't
+                // feel like a snap.
+                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+              ].join(" ")
+            : [
+                // Side drawer
+                "right-0 top-0 h-full w-full max-w-xl",
+                "gap-3 border-l p-5 sm:p-6 overflow-y-auto overscroll-contain",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
+              ].join(" "),
           className,
         )}
         {...props}
@@ -70,9 +92,21 @@ export function DialogHeader({ className, ...props }: HTMLAttributes<HTMLDivElem
   return <div className={cn("flex flex-col gap-1.5", className)} {...props} />;
 }
 
+/**
+ * Action row. Stays full-width on small screens (buttons stack reversed
+ * so the primary CTA is on top) and right-aligns on `sm` and above.
+ * Sits flush against the dialog padding; a top hairline divider keeps
+ * it visually pinned when the dialog body is long.
+ */
 export function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)} {...props} />
+    <div
+      className={cn(
+        "mt-1 flex flex-col-reverse gap-2 border-t hairline pt-3 sm:flex-row sm:justify-end",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 
@@ -83,7 +117,11 @@ export const DialogTitle = forwardRef<
   return (
     <DialogPrimitive.Title
       ref={ref}
-      className={cn("text-lg font-medium tracking-tight", className)}
+      className={cn(
+        // Reserve room for the absolute close button on the right.
+        "pr-8 font-display text-lg leading-tight tracking-tight",
+        className,
+      )}
       {...props}
     />
   );
@@ -96,7 +134,7 @@ export const DialogDescription = forwardRef<
   return (
     <DialogPrimitive.Description
       ref={ref}
-      className={cn("text-sm text-fg-muted", className)}
+      className={cn("-mt-1 text-sm leading-relaxed text-fg-muted", className)}
       {...props}
     />
   );
