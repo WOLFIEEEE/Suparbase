@@ -1,12 +1,12 @@
 <!-- SPECKIT START -->
-**Current**: v2.2.0 on `main` (tagged `v2.2.0`). Dashboards: per-
-connection widget registry (KPI tiles, bar / line charts, lists)
-backed by saved SQL queries. Hand-written SVG charts, ≤ 24 widgets
-per connection, optional auto-refresh, 5s read-only timeout per
-widget. Editor at `/c/[id]/dashboard/edit`; widgets render on the
-connection home above the table groups. Second of four releases
-(v2.1 → v2.4) closing the "we'll just build our own panel" gap
-(impersonation / teams come next).
+**Current**: v2.3.0 on `main` (tagged `v2.3.0`). Customer
+impersonation + session inspector: per-user detail page at
+`/c/[id]/auth-users/[uid]` with profile, active sessions (read from
+`auth.sessions` directly), and related-records discovery (UNION-ALL
+count across every table with a `user_id` / `owner_id` / `created_by`
+uuid column, with "view filtered" links). Quick actions for recovery,
+session revoke (one or all), and user delete. Third of four releases
+closing the "we'll just build our own panel" gap (teams come next).
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -39,4 +39,5 @@ Spec-kit features (chronological):
 - [specs/024-ai-chat-v2/](specs/024-ai-chat-v2/) · v2.0, AI chat overhaul: persistent conversations + 3 new tools + page context + markdown
 - [specs/025-custom-actions/](specs/025-custom-actions/) · v2.1, custom actions (SQL / webhook buttons surfaced on tables + rows)
 - [specs/026-dashboards/](specs/026-dashboards/) · v2.2, connection dashboards (KPI / bar / line / list widgets with SVG charts)
+- [specs/027-impersonation/](specs/027-impersonation/) · v2.3, per-user detail page (sessions inspector + related-records discovery)
 <!-- SPECKIT END -->

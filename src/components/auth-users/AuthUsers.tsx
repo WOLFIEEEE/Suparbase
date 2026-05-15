@@ -267,6 +267,7 @@ function AuthUsersAdmin({ connection }: { connection: ConnectionSummary }) {
                 user={u}
                 active={u.id === selectedId}
                 onSelect={() => setSelectedId(u.id)}
+                connectionId={connection.id}
               />
             ))}
           </ul>
@@ -327,14 +328,16 @@ function UserRow({
   user,
   active,
   onSelect,
+  connectionId,
 }: {
   user: AuthUser;
   active: boolean;
   onSelect: () => void;
+  connectionId: string;
 }) {
   const banned = isBanned(user.bannedUntil);
   return (
-    <li>
+    <li className="group/row relative">
       <button
         type="button"
         onClick={onSelect}
@@ -378,6 +381,13 @@ function UserRow({
           )}
         </span>
       </button>
+      <a
+        href={`/c/${connectionId}/auth-users/${encodeURIComponent(user.id)}`}
+        onClick={(e) => e.stopPropagation()}
+        className="absolute right-2 top-1/2 hidden -translate-y-1/2 items-center gap-1 rounded border hairline bg-bg px-1.5 py-0.5 text-[10px] text-fg-muted hover:border-line-strong hover:text-fg group-hover/row:inline-flex"
+      >
+        Open →
+      </a>
     </li>
   );
 }

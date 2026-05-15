@@ -3,6 +3,35 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v2.3.0 · 2026-05-15 · Customer impersonation + session inspector
+
+Tag: `v2.3.0` · Spec: [`027`](specs/027-impersonation/)
+
+Third of four releases closing the "we'll just build our own panel"
+gap. v2.3 gives support engineers a full per-user view without
+leaving Suparbase.
+
+- **User detail page** at `/c/[id]/auth-users/[uid]`: profile card
+  (id, email + verification state, providers, banned status, both
+  metadata blobs), quick actions (Send recovery, Revoke sessions,
+  Delete user), and a hero strip linking to the user list.
+- **Active sessions inspector**: reads `auth.sessions` directly via
+  `executeSql()`, lists user-agent, IP, MFA factor, created /
+  refreshed / expiry timestamps. Per-session revoke + revoke-all.
+- **Related-records discovery**: scans the introspected schema for
+  tables with a `user_id` / `owner_id` / `created_by` (or similar)
+  uuid column, runs a single UNION-ALL count query, shows a card
+  per matching table with a "view" link that opens the table page
+  filtered to the user. The "view as user" without changing JWT.
+
+New API routes:
+- `GET / DELETE /api/v/[id]/auth-users/[uid]/sessions`
+- `DELETE /api/v/[id]/auth-users/[uid]/sessions/[sessionId]`
+- `GET /api/v/[id]/auth-users/[uid]/related`
+
+All session and admin operations still require service_role (same
+contract as v1.3 auth-users).
+
 ## v2.2.0 · 2026-05-15 · Dashboards
 
 Tag: `v2.2.0` · Spec: [`026`](specs/026-dashboards/)
