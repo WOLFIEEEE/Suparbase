@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
 import { requireRole } from "@/server/connections/repo";
+import { db } from "@/server/db";
+import { connections } from "@/server/schema/connections";
+import { eq } from "drizzle-orm";
 import { createInvitation } from "@/server/team/repo";
+import { renderInvitationEmail } from "@/server/email/templates/invitation";
+import { sendEmail } from "@/server/email/resend";
 import { AppError } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +47,41 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
   try {
     const inv = await createInvitation(id, session.user.id, parsed.data.email, parsed.data.role);
-    return NextResponse.json(inv, { status: 201 });
+
+    // Try to email the invitation. If Resend isn't configured, this is a
+    // no-op — the owner still gets a copy-link in the UI as before.
+    const [connRow] = await db
+      .select({ name: connections.name })
+      .from(connections)
+      .where(eq(connections.id, id))
+      .limit(1);
+    const rendered = renderInvitationEmail({
+      token: inv.token,
+      recipientEmail: inv.email,
+      role: inv.role,
+      connectionName: connRow?.name ?? "your workspace",
+      inviterEmail: session.user.email ?? null,
+      expiresAt: inv.expiresAt,
+    });
+    const emailResult = await sendEmail({
+      to: inv.email,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+      tag: "team-invitation",
+    });
+
+    return NextResponse.json(
+      {
+        ...inv,
+        delivery: {
+          emailed: emailResult.delivered,
+          reason: emailResult.reason ?? null,
+          error: emailResult.error ?? null,
+        },
+      },
+      { status: 201 },
+    );
   } catch (e) {
     if (e instanceof AppError) {
       return NextResponse.json({ category: e.category, message: e.message }, { status: 400 });

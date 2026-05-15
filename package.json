@@ -1,7 +1,7 @@
 {
   "name": "suparbase",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Authenticated SaaS admin for any Supabase. Email+password or GitHub auth, encrypted vault, server-side PostgREST proxy, OpenRouter-powered preset routing, zero-config Coolify deploy.",
   "scripts": {
     "dev": "next dev",
@@ -48,6 +48,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
+    "resend": "^6.12.3",
     "server-only": "^0.0.1",
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",

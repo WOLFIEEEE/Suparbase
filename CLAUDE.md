@@ -1,14 +1,11 @@
 <!-- SPECKIT START -->
-**Current**: v2.4.0 on `main` (tagged `v2.4.0`). Team workspace:
-multi-user connections with `editor` / `viewer` roles (owner is
-implicit via `connections.user_id`). Owners invite teammates via
-expiring URL tokens. `getConnectionForUser()` now honors memberships;
-`listConnections()` returns owned + member-of with a `myRole` tag.
-Member management surface on `/c/[id]/settings`, invitation accept
-page at `/invitations/[token]`. Per-route viewer-vs-editor write
-enforcement at the proxy is deferred to v2.4.x. Fourth and final
-release in the v2.1 → v2.4 push closing the "we'll just build our
-own panel" gap.
+**Current**: v2.4.1 on `main` (tagged `v2.4.1`). Resend integration:
+team invitations are now emailed directly when `RESEND_API_KEY` +
+`EMAIL_FROM` are set, with a copy-link fallback when not. Reusable
+`sendEmail()` wrapper at `src/server/email/resend.ts` + HTML+text
+invitation template. New `/api/email/status` so the UI shows the
+right copy. v2.4 base = team workspace with editor / viewer roles
+(per-route viewer-vs-editor write gating still deferred to v2.4.x).
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -43,4 +40,5 @@ Spec-kit features (chronological):
 - [specs/026-dashboards/](specs/026-dashboards/) · v2.2, connection dashboards (KPI / bar / line / list widgets with SVG charts)
 - [specs/027-impersonation/](specs/027-impersonation/) · v2.3, per-user detail page (sessions inspector + related-records discovery)
 - [specs/028-team-workspace/](specs/028-team-workspace/) · v2.4, team workspace (multi-user connections with editor / viewer roles)
+- [specs/029-resend-email/](specs/029-resend-email/) · v2.4.1, Resend transactional email (invitations delivered via email when configured)
 <!-- SPECKIT END -->

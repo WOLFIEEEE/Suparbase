@@ -9,10 +9,12 @@ import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
   Check,
   Copy,
   Mail,
   Plus,
+  Send,
   Trash2,
   UserCheck,
   UserCog,
@@ -49,11 +51,28 @@ async function fetchTeam(connectionId: string): Promise<TeamSnapshot> {
   return (await res.json()) as TeamSnapshot;
 }
 
+interface EmailStatus {
+  configured: boolean;
+  reason: "no_key" | "no_from" | null;
+  from: string | null;
+}
+
+async function fetchEmailStatus(): Promise<EmailStatus> {
+  const res = await fetch("/api/email/status");
+  if (!res.ok) return { configured: false, reason: "no_key", from: null };
+  return (await res.json()) as EmailStatus;
+}
+
 export function TeamMembers({ connectionId }: Props) {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["team", connectionId],
     queryFn: () => fetchTeam(connectionId),
+  });
+  const { data: emailStatus } = useQuery({
+    queryKey: ["email-status"],
+    queryFn: fetchEmailStatus,
+    staleTime: 60_000,
   });
   const [openInvite, setOpenInvite] = useState(false);
   const [shareInvite, setShareInvite] = useState<InvitationSummary | null>(null);
@@ -95,6 +114,30 @@ export function TeamMembers({ connectionId }: Props) {
         refresh();
       } else {
         toast.error("Update failed.");
+      }
+    },
+    [connectionId],
+  );
+
+  const resendInvite = useCallback(
+    async (inv: InvitationSummary) => {
+      const res = await fetch(
+        `/api/connections/${encodeURIComponent(connectionId)}/members/invitations/${encodeURIComponent(inv.id)}/resend`,
+        { method: "POST" },
+      );
+      const j = (await res.json()) as { emailed: boolean; reason: string | null; error: string | null };
+      if (!res.ok) {
+        toast.error(j.error ?? "Resend failed.");
+        return;
+      }
+      if (j.emailed) {
+        toast.success(`Invitation re-sent to ${inv.email}.`);
+      } else {
+        toast.message(
+          j.reason === "no_key"
+            ? "Email not configured — share the link instead."
+            : `Email send failed: ${j.error ?? j.reason}`,
+        );
       }
     },
     [connectionId],
@@ -214,9 +257,20 @@ export function TeamMembers({ connectionId }: Props) {
                         {relativeFromNow(inv.expiresAt)} · {inv.role}
                       </div>
                     </div>
+                    {emailStatus?.configured && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => resendInvite(inv)}
+                        title="Re-send the invitation email"
+                      >
+                        <Send className="h-3 w-3" aria-hidden />
+                        Resend
+                      </Button>
+                    )}
                     <Button
                       size="sm"
-                      variant="secondary"
+                      variant="ghost"
                       onClick={() => setShareInvite(inv)}
                     >
                       <Copy className="h-3 w-3" aria-hidden />
@@ -241,6 +295,7 @@ export function TeamMembers({ connectionId }: Props) {
       {openInvite && (
         <InviteDialog
           connectionId={connectionId}
+          emailStatus={emailStatus}
           onClose={() => setOpenInvite(false)}
           onCreated={(inv) => {
             qc.invalidateQueries({ queryKey: ["team", connectionId] });
@@ -251,7 +306,11 @@ export function TeamMembers({ connectionId }: Props) {
       )}
 
       {shareInvite && (
-        <ShareInviteDialog invitation={shareInvite} onClose={() => setShareInvite(null)} />
+        <ShareInviteDialog
+          invitation={shareInvite}
+          emailStatus={emailStatus}
+          onClose={() => setShareInvite(null)}
+        />
       )}
     </section>
   );
@@ -261,14 +320,24 @@ export function TeamMembers({ connectionId }: Props) {
 // Invite dialog
 // ---------------------------------------------------------------------------
 
+interface InvitationCreated extends InvitationSummary {
+  delivery?: {
+    emailed: boolean;
+    reason: "no_key" | "no_from" | "failed" | null;
+    error: string | null;
+  };
+}
+
 function InviteDialog({
   connectionId,
+  emailStatus,
   onClose,
   onCreated,
 }: {
   connectionId: string;
+  emailStatus: EmailStatus | undefined;
   onClose: () => void;
-  onCreated: (inv: InvitationSummary) => void;
+  onCreated: (inv: InvitationCreated) => void;
 }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<MemberRole>("editor");
@@ -292,7 +361,15 @@ function InviteDialog({
         setError((j.message as string | undefined) ?? `HTTP ${res.status}`);
         return;
       }
-      onCreated(j as unknown as InvitationSummary);
+      const created = j as unknown as InvitationCreated;
+      if (created.delivery?.emailed) {
+        toast.success(`Invitation emailed to ${email}.`);
+      } else if (created.delivery && created.delivery.reason !== "no_key") {
+        toast.message(
+          `Invitation created — email send failed (${created.delivery.error ?? created.delivery.reason}). Share the link manually.`,
+        );
+      }
+      onCreated(created);
     } finally {
       setSaving(false);
     }
@@ -306,8 +383,21 @@ function InviteDialog({
           Invite teammate
         </DialogTitle>
         <DialogDescription>
-          v2.4 ships invite-by-link. Generate a link, share it with your
-          teammate, and they accept by signing in with the same email.
+          {emailStatus?.configured ? (
+            <>
+              We&apos;ll email the invitation directly from{" "}
+              <span className="font-mono">{emailStatus.from}</span>. You&apos;ll also get
+              a copy-link in case they prefer Slack or DM.
+            </>
+          ) : (
+            <>
+              Email isn&apos;t configured on this deployment yet, so we&apos;ll
+              generate a one-time link you can share manually. Add
+              {" "}
+              <span className="font-mono">RESEND_API_KEY</span> + {" "}
+              <span className="font-mono">EMAIL_FROM</span> env vars to enable email delivery.
+            </>
+          )}
         </DialogDescription>
         <form
           onSubmit={(e) => {
@@ -348,6 +438,17 @@ function InviteDialog({
               buttons for viewers.)
             </p>
           </div>
+          {!emailStatus?.configured && (
+            <div className="flex items-start gap-1.5 rounded-md border hairline bg-bg-sunken/40 px-2.5 py-2 text-[11px] text-fg-faint">
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-warn" aria-hidden />
+              <span>
+                Email not configured. Setting{" "}
+                <span className="font-mono">RESEND_API_KEY</span> +{" "}
+                <span className="font-mono">EMAIL_FROM</span> will send the
+                invitation automatically.
+              </span>
+            </div>
+          )}
           {error && (
             <div className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger">
               {error}
@@ -370,11 +471,15 @@ function InviteDialog({
 
 function ShareInviteDialog({
   invitation,
+  emailStatus,
   onClose,
 }: {
   invitation: InvitationSummary;
+  emailStatus: EmailStatus | undefined;
   onClose: () => void;
 }) {
+  const delivery = (invitation as InvitationCreated).delivery;
+  const wasEmailed = !!delivery?.emailed;
   const [copied, setCopied] = useState(false);
   const url =
     typeof window !== "undefined"
@@ -396,12 +501,34 @@ function ShareInviteDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogTitle className="flex items-center gap-2">
-          <UserCheck className="h-4 w-4 text-accent" aria-hidden />
-          Share this link with {invitation.email}
+          {wasEmailed ? (
+            <Send className="h-4 w-4 text-accent" aria-hidden />
+          ) : (
+            <UserCheck className="h-4 w-4 text-accent" aria-hidden />
+          )}
+          {wasEmailed
+            ? `Emailed to ${invitation.email}`
+            : `Share this link with ${invitation.email}`}
         </DialogTitle>
         <DialogDescription>
-          Anyone with this URL who can sign in with {invitation.email}
-          will become a {invitation.role}. Link expires in 7 days.
+          {wasEmailed ? (
+            <>
+              We sent the invitation from{" "}
+              <span className="font-mono">{emailStatus?.from ?? "your sender"}</span>.
+              The link below is a backup in case the email doesn&apos;t arrive.
+            </>
+          ) : delivery && delivery.reason !== "no_key" ? (
+            <>
+              We tried to email this but{" "}
+              <span className="text-danger">{delivery.error ?? delivery.reason}</span>.
+              Share the link manually:
+            </>
+          ) : (
+            <>
+              Anyone with this URL who can sign in with {invitation.email} will become a{" "}
+              {invitation.role}. Link expires in 7 days.
+            </>
+          )}
         </DialogDescription>
         <div className="space-y-2">
           <code className="block break-all rounded border hairline bg-bg-sunken px-3 py-2 font-mono text-[11px] text-fg">

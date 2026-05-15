@@ -3,6 +3,35 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v2.4.1 · 2026-05-15 · Resend transactional email
+
+Tag: `v2.4.1` · Spec: [`029`](specs/029-resend-email/)
+
+Closes v2.4's email gap. Team invitations now get emailed directly
+via Resend when configured, and gracefully fall back to copy-link
+when not — no breakage either way.
+
+- New `src/server/email/resend.ts`: reusable `sendEmail()` wrapper
+  returning `{ delivered, reason, error }` so callers can branch on
+  the "not configured" path inline. `getEmailConfig()` exposes the
+  env state for UI.
+- New `src/server/email/templates/invitation.ts`: HTML + plain-text
+  invitation template, table layout for cross-client rendering,
+  hairline visual language matching the rest of the product.
+- `POST /api/connections/[id]/members/invitations` now sends an
+  email if Resend is configured and returns a `delivery` field on
+  the response.
+- New `POST /api/connections/[id]/members/invitations/[invId]/resend`
+  for retrying a delivery.
+- New `GET /api/email/status` (auth-gated) so the UI can show the
+  right copy.
+- Invite dialog adapts: "we'll email it from <sender>" when
+  configured, "share this copy-link" otherwise. Pending invitations
+  list gains a Resend button when email is wired. Share-link
+  dialog re-titles based on delivery state.
+- `.env.example` + `docker-compose.yaml` document `RESEND_API_KEY`,
+  `EMAIL_FROM`, `EMAIL_REPLY_TO`.
+
 ## v2.4.0 · 2026-05-15 · Team workspace (multi-user connections)
 
 Tag: `v2.4.0` · Spec: [`028`](specs/028-team-workspace/)

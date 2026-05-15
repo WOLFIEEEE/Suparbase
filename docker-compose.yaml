@@ -134,6 +134,13 @@ services:
       SUPARBASE_ENCRYPTION_KEY_OLD: ${SUPARBASE_ENCRYPTION_KEY_OLD:-}
 
       SUPARBASE_AI_DEFAULT_MODEL: ${SUPARBASE_AI_DEFAULT_MODEL:-anthropic/claude-3.5-haiku}
+
+      # Optional: transactional email via Resend. When both RESEND_API_KEY
+      # and EMAIL_FROM are set, team invitations are emailed directly.
+      # With either missing, the UI falls back to copy-link invites.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
     expose:
       - "3000"
     healthcheck:
