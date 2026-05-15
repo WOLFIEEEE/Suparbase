@@ -32,8 +32,10 @@ import { meta as drizPrismaMeta, Body as drizPrismaBody } from "./content/drizzl
 import { meta as pgvPineMeta, Body as pgvPineBody } from "./content/pgvector-vs-pinecone";
 import { meta as sbAuthClerkMeta, Body as sbAuthClerkBody } from "./content/supabase-auth-vs-clerk";
 import { meta as sbConvexMeta, Body as sbConvexBody } from "./content/supabase-vs-convex";
+import { meta as supaStudioMeta, Body as supaStudioBody } from "./content/suparbase-vs-supabase-studio";
 
 const REGISTRY: CompareMeta[] = [
+  { ...supaStudioMeta, body: supaStudioBody },
   { ...sbFbMeta, body: sbFbBody },
   { ...pgMongoMeta, body: pgMongoBody },
   { ...sbNeonMeta, body: sbNeonBody },

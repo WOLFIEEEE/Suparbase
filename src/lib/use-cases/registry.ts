@@ -18,8 +18,10 @@ import { meta as indieMeta, Page as IndiePage } from "./content/indie-hackers";
 import { meta as aiMeta, Page as AiPage } from "./content/ai-startups";
 import { meta as hcMeta, Page as HcPage } from "./content/healthcare-saas";
 import { meta as ecomMeta, Page as EcomPage } from "./content/ecommerce-operators";
+import { meta as vibeMeta, Page as VibePage } from "./content/vibe-coders";
 
 const REGISTRY: UseCaseMeta[] = [
+  { ...vibeMeta, body: VibePage },
   { ...saasMeta, body: SaasPage },
   { ...agencyMeta, body: AgencyPage },
   { ...internalMeta, body: InternalPage },

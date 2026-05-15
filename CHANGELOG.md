@@ -3,6 +3,28 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.1.4 · 2026-05-15 · Two new marketing pages
+
+Adding the only two pages with measurable ROI from the marketing
+audit. Both registry-driven, so the sitemap and the `/compare` +
+`/use-cases` hub pages picked them up automatically.
+
+- **`/compare/suparbase-vs-supabase-studio`**: head-to-head with the
+  official dashboard. 21-row feature matrix; honest "when Studio
+  alone is enough" + "when Suparbase wins" sections; a dedicated
+  section on credential-handling (Suparbase encrypts at rest, Studio
+  holds the key in the browser session). Highest-intent comparison
+  query for any Supabase user.
+- **`/use-cases/vibe-coders`**: persona page for the audience reading
+  Moltbook / Lovable CVE / PocketOS post-mortems. Hero links to the
+  three real 2026 incidents, four cards covering Sentry probe +
+  quarantine + per-agent attribution + session undo, four-step
+  wire-it-up flow at the bottom. Different framing than `/agent-sentry`,
+  same downstream conversion.
+
+Both pages are pre-rendered via the existing `[slug]` routes,
+included in `sitemap.xml` automatically.
+
 ## v3.1.3 · 2026-05-15 · Em-dash sweep + jargon explainers
 
 No feature work. Two consistency passes:
