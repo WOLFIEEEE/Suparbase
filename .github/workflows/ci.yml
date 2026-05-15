@@ -41,6 +41,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Unit tests
+        # Pure-function unit tests under tests/. The real-DB integration
+        # tests are gated by the separate migrate-smoke job below.
+        run: pnpm test
+
       - name: Build
         # `next build` collects page metadata at compile time, which means
         # every server module's top-level code runs. Several modules under
@@ -68,3 +73,59 @@ jobs:
             echo "next build manifest present"
           fi
           echo "::endgroup::"
+
+  migrate-smoke:
+    name: Migrations · fresh DB
+    runs-on: ubuntu-latest
+    # Validates every drizzle/00*.sql applies cleanly against an empty
+    # Postgres 16. Catches schema-drift mistakes (typo in a new migration,
+    # missing dependency on an existing column) before they reach Coolify's
+    # pre-`next start` migrator and brick a deploy.
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the migrator
+        run: pnpm build:migrator
+
+      - name: Apply migrations to fresh Postgres
+        run: node dist/migrator.mjs
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+
+      - name: Re-apply (idempotency check)
+        # A second run must be a no-op — drizzle's migrator records every
+        # applied migration in __drizzle_migrations and skips repeats.
+        run: node dist/migrator.mjs
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci

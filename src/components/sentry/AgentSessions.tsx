@@ -50,15 +50,23 @@ interface Props {
   connectionId: string;
 }
 
+type ConnectionRole = "owner" | "editor" | "viewer";
+
 interface SessionsData {
   sessions: SessionSummary[];
   canUndo: boolean;
+  myRole: ConnectionRole;
 }
 
 interface SessionDetail {
   session: SessionSummary;
   writes: SessionWrite[];
   canUndo: boolean;
+  myRole: ConnectionRole;
+}
+
+function canMutate(role: ConnectionRole | undefined): boolean {
+  return role === "owner" || role === "editor";
 }
 
 async function fetchSessions(connectionId: string): Promise<SessionsData> {
@@ -369,24 +377,30 @@ function SessionDrawer({
                 <Button variant="ghost" onClick={onClose}>
                   Close
                 </Button>
-                <Button
-                  variant="danger"
-                  disabled={
-                    !data.canUndo ||
-                    undoing ||
-                    data.session.status === "undone" ||
-                    data.writes.length === 0
-                  }
-                  onClick={undo}
-                  title={!data.canUndo ? "Set the Direct Postgres URL on connection settings." : undefined}
-                >
-                  {undoing ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                  ) : (
-                    <Undo2 className="h-3.5 w-3.5" aria-hidden />
-                  )}
-                  Undo session
-                </Button>
+                {canMutate(data.myRole) ? (
+                  <Button
+                    variant="danger"
+                    disabled={
+                      !data.canUndo ||
+                      undoing ||
+                      data.session.status === "undone" ||
+                      data.writes.length === 0
+                    }
+                    onClick={undo}
+                    title={!data.canUndo ? "Set the Direct Postgres URL on connection settings." : undefined}
+                  >
+                    {undoing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                    ) : (
+                      <Undo2 className="h-3.5 w-3.5" aria-hidden />
+                    )}
+                    Undo session
+                  </Button>
+                ) : (
+                  <span className="rounded-full border hairline bg-bg-sunken/40 px-2.5 py-1 text-[11px] text-fg-faint">
+                    viewer · read only
+                  </span>
+                )}
               </div>
             </div>
           </>

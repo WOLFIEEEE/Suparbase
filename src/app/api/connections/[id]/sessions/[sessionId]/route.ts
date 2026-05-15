@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { and, asc, eq } from "drizzle-orm";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionAccess } from "@/server/connections/repo";
 import { getSession } from "@/server/sentry/sessions";
 import { auditLog } from "@/server/schema/audit";
 
@@ -16,8 +16,9 @@ export async function GET(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, sessionId } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const conn = access.conn;
 
   const s = await getSession(session.user.id, id, sessionId);
   if (!s) return NextResponse.json({ category: "not_found" }, { status: 404 });
@@ -47,6 +48,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   return NextResponse.json({
     session: s,
     canUndo: !!conn.encryptedPostgresUrl,
+    myRole: access.role,
     writes: writes.map((w) => ({
       id: w.id,
       schemaName: w.schemaName,

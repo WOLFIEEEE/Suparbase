@@ -47,10 +47,17 @@ interface Props {
   connectionId: string;
 }
 
+type ConnectionRole = "owner" | "editor" | "viewer";
+
 interface SentryData {
   findings: FindingSummary[];
   scans: ScanSummary[];
   canQuarantine: boolean;
+  myRole: ConnectionRole;
+}
+
+function canMutate(role: ConnectionRole | undefined): boolean {
+  return role === "owner" || role === "editor";
 }
 
 async function fetchSentry(connectionId: string): Promise<SentryData> {
@@ -187,6 +194,7 @@ export function SentryDashboard({ connectionId }: Props) {
                   connectionId={connectionId}
                   finding={f}
                   canQuarantine={data?.canQuarantine ?? false}
+                  canMutate={canMutate(data?.myRole)}
                   onAction={onAction}
                 />
               ))}
@@ -367,11 +375,13 @@ function FindingRow({
   connectionId,
   finding,
   canQuarantine,
+  canMutate: canMutateRow,
   onAction,
 }: {
   connectionId: string;
   finding: FindingSummary;
   canQuarantine: boolean;
+  canMutate: boolean;
   onAction: (f: FindingSummary, a: "ack" | "resolve" | "quarantine" | "dismiss") => void;
 }) {
   const tone =
@@ -444,7 +454,11 @@ function FindingRow({
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-1">
-          {quarantined ? (
+          {!canMutateRow ? (
+            <span className="rounded-full border hairline bg-bg-sunken/40 px-2 py-0.5 text-[10px] text-fg-faint">
+              viewer · read only
+            </span>
+          ) : quarantined ? (
             <Button size="sm" variant="ghost" onClick={() => onAction(finding, "dismiss")}>
               <Undo2 className="h-3 w-3" aria-hidden /> Lift quarantine
             </Button>

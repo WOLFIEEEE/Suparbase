@@ -17,6 +17,41 @@ import { fingerprintRequest, type AgentFingerprint } from "./fingerprint";
  */
 const SESSION_WINDOW_MS = 5 * 60 * 1000;
 
+/**
+ * Hot-path cache: in-memory map keyed by `${userId}:${connectionId}:${kind}`
+ * so subsequent writes within the session window skip both the SELECT
+ * and the bumping UPDATE on the agent_session table.
+ *
+ * Each entry stores the session id + last-seen-at-cache-time. When a
+ * write comes in:
+ *   1. If the cached entry is fresher than SESSION_WINDOW_MS, attribute
+ *      the write to it instantly. Bump the cached `lastSeenAt` so a
+ *      slow burst (one write every few minutes) keeps the same id.
+ *   2. We still asynchronously bump the session row in the DB so the
+ *      authoritative `mutation_count` + `tables_touched` stay accurate
+ *      — fire-and-forget, never blocks the proxy reply.
+ *   3. On a cache miss we hit the DB once, then prime the cache.
+ *
+ * Trade-offs:
+ *   - The cache is per-process. Multiple Next.js / serverless instances
+ *     get their own copies; that's fine — duplicate sessions across
+ *     processes are equivalent to the race the v3.1.0 spec already
+ *     documented, and they don't break undo.
+ *   - Memory is bounded by (active users × connections × agent kinds).
+ *     We also evict expired entries opportunistically on each lookup.
+ */
+interface CachedSession {
+  sessionId: string;
+  kind: AgentKind;
+  label: string;
+  lastSeenAt: number;
+}
+const sessionCache = new Map<string, CachedSession>();
+
+function cacheKey(userId: string, connectionId: string, kind: AgentKind): string {
+  return `${userId}:${connectionId}:${kind}`;
+}
+
 export interface AttachToSessionInput {
   userId: string;
   connectionId: string;
@@ -43,8 +78,44 @@ export async function attachToSession(
 ): Promise<AttachedSession | null> {
   try {
     const fp = fingerprintRequest(input.userAgent);
-    const cutoff = new Date(Date.now() - SESSION_WINDOW_MS);
+    const now = Date.now();
+    const cutoff = new Date(now - SESSION_WINDOW_MS);
+    const tableLabel = `${input.schemaName}.${input.tableName}`;
+    const key = cacheKey(input.userId, input.connectionId, fp.kind);
 
+    // ── Cache hot path ──────────────────────────────────────────────
+    const cached = sessionCache.get(key);
+    if (cached && now - cached.lastSeenAt < SESSION_WINDOW_MS) {
+      // Refresh the in-memory timestamp so a slow burst stays in the
+      // same session, and bump the DB row asynchronously.
+      cached.lastSeenAt = now;
+      const sessionId = cached.sessionId;
+      void (async () => {
+        try {
+          await db
+            .update(agentSessions)
+            .set({
+              mutationCount: sql`${agentSessions.mutationCount} + 1`,
+              tablesTouched: sql`CASE WHEN ${tableLabel} = ANY(${agentSessions.tablesTouched}::text[]) THEN ${agentSessions.tablesTouched} ELSE array_append(${agentSessions.tablesTouched}, ${tableLabel}) END`,
+              lastSeenAt: new Date(now),
+            })
+            .where(eq(agentSessions.id, sessionId));
+        } catch {
+          /* never let an audit-side error reach the proxy */
+        }
+      })();
+      return { id: cached.sessionId, kind: cached.kind, label: cached.label };
+    }
+
+    // Opportunistically evict any other expired entries we noticed along
+    // the way. Cheap: only iterates when the cache is non-trivial.
+    if (sessionCache.size > 64) {
+      for (const [k, v] of sessionCache) {
+        if (now - v.lastSeenAt >= SESSION_WINDOW_MS) sessionCache.delete(k);
+      }
+    }
+
+    // ── Cold path: hit the DB ──────────────────────────────────────
     // Find the most recent open session for this (user, conn, kind).
     const [existing] = await db
       .select()
@@ -61,10 +132,14 @@ export async function attachToSession(
       .orderBy(desc(agentSessions.lastSeenAt))
       .limit(1);
 
-    const tableLabel = `${input.schemaName}.${input.tableName}`;
-
     if (existing) {
       await bumpSession(existing, tableLabel);
+      sessionCache.set(key, {
+        sessionId: existing.id,
+        kind: existing.kind,
+        label: existing.label,
+        lastSeenAt: now,
+      });
       return { id: existing.id, kind: existing.kind, label: existing.label };
     }
 
@@ -80,10 +155,21 @@ export async function attachToSession(
         tablesTouched: [tableLabel],
       })
       .returning();
+    sessionCache.set(key, {
+      sessionId: created.id,
+      kind: created.kind,
+      label: created.label,
+      lastSeenAt: now,
+    });
     return { id: created.id, kind: created.kind, label: created.label };
   } catch {
     return null;
   }
+}
+
+/** Test-only helper: clear the cache between tests. */
+export function _resetSessionCache(): void {
+  sessionCache.clear();
 }
 
 async function bumpSession(row: AgentSessionRow, tableLabel: string): Promise<void> {
@@ -199,6 +285,12 @@ export async function markUndoResult(
       undoError: result.error ?? null,
     })
     .where(eq(agentSessions.id, sessionId));
+
+  // Drop any cache entries pointing at this session — future writes
+  // from the same fingerprint should open a fresh session.
+  for (const [k, v] of sessionCache) {
+    if (v.sessionId === sessionId) sessionCache.delete(k);
+  }
 }
 
 /** Re-export for callers that need to fingerprint without attaching. */

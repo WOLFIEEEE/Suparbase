@@ -3,6 +3,49 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.1.2 · 2026-05-15 · Performance, viewer UX, tests, CI
+
+Follow-up to the v3.1.1 audit. No feature work — strictly polish +
+infrastructure. Found 2 real SSRF gaps along the way and fixed them.
+
+**Performance** · proxy hot-path session cache
+- `src/server/sentry/sessions.ts`: every authenticated write through
+  the proxy used to do one extra DB roundtrip to attach to an agent
+  session. Added an in-memory `Map` keyed by `userId:connectionId:kind`
+  with the 5-minute session window as TTL. Cache hits skip the SELECT
+  entirely and bump the session row asynchronously. Bounded eviction
+  on each cold-path call. Invalidated when a session is undone so the
+  next write opens a fresh one.
+
+**Viewer UX** · stop showing buttons that 403
+- `/api/connections/[id]/sentry` and `/api/connections/[id]/sessions`
+  now return `myRole` so the client can render the right buttons.
+- SentryDashboard hides Quarantine / Acknowledge / Resolve / Lift for
+  viewers and shows a "viewer · read only" pill instead.
+- AgentSessions hides the Undo button on the session drawer for
+  viewers and shows the same pill.
+
+**Tests** · vitest bootstrap + 53 unit tests
+- `vitest.config.ts` + `tests/` with stubs for `server-only` and
+  `@/server/db` so pure helpers can be loaded without booting Postgres.
+- `tests/fingerprint.test.ts` — every UA pattern + the `ai_unknown` /
+  `browser` / `cli` / `unknown` fallthroughs.
+- `tests/undo-sql.test.ts` — every verb branch, identifier quoting,
+  embedded quotes, null-byte stripping, jsonb fallback.
+- `tests/webhook-ssrf.test.ts` — 20 blocked URLs + 5 allowed.
+- **Two real bugs caught by the tests**: `::ffff:127.0.0.1` canonical
+  form (`[::ffff:7f00:1]`) and `fdXX::/8` ULA range weren't matched
+  by the v3.1.1 patterns. Fixed.
+- `pnpm test` script added. New "Unit tests" step in CI.
+
+**CI** · migration smoke check
+- New `migrate-smoke` job in `.github/workflows/ci.yml` spins up a
+  Postgres 16 service container, builds the production migrator,
+  applies every `drizzle/*.sql` against an empty DB, then re-runs to
+  prove idempotency. Catches schema-drift mistakes (typos, missing
+  dependencies on a previous migration) before they reach Coolify's
+  pre-`next start` migrator.
+
 ## v3.1.1 · 2026-05-15 · Hardening pass
 
 Tag: `v3.1.1` · No new feature work — locking the v3 surface before

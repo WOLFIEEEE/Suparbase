@@ -33,7 +33,7 @@ export interface UndoResult {
   error: string | null;
 }
 
-interface AuditRowMinimal {
+export interface AuditRowMinimal {
   id: string;
   schemaName: string;
   tableName: string;
