@@ -125,11 +125,18 @@ export async function POST(req: NextRequest, ctx: Params) {
         connectionId: id,
         userId: session.user.id,
       });
+      // Map carefully:
+      //   - unauthorized: 400 (key problem, user-actionable in /settings/ai)
+      //   - rate_limited: 429 (transient, retry-after)
+      //   - malformed: 422 (model output didn't validate; rephrase)
+      //   - network / server: 502 (upstream is the problem)
       const status =
         e.category === "unauthorized"
           ? 400
           : e.category === "rate_limited"
           ? 429
+          : e.category === "malformed"
+          ? 422
           : 502;
       return NextResponse.json({ category: e.category, message: e.message }, { status });
     }

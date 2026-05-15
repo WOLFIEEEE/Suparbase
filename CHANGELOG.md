@@ -3,6 +3,26 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.2.2 · 2026-05-15 · Widget AI: forbid `$N` placeholders
+
+Bugfix. The widget-builder model occasionally leaked the actions-style
+`$1..$N` parametrisation into widget SQL (e.g. prompt "Tool usage by
+daily basis" → `where created_at > $1`). Widgets run unparametrised
+through `executeSql`, so Postgres returned a generic "syntax error at
+or near $1" that didn't point at the real cause and didn't tell the
+user how to recover.
+
+- **`src/server/ai/widget-generate.ts`**: system prompt now explicitly
+  forbids `$N` placeholders and tells the model to bake the literal
+  value into the SQL using `NOW()`, `CURRENT_DATE`, or `INTERVAL`
+  literals. Added a belt-and-braces pre-execution check (`/\$\d+/`)
+  that rejects with a clear "use literal values, not placeholders"
+  message before the SQL ever reaches Postgres.
+- **`POST /api/connections/[id]/widgets/ai-generate`**: `malformed`
+  category now maps to HTTP 422 instead of 502 — it's the model's
+  output that failed validation, not an upstream incident, and the
+  user can fix it by rephrasing.
+
 ## v3.2.1 · 2026-05-15 · AI-powered action builder
 
 Same shape as v3.2's widget AI, applied to custom actions. Describe

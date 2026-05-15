@@ -100,7 +100,8 @@ Your output MUST be a strict JSON object matching this shape:
 
 Rules:
 - The SQL MUST be a SELECT (or WITH ... SELECT). NEVER INSERT, UPDATE, DELETE, ALTER, DROP, CREATE, TRUNCATE, GRANT, REVOKE, SET, or any DDL/DML. The query runs inside a read-only transaction; a write will fail. Pick the simplest read that answers the user's request.
-- Use only tables and columns that appear in the provided schema. NEVER invent column names. If the schema doesn't contain something the user asked for, pick the closest available column and explain via the description.
+- The SQL is executed WITHOUT bind values. NEVER use $1, $2, or any other $N parameter placeholders. If the user implies a filter ("last 30 days", "this week"), bake the value into the SQL using NOW(), CURRENT_DATE, INTERVAL literals, or specific numeric literals. A query that references $1 produces "syntax error at or near $1" and fails the user. This rule is non-negotiable.
+- Use only tables and columns that appear in the provided schema. NEVER invent column names. If the schema doesn't contain something the user asked for, pick the closest available column and explain via the description. If no reasonable approximation exists, return a small descriptive query (e.g. SELECT 'no matching data' AS note) and explain in the description.
 - For "kpi" widgets: return a single row with one or two numeric columns named "value" and optionally "previous". visConfig.valueColumn defaults to "value".
 - For "bar" or "line" widgets: return 2 columns (label, value). visConfig.labelColumn and visConfig.valueColumn name them. For "line" widgets, the labelColumn should usually be a date / timestamp aggregated by day/week/month using date_trunc(); ORDER BY the labelColumn ASC.
 - For "list" widgets: return up to ~10 rows with the columns named in visConfig.columns. ORDER BY a sensible column (usually a timestamp DESC).
@@ -227,6 +228,19 @@ export async function generateWidget(input: GenerateWidgetInput): Promise<Genera
     throw new OpenRouterError(
       "malformed",
       "Generated SQL must be a SELECT statement. Please rephrase.",
+    );
+  }
+
+  // Widgets execute without bind values. Models occasionally leak the
+  // actions-style `$1` parametrisation into widget SQL (the system
+  // prompt forbids this; this is a belt-and-braces catch). Detect and
+  // reject with a clear message before we send the query to Postgres,
+  // which would otherwise return a generic "syntax error at or near
+  // $1" that doesn't point at the real cause.
+  if (/\$\d+/.test(validated.data.sql)) {
+    throw new OpenRouterError(
+      "malformed",
+      "Generated SQL used $N placeholders; widgets run without bind values. Try rephrasing with the literal value baked in (e.g. 'last 30 days' instead of a placeholder).",
     );
   }
 
