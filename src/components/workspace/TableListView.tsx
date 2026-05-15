@@ -46,6 +46,7 @@ import { FilterBar } from "@/components/data/FilterBar";
 import { ViewTabs } from "@/components/data/ViewTabs";
 import { parseFilterParams } from "@/lib/filters/parse-url";
 import { StatusPill } from "@/components/presets/shared/StatusPill";
+import { ActionRunner } from "@/components/actions/ActionRunner";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 
@@ -176,6 +177,12 @@ function Body({ connectionId, table, analysis }: BodyProps) {
 
   const headerActions = (
     <>
+      <ActionRunner
+        connectionId={connectionId}
+        surface="table"
+        tableSchema={table.schema}
+        tableName={table.name}
+      />
       <PresetSwitcher active="generic" />
       <ExportMenu
         connectionId={connectionId}

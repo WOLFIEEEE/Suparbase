@@ -21,6 +21,7 @@ import { AnalysisBanner } from "@/components/workspace/AnalysisBanner";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { PageHeader, StatTile } from "@/components/workspace/PageHeader";
 import { TableTile } from "@/components/data/TableTile";
+import { ActionRunner } from "@/components/actions/ActionRunner";
 import { AppError } from "@/lib/errors";
 import { relativeFromNow } from "@/lib/ui/time";
 import { encodePkSegment } from "@/lib/table/pk";
@@ -91,6 +92,8 @@ export function Dashboard() {
         }
         actions={<QuickActions connectionId={connection.id} users={groups.users[0] ?? null} hasAiKey={!!aiSettings?.hasKey} />}
       />
+
+      <ActionRunner connectionId={connection.id} surface="global" />
 
       <AnalysisBanner />
 

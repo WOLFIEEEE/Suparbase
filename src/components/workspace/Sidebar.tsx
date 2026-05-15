@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Database, FolderOpen, LayoutDashboard, Settings, ShieldCheck, Sparkles, SquareCode, Table2, UserCog } from "lucide-react";
+import { ArrowLeft, Database, FolderOpen, LayoutDashboard, Settings, ShieldCheck, Sparkles, SquareCode, Table2, UserCog, Zap } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
 import { Wordmark } from "@/components/brand/Logo";
+import { SITE } from "@/lib/seo/site";
 import type { AiSettingsSummary } from "@/lib/types/analysis";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
@@ -23,6 +24,7 @@ const items: NavItem[] = [
   { sub: "sql", label: "SQL", icon: SquareCode },
   { sub: "storage", label: "Storage", icon: FolderOpen },
   { sub: "auth-users", label: "Auth users", icon: UserCog },
+  { sub: "actions", label: "Actions", icon: Zap },
   { sub: "rls", label: "RLS", icon: ShieldCheck },
   { sub: "settings", label: "Connection", icon: Settings },
 ];
@@ -134,7 +136,7 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
           </div>
         </Link>
         <div className="px-3 text-[10px] uppercase tracking-wider text-fg-faint">
-          v1.0 · proxied · AI
+          v{SITE.version} · proxied · AI
         </div>
       </div>
     </div>

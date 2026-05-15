@@ -1,11 +1,11 @@
 <!-- SPECKIT START -->
-**Current**: v2.0.0 on `main` (tagged `v2.0.0`). AI chat overhaul:
-persistent multi-conversation memory (per-connection localStorage,
-sidebar with switch / delete / export), three new agent tools
-(`aggregate`, `list_indexes`, `audit_summary`), page-context awareness
-(the agent knows what table you're viewing), markdown rendering with
-copyable code blocks, and per-conversation token totals. Read-only-
-by-default contract preserved — write proposals still require Apply.
+**Current**: v2.1.0 on `main` (tagged `v2.1.0`). Custom actions: a
+per-connection registry of named buttons backed by SQL templates or
+webhooks, with global / table / row scope. Surfaced on the connection
+dashboard, table headers, and row detail pages. Param-aware dialog at
+run time; danger actions require typed confirmation. First of four
+releases (v2.1 → v2.4) closing the "we'll just build our own panel"
+gap (dashboards / impersonation / teams come next).
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -36,4 +36,5 @@ Spec-kit features (chronological):
 - [specs/019-seo-content/](specs/019-seo-content/) · v1.5, content + SEO release: blog, use-cases, sitemap, JSON-LD
 - [specs/020-content-expansion/](specs/020-content-expansion/) · v1.6, eight vibe-coding-era articles + three comparison pages
 - [specs/024-ai-chat-v2/](specs/024-ai-chat-v2/) · v2.0, AI chat overhaul: persistent conversations + 3 new tools + page context + markdown
+- [specs/025-custom-actions/](specs/025-custom-actions/) · v2.1, custom actions (SQL / webhook buttons surfaced on tables + rows)
 <!-- SPECKIT END -->

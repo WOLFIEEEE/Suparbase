@@ -52,6 +52,11 @@ export interface SqlExecuteOptions {
   sql: string;
   readOnly: boolean;
   statementTimeoutMs?: number;
+  /**
+   * Positional parameters for $1..$N placeholders. Bound via postgres.js
+   * so values are never string-concatenated into the SQL.
+   */
+  params?: unknown[];
 }
 
 /**
@@ -103,7 +108,7 @@ export async function executeSql(opts: SqlExecuteOptions): Promise<SqlExecuteRes
           await tx.unsafe("SET TRANSACTION READ ONLY");
           await tx`SET LOCAL statement_timeout = ${timeoutMs}`;
           try {
-            captured = await tx.unsafe(opts.sql);
+            captured = await tx.unsafe(opts.sql, opts.params as never);
           } catch (e) {
             capturedError = e;
           }
@@ -118,7 +123,7 @@ export async function executeSql(opts: SqlExecuteOptions): Promise<SqlExecuteRes
       try {
         await sql.begin(async (tx) => {
           await tx`SET LOCAL statement_timeout = ${timeoutMs}`;
-          captured = await tx.unsafe(opts.sql);
+          captured = await tx.unsafe(opts.sql, opts.params as never);
         });
       } catch (e) {
         capturedError = e;

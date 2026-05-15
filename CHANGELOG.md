@@ -3,6 +3,36 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v2.1.0 · 2026-05-15 · Custom actions
+
+Tag: `v2.1.0` · Spec: [`025`](specs/025-custom-actions/)
+
+The first of four releases (v2.1 → v2.4) aimed at closing the
+"we'll just build our own admin panel" gap. v2.1 lets ops teams
+define declarative buttons backed by SQL templates or webhooks.
+
+- **Action registry**: per-connection storage of named actions with
+  scope (global / table / row), kind (sql / webhook), params, and a
+  danger flag. CRUD via `/api/connections/[id]/actions` and a new
+  `/c/[id]/actions` management page.
+- **Action surfaces**: button strip rendered on the connection
+  dashboard (global actions), in table headers (table-scoped), and on
+  row detail pages (row-scoped, primary key auto-bound).
+- **Safety**: SQL templates run through the existing `executeSql()`
+  with parametrised `$1..$N` binding (no string concatenation),
+  optional READ ONLY transaction, and the same row + char caps as
+  the SQL playground. Webhooks reject private-network targets to
+  block SSRF and time out after 15s with a 64KB body cap. Danger
+  actions require typed-name confirmation. All executions are
+  rate-limited.
+- **Param form**: each action's params become a small dialog at run
+  time, with type-aware inputs (string / number / boolean / json) and
+  a results card showing rows + timing (SQL) or status + body
+  (webhook).
+
+Sidebar gains an "Actions" entry; the sidebar version display now
+reads from `SITE.version` instead of the hardcoded `v1.0`.
+
 ## v2.0.0 · 2026-05-14 · AI chat overhaul
 
 Tag: `v2.0.0` · Spec: [`024`](specs/024-ai-chat-v2/)

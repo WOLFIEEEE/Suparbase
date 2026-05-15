@@ -43,6 +43,13 @@
       "when": 1778735216986,
       "tag": "0005_silent_hardball",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778824177743,
+      "tag": "0006_sleepy_starhawk",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { EditableField } from "@/components/row/EditableField";
 import { RowHistoryPanel } from "@/components/row/RowHistoryPanel";
 import { StatusPill } from "./shared/StatusPill";
+import { ActionRunner } from "@/components/actions/ActionRunner";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
 import { AppError } from "@/lib/errors";
@@ -178,6 +179,15 @@ export function GenericDetail({ connectionId, table, schema, analysis, pkSegment
         actions={
           canEdit && !editMode ? (
             <>
+              <ActionRunner
+                connectionId={connectionId}
+                surface="row"
+                tableSchema={table.schema}
+                tableName={table.name}
+                primaryKey={Object.fromEntries(
+                  table.primaryKey.map((c) => [c, row[c]]),
+                )}
+              />
               <Button variant="secondary" onClick={() => toggleEdit(true)}>
                 <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
               </Button>
