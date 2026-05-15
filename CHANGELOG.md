@@ -3,6 +3,51 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.2.0 · 2026-05-15 · AI-powered widget builder
+
+Tag: `v3.2.0`
+
+You can now build dashboard widgets by describing them in natural
+language. Reuses the OpenRouter integration that was already wired
+for the AI chat.
+
+- **New `src/server/ai/widget-generate.ts`**: focused one-shot
+  prompt that gets back a strictly-typed widget config. The system
+  prompt locks the response to SELECT-only SQL, named columns
+  matching the introspected schema, and a Zod-validated shape
+  (`type / title / sql / visConfig`). Extra defensive guards:
+  strip code-fence wrapping, refuse non-SELECT, fail validation
+  if Zod doesn't accept the result.
+- **New `POST /api/connections/[id]/widgets/ai-generate`**: takes
+  `{ prompt }`, returns `{ widget, preview }`. Role-gated to
+  editor+, AI bucket rate-limited. Server-side:
+  1. Auth + role check
+  2. Pull OpenRouter key + model from user settings
+  3. Introspect the connection's schema
+  4. Generate widget config via OpenRouter (temperature 0, JSON
+     response format)
+  5. Execute the generated SQL read-only with a 5s timeout to catch
+     hallucinated column names and syntax errors at API time, not
+     save time
+  6. Return the config + first 5 preview rows
+  Failures at step 5 return a 422 with the Postgres error in the
+  body, so the UI can prompt the user to rephrase.
+- **Editor UI**: new collapsible "Generate with AI" panel at the
+  top of the widget form. Default open for new widgets, closed on
+  edit. Prompt textarea + Generate button with a spinner; on
+  success the form below is populated with type / title / SQL /
+  visConfig and an inline preview table shows the first 5 rows
+  from the generated query. Model name is shown so the user knows
+  which model produced it.
+- **Error surfaces**: no OpenRouter key in settings → friendly
+  "Add a key in Settings → AI" message; hallucinated column → the
+  exact Postgres error inline; rate limit → 429 with Retry-After.
+
+The user reviews the populated fields and clicks Save just like
+the existing manual flow. No new column saved, no new schema
+table — the widget that ends up in `dashboard_widget` is identical
+to one a human typed by hand.
+
 ## v3.1.5 · 2026-05-15 · Production hardening pass
 
 Eight items closed, every gap from the production audit that's

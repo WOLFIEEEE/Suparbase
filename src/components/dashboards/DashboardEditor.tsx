@@ -10,12 +10,17 @@ import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
   BarChart3,
+  ChevronDown,
+  ChevronRight,
   LineChart as LineIcon,
   List,
+  Loader2,
   Pencil,
   Plus,
   Sigma,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -228,11 +233,84 @@ function fromWidget(w: WidgetSummary): FormState {
   };
 }
 
+interface AiPreview {
+  columns: Array<{ name: string; typeOid: number }>;
+  rows: unknown[][];
+  rowCount: number;
+  truncated: boolean;
+  elapsedMs: number;
+}
+
 function WidgetFormDialog({ connectionId, initial, onClose, onSaved }: FormDialogProps) {
   const [form, setForm] = useState<FormState>(() => (initial ? fromWidget(initial) : blank()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isEdit = !!initial;
+
+  // AI-generate state — lives next to the form so the prompt and the
+  // resulting preview are visible at the same time as the populated
+  // fields the user is about to save.
+  const [aiOpen, setAiOpen] = useState(!isEdit);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiPreview, setAiPreview] = useState<AiPreview | null>(null);
+  const [aiModel, setAiModel] = useState<string | null>(null);
+
+  const runAi = useCallback(async () => {
+    if (aiBusy || aiPrompt.trim().length < 3) return;
+    setAiBusy(true);
+    setAiError(null);
+    setAiPreview(null);
+    try {
+      const res = await fetch(
+        `/api/connections/${encodeURIComponent(connectionId)}/widgets/ai-generate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: aiPrompt }),
+        },
+      );
+      const j = (await res.json().catch(() => ({}))) as {
+        widget?: {
+          type: "kpi" | "bar" | "line" | "list";
+          title: string;
+          description?: string | null;
+          sql: string;
+          visConfig: WidgetVisConfig;
+        };
+        preview?: AiPreview;
+        message?: string;
+        category?: string;
+        model?: string;
+      };
+      if (!res.ok || !j.widget) {
+        setAiError(j.message ?? `HTTP ${res.status}`);
+        return;
+      }
+      const w = j.widget;
+      setForm((prev) => ({
+        ...prev,
+        type: w.type,
+        title: w.title.slice(0, 60),
+        description: (w.description ?? "").slice(0, 200),
+        sql: w.sql,
+        valueColumn: w.visConfig.valueColumn ?? prev.valueColumn,
+        labelColumn: w.visConfig.labelColumn ?? prev.labelColumn,
+        unit: w.visConfig.unit ?? prev.unit,
+        prefix: w.visConfig.prefix ?? prev.prefix,
+        format: w.visConfig.format ?? prev.format,
+        columns: w.visConfig.columns ? w.visConfig.columns.join(", ") : prev.columns,
+      }));
+      setAiPreview(j.preview ?? null);
+      setAiModel(j.model ?? null);
+      toast.success("Widget generated. Review and save.");
+    } catch (e) {
+      setAiError((e as Error).message ?? "Generation failed.");
+    } finally {
+      setAiBusy(false);
+    }
+  }, [aiBusy, aiPrompt, connectionId]);
 
   const save = useCallback(async () => {
     setSaving(true);
@@ -292,6 +370,126 @@ function WidgetFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
         <DialogDescription>
           Saves a SQL query as a KPI tile, chart, or list on the dashboard.
         </DialogDescription>
+
+        {/* AI-generate panel — collapsed by default on edit, open on
+            create. Lives above the form so the user can ask once,
+            review the populated fields below, tweak, and save. */}
+        <section className="rounded-lg border hairline bg-bg-sunken/40">
+          <button
+            type="button"
+            onClick={() => setAiOpen((v) => !v)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-bg-sunken/60"
+            aria-expanded={aiOpen}
+          >
+            {aiOpen ? (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-fg-faint" aria-hidden />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-fg-faint" aria-hidden />
+            )}
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+            <span className="font-display">Generate with AI</span>
+            <span className="ml-1 text-xs text-fg-faint">
+              describe what you want, we build the SQL + config
+            </span>
+          </button>
+          {aiOpen && (
+            <div className="space-y-2 border-t hairline px-3 py-3">
+              <Textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                rows={2}
+                placeholder="e.g. 'weekly signups as a line chart for the last 12 weeks' or 'top 10 customers by total order value'"
+                className="!text-sm"
+                aria-label="Describe the widget you want"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] text-fg-faint">
+                  Runs your OpenRouter key on the model set in{" "}
+                  <a href="/settings/ai" className="text-accent hover:underline">
+                    Settings &rarr; AI
+                  </a>
+                  . We validate the SQL read-only before populating the form.
+                  {aiModel && (
+                    <span className="ml-1 font-mono text-fg-muted">
+                      via {aiModel}
+                    </span>
+                  )}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={runAi}
+                  disabled={aiBusy || aiPrompt.trim().length < 3}
+                >
+                  {aiBusy ? (
+                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                  ) : (
+                    <Sparkles className="h-3 w-3" aria-hidden />
+                  )}
+                  {aiBusy ? "Generating…" : "Generate"}
+                </Button>
+              </div>
+              {aiError && (
+                <div className="flex items-start gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-2.5 py-1.5 text-[11px] text-danger">
+                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+                  <span>{aiError}</span>
+                </div>
+              )}
+              {aiPreview && (
+                <details
+                  className="rounded-md border hairline bg-bg-raised text-[11px]"
+                  open
+                >
+                  <summary className="flex cursor-pointer items-center gap-2 px-2 py-1.5">
+                    <span className="font-mono text-fg-faint uppercase tracking-[0.12em]">
+                      preview
+                    </span>
+                    <span className="text-fg-muted">
+                      {aiPreview.rowCount.toLocaleString()} row
+                      {aiPreview.rowCount === 1 ? "" : "s"}
+                      {aiPreview.truncated && " (showing 5)"}
+                      · {aiPreview.elapsedMs}ms
+                    </span>
+                  </summary>
+                  {aiPreview.rows.length > 0 && (
+                    <div className="overflow-x-auto border-t hairline">
+                      <table className="w-full border-collapse text-[11px]">
+                        <thead className="bg-bg-sunken/60">
+                          <tr>
+                            {aiPreview.columns.map((c) => (
+                              <th
+                                key={c.name}
+                                className="truncate border-b hairline px-2 py-1 text-left font-mono text-[10px] font-normal text-fg-faint"
+                              >
+                                {c.name}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {aiPreview.rows.map((row, i) => (
+                            <tr key={i} className="align-top">
+                              {row.map((cell, j) => (
+                                <td
+                                  key={j}
+                                  className="truncate border-b hairline px-2 py-1 font-mono text-fg-muted"
+                                  style={{ maxWidth: "10rem" }}
+                                  title={String(cell ?? "")}
+                                >
+                                  {cell === null || cell === undefined ? "null" : String(cell)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </details>
+              )}
+            </div>
+          )}
+        </section>
 
         <form
           onSubmit={(e) => {
