@@ -57,6 +57,13 @@
       "when": 1778824921435,
       "tag": "0007_funny_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778825809447,
+      "tag": "0008_rich_power_man",
+      "breakpoints": true
     }
   ]
 }

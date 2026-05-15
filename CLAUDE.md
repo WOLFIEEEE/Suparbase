@@ -1,12 +1,14 @@
 <!-- SPECKIT START -->
-**Current**: v2.3.0 on `main` (tagged `v2.3.0`). Customer
-impersonation + session inspector: per-user detail page at
-`/c/[id]/auth-users/[uid]` with profile, active sessions (read from
-`auth.sessions` directly), and related-records discovery (UNION-ALL
-count across every table with a `user_id` / `owner_id` / `created_by`
-uuid column, with "view filtered" links). Quick actions for recovery,
-session revoke (one or all), and user delete. Third of four releases
-closing the "we'll just build our own panel" gap (teams come next).
+**Current**: v2.4.0 on `main` (tagged `v2.4.0`). Team workspace:
+multi-user connections with `editor` / `viewer` roles (owner is
+implicit via `connections.user_id`). Owners invite teammates via
+expiring URL tokens. `getConnectionForUser()` now honors memberships;
+`listConnections()` returns owned + member-of with a `myRole` tag.
+Member management surface on `/c/[id]/settings`, invitation accept
+page at `/invitations/[token]`. Per-route viewer-vs-editor write
+enforcement at the proxy is deferred to v2.4.x. Fourth and final
+release in the v2.1 → v2.4 push closing the "we'll just build our
+own panel" gap.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -40,4 +42,5 @@ Spec-kit features (chronological):
 - [specs/025-custom-actions/](specs/025-custom-actions/) · v2.1, custom actions (SQL / webhook buttons surfaced on tables + rows)
 - [specs/026-dashboards/](specs/026-dashboards/) · v2.2, connection dashboards (KPI / bar / line / list widgets with SVG charts)
 - [specs/027-impersonation/](specs/027-impersonation/) · v2.3, per-user detail page (sessions inspector + related-records discovery)
+- [specs/028-team-workspace/](specs/028-team-workspace/) · v2.4, team workspace (multi-user connections with editor / viewer roles)
 <!-- SPECKIT END -->

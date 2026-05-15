@@ -151,6 +151,9 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
             <p className="truncate font-mono text-[11px] text-fg-faint">{connection.hostname}</p>
           </div>
           <div className="pointer-events-auto relative z-20 flex shrink-0 items-center gap-1.5">
+            {connection.myRole && connection.myRole !== "owner" && (
+              <Badge>{connection.myRole}</Badge>
+            )}
             <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -172,25 +175,29 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
                 <DropdownMenuItem asChild>
                   <Link href={`/c/${connection.id}/settings`}>Open settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setNameDraft(connection.name);
-                    setRenameOpen(true);
-                  }}
-                >
-                  <Pencil className="mr-2 h-3.5 w-3.5" aria-hidden /> Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setDeleteOpen(true);
-                  }}
-                  className="text-danger focus:text-danger"
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden /> Delete
-                </DropdownMenuItem>
+                {(!connection.myRole || connection.myRole === "owner") && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setNameDraft(connection.name);
+                        setRenameOpen(true);
+                      }}
+                    >
+                      <Pencil className="mr-2 h-3.5 w-3.5" aria-hidden /> Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setDeleteOpen(true);
+                      }}
+                      className="text-danger focus:text-danger"
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" aria-hidden /> Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

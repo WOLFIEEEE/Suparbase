@@ -3,6 +3,43 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v2.4.0 · 2026-05-15 · Team workspace (multi-user connections)
+
+Tag: `v2.4.0` · Spec: [`028`](specs/028-team-workspace/)
+
+Fourth and final release in the "we'll just build our own panel"
+push. Suparbase is no longer a single-user app: owners can invite
+teammates and pick a role.
+
+- **`connection_member` + `connection_invitation` tables** (drizzle
+  migration 0008). Owner stays implicit via `connections.user_id`;
+  members are stored with `role: 'editor' | 'viewer'`.
+- **Access model**: `getConnectionForUser()` now returns the
+  connection if the caller is the owner OR any member, so every
+  existing protected route just works for invited teammates.
+  `listConnections()` returns owned + member-of connections with a
+  `myRole` tag. A new `requireRole()` helper gates owner-only
+  routes (rename / delete connection, member management, invite
+  CRUD). Per-route viewer-vs-editor write enforcement on the proxy
+  is deferred to v2.4.x.
+- **Invite-by-link** (no email infra yet): owner generates a
+  7-day-expiry token and copies the URL. Invitee clicks the URL
+  → if their session email matches, accepts and joins. Mismatched
+  or expired tokens get clear error states.
+- **UI**: new "Team" section on `/c/[id]/settings` showing the
+  member roster (with avatar, role select, remove) and pending
+  invitations (revoke + "Get link"). Connection cards in the list
+  show the caller's role tag (editor/viewer) and hide the
+  rename/delete dropdown actions for non-owners. New
+  `/invitations/[token]` accept page with redirect-to-signin flow.
+
+API:
+- `GET /api/connections/[id]/members` (any access)
+- `POST /api/connections/[id]/members/invitations` (owner)
+- `DELETE /api/connections/[id]/members/invitations/[invId]` (owner)
+- `PATCH / DELETE /api/connections/[id]/members/[memberId]` (owner)
+- `POST /api/invitations/[token]/accept`
+
 ## v2.3.0 · 2026-05-15 · Customer impersonation + session inspector
 
 Tag: `v2.3.0` · Spec: [`027`](specs/027-impersonation/)
