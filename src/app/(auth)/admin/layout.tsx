@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
       <AppHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[14rem_1fr]">
           <aside className="md:sticky md:top-20 md:self-start">
             <div className="mb-4 flex items-center gap-2 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs">

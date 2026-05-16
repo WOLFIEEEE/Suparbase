@@ -3,6 +3,55 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.5.0 · 2026-05-15 · Accessibility pass + VPAT 2.5
+
+Honest accessibility documentation backed by a real audit + 5 quick
+fixes that close the gaps the audit flagged. New pages at
+`/accessibility` (plain-English statement) and `/accessibility/vpat`
+(VPAT 2.5 Rev conformance report). Both linked from the public
+footer's Company column.
+
+**Quick wins shipped (the VPAT now reflects these):**
+- **Skip link** on every page (`/src/app/layout.tsx`) jumps to the
+  `<main id="main">` landmark in each layout. Flips WCAG 2.4.1
+  Bypass Blocks from "Does Not Support" → "Supports".
+- **Bare-label form fields patched**:
+  - TeamMembers invite (Email + Role) now use `htmlFor`/`id` pairs.
+  - `ActionsManager`'s `Field` helper wraps `<label>` around its
+    contents so any input descendant auto-associates.
+  - `EditableField` inline editor gives every editor field an
+    `aria-label={"Edit " + column.name}` so screen readers announce
+    which column is being edited.
+- **`title="..."` tooltips replaced with Radix Tooltip** in
+  `SignInForm` ("Forgot?") and `Topbar` ("Refresh schema"). Now
+  keyboard-reachable + screen-reader-exposed + dismissible.
+- **AI chat marked as a polite live region** (`role="log"`,
+  `aria-live="polite"`, `aria-relevant="additions text"`,
+  `aria-label="AI assistant conversation"`). Streamed assistant
+  responses are now announced.
+- **Sonner toaster** changed from hard-coded `theme="dark"` to
+  `theme="system"` so light-mode users get light-mode toasts.
+
+**New pages:**
+- `/accessibility` — plain-English statement: what's solid, what's
+  partial, what doesn't apply, how to report issues, contact at
+  `accessibility@suparbase.com`. Realistic about color-contrast
+  verification not being tool-measured.
+- `/accessibility/vpat` — full VPAT 2.5 Rev: Product Information,
+  Standards Covered, Terms, WCAG 2.1 Level AA criterion-by-criterion
+  table (all 45 criteria), Revised Section 508 functional-performance
+  table, EN 301 549 V3.2.1 chapter mapping, legal disclaimer, and
+  revision history. Every "Supports / Partially / Does Not Support /
+  Not Applicable" cell traces back to specific code observations or
+  honest "couldn't fully verify" notes.
+
+**Footer:** new "Accessibility" link in the Company column,
+between Terms and Contact.
+
+**No application behaviour changes** beyond the live-region + label
+additions and the toast theme switch. Pure accessibility hardening
++ documentation.
+
 ## v3.4.3 · 2026-05-15 · Database optimisation pass
 
 Schema-level + query-level performance pass. No behaviour changes;

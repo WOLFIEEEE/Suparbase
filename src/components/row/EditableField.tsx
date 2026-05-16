@@ -247,6 +247,10 @@ function Editor({
     "focus:border-line-strong focus:outline-none focus-visible:ring-1 focus-visible:ring-accent",
   );
 
+  // Use the column name as the accessible name so screen readers
+  // announce "Edit <column>" when the user enters edit mode.
+  const editorAriaLabel = `Edit ${col.name}`;
+
   let field: React.ReactNode;
   if (col.category === "enum" && col.enumValues) {
     field = (
@@ -254,6 +258,7 @@ function Editor({
         ref={(el) => {
           inputRef.current = el;
         }}
+        aria-label={editorAriaLabel}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => void commit()}
@@ -277,6 +282,7 @@ function Editor({
         ref={(el) => {
           inputRef.current = el;
         }}
+        aria-label={editorAriaLabel}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => void commit()}
@@ -297,6 +303,7 @@ function Editor({
         ref={(el) => {
           inputRef.current = el;
         }}
+        aria-label={editorAriaLabel}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => void commit()}
@@ -315,6 +322,7 @@ function Editor({
         ref={(el) => {
           inputRef.current = el;
         }}
+        aria-label={editorAriaLabel}
         type={inputTypeFor(col)}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

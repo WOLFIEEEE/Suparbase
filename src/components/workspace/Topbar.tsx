@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,27 +115,31 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={refreshSchema}
-            disabled={refreshing}
-            aria-label="Refresh schema"
-            title={
-              connection.hasPostgresUrl
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={refreshSchema}
+                disabled={refreshing}
+                aria-label="Refresh schema"
+              >
+                {refreshing ? (
+                  <Loader2 className={cn("h-3.5 w-3.5 animate-spin")} aria-hidden />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                )}
+                <span className="hidden sm:inline">
+                  {refreshing ? "Refreshing…" : "Refresh schema"}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {connection.hasPostgresUrl
                 ? "Re-introspect the project. Asks PostgREST to drop its OpenAPI cache first."
-                : "Re-introspect the project. Add a Direct Postgres URL on connection settings to also drop PostgREST's cache."
-            }
-          >
-            {refreshing ? (
-              <Loader2 className={cn("h-3.5 w-3.5 animate-spin")} aria-hidden />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-            )}
-            <span className="hidden sm:inline">
-              {refreshing ? "Refreshing…" : "Refresh schema"}
-            </span>
-          </Button>
+                : "Re-introspect the project. Add a Direct Postgres URL on connection settings to also drop PostgREST's cache."}
+            </TooltipContent>
+          </Tooltip>
           {session?.user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

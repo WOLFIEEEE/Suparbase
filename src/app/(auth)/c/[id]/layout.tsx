@@ -27,7 +27,7 @@ export default async function ConnectionLayout({ children, params }: Props) {
         <Sidebar connectionId={connection.id} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar connection={connection} />
-          <main className="flex-1">
+          <main id="main" className="flex-1">
             <div className="mx-auto w-full max-w-7xl px-6 py-8">{children}</div>
           </main>
           <AppFooter width="wide" />

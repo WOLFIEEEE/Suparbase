@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/ui/cn";
 
 interface Props {
@@ -88,12 +89,19 @@ export function SignInForm({ githubEnabled, error }: Props) {
             >
               Password
             </Label>
-            <span
-              title="Self-service password reset isn't wired up yet: contact your admin."
-              className="cursor-help text-[10px] uppercase tracking-wider text-fg-faint"
-            >
-              Forgot?
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="cursor-help text-[10px] uppercase tracking-wider text-fg-faint hover:text-fg focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  Forgot?
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Self-service password reset isn&apos;t wired up yet: contact your admin.
+              </TooltipContent>
+            </Tooltip>
           </div>
           <div className="relative">
             <Input

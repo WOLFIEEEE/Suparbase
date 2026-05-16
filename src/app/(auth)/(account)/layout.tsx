@@ -10,7 +10,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
       <AppHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <div className="mx-auto w-full max-w-6xl px-6 py-10">{children}</div>
       </main>
       <AppFooter width="narrow" />

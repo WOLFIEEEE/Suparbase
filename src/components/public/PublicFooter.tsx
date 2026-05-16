@@ -41,6 +41,7 @@ const COLUMNS: Column[] = [
       { label: "About", href: "/about" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
+      { label: "Accessibility", href: "/accessibility" },
       { label: "Contact", href: "mailto:hello@suparbase.com", external: true },
     ],
   },

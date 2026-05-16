@@ -714,7 +714,15 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
           </div>
         </header>
 
-        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
+        <div
+          ref={scrollRef}
+          role="log"
+          aria-live="polite"
+          aria-atomic="false"
+          aria-relevant="additions text"
+          aria-label="AI assistant conversation"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5"
+        >
           {messages.length === 0 ? (
             <EmptyState onPick={send} pageCtx={pageCtx} />
           ) : (

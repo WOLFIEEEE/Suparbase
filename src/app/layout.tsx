@@ -28,6 +28,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" data-theme={dataTheme} suppressHydrationWarning>
       <body className="bg-bg text-fg antialiased">
+        {/*
+          Skip link for keyboard users. Hidden until focused; every
+          layout that wraps a <main> tag with id="main" picks it up.
+          Tab once from the address bar to land here.
+        */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-accent-fg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        >
+          Skip to content
+        </a>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -26,17 +26,14 @@ export function Providers({ children }: { children: ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-        <Toaster
-          theme="dark"
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: "rgb(18 18 20)",
-              color: "rgb(245 245 241)",
-              border: "1px solid rgb(38 38 42)",
-            },
-          }}
-        />
+        {/*
+          theme="system" honours the user's OS preference (and the
+          app's data-theme attribute via prefers-color-scheme).
+          Previously hard-coded "dark", which rendered dark toasts in
+          light mode — visually inconsistent for low-vision users on
+          high-contrast light themes.
+        */}
+        <Toaster theme="system" position="bottom-right" richColors closeButton />
       </QueryClientProvider>
     </SessionProvider>
   );

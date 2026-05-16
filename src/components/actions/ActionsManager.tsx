@@ -756,14 +756,17 @@ function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
+  // Wrapping <label> auto-associates with the first interactive
+  // descendant (input/select/textarea), so consumers don't need to
+  // thread an id through. Adds accessible name without ceremony.
   return (
-    <div className="space-y-1.5">
-      <label className="block text-[11px] uppercase tracking-[0.16em] text-fg-faint">
+    <label className="block space-y-1.5">
+      <span className="block text-[11px] uppercase tracking-[0.16em] text-fg-faint">
         {label}
-      </label>
+      </span>
       {children}
-      {hint && <p className="text-[10px] text-fg-faint">{hint}</p>}
-    </div>
+      {hint && <span className="block text-[10px] text-fg-faint">{hint}</span>}
+    </label>
   );
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "suparbase",
   "private": true,
-  "version": "3.4.3",
+  "version": "3.5.0",
   "license": "UNLICENSED",
   "description": "Authenticated SaaS admin for any Supabase project. Email+password or GitHub auth, encrypted vault, server-side PostgREST proxy, OpenRouter-powered preset routing.",
   "homepage": "https://github.com/WOLFIEEEE/Suparbase",

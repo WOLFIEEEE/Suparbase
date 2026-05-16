@@ -407,10 +407,14 @@ function InviteDialog({
           className="space-y-3"
         >
           <div className="space-y-1.5">
-            <label className="block text-[11px] uppercase tracking-[0.16em] text-fg-faint">
+            <label
+              htmlFor="invite-email"
+              className="block text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+            >
               Email
             </label>
             <Input
+              id="invite-email"
               type="email"
               required
               value={email}
@@ -420,11 +424,14 @@ function InviteDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-[11px] uppercase tracking-[0.16em] text-fg-faint">
+            <label
+              htmlFor="invite-role"
+              className="block text-[11px] uppercase tracking-[0.16em] text-fg-faint"
+            >
               Role
             </label>
             <Select value={role} onValueChange={(v) => setRole(v as MemberRole)}>
-              <SelectTrigger>
+              <SelectTrigger id="invite-role">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
