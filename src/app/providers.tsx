@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AnalyticsBoot } from "@/lib/analytics/AnalyticsBoot";
 
 type Resolved = "light" | "dark";
 
@@ -64,6 +65,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
+        <AnalyticsBoot />
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         {/*
           Pass the resolved theme so toasts re-paint when the user

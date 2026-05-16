@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowUpRight, CheckCircle2, Clock, CreditCard, ShieldAlert, Sparkles } from "lucide-react";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/ui/cn";
 
 interface PlanCatalogEntry {
@@ -25,12 +26,23 @@ export interface ActivePlanProps {
   grantedByAdmin: boolean;
 }
 
+export interface BillingPanelPayment {
+  paymentId: string;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+  status: string;
+  invoiceUrl: string | null;
+}
+
 interface Props {
   email: string;
   active: ActivePlanProps;
   catalog: PlanCatalogEntry[];
   billingConfigured: boolean;
   flashStatus: "success" | "cancelled" | null;
+  /** Recent Dodo payments. Empty when no Dodo customer id or fetch failed. */
+  payments?: BillingPanelPayment[];
 }
 
 /**
@@ -40,13 +52,21 @@ interface Props {
  * customer flow — when paid, we link out instead of duplicating
  * forms in-app.
  */
-export function BillingPanel({ email, active, catalog, billingConfigured, flashStatus }: Props) {
+export function BillingPanel({
+  email,
+  active,
+  catalog,
+  billingConfigured,
+  flashStatus,
+  payments = [],
+}: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function startCheckout() {
     setLoading(true);
     setError(null);
+    track("checkout_started", { from: "billing_panel", plan: active.plan, isLapsed: isLapsed(active) });
     try {
       const res = await fetch("/api/billing/checkout", { method: "POST" });
       const data = await res.json().catch(() => ({}));
@@ -203,6 +223,57 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
         </ul>
       </section>
 
+      {payments.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="font-display text-xl">Payment history</h2>
+          <div className="overflow-x-auto rounded-lg border hairline bg-bg-raised">
+            <table className="w-full text-xs">
+              <thead className="bg-bg-raised/60 text-left">
+                <tr className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">
+                  <th scope="col" className="px-4 py-2">Date</th>
+                  <th scope="col" className="px-4 py-2">Amount</th>
+                  <th scope="col" className="px-4 py-2">Status</th>
+                  <th scope="col" className="px-4 py-2 text-right">Invoice</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y hairline">
+                {payments.map((p) => (
+                  <tr key={p.paymentId} className="align-middle">
+                    <td className="px-4 py-2 font-mono text-fg-muted">
+                      {p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }) : "—"}
+                    </td>
+                    <td className="px-4 py-2 font-mono text-fg">
+                      {formatMoney(p.totalAmount, p.currency)}
+                    </td>
+                    <td className="px-4 py-2">
+                      <PaymentStatusPill status={p.status} />
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      {p.invoiceUrl ? (
+                        <a
+                          href={p.invoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-accent hover:underline"
+                        >
+                          PDF <ArrowUpRight className="h-3 w-3" aria-hidden />
+                        </a>
+                      ) : (
+                        <span className="text-fg-faint">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       <section className="rounded-md border hairline bg-bg-raised/40 p-4 text-xs text-fg-muted">
         <p className="flex items-start gap-2">
           <CreditCard className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
@@ -211,12 +282,43 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
             <a href="https://dodopayments.com" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">
               Dodo Payments
             </a>{" "}
-            (Merchant of Record). To change your card, cancel, or download an invoice, follow the
-            link in the receipt email. Questions? <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">contact@suparbase.com</a>.
+            (Merchant of Record). To change your card or cancel, follow the link in any
+            receipt email. Questions? <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">contact@suparbase.com</a>.
           </span>
         </p>
       </section>
     </div>
+  );
+}
+
+/** Format an amount in the smallest currency unit (cents-style) to a display string. */
+function formatMoney(amountMinor: number, currency: string): string {
+  // Dodo returns the total in minor units (e.g., cents). Major-unit
+  // currencies (most fiat) divide by 100. We default to that.
+  const major = amountMinor / 100;
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(major);
+  } catch {
+    // Bad currency code from Dodo — fall back to a manual format.
+    return `${(currency || "USD").toUpperCase()} ${major.toFixed(2)}`;
+  }
+}
+
+function PaymentStatusPill({ status }: { status: string }) {
+  const lower = status.toLowerCase();
+  const tone =
+    lower === "succeeded" || lower === "paid"
+      ? "bg-accent/15 text-accent"
+      : lower === "processing" || lower === "pending"
+      ? "bg-amber-500/15 text-amber-400"
+      : "bg-danger/15 text-danger";
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] ${tone}`}>
+      {status || "—"}
+    </span>
   );
 }
 

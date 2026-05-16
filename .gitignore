@@ -14,3 +14,9 @@ dist-ssr
 .idea
 coverage
 *.tsbuildinfo
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/

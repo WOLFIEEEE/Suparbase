@@ -3,8 +3,14 @@ import type { Metadata } from "next";
 import { auth } from "@/server/auth";
 import { getSubscription } from "@/server/billing/repo";
 import { resolvePlan, PLAN_LIMITS } from "@/server/billing/plans";
-import { isBillingConfigured } from "@/server/billing/dodo";
+import {
+  isBillingConfigured,
+  listCustomerPayments,
+  readDodoConfig,
+  type DodoPayment,
+} from "@/server/billing/dodo";
 import { BillingPanel } from "@/components/settings/BillingPanel";
+import { log } from "@/server/log";
 
 export const metadata: Metadata = {
   title: "Billing · Suparbase",
@@ -37,6 +43,22 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
     ...limits,
   }));
 
+  // Fetch payment history from Dodo if we know the customer id.
+  // Failures are silent — the BillingPanel renders without history
+  // rather than showing an error.
+  let payments: DodoPayment[] = [];
+  const dodoConfig = readDodoConfig();
+  if (dodoConfig && row?.dodoCustomerId) {
+    try {
+      payments = await listCustomerPayments(dodoConfig, row.dodoCustomerId, 20);
+    } catch (e) {
+      log.warn("billing page: payments fetch failed", {
+        err: (e as Error).message,
+        userId,
+      });
+    }
+  }
+
   return (
     <BillingPanel
       email={email}
@@ -52,6 +74,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
       catalog={catalog}
       billingConfigured={billingConfigured}
       flashStatus={flashStatus}
+      payments={payments}
     />
   );
 }

@@ -122,6 +122,59 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<Create
 }
 
 // ---------------------------------------------------------------------------
+// Payment history
+// ---------------------------------------------------------------------------
+
+export interface DodoPayment {
+  paymentId: string;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+  status: string;
+  invoiceUrl: string | null;
+  subscriptionId: string | null;
+}
+
+/**
+ * List the most recent payments for one Dodo customer. Used by the
+ * /settings/billing page to render an invoice history with download
+ * links — Dodo hosts the actual PDF, we just surface the URL.
+ *
+ * Returns [] when the customer has no payments or Dodo rejects the
+ * query; never throws to the caller's UI path.
+ */
+export async function listCustomerPayments(
+  config: DodoConfig,
+  customerId: string,
+  limit = 20,
+): Promise<DodoPayment[]> {
+  const url = `/payments?customer_id=${encodeURIComponent(customerId)}&page_size=${limit}`;
+  const res = await dodoFetch(config, "GET", url);
+  const data = (await res.json().catch(() => null)) as
+    | { items?: Array<Record<string, unknown>> }
+    | Array<Record<string, unknown>>
+    | null;
+  // Dodo's response is either { items: [...] } or a bare array
+  // depending on the endpoint version. Handle both shapes.
+  const items = Array.isArray(data) ? data : data?.items ?? [];
+  return items
+    .map((p) => ({
+      paymentId: String(p.payment_id ?? p.id ?? ""),
+      totalAmount: Number(p.total_amount ?? 0),
+      currency: String(p.currency ?? "USD"),
+      createdAt: String(p.created_at ?? ""),
+      status: String(p.status ?? ""),
+      invoiceUrl:
+        typeof p.invoice_url === "string" && p.invoice_url.length > 0
+          ? p.invoice_url
+          : null,
+      subscriptionId:
+        typeof p.subscription_id === "string" ? p.subscription_id : null,
+    }))
+    .filter((p) => p.paymentId.length > 0);
+}
+
+// ---------------------------------------------------------------------------
 // Webhook signature verification
 // ---------------------------------------------------------------------------
 
@@ -207,7 +260,7 @@ export function verifyWebhookSignature(params: {
 
 async function dodoFetch(
   config: DodoConfig,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<Response> {

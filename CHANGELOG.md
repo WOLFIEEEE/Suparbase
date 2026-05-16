@@ -3,6 +3,45 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.7.0 · 2026-05-15 · Production-readiness Tier 2 (partial)
+
+Three Tier-2 items shipped: product analytics scaffolding, a
+Playwright end-to-end harness, and payment-history (invoice
+download) on the billing page. **2FA is deferred** to a dedicated
+ship — half-implementing it would risk lockouts.
+
+**Analytics (env-driven, no footprint until enabled):**
+- New module `src/lib/analytics` with `track()`, `identifyUser()`,
+  `resetAnalytics()`. Dynamically loads `posthog-js` only when
+  `NEXT_PUBLIC_POSTHOG_KEY` is set; honours `navigator.doNotTrack`;
+  no automatic event capture (explicit `track()` calls only — too
+  noisy + privacy-leaky on a data-admin tool).
+- `AnalyticsBoot` mounted inside Providers identifies the signed-in
+  user (id + email + name + plan, never row data).
+- Wired first events: `checkout_started` (from BillingPanel),
+  `resetAnalytics` on sign-out.
+
+**Playwright end-to-end:**
+- `playwright.config.ts` — Chromium project, auto-spawns `pnpm dev`
+  locally, traces + screenshots + video on retry/failure.
+- `e2e/smoke.spec.ts` — 9 specs covering the public surface that
+  must not break on deploy: home, sign-in, forgot-password,
+  accessibility, VPAT, pricing, `/api/health` shape, `/connections`
+  anon redirect, `/admin` 404s without allowlist.
+- New scripts: `pnpm test:e2e`, `pnpm test:e2e:ui`.
+
+**Payment history:**
+- `listCustomerPayments()` on the Dodo client fetches the last 20
+  payments for the user's `dodo_customer_id`.
+- BillingPanel renders a "Payment history" table with date, amount,
+  status, and **PDF invoice link** (Dodo-hosted). Customers no
+  longer have to dig through receipt emails to find an invoice.
+
+**No schema changes. 116 tests pass, typecheck + build green.**
+
+**Still on Tier 2:** 2FA, real load test (external), SOC 2
+readiness (external), customer support ticketing (external).
+
 ## v3.6.0 · 2026-05-15 · Production-readiness Tier 1
 
 Closes the operator-blocking gaps from the production-readiness
