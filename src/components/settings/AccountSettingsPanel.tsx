@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowRight, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Download, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -77,6 +77,7 @@ export function AccountSettingsPanel({ email, name }: Props) {
           </div>
           <ArrowRight className="h-4 w-4 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
         </Link>
+        <ChangePasswordForm />
       </section>
 
       <section className="space-y-3">
@@ -92,6 +93,26 @@ export function AccountSettingsPanel({ email, name }: Props) {
           </a>{" "}
           from the address on your account.
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-display text-xl">Export your data</h2>
+        <p className="text-xs leading-relaxed text-fg-muted">
+          Download a JSON file containing your account record, connection
+          metadata, audit log (most recent 100k entries), saved views,
+          dashboards, custom actions, and agent sessions. Encrypted columns
+          (Supabase keys, Postgres URL, TOTP secret) are excluded — they
+          wouldn&apos;t be usable outside this deployment anyway. GDPR Art.
+          15 / Art. 20.
+        </p>
+        <a
+          href="/api/account/export"
+          download
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
+        >
+          <Download className="h-3.5 w-3.5" aria-hidden />
+          Download my data (JSON)
+        </a>
       </section>
 
       <section className="space-y-3 rounded-lg border border-danger/40 bg-danger/5 p-5">
@@ -155,5 +176,134 @@ function ReadField({
       <p className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">{label}</p>
       <p className={mono ? "mt-1 font-mono text-sm" : "mt-1 text-sm"}>{value}</p>
     </div>
+  );
+}
+
+const MIN_PASSWORD = 12;
+
+function ChangePasswordForm() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const tooShort = next.length > 0 && next.length < MIN_PASSWORD;
+  const mismatch = confirm.length > 0 && confirm !== next;
+  const canSubmit =
+    current.length >= 8 && next.length >= MIN_PASSWORD && confirm === next && !pending;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/account/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: current, newPassword: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      if (!res.ok) {
+        setError(data.message ?? `HTTP ${res.status}`);
+        return;
+      }
+      toast.success("Password updated.");
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    } catch (e) {
+      setError((e as Error).message ?? "Network error.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="space-y-3 rounded-md border hairline bg-bg-raised p-4"
+    >
+      <div className="flex items-center gap-2">
+        <p className="font-medium text-fg">Change password</p>
+        <span className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">
+          Email + password accounts only
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <PasswordField
+          label="Current"
+          id="pw-current"
+          autoComplete="current-password"
+          value={current}
+          onChange={setCurrent}
+        />
+        <PasswordField
+          label="New"
+          id="pw-new"
+          autoComplete="new-password"
+          value={next}
+          onChange={setNext}
+          ariaInvalid={tooShort}
+          hint={tooShort ? `≥${MIN_PASSWORD} characters` : undefined}
+        />
+        <PasswordField
+          label="Confirm"
+          id="pw-confirm"
+          autoComplete="new-password"
+          value={confirm}
+          onChange={setConfirm}
+          ariaInvalid={mismatch}
+          hint={mismatch ? "Doesn't match" : undefined}
+        />
+      </div>
+      {error && (
+        <div role="alert" className="rounded-md border border-danger/40 bg-danger/10 p-2 text-xs text-danger">
+          {error}
+        </div>
+      )}
+      <button
+        type="submit"
+        disabled={!canSubmit}
+        className="inline-flex h-9 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {pending ? "Updating…" : "Change password"}
+      </button>
+    </form>
+  );
+}
+
+function PasswordField({
+  label,
+  id,
+  autoComplete,
+  value,
+  onChange,
+  ariaInvalid,
+  hint,
+}: {
+  label: string;
+  id: string;
+  autoComplete: string;
+  value: string;
+  onChange: (v: string) => void;
+  ariaInvalid?: boolean;
+  hint?: string;
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-[10px] uppercase tracking-[0.16em] text-fg-faint">{label}</span>
+      <input
+        id={id}
+        type="password"
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={ariaInvalid}
+        className="h-9 w-full rounded-md border hairline bg-bg px-2 text-sm focus:border-line-strong focus:outline-none"
+      />
+      {hint && <span className="block text-[11px] text-danger">{hint}</span>}
+    </label>
   );
 }

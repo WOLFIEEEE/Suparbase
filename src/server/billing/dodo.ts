@@ -174,6 +174,34 @@ export async function listCustomerPayments(
     .filter((p) => p.paymentId.length > 0);
 }
 
+/**
+ * Mint a customer-portal session URL. The user clicks it and lands
+ * on Dodo's hosted UI for managing their payment method,
+ * cancelling, or pulling invoices — without us needing to re-build
+ * any of that surface in-app.
+ *
+ * Returns `null` when Dodo doesn't return a URL (older sandbox
+ * accounts may not have the portal enabled). Caller falls back to
+ * "follow the receipt email" copy.
+ */
+export async function createPortalSession(
+  config: DodoConfig,
+  customerId: string,
+): Promise<{ url: string } | null> {
+  const res = await dodoFetch(
+    config,
+    "POST",
+    `/customers/${encodeURIComponent(customerId)}/portal-session`,
+    {},
+  );
+  const data = (await res.json().catch(() => null)) as
+    | { url?: string; portal_url?: string; checkout_url?: string }
+    | null;
+  const url = data?.url ?? data?.portal_url ?? data?.checkout_url ?? null;
+  if (!url || typeof url !== "string") return null;
+  return { url };
+}
+
 // ---------------------------------------------------------------------------
 // Webhook signature verification
 // ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@ import { issueResetToken } from "@/server/auth/password-reset";
 import { renderPasswordResetEmail } from "@/server/email/templates/password-reset";
 import { sendEmail, isEmailConfigured } from "@/server/email/resend";
 import { checkSignupRate } from "@/server/proxy/ratelimit";
+import { clientIp } from "@/server/security/client-ip";
 import { log } from "@/server/log";
 
 export const dynamic = "force-dynamic";
@@ -97,12 +98,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, configured: true });
-}
-
-function clientIp(req: NextRequest): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown"
-  );
 }

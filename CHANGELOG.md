@@ -3,6 +3,77 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.8.1 · 2026-05-15 · Production-readiness completeness pass
+
+Six items that were honestly still on my plate after the v3.8.0
+batch. All real code work — no marketing, no scaffolding.
+
+**GDPR data export (closes a stale terms-of-service claim):**
+- New `src/server/auth/data-export.ts` assembles the user's full
+  record: account, subscription, settings, owned connections,
+  memberships, saved views, dashboards, custom actions, agent
+  sessions, and up to 100k audit log rows.
+- Encrypted columns (Supabase keys, Postgres URL, TOTP secret)
+  are **excluded** from the export — they wouldn't be useful
+  outside this deployment, and including the encrypted blobs
+  would be a forensic foot-gun.
+- `GET /api/account/export` returns the JSON with a
+  `Content-Disposition: attachment` header.
+- "Download my data (JSON)" button on `/settings/account` (GDPR
+  Art. 15 / Art. 20). Closes the false claim in the Terms page
+  that the export "is exportable as JSON from your account page".
+
+**Password change for signed-in users:**
+- `POST /api/account/change-password` requires the current password
+  + a new password ≥12 chars. Rate-limited per (ip + userId) so a
+  leaked session can't grind brute-force. 409 for OAuth-only users.
+- Inline `ChangePasswordForm` on `/settings/account` (current + new
+  + confirm with mismatch validation).
+
+**Dodo customer-portal link:**
+- New `createPortalSession()` on the Dodo client calls
+  `POST /customers/{id}/portal-session` and returns the hosted
+  portal URL.
+- `POST /api/billing/portal` mints a fresh session URL for the
+  signed-in user. 404 when no customer id yet (free-tier never
+  started a checkout); 502 with a "check receipt email" message
+  if Dodo's sandbox doesn't have the portal enabled.
+- "Manage subscription" button on `/settings/billing` Current Plan
+  card, visible only when `active.isPaid`.
+
+**Unit tests for v3.6+ code:**
+- `tests/totp.test.ts` (9 specs) — MFA cookie sign/verify cycle:
+  same-user accept, different-user reject, tampered-signature
+  reject, expired reject, malformed reject, secret-rotation
+  invalidation, constant-time compare. Plus library-compat sanity
+  for otpauth (RFC test-vector generates + validates, wrong code
+  rejects).
+- `tests/password-reset.test.ts` (4 specs) — `hashToken()` is the
+  load-bearing primitive for the "we never store plaintext tokens"
+  guarantee. Tests pin the SHA-256 contract, determinism, and the
+  "no input normalisation" rule.
+
+**Cleanup:**
+- `src/server/security/client-ip.ts` extracts the `clientIp(req)`
+  helper that was duplicated in `forgot-password`, `reset-password`,
+  and `2fa/verify`.
+- `next-auth.d.ts`-style module augmentation in `src/server/auth.ts`
+  declares `User.totpEnabled` and `JWT.id` + `JWT.requires2FA`. Drops
+  the `as { ... }` casts that were sprinkled in the jwt + session
+  callbacks.
+
+**Operator docs:**
+- `PRODUCTION.md` gains a "v3.6-v3.8 account + observability smoke
+  (15 min)" section. Walks: forgot-password, password change,
+  account deletion, data export, 2FA round-trip (enable, sign in,
+  recovery code, disable), `/api/health` shape, `/status` rendering,
+  admin parity. Plus the known limitations (API routes not gated
+  by 2FA, password change doesn't terminate other sessions, data
+  export 100k cap, portal 502 fallback).
+
+129 tests passing (4 new). Typecheck clean, production build green.
+No schema changes.
+
 ## v3.8.0 · 2026-05-15 · 2FA + status + roadmap + annual billing scaffolding
 
 The dedicated 2FA ship plus a bunch of customer-facing pages and

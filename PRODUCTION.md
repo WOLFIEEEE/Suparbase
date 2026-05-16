@@ -353,3 +353,104 @@ sandbox.
 - Unrecognised webhook event types are recorded but not applied
   (and surfaced in the `unapplied` banner on `/admin/billing` so an
   operator notices).
+
+---
+
+## 6. v3.6 – v3.8 account + observability smoke (15 min)
+
+Adds the password reset / account deletion / 2FA / observability /
+status page surfaces. None requires a new external account to test
+the happy path, but Sentry + PostHog + UptimeRobot are recommended.
+
+### One-time setup
+
+- [ ] `pnpm db:push` — applies migrations `0014_cuddly_fabian_cortez`
+  (password_reset_token) and `0015_real_proudstar` (TOTP secret +
+  user_recovery_code table).
+- [ ] Verify `AUTH_SECRET` is set to a strong random value. The 2FA
+  cookie HMAC depends on it; rotating AUTH_SECRET invalidates every
+  in-flight MFA-ok cookie (expected).
+- [ ] (Optional) Set `SENTRY_DSN`. Copy
+  `instrumentation.example.ts` → `instrumentation.ts`,
+  `pnpm add @sentry/nextjs`, redeploy. Confirm `/api/health`
+  reports `observability: true`.
+- [ ] (Optional) Set `NEXT_PUBLIC_POSTHOG_KEY`. Sign in once and
+  check the PostHog dashboard for the `$pageview` event + the
+  identify call with your email.
+
+### Customer flows (no external account required)
+
+- [ ] **Forgot password**: sign out, go to `/signin`, click
+  "Forgot?", enter a real account email. Should see the
+  enumeration-resistant confirmation banner regardless of whether
+  the email exists. If `RESEND_API_KEY` is set, an email arrives;
+  click the link, set a new password ≥12 chars, sign in.
+- [ ] **Password change**: while signed in, `/settings/account` →
+  Change password card → current + new + confirm. Confirm the
+  toast and sign in with the new password.
+- [ ] **Self-service account deletion**: brand new test account,
+  `/settings/account` → Danger Zone → type "DELETE MY ACCOUNT"
+  → confirm. Verify the user row + cascades (connections, settings,
+  saved views, dashboards, custom actions, agent sessions, team
+  memberships, subscriptions) are gone. Audit log rows keep their
+  null user_id.
+- [ ] **Data export**: while signed in, `/settings/account` →
+  "Download my data (JSON)". File saves; confirm the JSON contains
+  `account`, `connections`, `auditLog` keys + a `notes.encryption`
+  disclaimer.
+
+### 2FA round-trip
+
+- [ ] Go to `/settings/account/2fa` → Enable. Scan the QR with
+  any authenticator (1Password, Bitwarden, Google Authenticator,
+  Authy). Enter the 6-digit code → see the 10 recovery codes
+  page. Download or copy them.
+- [ ] Sign out, sign back in. After password succeeds, you should
+  be redirected to `/signin/2fa`. Enter a fresh code → land on
+  `/connections`. The `suparbase-mfa-ok` cookie is set for 24h.
+- [ ] Test recovery: at `/signin/2fa`, click "Use a recovery
+  code", paste one of the saved codes (with or without dashes).
+  Should succeed and consume the code (next attempt with the
+  same one fails).
+- [ ] Disable: `/settings/account/2fa` → enter current password →
+  Disable. Sign-out + sign-in should no longer redirect to
+  `/signin/2fa`.
+
+### Operator observability
+
+- [ ] `curl https://<host>/api/health` → 200 with
+  `{ db: true, email: <bool>, billing: <bool>,
+     observability: <bool>, version: "<x.y.z>" }`.
+- [ ] Visit `/status` while signed out — every subsystem renders
+  with an Operational / Not-configured badge that matches what
+  `/api/health` returned.
+- [ ] (If Sentry is wired) trigger an error: visit `/admin/users/<not-a-uuid>`
+  while signed in as an admin. The page should 404 cleanly. To
+  test the boundary, throw an error from a route handler in a
+  scratch branch and confirm the Sentry inbox catches it.
+
+### Admin parity
+
+- [ ] `/admin/audit?user=<id>` filters audit_log by user. Apply
+  a date range. The query plan should hit `audit_conn_recent_idx`.
+- [ ] `/admin/users/[id]` shows the user's connection list +
+  the "View audit log for this user" deep-link.
+
+### Known limitations
+
+- 2FA enforcement gates protected *pages*. API routes are not
+  gated — a leaked session cookie can still hit `/api/v/...`
+  endpoints. This is acceptable because session cookies are
+  `httpOnly: true; secure: true; sameSite: lax` and exfiltration
+  requires XSS, which is broadly prevented by Next's auto-escape
+  + our CSP-friendly markup.
+- Password change does NOT terminate other active sessions. A
+  future hardening pass should invalidate every NextAuth session
+  for the user on password change.
+- Data export is capped at 100k audit rows. Customers above that
+  bracket need an offline dump from the operator.
+- The Dodo "Manage subscription" button calls
+  `/api/billing/portal` which mints a fresh customer-portal URL.
+  If your sandbox Dodo account doesn't have the portal enabled,
+  the API returns 502 and the UI tells the user to follow the
+  receipt-email link instead.

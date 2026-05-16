@@ -9,6 +9,7 @@ import {
   verifyTotpForUser,
 } from "@/server/auth/totp";
 import { checkSignupRate } from "@/server/proxy/ratelimit";
+import { clientIp } from "@/server/security/client-ip";
 import { log } from "@/server/log";
 
 export const dynamic = "force-dynamic";
@@ -39,10 +40,7 @@ export async function POST(req: NextRequest) {
   }
   const userId = session.user.id;
 
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  const ip = clientIp(req);
   const limit = checkSignupRate(`mfa:${ip}:${userId}`);
   if (!limit.allowed) {
     return NextResponse.json(

@@ -64,6 +64,7 @@ export function BillingPanel({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [cadence, setCadence] = useState<"monthly" | "annual">("monthly");
   const annualAvailable = catalog.some(
     (e) => e.plan === "hosted" && e.annualPriceCents > 0,
@@ -91,6 +92,27 @@ export function BillingPanel({
       setLoading(false);
     }
   }
+
+  async function openPortal() {
+    setPortalLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; message?: string };
+      if (!res.ok || !data.url) {
+        setError(data.message ?? "Could not open the billing portal. Check the receipt email instead.");
+        return;
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setError((e as Error).message ?? "Network error.");
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+  // Suppress unused-var warning when not paid; we still want to
+  // declare the loading state at component scope.
+  void portalLoading;
 
   return (
     <div className="space-y-8">
@@ -127,7 +149,7 @@ export function BillingPanel({
         />
       )}
 
-      <CurrentPlanCard active={active} />
+      <CurrentPlanCard active={active} onManage={active.isPaid ? openPortal : undefined} />
 
       {error && (
         <div className="rounded border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
@@ -398,7 +420,13 @@ function isLapsed(active: ActivePlanProps): boolean {
   );
 }
 
-function CurrentPlanCard({ active }: { active: ActivePlanProps }) {
+function CurrentPlanCard({
+  active,
+  onManage,
+}: {
+  active: ActivePlanProps;
+  onManage?: () => void;
+}) {
   const cliff = active.currentPeriodEnd
     ? new Date(active.currentPeriodEnd)
     : active.trialEndsAt
@@ -441,12 +469,24 @@ function CurrentPlanCard({ active }: { active: ActivePlanProps }) {
             {active.grantedByAdmin && <span className="ml-2 text-fg-faint">· Admin grant</span>}
           </p>
         </div>
-        {cliffLabel && (
-          <div className="text-right">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-fg-faint">{cliffHeading}</p>
-            <p className="font-mono text-sm">{cliffLabel}</p>
-          </div>
-        )}
+        <div className="flex flex-col items-end gap-3">
+          {cliffLabel && (
+            <div className="text-right">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-fg-faint">{cliffHeading}</p>
+              <p className="font-mono text-sm">{cliffLabel}</p>
+            </div>
+          )}
+          {onManage && (
+            <button
+              type="button"
+              onClick={onManage}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border hairline px-3 text-xs text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
+            >
+              Manage subscription
+              <ArrowUpRight className="h-3 w-3" aria-hidden />
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );

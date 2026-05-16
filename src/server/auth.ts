@@ -39,23 +39,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
-        const t = token as typeof token & { id?: string; requires2FA?: boolean };
-        t.id = (user as { id?: string }).id ?? t.id;
+        token.id = (user as { id?: string }).id ?? token.id;
         token.email = user.email ?? token.email;
         token.name = user.name ?? token.name;
         token.picture = user.image ?? token.picture;
         // Surface the 2FA requirement on the JWT so middleware can
         // gate without an extra DB round-trip. We look it up once at
         // signin time; subsequent refreshes reuse the cached flag.
-        const u = user as { totpEnabled?: boolean };
-        t.requires2FA = u.totpEnabled === true;
+        token.requires2FA = user.totpEnabled === true;
       }
       return token;
     },
     session: ({ session, token }) => {
-      const t = token as { id?: string; requires2FA?: boolean };
-      if (session.user && t.id) {
-        session.user.id = t.id;
+      if (session.user && token.id) {
+        session.user.id = token.id;
       }
       return session;
     },
@@ -71,5 +68,20 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
     };
+  }
+  // The authorize() callback returns this shape; the jwt callback
+  // reads `totpEnabled` to decide whether to set `requires2FA` on
+  // the token. Without this declaration, TS narrows away the field.
+  interface User {
+    totpEnabled?: boolean;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    /** True when this user has 2FA enabled and the current session
+     *  hasn't yet cleared the second factor (gated by middleware). */
+    requires2FA?: boolean;
   }
 }
