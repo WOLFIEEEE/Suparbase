@@ -3,6 +3,81 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.8.0 · 2026-05-15 · 2FA + status + roadmap + annual billing scaffolding
+
+The dedicated 2FA ship plus a bunch of customer-facing pages and
+backend scaffolding queued from the production-readiness review.
+
+**Two-factor authentication (TOTP + recovery codes + enforcement):**
+- New `otpauth` + `qrcode` deps; new module
+  `src/server/auth/totp.ts` with secret generation, code
+  verification (RFC 6238, ±1 window), recovery-code generation +
+  redemption, and a signed `suparbase-mfa-ok` cookie (HMAC-SHA256
+  via AUTH_SECRET, 24h TTL).
+- Schema: `users.totp_secret_encrypted` (AES-256-GCM via vault),
+  `users.totp_enabled_at`, plus new `user_recovery_code` table
+  with `(user_id, consumed_at)` index. Migration
+  `drizzle/0015_real_proudstar.sql`.
+- Four API routes under `/api/account/2fa/*`:
+  `setup` (generate secret + QR data URL), `enable` (verify code,
+  persist encrypted secret + 10 fresh recovery codes), `disable`
+  (require current password), `verify` (TOTP or recovery code,
+  rate-limited per-IP).
+- Pages: `/settings/account/2fa` (setup, view enabled state,
+  remaining recovery codes, disable behind password), `/signin/2fa`
+  (verify on sign-in, supports recovery codes).
+- NextAuth integration: `Credentials.authorize()` surfaces
+  `totpEnabled: boolean`; the JWT callback puts `requires2FA` on
+  the token; middleware (now Edge-compatible) reads the JWT +
+  verifies the MFA cookie before letting protected pages through.
+- Cookie uses Web Crypto in middleware (Edge runtime), `node:crypto`
+  HMAC in API routes. Constant-time comparison both sides.
+- Account-settings index now links to the 2FA page.
+
+**New customer-facing pages:**
+- `/status` — real-time public status page running the same checks
+  as `/api/health`: database, encrypted proxy, email (Resend),
+  billing (Dodo), error reporting, admin panel. Each subsystem
+  gets an Operational / Degraded / Down / Not-configured badge
+  with a one-line hint. Server-rendered on every load.
+- `/roadmap` — three-section public roadmap (Recently shipped /
+  In progress / Next). Items link back to specific changelog
+  entries when available.
+- PublicFooter Product column gains Roadmap + Status links.
+
+**Annual billing scaffolding:**
+- `PlanLimits.annualPriceCents` added to the catalog. Hosted is
+  set to `$120/year` ($10/user/mo, ≈17% off the monthly $12).
+- BillingPanel exposes a Monthly / Annual toggle with a "−17%"
+  pill on the annual side. Toggle re-renders the price card; the
+  underlying checkout still routes through the existing monthly
+  Dodo product until the operator publishes an annual product
+  (then we just swap the product id).
+
+**Sentry instrumentation example:**
+- New `instrumentation.example.ts` at the repo root — drop-in
+  template for wiring `@sentry/nextjs` against the existing
+  `reportError()` shim. No new dependency required; the example
+  installs and ignites Sentry only when the operator opts in by
+  copying the file and setting `SENTRY_DSN`.
+
+**More Playwright coverage:**
+- `e2e/account.spec.ts` (10 specs) covers `/forgot` (form +
+  enumeration-resistant submit), `/reset/<garbage>` rendering,
+  `/signin/2fa` + `/settings/account` + `/settings/account/2fa`
+  redirecting to `/signin` when not authenticated, `/roadmap` +
+  `/status` rendering their headline sections, and two API-level
+  400-rejection cases.
+
+**Plumbing:**
+- Middleware rewritten to handle both CSRF (existing) AND 2FA
+  enforcement (new). Single matcher covers `/api/*`, `/c/*`,
+  `/connections/*`, `/settings/*`, `/admin/*`.
+- `/api/email/status` (already shipped) is now picked up by the
+  status page check.
+- Build still green, typecheck clean, 116 unit tests + 19 e2e
+  specs ready to run.
+
 ## v3.7.0 · 2026-05-15 · Production-readiness Tier 2 (partial)
 
 Three Tier-2 items shipped: product analytics scaffolding, a

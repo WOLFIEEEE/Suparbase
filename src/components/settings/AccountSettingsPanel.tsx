@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -57,6 +58,26 @@ export function AccountSettingsPanel({ email, name }: Props) {
           Identity, contact, and the danger-zone controls.
         </p>
       </header>
+
+      <section className="space-y-3">
+        <h2 className="font-display text-xl">Security</h2>
+        <Link
+          href="/settings/account/2fa"
+          className="group flex items-center justify-between gap-3 rounded-md border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong"
+        >
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="mt-0.5 h-4 w-4 text-accent" aria-hidden />
+            <div className="space-y-1">
+              <p className="font-medium text-fg">Two-factor authentication</p>
+              <p className="text-xs text-fg-muted">
+                Add a time-based code on top of your password. Required for
+                admin accounts.
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
+        </Link>
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-display text-xl">Profile</h2>

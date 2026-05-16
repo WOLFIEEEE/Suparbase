@@ -1,4 +1,6 @@
 import {
+  customType,
+  index,
   integer,
   pgTable,
   primaryKey,
@@ -8,6 +10,23 @@ import {
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
+const bytea = customType<{ data: Uint8Array; default: false }>({
+  dataType() {
+    return "bytea";
+  },
+  fromDriver(value): Uint8Array {
+    if (value instanceof Uint8Array) return value;
+    if (Buffer.isBuffer(value)) return new Uint8Array(value);
+    if (typeof value === "string" && value.startsWith("\\x")) {
+      return new Uint8Array(Buffer.from(value.slice(2), "hex"));
+    }
+    throw new Error("Unexpected bytea value shape from driver");
+  },
+  toDriver(value: Uint8Array): Buffer {
+    return Buffer.from(value);
+  },
+});
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name"),
@@ -15,8 +34,39 @@ export const users = pgTable("users", {
   emailVerified: timestamp("emailVerified", { mode: "date", withTimezone: true }),
   image: text("image"),
   passwordHash: text("password_hash"),
+  /**
+   * TOTP secret, encrypted with the vault key. Only present when the
+   * user has set up two-factor authentication. Cleared on disable.
+   */
+  totpSecretEncrypted: bytea("totp_secret_encrypted"),
+  /** When the user activated 2FA. Null = 2FA disabled. */
+  totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * Recovery codes for 2FA. Generated as 10 codes when the user
+ * enables 2FA, shown to the user exactly once at enable time with
+ * a download button. Each plaintext code is SHA-256 hashed; we
+ * never store the plaintext. Marked `consumed_at` on redemption.
+ */
+export const recoveryCodes = pgTable(
+  "user_recovery_code",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    byUser: index("user_recovery_code_by_user_idx").on(t.userId, t.consumedAt),
+  }),
+);
+
+export type RecoveryCodeRow = typeof recoveryCodes.$inferSelect;
 
 export const accounts = pgTable(
   "accounts",

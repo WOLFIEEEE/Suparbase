@@ -20,7 +20,9 @@ const COLUMNS: Column[] = [
       // Signed-in users manage billing in /settings/billing — pricing
       // is a marketing surface they don't need to see twice.
       { label: "Pricing", href: "/pricing", hideWhenSignedIn: true },
+      { label: "Roadmap", href: "/roadmap" },
       { label: "Changelog", href: "/changelog" },
+      { label: "Status", href: "/status" },
       { label: "Sign up", href: "/signup", hideWhenSignedIn: true },
     ],
   },

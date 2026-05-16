@@ -38,6 +38,10 @@ export const credentialsProvider = Credentials({
       email: row.email ?? email,
       name: row.name ?? null,
       image: row.image ?? null,
+      // Custom flag — the auth.ts jwt callback reads this to set
+      // token.requires2FA. Middleware uses that to gate every
+      // protected route until the user clears /signin/2fa.
+      totpEnabled: row.totpEnabledAt != null,
     };
   },
 });

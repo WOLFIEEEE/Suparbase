@@ -23,6 +23,13 @@ export interface PlanLimits {
   description: string;
   /** Monthly price in cents (for MRR maths in /admin). */
   monthlyPriceCents: number;
+  /**
+   * Annual price in cents (the customer pays this once per year
+   * for 12 months of service). Set to 0 when the plan isn't sold
+   * annually. Typically `monthlyPriceCents * 10` (≈17% discount
+   * for paying yearly).
+   */
+  annualPriceCents: number;
   /** Trial length offered at signup for this plan, 0 if none. */
   trialDays: number;
 }
@@ -34,6 +41,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     label: "Free",
     description: "1 Supabase connection, solo workspace.",
     monthlyPriceCents: 0,
+    annualPriceCents: 0,
     trialDays: 0,
   },
   hosted: {
@@ -42,6 +50,9 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     label: "Hosted",
     description: "Unlimited connections, team workspace, 90-day audit retention.",
     monthlyPriceCents: 1200,
+    // 12 × $12 = $144 monthly. Annual at $120 = 17% off, two months
+    // free. Adjust here when the operator publishes the Dodo product.
+    annualPriceCents: 12000,
     trialDays: 7,
   },
   team: {
@@ -50,6 +61,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     label: "Team",
     description: "Custom enterprise plan — SSO, dedicated infra, DPA.",
     monthlyPriceCents: 0, // priced manually
+    annualPriceCents: 0,
     trialDays: 0,
   },
 };

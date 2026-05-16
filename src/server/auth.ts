@@ -37,20 +37,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: { signIn: "/signin", error: "/signin" },
   callbacks: {
-    jwt: ({ token, user }) => {
+    jwt: async ({ token, user }) => {
       if (user) {
-        const t = token as typeof token & { id?: string };
+        const t = token as typeof token & { id?: string; requires2FA?: boolean };
         t.id = (user as { id?: string }).id ?? t.id;
         token.email = user.email ?? token.email;
         token.name = user.name ?? token.name;
         token.picture = user.image ?? token.picture;
+        // Surface the 2FA requirement on the JWT so middleware can
+        // gate without an extra DB round-trip. We look it up once at
+        // signin time; subsequent refreshes reuse the cached flag.
+        const u = user as { totpEnabled?: boolean };
+        t.requires2FA = u.totpEnabled === true;
       }
       return token;
     },
     session: ({ session, token }) => {
-      const tokenId = (token as { id?: string }).id;
-      if (session.user && tokenId) {
-        session.user.id = tokenId;
+      const t = token as { id?: string; requires2FA?: boolean };
+      if (session.user && t.id) {
+        session.user.id = t.id;
       }
       return session;
     },

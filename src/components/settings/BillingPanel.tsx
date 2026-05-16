@@ -10,6 +10,8 @@ interface PlanCatalogEntry {
   label: string;
   description: string;
   monthlyPriceCents: number;
+  /** Annual price in cents. 0 means "not sold annually". */
+  annualPriceCents: number;
   /** null === unlimited. */
   maxConnections: number | null;
   canInviteTeam: boolean;
@@ -62,6 +64,10 @@ export function BillingPanel({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cadence, setCadence] = useState<"monthly" | "annual">("monthly");
+  const annualAvailable = catalog.some(
+    (e) => e.plan === "hosted" && e.annualPriceCents > 0,
+  );
 
   async function startCheckout() {
     setLoading(true);
@@ -130,7 +136,40 @@ export function BillingPanel({
       )}
 
       <section className="space-y-3">
-        <h2 className="font-display text-xl">Plans</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-xl">Plans</h2>
+          {annualAvailable && (
+            <div className="inline-flex items-center rounded-md border hairline bg-bg-raised p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setCadence("monthly")}
+                className={cn(
+                  "rounded px-3 py-1.5 transition-colors",
+                  cadence === "monthly"
+                    ? "bg-bg text-fg"
+                    : "text-fg-muted hover:text-fg",
+                )}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setCadence("annual")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded px-3 py-1.5 transition-colors",
+                  cadence === "annual"
+                    ? "bg-bg text-fg"
+                    : "text-fg-muted hover:text-fg",
+                )}
+              >
+                Annual
+                <span className="rounded-full bg-accent/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-accent">
+                  −17%
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {catalog.map((entry) => {
             // A cancelled/expired Hosted plan still has plan="hosted"
@@ -156,12 +195,17 @@ export function BillingPanel({
                   </div>
                   <p className="font-mono text-2xl">
                     {entry.monthlyPriceCents > 0
-                      ? `$${(entry.monthlyPriceCents / 100).toFixed(0)}`
+                      ? cadence === "annual" && entry.annualPriceCents > 0
+                        ? `$${(entry.annualPriceCents / 100 / 12).toFixed(0)}`
+                        : `$${(entry.monthlyPriceCents / 100).toFixed(0)}`
                       : entry.plan === "team"
                       ? "Custom"
                       : "$0"}
                     {entry.monthlyPriceCents > 0 && (
-                      <span className="ml-1 text-xs text-fg-faint">/user/mo</span>
+                      <span className="ml-1 text-xs text-fg-faint">
+                        /user/mo
+                        {cadence === "annual" && entry.annualPriceCents > 0 ? ", billed yearly" : ""}
+                      </span>
                     )}
                   </p>
                   <ul className="space-y-1.5 text-xs text-fg-muted">
