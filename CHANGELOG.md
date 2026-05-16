@@ -3,6 +3,66 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.9.0 · 2026-05-15 · Email verification + API docs + agent fingerprints
+
+Four shippable items from the "if you ask" backlog. No new schema —
+the email verification flow reuses NextAuth's existing
+`verificationTokens` table with a namespaced identifier so a future
+magic-link rollout won't collide.
+
+**Email verification:**
+- `src/server/auth/email-verification.ts` issues SHA-256-hashed
+  tokens with a 24h TTL; previous in-flight tokens are cleared on
+  each new issue. Confirmation marks `users.email_verified` and
+  invalidates every outstanding token for the identifier.
+- `src/server/email/templates/email-verification.ts` — themed email
+  matching the invitation + reset templates.
+- `POST /api/account/verify-email/start` — re-send for the
+  signed-in user, or accept `{ email }` from anonymous callers
+  (enumeration-resistant). Per-(ip + email) rate-limited.
+- `POST /api/account/verify-email/confirm` — token consumption.
+  200 / 410 (expired) / 409 (already verified) / 404 (unknown).
+- `/verify-email/[token]` — server-rendered landing page. Confirms
+  on first GET; no client JS required, no token in client state.
+- Signup flow now fires the verification email automatically after
+  the user row commits. Fire-and-forget — delivery failure can't
+  roll signup back.
+- `/settings/account` gains an inline verification banner: amber
+  with a Resend button when not verified, green confirmation when
+  verified.
+
+**Agent-kind fingerprints (Aider, Cline, Continue.dev):**
+- `AgentKind` union extended with `aider`, `cline`, `continue_dev`.
+- Regex patterns in `src/server/sentry/fingerprint.ts`:
+  - `aider` matches `aider/<version>` UA.
+  - `cline` matches both `cline/…` and the legacy `claude-dev/…`
+    (the IDE plugin rebranded mid-2025).
+  - `continue_dev` matches `continue-dev/…` and bare `continue/…`.
+- `isAiAgent()` flags all three as AI.
+- 3 new fingerprint tests pin the patterns.
+
+**Public API documentation:**
+- `/docs/api` lists every stable REST endpoint a customer or
+  operator can script against — auth notes, CSRF policy, full
+  request/response shapes for account, billing, operational
+  endpoints. Explicit "NOT public yet" section names the routes
+  whose shape may change without notice.
+- Linked from `/docs` header as "API reference →".
+
+**Annual billing wiring:**
+- `DodoConfig.hostedAnnualProductId` reads `DODO_HOSTED_ANNUAL_PRODUCT_ID`
+  from env. `.env.example` documents it.
+- `POST /api/billing/checkout` now honours `cadence: "annual" | "monthly"`
+  (via query param or JSON body) and routes to the annual product id
+  when configured. Falls back to monthly when the env var is unset.
+- BillingPanel's existing Monthly/Annual toggle now actually
+  affects which product the checkout creates — passing
+  `cadence` to the API + tracking it as a property on the
+  `checkout_started` analytics event.
+
+132 tests passing (3 new). Typecheck clean, build green. No
+migration required.
+
 ## v3.8.1 · 2026-05-15 · Production-readiness completeness pass
 
 Six items that were honestly still on my plate after the v3.8.0

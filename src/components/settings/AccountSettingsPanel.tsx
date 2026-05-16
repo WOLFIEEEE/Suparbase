@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowRight, Download, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Download, Mail, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -12,6 +12,7 @@ import { deleteMyAccount } from "@/app/(auth)/(account)/settings/account/actions
 interface Props {
   email: string;
   name: string | null;
+  emailVerifiedAt: string | null;
 }
 
 /**
@@ -21,7 +22,7 @@ interface Props {
  * log + billing events keep their rows with NULL user_id for operator
  * forensics. Required for GDPR Art. 17 ("right to be forgotten").
  */
-export function AccountSettingsPanel({ email, name }: Props) {
+export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -58,6 +59,8 @@ export function AccountSettingsPanel({ email, name }: Props) {
           Identity, contact, and the danger-zone controls.
         </p>
       </header>
+
+      <EmailVerificationCard email={email} verifiedAt={emailVerifiedAt} />
 
       <section className="space-y-3">
         <h2 className="font-display text-xl">Security</h2>
@@ -305,5 +308,82 @@ function PasswordField({
       />
       {hint && <span className="block text-[11px] text-danger">{hint}</span>}
     </label>
+  );
+}
+
+function EmailVerificationCard({
+  email,
+  verifiedAt,
+}: {
+  email: string;
+  verifiedAt: string | null;
+}) {
+  const [pending, setPending] = useState(false);
+
+  async function resend() {
+    setPending(true);
+    try {
+      const res = await fetch("/api/account/verify-email/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        configured?: boolean;
+        message?: string;
+      };
+      if (!res.ok) {
+        toast.error(data.message ?? `HTTP ${res.status}`);
+        return;
+      }
+      if (data.configured === false) {
+        toast.message(
+          "Email isn't configured on this deployment. Ask the operator to wire RESEND_API_KEY.",
+        );
+        return;
+      }
+      toast.success(`Verification email sent to ${email}.`);
+    } catch (e) {
+      toast.error((e as Error).message ?? "Network error.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (verifiedAt) {
+    return (
+      <section className="flex items-start gap-3 rounded-md border border-accent/40 bg-accent/5 p-3">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />
+        <div className="flex-1 space-y-0.5">
+          <p className="text-sm font-medium text-fg">Email verified</p>
+          <p className="text-xs text-fg-muted">
+            <span className="font-mono">{email}</span> was confirmed on{" "}
+            {new Date(verifiedAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+            .
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+      <Mail className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium text-fg">Verify your email</p>
+        <p className="text-xs text-fg-muted">
+          We sent a verification link to <span className="font-mono">{email}</span>. Click
+          it to confirm ownership before we'll deliver invitations or password-reset emails to
+          this address.
+        </p>
+      </div>
+      <Button variant="secondary" size="sm" disabled={pending} onClick={resend}>
+        {pending ? "Sending…" : "Resend"}
+      </Button>
+    </section>
   );
 }

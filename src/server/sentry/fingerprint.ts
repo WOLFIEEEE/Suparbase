@@ -67,6 +67,24 @@ const PATTERNS: Array<{
     kind: "openrouter",
     label: () => "Suparbase AI (OpenRouter)",
   },
+  // Aider (paul-gauthier/aider). UA is typically `aider/<version>`.
+  {
+    rx: /\baider[/ ]?([0-9.]+)?/i,
+    kind: "aider",
+    label: (m) => (m[1] ? `Aider ${m[1]}` : "Aider"),
+  },
+  // Cline (formerly Claude Dev). UA carries `cline` or `claude-dev`.
+  {
+    rx: /\b(?:cline|claude[- ]dev)[/ ]?([0-9.]+)?/i,
+    kind: "cline",
+    label: (m) => (m[1] ? `Cline ${m[1]}` : "Cline"),
+  },
+  // Continue.dev (continuedev/continue).
+  {
+    rx: /\b(?:continue[- ]?dev|continue\/[0-9])/i,
+    kind: "continue_dev",
+    label: () => "Continue.dev",
+  },
 ];
 
 /** Tag a request as `ai_unknown` if the UA mentions any of these but
@@ -116,6 +134,9 @@ export function isAiAgent(kind: AgentKind): boolean {
     kind === "v0" ||
     kind === "vercel_ai_sdk" ||
     kind === "openrouter" ||
+    kind === "aider" ||
+    kind === "cline" ||
+    kind === "continue_dev" ||
     kind === "ai_unknown"
   );
 }

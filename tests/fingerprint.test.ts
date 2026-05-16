@@ -78,6 +78,22 @@ describe("fingerprintRequest", () => {
   it("falls back to unknown for truly opaque UAs", () => {
     expect(fingerprintRequest("MyCustomAgent/0.1").kind).toBe("unknown");
   });
+
+  it("identifies Aider from versioned UA", () => {
+    const fp = fingerprintRequest("aider/0.40.0");
+    expect(fp.kind).toBe("aider");
+    expect(fp.label).toContain("Aider");
+  });
+
+  it("identifies Cline (and the older Claude Dev alias)", () => {
+    expect(fingerprintRequest("cline/1.2.3").kind).toBe("cline");
+    expect(fingerprintRequest("Claude-Dev/0.5.0 VSCode").kind).toBe("cline");
+  });
+
+  it("identifies Continue.dev", () => {
+    expect(fingerprintRequest("continue-dev/0.9.250").kind).toBe("continue_dev");
+    expect(fingerprintRequest("continue/0.9.250").kind).toBe("continue_dev");
+  });
 });
 
 describe("isAiAgent", () => {
@@ -89,6 +105,9 @@ describe("isAiAgent", () => {
     expect(isAiAgent("v0")).toBe(true);
     expect(isAiAgent("vercel_ai_sdk")).toBe(true);
     expect(isAiAgent("openrouter")).toBe(true);
+    expect(isAiAgent("aider")).toBe(true);
+    expect(isAiAgent("cline")).toBe(true);
+    expect(isAiAgent("continue_dev")).toBe(true);
     expect(isAiAgent("ai_unknown")).toBe(true);
   });
 

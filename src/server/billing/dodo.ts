@@ -43,6 +43,12 @@ export interface DodoConfig {
   baseUrl: string;
   webhookSecret: string;
   hostedProductId: string;
+  /**
+   * Optional Dodo product id for the annual-billed Hosted plan.
+   * When set, the checkout endpoint can switch on a `cadence=annual`
+   * query/body field and route to it. Unset = monthly only.
+   */
+  hostedAnnualProductId: string | null;
 }
 
 /**
@@ -55,17 +61,16 @@ export function readDodoConfig(): DodoConfig | null {
   const webhookSecret = process.env.DODO_WEBHOOK_SECRET;
   const hostedProductId =
     process.env.DODO_HOSTED_PRODUCT_ID ?? "pdt_0Nev0FKdzw0UxPeUBKItA";
+  const hostedAnnualProductId = process.env.DODO_HOSTED_ANNUAL_PRODUCT_ID ?? null;
   if (!apiKey) return null;
   const mode = (process.env.DODO_MODE ?? "test").toLowerCase();
   const baseUrl = mode === "live" ? LIVE_BASE : TEST_BASE;
   return {
     apiKey,
     baseUrl,
-    // Webhook secret is only required by the receiver; if it's absent
-    // the checkout side still works, but incoming events will be
-    // rejected. We track it here so the receiver can fail closed.
     webhookSecret: webhookSecret ?? "",
     hostedProductId,
+    hostedAnnualProductId,
   };
 }
 

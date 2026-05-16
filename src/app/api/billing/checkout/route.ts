@@ -22,7 +22,7 @@ export const runtime = "nodejs";
  * subscription, we return 409 with a pointer to /settings/billing
  * rather than create a second checkout.
  */
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ category: "unauthorized" }, { status: 401 });
@@ -77,17 +77,38 @@ export async function POST(_req: NextRequest) {
     process.env.AUTH_URL ??
     "http://localhost:3000";
 
+  // Cadence selection: client can request annual via `?cadence=annual`
+  // (GET-friendly, mirrors the form pattern used elsewhere) or via a
+  // JSON body `{ cadence: "annual" }`. Falls back to monthly when the
+  // operator hasn't published an annual Dodo product yet — UI still
+  // displays the toggle, the user just gets the monthly checkout.
+  let cadence: "monthly" | "annual" = "monthly";
+  const cadenceParam = req.nextUrl.searchParams.get("cadence");
+  if (cadenceParam === "annual") cadence = "annual";
+  if (!cadenceParam) {
+    try {
+      const body = (await req.clone().json()) as { cadence?: string };
+      if (body?.cadence === "annual") cadence = "annual";
+    } catch {
+      /* no body, that's fine */
+    }
+  }
+  const productId =
+    cadence === "annual" && config.hostedAnnualProductId
+      ? config.hostedAnnualProductId
+      : config.hostedProductId;
+
   try {
     const result = await createCheckout({
       config,
-      productId: config.hostedProductId,
+      productId,
       trialPeriodDays: PLAN_LIMITS.hosted.trialDays,
       customer: { email, name: displayName },
-      metadata: { user_id: userId },
+      metadata: { user_id: userId, cadence },
       returnUrl: `${origin}/api/billing/return?status=success`,
       cancelUrl: `${origin}/api/billing/return?status=cancelled`,
     });
-    return NextResponse.json({ checkoutUrl: result.checkoutUrl });
+    return NextResponse.json({ checkoutUrl: result.checkoutUrl, cadence });
   } catch (e) {
     if (e instanceof DodoError) {
       log.warn("checkout failure", {

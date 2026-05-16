@@ -45,6 +45,14 @@ export default async function DocsPage() {
           eyebrow="Documentation"
           title="Everything you need to operate Suparbase."
           subtitle="One page on purpose. Quickstart at the top; deep dives below. Use the sidebar to jump."
+          actions={
+            <Link
+              href="/docs/api"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
+            >
+              API reference →
+            </Link>
+          }
         />
 
         <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-[14rem_1fr]">

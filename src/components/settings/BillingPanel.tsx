@@ -73,9 +73,18 @@ export function BillingPanel({
   async function startCheckout() {
     setLoading(true);
     setError(null);
-    track("checkout_started", { from: "billing_panel", plan: active.plan, isLapsed: isLapsed(active) });
+    track("checkout_started", {
+      from: "billing_panel",
+      plan: active.plan,
+      cadence,
+      isLapsed: isLapsed(active),
+    });
     try {
-      const res = await fetch("/api/billing/checkout", { method: "POST" });
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cadence }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data?.message ?? `Checkout failed (${res.status}).`);
