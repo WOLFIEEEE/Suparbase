@@ -9,7 +9,7 @@ import {
   type SubscriptionRow,
   type SubscriptionStatus,
 } from "@/server/schema";
-import { resolvePlan, type ActivePlan } from "./plans";
+import { PLAN_LIMITS, resolvePlan, type ActivePlan } from "./plans";
 
 /**
  * Repo for the `subscriptions` + `billing_events` tables. The repo
@@ -91,9 +91,18 @@ export async function upsertSubscription(input: UpsertSubscriptionInput): Promis
 }
 
 /**
- * Recorded as part of the webhook handler. The unique index on
- * `webhook_id` is what makes the handler idempotent — a conflict on
- * insert means we've already processed this event.
+ * Recorded as part of the webhook handler. The handler runs in two
+ * idempotency steps:
+ *
+ *   1. `recordBillingEvent` — insert (or no-op on duplicate). Returns
+ *      `alreadyApplied: true` when a prior receipt has already been
+ *      acted on, in which case the handler short-circuits 200 OK.
+ *      Otherwise the row is in the DB but `applied_at` is still null.
+ *
+ *   2. `markBillingEventApplied` — set `applied_at = now()` after the
+ *      caller has successfully mutated `subscriptions`. If step 2
+ *      throws, the next receipt finds `applied_at IS NULL` and re-runs
+ *      apply, so transient DB errors don't permanently desync state.
  */
 export interface RecordEventInput {
   webhookId: string;
@@ -104,43 +113,70 @@ export interface RecordEventInput {
 }
 
 export interface RecordEventResult {
+  /** True when a fresh row was inserted; false when the webhook id was already known. */
   inserted: boolean;
+  /** True when a prior receipt for this webhook id has already been fully applied. */
+  alreadyApplied: boolean;
   row: BillingEventRow | null;
 }
 
 export async function recordBillingEvent(input: RecordEventInput): Promise<RecordEventResult> {
-  try {
-    const rows = await db
-      .insert(billingEvents)
-      .values({
-        webhookId: input.webhookId,
-        eventType: input.eventType,
-        dodoSubscriptionId: input.dodoSubscriptionId ?? null,
-        userId: input.userId ?? null,
-        payload: input.payload as object,
-      })
-      .returning();
-    return { inserted: true, row: rows[0]! };
-  } catch (e) {
-    // Duplicate webhook_id → unique violation → already processed.
-    if (isUniqueViolation(e)) return { inserted: false, row: null };
-    throw e;
+  // Try the insert first. ON CONFLICT DO NOTHING returns 0 rows when
+  // the webhook id is already known, in which case we look up the
+  // existing row to see whether the prior receipt was applied.
+  const inserted = await db
+    .insert(billingEvents)
+    .values({
+      webhookId: input.webhookId,
+      eventType: input.eventType,
+      dodoSubscriptionId: input.dodoSubscriptionId ?? null,
+      userId: input.userId ?? null,
+      payload: input.payload as object,
+    })
+    .onConflictDoNothing({ target: billingEvents.webhookId })
+    .returning();
+  if (inserted.length > 0) {
+    return { inserted: true, alreadyApplied: false, row: inserted[0]! };
   }
+  const existing = await db
+    .select()
+    .from(billingEvents)
+    .where(eq(billingEvents.webhookId, input.webhookId))
+    .limit(1);
+  const row = existing[0] ?? null;
+  return {
+    inserted: false,
+    alreadyApplied: row?.appliedAt != null,
+    row,
+  };
 }
 
-function isUniqueViolation(e: unknown): boolean {
-  return (
-    typeof e === "object" &&
-    e !== null &&
-    "code" in e &&
-    (e as { code?: string }).code === "23505"
-  );
+/** Mark an event as successfully applied. Safe to call multiple times. */
+export async function markBillingEventApplied(webhookId: string): Promise<void> {
+  await db
+    .update(billingEvents)
+    .set({ appliedAt: new Date() })
+    .where(eq(billingEvents.webhookId, webhookId));
 }
 
 export async function listRecentBillingEvents(limit = 100): Promise<BillingEventRow[]> {
   return await db
     .select()
     .from(billingEvents)
+    .orderBy(desc(billingEvents.receivedAt))
+    .limit(limit);
+}
+
+/**
+ * Events that were received but not (yet) successfully applied.
+ * The admin billing page surfaces these so an operator can spot a
+ * webhook that failed to mutate `subscriptions`.
+ */
+export async function listUnappliedBillingEvents(limit = 50): Promise<BillingEventRow[]> {
+  return await db
+    .select()
+    .from(billingEvents)
+    .where(sql`${billingEvents.appliedAt} IS NULL`)
     .orderBy(desc(billingEvents.receivedAt))
     .limit(limit);
 }
@@ -189,9 +225,12 @@ export async function getBillingStats(): Promise<BillingStats> {
     total += r.count;
     if (r.status === "active") {
       paid += r.count;
-      // Use the catalog price directly. Team is custom-priced;
-      // doesn't contribute predictably.
-      if (r.plan === "hosted") mrr += 1200 * r.count;
+      // Read from the catalog so a price change in plans.ts is the
+      // single source of truth (and the dashboard can't silently lie
+      // by stale-hardcoded value).
+      if (r.plan === "hosted") {
+        mrr += PLAN_LIMITS.hosted.monthlyPriceCents * r.count;
+      }
     } else if (r.status === "trialing") {
       trial += r.count;
     }

@@ -1,0 +1,2 @@
+ALTER TABLE "billing_event" ADD COLUMN "applied_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "billing_event_unapplied_idx" ON "billing_event" USING btree ("applied_at","received_at");

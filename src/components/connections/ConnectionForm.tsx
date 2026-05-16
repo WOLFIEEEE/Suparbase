@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { ServiceRoleWarning } from "@/components/connections/ServiceRoleWarning";
+import { PaywallCard } from "@/components/billing/PaywallCard";
 import { AppError } from "@/lib/errors";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
 
@@ -258,7 +259,14 @@ export function ConnectionForm() {
         )}
       </div>
 
-      {error && <ErrorBanner error={error} />}
+      {error && error.category === "plan_limit" ? (
+        <PaywallCard
+          title="Free plan: 1 connection"
+          message={error.message}
+        />
+      ) : error ? (
+        <ErrorBanner error={error} />
+      ) : null}
 
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={!canSubmit || mutation.isPending}>

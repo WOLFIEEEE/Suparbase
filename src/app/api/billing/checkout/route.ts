@@ -5,6 +5,7 @@ import { users } from "@/server/schema";
 import { eq } from "drizzle-orm";
 import { createCheckout, DodoError, readDodoConfig } from "@/server/billing/dodo";
 import { getActivePlan } from "@/server/billing/repo";
+import { PLAN_LIMITS } from "@/server/billing/plans";
 import { limitOr429 } from "@/server/security/route-guards";
 import { log } from "@/server/log";
 
@@ -80,7 +81,7 @@ export async function POST(_req: NextRequest) {
     const result = await createCheckout({
       config,
       productId: config.hostedProductId,
-      trialPeriodDays: 7,
+      trialPeriodDays: PLAN_LIMITS.hosted.trialDays,
       customer: { email, name: displayName },
       metadata: { user_id: userId },
       returnUrl: `${origin}/api/billing/return?status=success`,

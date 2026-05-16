@@ -78,11 +78,20 @@ export const billingEvents = pgTable(
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     payload: jsonb("payload").notNull(),
     receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+    /**
+     * When non-null, the handler successfully mutated the
+     * `subscriptions` table for this event. Receipt + apply are
+     * separate steps so transient apply failures get retried by
+     * Dodo (we return 5xx) without losing the dedupe on receipt.
+     */
+    appliedAt: timestamp("applied_at", { withTimezone: true }),
   },
   (t) => ({
     uniqWebhookId: uniqueIndex("billing_event_webhook_id_unique").on(t.webhookId),
     byUser: index("billing_event_user_idx").on(t.userId, t.receivedAt),
     bySub: index("billing_event_sub_idx").on(t.dodoSubscriptionId, t.receivedAt),
+    /** Operator-facing: list events that were received but not applied. */
+    byUnapplied: index("billing_event_unapplied_idx").on(t.appliedAt, t.receivedAt),
   }),
 );
 

@@ -168,17 +168,17 @@ export function verifyWebhookSignature(params: {
   }
 
   // Secrets distributed via Standard Webhooks dashboards conventionally
-  // arrive with a `whsec_` prefix (base64) — strip it before HMAC.
+  // arrive with a `whsec_` prefix wrapping a base64 body — strip it
+  // and decode. If the body doesn't look like base64 we treat the
+  // entire (post-prefix) string as raw UTF-8 bytes. The earlier
+  // try/catch around Buffer.from was a no-op since Buffer.from
+  // doesn't throw on non-base64 input.
   const rawSecret = secret.startsWith("whsec_") ? secret.slice(6) : secret;
-  // Convention: secrets are base64. If it parses, use the decoded
-  // bytes; otherwise treat as raw UTF-8 text.
-  let secretBytes: Buffer;
-  try {
-    secretBytes = Buffer.from(rawSecret, "base64");
-    if (secretBytes.length === 0) throw new Error("empty");
-  } catch {
-    secretBytes = Buffer.from(rawSecret, "utf8");
-  }
+  const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+  const secretBytes =
+    BASE64_RE.test(rawSecret) && rawSecret.length % 4 === 0
+      ? Buffer.from(rawSecret, "base64")
+      : Buffer.from(rawSecret, "utf8");
 
   const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`;
   const expected = createHmac("sha256", secretBytes).update(signedContent).digest("base64");

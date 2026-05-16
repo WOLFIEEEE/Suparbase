@@ -9,8 +9,10 @@ interface PlanCatalogEntry {
   label: string;
   description: string;
   monthlyPriceCents: number;
-  maxConnections: number;
+  /** null === unlimited. */
+  maxConnections: number | null;
   canInviteTeam: boolean;
+  trialDays: number;
 }
 
 export interface ActivePlanProps {
@@ -143,14 +145,20 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
                   <ul className="space-y-1.5 text-xs text-fg-muted">
                     <Bullet
                       label={
-                        entry.maxConnections === Number.POSITIVE_INFINITY
+                        entry.maxConnections === null
                           ? "Unlimited connections"
-                          : `${entry.maxConnections} connection${entry.maxConnections > 1 ? "s" : ""}`
+                          : `${entry.maxConnections} connection${entry.maxConnections === 1 ? "" : "s"}`
                       }
                     />
                     <Bullet label={entry.canInviteTeam ? "Team workspace" : "Solo workspace"} />
                     <Bullet
-                      label={entry.plan === "hosted" ? "7-day free trial" : entry.plan === "team" ? "SSO + dedicated infra" : "No credit card"}
+                      label={
+                        entry.trialDays > 0
+                          ? `${entry.trialDays}-day free trial`
+                          : entry.plan === "team"
+                          ? "SSO + dedicated infra"
+                          : "No credit card"
+                      }
                     />
                   </ul>
                   <div className="mt-auto pt-2">
@@ -165,7 +173,11 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
                         disabled={loading || !billingConfigured}
                         className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-accent px-3 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {loading ? "Opening Dodo…" : "Start 7-day trial"}
+                        {loading
+                          ? "Opening Dodo…"
+                          : entry.trialDays > 0
+                          ? `Start ${entry.trialDays}-day trial`
+                          : "Subscribe"}
                         {!loading && <Sparkles className="h-3.5 w-3.5" aria-hidden />}
                       </button>
                     ) : entry.plan === "team" ? (

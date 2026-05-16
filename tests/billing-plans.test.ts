@@ -85,6 +85,31 @@ describe("resolvePlan", () => {
     expect(r.isPaid).toBe(true);
     expect(r.grantedByAdmin).toBe(true);
   });
+
+  // Regression guard for the v3.4.1 bug where an admin grant
+  // silently outlived its own `expiresAt` because the cliff check
+  // was OR'd with the admin flag.
+  it("admin grant WITH an elapsed cliff is NOT entitled", () => {
+    const r = resolvePlan({
+      ...baseRow,
+      currentPeriodEnd: new Date(Date.now() - 1000), // expired 1s ago
+      trialEndsAt: null,
+      grantedByAdmin: "admin-1",
+    });
+    expect(r.isPaid).toBe(false);
+    expect(r.plan).toBe("free");
+  });
+
+  it("admin grant with a future cliff IS entitled", () => {
+    const r = resolvePlan({
+      ...baseRow,
+      currentPeriodEnd: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      trialEndsAt: null,
+      grantedByAdmin: "admin-1",
+    });
+    expect(r.isPaid).toBe(true);
+    expect(r.grantedByAdmin).toBe(true);
+  });
 });
 
 describe("requireFeature", () => {
@@ -121,11 +146,26 @@ describe("PLAN_LIMITS catalog", () => {
     expect(PLAN_LIMITS.free.maxConnections).toBe(1);
     expect(PLAN_LIMITS.free.canInviteTeam).toBe(false);
   });
-  it("Hosted has infinite connections + team", () => {
-    expect(PLAN_LIMITS.hosted.maxConnections).toBe(Number.POSITIVE_INFINITY);
+  // null === unlimited (chosen over Number.POSITIVE_INFINITY so
+  // JSON serialisation to the client component stays correct).
+  it("Hosted has unlimited connections + team", () => {
+    expect(PLAN_LIMITS.hosted.maxConnections).toBeNull();
     expect(PLAN_LIMITS.hosted.canInviteTeam).toBe(true);
+  });
+  it("Team has unlimited connections", () => {
+    expect(PLAN_LIMITS.team.maxConnections).toBeNull();
   });
   it("Hosted price is $12/mo in cents", () => {
     expect(PLAN_LIMITS.hosted.monthlyPriceCents).toBe(1200);
+  });
+  it("Hosted trial is 7 days", () => {
+    expect(PLAN_LIMITS.hosted.trialDays).toBe(7);
+  });
+
+  it("requireFeature treats null max as unlimited", () => {
+    const r = resolvePlan(baseRow);
+    expect(() =>
+      requireFeature(r, "addConnection", { currentConnectionCount: 9999 }),
+    ).not.toThrow();
   });
 });

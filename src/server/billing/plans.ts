@@ -8,8 +8,13 @@ import type { Plan, SubscriptionRow, SubscriptionStatus } from "@/server/schema"
  * resolved to `free` at entitlement time.
  */
 export interface PlanLimits {
-  /** Max number of personal connections (owned by this user). */
-  maxConnections: number;
+  /**
+   * Max number of personal connections (owned by this user).
+   * `null` means unlimited — use this sentinel rather than
+   * `Number.POSITIVE_INFINITY`, which JSON-serialises to `null`
+   * anyway and breaks client-side type checks.
+   */
+  maxConnections: number | null;
   /** Can this user invite teammates to their connections? */
   canInviteTeam: boolean;
   /** Display label shown in the UI. */
@@ -18,6 +23,8 @@ export interface PlanLimits {
   description: string;
   /** Monthly price in cents (for MRR maths in /admin). */
   monthlyPriceCents: number;
+  /** Trial length offered at signup for this plan, 0 if none. */
+  trialDays: number;
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
@@ -27,20 +34,23 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     label: "Free",
     description: "1 Supabase connection, solo workspace.",
     monthlyPriceCents: 0,
+    trialDays: 0,
   },
   hosted: {
-    maxConnections: Number.POSITIVE_INFINITY,
+    maxConnections: null,
     canInviteTeam: true,
     label: "Hosted",
     description: "Unlimited connections, team workspace, 90-day audit retention.",
     monthlyPriceCents: 1200,
+    trialDays: 7,
   },
   team: {
-    maxConnections: Number.POSITIVE_INFINITY,
+    maxConnections: null,
     canInviteTeam: true,
     label: "Team",
     description: "Custom enterprise plan — SSO, dedicated infra, DPA.",
     monthlyPriceCents: 0, // priced manually
+    trialDays: 0,
   },
 };
 
@@ -88,12 +98,16 @@ export function resolvePlan(row: SubscriptionRow | null): ActivePlan {
   }
   const cliff = row.currentPeriodEnd ?? row.trialEndsAt;
   const cliffOk = cliff ? cliff.getTime() > Date.now() : false;
+  const isAdminGrant = row.grantedByAdmin !== null;
+  // Entitlement rules:
+  //   - paid status required (active | trialing)
+  //   - real-billing rows need a future current_period_end / trial_ends_at
+  //   - admin grants without a cliff are open-ended (cliff IS NULL)
+  //   - admin grants WITH a cliff still honour it — comp accounts
+  //     don't outlive their stated expiry
+  const cliffSatisfied = isAdminGrant ? cliff === null || cliffOk : cliffOk;
   const entitled =
-    row.plan !== "free" &&
-    ENTITLED_STATUSES.has(row.status) &&
-    // Admin grants without a cliff are open-ended; real-billing rows
-    // need a future period_end / trial_ends_at to count.
-    (row.grantedByAdmin !== null || cliffOk);
+    row.plan !== "free" && ENTITLED_STATUSES.has(row.status) && cliffSatisfied;
   const effectivePlan: Plan = entitled ? row.plan : "free";
   return {
     plan: effectivePlan,
@@ -141,12 +155,14 @@ export function requireFeature(
     return;
   }
   if (feature === "addConnection") {
+    const cap = active.limits.maxConnections;
+    if (cap === null) return; // null === unlimited
     const count = ctx?.currentConnectionCount ?? 0;
-    if (count >= active.limits.maxConnections) {
+    if (count >= cap) {
       throw new PlanLimitError(
         feature,
         active.plan,
-        `The Free plan is limited to ${active.limits.maxConnections} connection. Upgrade to add more.`,
+        `The Free plan is limited to ${cap} connection. Upgrade to add more.`,
       );
     }
     return;

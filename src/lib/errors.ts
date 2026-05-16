@@ -13,7 +13,8 @@ export type ErrorCategory =
   | "no_key"
   | "no_postgres_url"
   | "rls"
-  | "service_role_required";
+  | "service_role_required"
+  | "plan_limit";
 
 export interface AppErrorOptions {
   cause?: unknown;

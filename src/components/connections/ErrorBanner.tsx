@@ -17,6 +17,10 @@ const TITLES: Record<AppError["category"], string> = {
   no_postgres_url: "Postgres URL missing",
   rls: "Blocked by policy",
   service_role_required: "Service role key required",
+  // Used when a 402 from a plan-gated route bubbles up here without
+  // a dedicated paywall renderer (e.g. via toast). Most callers wrap
+  // PaywallCard directly instead.
+  plan_limit: "Upgrade required",
 };
 
 const HINTS: Record<AppError["category"], string> = {
@@ -33,6 +37,7 @@ const HINTS: Record<AppError["category"], string> = {
   no_postgres_url: "Add a direct Postgres URL on the RLS page first.",
   rls: "Postgres rejected this: RLS or read-only mode.",
   service_role_required: "Open connection settings and store a service_role key.",
+  plan_limit: "Your plan doesn't include this. Visit /settings/billing to upgrade.",
 };
 
 export function ErrorBanner({ error }: { error: AppError }) {

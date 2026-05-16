@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getAdminSession } from "@/server/admin/guard";
 import { recordAdminAction } from "@/server/admin/repo";
@@ -26,7 +27,10 @@ const GrantSchema = z.object({
 
 export async function grantPlanAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   const admin = await getAdminSession();
-  if (!admin) return { ok: false, message: "Not authorised." };
+  // Match the layout's surface-invisibility posture: a non-admin
+  // probing the action endpoint should see a 404, not an explanatory
+  // JSON that confirms the URL exists.
+  if (!admin) notFound();
 
   const parsed = GrantSchema.safeParse({
     targetUserId: formData.get("targetUserId"),
@@ -38,9 +42,12 @@ export async function grantPlanAction(formData: FormData): Promise<{ ok: boolean
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
+  // `<input type="date">` returns YYYY-MM-DD. Push to 23:59:59 UTC of
+  // that day so a grant "through Dec 31" actually entitles the user
+  // for the whole of Dec 31 (rather than expiring at the start of it).
   const expiresAt =
     parsed.data.expiresAt && parsed.data.expiresAt.length > 0
-      ? new Date(parsed.data.expiresAt)
+      ? endOfDayUtc(parsed.data.expiresAt)
       : null;
 
   await recordAdminAction({
@@ -72,11 +79,22 @@ export async function grantPlanAction(formData: FormData): Promise<{ ok: boolean
   return { ok: true };
 }
 
+function endOfDayUtc(ymd: string): Date {
+  // Accept YYYY-MM-DD; reject anything else (defensive — Zod already
+  // checked it's a non-empty string but didn't enforce shape).
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!m) return new Date(Number.NaN);
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 23, 59, 59, 999));
+}
+
 const ResetSchema = z.object({ targetUserId: z.string().uuid() });
 
 export async function resetSubscriptionAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   const admin = await getAdminSession();
-  if (!admin) return { ok: false, message: "Not authorised." };
+  // Match the layout's surface-invisibility posture: a non-admin
+  // probing the action endpoint should see a 404, not an explanatory
+  // JSON that confirms the URL exists.
+  if (!admin) notFound();
 
   const parsed = ResetSchema.safeParse({ targetUserId: formData.get("targetUserId") });
   if (!parsed.success) {

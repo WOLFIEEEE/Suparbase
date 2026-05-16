@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { DodoError, readDodoConfig, verifyWebhookSignature } from "@/server/billing/dodo";
 import {
   findUserForDodoSubscription,
+  markBillingEventApplied,
   recordBillingEvent,
   upsertSubscription,
 } from "@/server/billing/repo";
-import type { Plan, SubscriptionStatus } from "@/server/schema";
+import { mapDodoEventToUpdate, type DodoWebhookEvent } from "@/server/billing/dodo-events";
 import { log } from "@/server/log";
 
 export const dynamic = "force-dynamic";
@@ -80,9 +81,11 @@ export async function POST(req: NextRequest) {
     metadataUserId ??
     (dodoSubscriptionId ? await findUserForDodoSubscription(dodoSubscriptionId) : null);
 
-  // Idempotency: the unique index on webhook_id makes duplicate
-  // receipts a no-op. Standard Webhooks will retry on any non-2xx,
-  // so this matters.
+  // Idempotency with separate "received" vs "applied" tracking.
+  // - First receipt: insert succeeds, `appliedAt` is null, we try to apply.
+  // - Duplicate where prior apply succeeded: short-circuit 200, do nothing.
+  // - Duplicate where prior apply failed (transient DB error etc): we re-attempt
+  //   the apply so the operator doesn't have to dig in manually.
   const recordResult = await recordBillingEvent({
     webhookId,
     eventType,
@@ -90,106 +93,48 @@ export async function POST(req: NextRequest) {
     userId,
     payload: event,
   });
-  if (!recordResult.inserted) {
+  if (recordResult.alreadyApplied) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  // Without a user we can't update the subscription row. Record the
-  // event for forensics and 200 the response so Dodo doesn't retry.
+  // No user → can't apply. Record-only and 200 (Dodo would otherwise
+  // retry forever). The admin panel surfaces unmapped events.
   if (!userId) {
     log.warn("dodo webhook: no user resolved", { eventType, dodoSubscriptionId });
     return NextResponse.json({ ok: true, unmapped: true });
   }
 
+  const update = mapDodoEventToUpdate(event);
+  if (!update) {
+    // Unknown event type — record it (already done) and log at info
+    // so an operator browsing logs notices unrecognised events.
+    log.info("dodo webhook: unrecognised event type", {
+      eventType,
+      dodoSubscriptionId,
+    });
+    // Mark applied so we don't retry a no-op forever.
+    await markBillingEventApplied(webhookId);
+    return NextResponse.json({ ok: true, unrecognised: true });
+  }
+
   try {
-    await applyEvent({ userId, eventType, data });
+    await upsertSubscription({
+      userId,
+      ...update,
+    });
+    await markBillingEventApplied(webhookId);
   } catch (e) {
     log.error("dodo webhook: apply failed", {
       userId,
       eventType,
       err: (e as Error).message,
     });
-    // We've already recorded the event; tell Dodo not to retry. An
-    // operator can re-run the apply via the admin panel if needed.
-    return NextResponse.json({ ok: true, appliedError: true });
+    // Return 5xx so Dodo retries with exponential backoff. Next
+    // attempt will find applied_at is still null and re-run apply.
+    return NextResponse.json(
+      { category: "server", message: "Apply failed; retry expected." },
+      { status: 500 },
+    );
   }
   return NextResponse.json({ ok: true });
-}
-
-interface DodoSubscriptionData {
-  subscription_id?: string;
-  customer_id?: string;
-  status?: string;
-  current_period_end?: string;
-  trial_end?: string;
-  product_id?: string;
-  metadata?: Record<string, unknown>;
-}
-
-interface DodoWebhookEvent {
-  type?: string;
-  timestamp?: string;
-  business_id?: string;
-  data?: DodoSubscriptionData;
-}
-
-/**
- * Translate a Dodo event into a `subscriptions` row mutation.
- * Anything we don't recognise becomes a no-op (still recorded in
- * `billing_events`, so we can backfill once we extend the switch).
- */
-async function applyEvent(input: {
-  userId: string;
-  eventType: string;
-  data: DodoSubscriptionData;
-}): Promise<void> {
-  const status = mapStatus(input.eventType, input.data.status);
-  if (!status) return; // unknown event, leave row untouched
-
-  const currentPeriodEnd = parseDate(input.data.current_period_end);
-  const trialEndsAt = parseDate(input.data.trial_end);
-  const plan: Plan = "hosted"; // the only product we sell self-serve
-
-  await upsertSubscription({
-    userId: input.userId,
-    plan: status === "expired" || status === "cancelled" ? plan : plan,
-    status,
-    dodoCustomerId: input.data.customer_id ?? null,
-    dodoSubscriptionId: input.data.subscription_id ?? null,
-    currentPeriodEnd,
-    trialEndsAt,
-  });
-}
-
-function mapStatus(
-  eventType: string,
-  payloadStatus: string | undefined,
-): SubscriptionStatus | null {
-  switch (eventType) {
-    case "subscription.active":
-      // `payloadStatus` reflects whether the subscription is in trial
-      // — Dodo emits "trialing" via the data.status field.
-      if (payloadStatus === "trialing") return "trialing";
-      return "active";
-    case "subscription.renewed":
-    case "subscription.plan_changed":
-    case "subscription.updated":
-      return payloadStatus === "trialing" ? "trialing" : "active";
-    case "subscription.on_hold":
-      return "on_hold";
-    case "subscription.cancelled":
-      return "cancelled";
-    case "subscription.expired":
-      return "expired";
-    case "subscription.failed":
-      return "failed";
-    default:
-      return null;
-  }
-}
-
-function parseDate(s: string | undefined): Date | null {
-  if (!s) return null;
-  const t = Date.parse(s);
-  return Number.isFinite(t) ? new Date(t) : null;
 }

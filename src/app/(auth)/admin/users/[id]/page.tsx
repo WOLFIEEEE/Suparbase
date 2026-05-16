@@ -6,6 +6,12 @@ import { getUserDetail } from "@/server/admin/repo";
 import { listBillingEventsForUser } from "@/server/billing/repo";
 import { GrantPlanForm, ResetSubscriptionForm } from "./forms";
 
+// RFC 4122 UUID pattern. Guards against `/admin/users/garbage` which
+// would otherwise let Postgres reject the malformed cast and bubble
+// up as a 500 — confusing for the operator.
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const metadata: Metadata = {
   title: "Admin · User",
 };
@@ -16,6 +22,7 @@ interface Props {
 
 export default async function AdminUserDetailPage({ params }: Props) {
   const { id } = await params;
+  if (!UUID_RE.test(id)) notFound();
   const user = await getUserDetail(id);
   if (!user) notFound();
   const events = await listBillingEventsForUser(id, 30);

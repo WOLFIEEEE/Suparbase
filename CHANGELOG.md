@@ -3,6 +3,88 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.4.2 · 2026-05-15 · Billing hardening
+
+Iron-clad audit pass over the v3.4 surface. No new features — every
+change closes a latent bug, a coverage gap, or a consistency hole.
+Total: 21 new tests (116 passing), one additive migration.
+
+**Real bugs fixed:**
+- **Webhook idempotency now tracks "applied" separately from
+  "received".** Previously, if `applyEvent` threw (transient DB
+  error, etc.) we returned 200 and the unique-violation short-circuit
+  swallowed every retry — the subscription stayed desynchronised
+  forever. New `billing_event.applied_at` column + the receive/apply
+  split: failed applies now return 5xx so Dodo retries; the next
+  receipt finds `applied_at IS NULL` and re-runs the mutation.
+- **Admin grants now honour their own `expiresAt` cliff.** The
+  resolver was OR-ing the admin flag with the cliff check, so a
+  comp account set to expire on a specific date stayed entitled
+  forever. Now: open-ended grants stay open-ended, dated grants
+  expire as configured.
+- **Tautology in webhook `applyEvent`** (`plan: ... ? plan : plan`)
+  removed. The intent — "downgrade on expire/cancel" — is already
+  handled by the resolver via status; the `plan` column is always
+  `hosted`.
+- **`/admin/users/<garbage>` no longer 500s.** UUID format checked
+  before the Postgres query; malformed paths `notFound()`.
+- **`PaywallCard` now actually renders.** When `/api/connections`
+  returns 402 with `category: "plan_limit"`, the connection form
+  shows the paywall card with the upgrade CTA instead of a generic
+  error.
+- **`plan_limit` added to `ErrorCategory`** + matching strings in
+  `ErrorBanner`. Previously the code referenced a category the type
+  union didn't include — only worked because of an `as` cast.
+
+**Consistency:**
+- MRR maths in `/admin` now reads from `PLAN_LIMITS.hosted.monthlyPriceCents`
+  (was a hardcoded `1200`). Single source of truth.
+- Trial length centralised as `PLAN_LIMITS.hosted.trialDays = 7`.
+  Checkout route + billing page CTA both pull from the catalog —
+  bumping the trial to 14 days is one edit.
+- `PlanLimits.maxConnections` is now `number | null` (null = unlimited).
+  Previously `Number.POSITIVE_INFINITY`, which JSON-serialises to
+  `null` and broke the client-side display check for the Hosted card.
+- Admin grant `expiresAt` is now end-of-day UTC (23:59:59), so "grant
+  through Dec 31" actually entitles the user for all of Dec 31, not
+  the start of it.
+
+**Tests** (21 new):
+- `tests/dodo-events.test.ts` — pure event-name → status mapping
+  pinned for all 8 subscription events + trial detection + date
+  parsing + unrecognised events.
+- `tests/billing-plans.test.ts` extended with regression guards for
+  the admin-grant cliff bug + the null-sentinel unlimited cap.
+
+**Defence-in-depth:**
+- Webhook secret parsing — replaced the misleading `try/catch` (which
+  never caught) with an explicit base64 regex + length check. The
+  utf-8 fallback now only fires when the secret genuinely isn't
+  base64.
+- Admin server actions `notFound()` on non-admin (was returning a
+  JSON error that confirmed the URL existed).
+- Unrecognised webhook event types are logged at `info` and marked
+  applied (we don't retry forever) instead of leaving an event
+  recorded-but-unapplied.
+
+**Operator surface:**
+- `/admin/billing` now shows an amber callout listing events that
+  were received but not yet applied — the operator's first stop when
+  a payment landed but the user's plan didn't flip. The main table
+  gains an "Applied" column (✓ / pending).
+- `PRODUCTION.md` gains a v3.4 billing + admin smoke checklist
+  (~10 min walk-through covering admin grant cliff, hard limits,
+  webhook idempotency, and the checkout round-trip).
+
+**Plumbing:**
+- New module `src/server/billing/dodo-events.ts` houses the pure
+  event-mapping logic, extracted from the route handler so it can be
+  unit-tested without a DB or HTTP harness.
+- Migration `drizzle/0012_organic_quasar.sql` adds
+  `billing_event.applied_at` + `billing_event_unapplied_idx`.
+  Additive only — existing rows backfill to `NULL` (treated as
+  unapplied — the apply will idempotently re-run on next receipt).
+
 ## v3.4.1 · 2026-05-15 · Signed-in browsing fixes
 
 Two routing nits from the v3.4 ship reported by the operator:

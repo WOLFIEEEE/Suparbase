@@ -276,3 +276,80 @@ These are intentionally not blocking launch but worth knowing:
 - **The undo audit trail** lives in `agent_session.undo_attempted_count`
   + `undo_reverted_count` + `undo_error`. If an undo half-applied,
   the error is captured there.
+
+---
+
+## 5. v3.4 billing + admin smoke (10 min)
+
+Adds Dodo Payments subscription billing and the `/admin` operator
+panel. Most can be exercised without a real Dodo account by
+exercising the admin grant path; the webhook path needs a Dodo
+sandbox.
+
+### One-time setup
+
+- [ ] `pnpm db:push` (or run `dist/migrator.mjs`) — applies the
+  `subscription`, `billing_event`, `admin_action` tables and the
+  `billing_event.applied_at` column.
+- [ ] Set `SUPARBASE_ADMIN_EMAILS=<your email>` in the host env.
+  Restart. `/admin` should now be reachable when signed in.
+- [ ] (Optional, full billing) Set `DODO_API_KEY` +
+  `DODO_WEBHOOK_SECRET` + `DODO_HOSTED_PRODUCT_ID`. In the Dodo
+  dashboard, configure the webhook endpoint to
+  `https://<host>/api/webhooks/dodo`.
+
+### Admin panel happy-path (no Dodo required)
+
+- [ ] Visit `/admin` — dashboard loads with user/MRR stats.
+- [ ] Visit `/admin/users` — search by email works; pill shows the
+  user's plan.
+- [ ] Open a user → **Grant a plan** → choose Hosted, leave date
+  blank → save. The user's plan flips to Hosted with `granted_by_admin`
+  set. Refresh `/admin/users` and confirm the pill says `hosted·comp`.
+- [ ] On the same user, **Grant** again with `expiresAt` = yesterday
+  → save → check `/admin/users/[id]`. Despite the row saying Hosted,
+  re-running the resolver via any gated request should treat this user
+  as Free (the cliff is honoured). Hit `POST /api/connections` from
+  this account and confirm 402 fires once they hit their second.
+- [ ] **Reset** the user → plan returns to Free.
+
+### Hard-limit enforcement (no Dodo required)
+
+- [ ] Create a fresh Free-tier user with 1 connection.
+- [ ] Try to add a 2nd connection → form shows the `PaywallCard` with
+  "See plans" link.
+- [ ] Try to invite a teammate from the Members tab → server returns
+  402 `plan_limit`; UI surfaces it.
+
+### Dodo webhook smoke (needs Dodo sandbox)
+
+- [ ] In the Dodo dashboard, send a test event (`subscription.active`)
+  with `metadata.user_id` set to a real Suparbase user id.
+- [ ] Hit `/admin/billing` — the event row shows `Applied ✓`.
+- [ ] The targeted user's plan in `/admin/users/[id]` flips to Hosted
+  with the correct `current_period_end`.
+- [ ] Re-send the same event → second row does NOT appear (dedupe on
+  `webhook-id`); `Applied ✓` from the first remains.
+- [ ] Send `subscription.cancelled` → the plan flips to Free in the
+  resolver (the `status` column says `cancelled` but the user can no
+  longer create extra connections / invite teammates).
+
+### Checkout (needs Dodo sandbox + a test card)
+
+- [ ] As a Free user, visit `/settings/billing` → click
+  **Start 7-day trial** → redirected to Dodo's hosted checkout.
+- [ ] Pay with a Dodo test card → redirected back to
+  `/settings/billing?status=success`.
+- [ ] Within a few seconds the dashboard reflects `trialing` status.
+- [ ] Cancel through Dodo's customer flow → webhook lands → state
+  flips to `cancelled` on the next refresh.
+
+### Known limitations
+
+- Self-serve plan changes aren't supported in-app — cancel + re-sub
+  through Dodo, then admin grants if needed.
+- The admin grant `expiresAt` is set to 23:59:59 UTC of the chosen
+  day, not local time.
+- Unrecognised webhook event types are recorded but not applied
+  (and surfaced in the `unapplied` banner on `/admin/billing` so an
+  operator notices).
