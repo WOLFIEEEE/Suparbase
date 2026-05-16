@@ -40,7 +40,28 @@ export async function listUsers(params: {
   const limit = Math.min(params.limit ?? 200, 500);
   const search = params.search?.trim();
 
+  // Pre-aggregate connection counts in a CTE rather than running a
+  // correlated subquery per user row (which is N×lookup against
+  // `connections`). This becomes one indexed GROUP BY scan plus a
+  // single left-join hash probe.
+  const connCounts = db.$with("conn_counts").as(
+    db
+      .select({
+        userId: connections.userId,
+        c: sql<number>`count(*)::int`.as("c"),
+      })
+      .from(connections)
+      .groupBy(connections.userId),
+  );
+
+  // Search uses pg_trgm GIN indexes on email/name (added in
+  // migration 0013) for substring matches that don't full-scan.
+  const whereClause = search
+    ? or(ilike(users.email, `%${search}%`), ilike(users.name, `%${search}%`))
+    : undefined;
+
   const baseQuery = db
+    .with(connCounts)
     .select({
       id: users.id,
       email: users.email,
@@ -52,20 +73,15 @@ export async function listUsers(params: {
       trialEndsAt: subscriptions.trialEndsAt,
       currentPeriodEnd: subscriptions.currentPeriodEnd,
       grantedByAdmin: subscriptions.grantedByAdmin,
-      connectionCount: sql<number>`(
-        SELECT count(*)::int FROM ${connections} WHERE ${connections.userId} = ${users.id}
-      )`,
+      connectionCount: sql<number>`coalesce(${connCounts.c}, 0)`,
     })
     .from(users)
     .leftJoin(subscriptions, eq(subscriptions.userId, users.id))
+    .leftJoin(connCounts, eq(connCounts.userId, users.id))
     .orderBy(desc(users.createdAt))
     .limit(limit);
 
-  const rows = search
-    ? await baseQuery.where(
-        or(ilike(users.email, `%${search}%`), ilike(users.name, `%${search}%`)),
-      )
-    : await baseQuery;
+  const rows = whereClause ? await baseQuery.where(whereClause) : await baseQuery;
 
   return rows.map((r) => ({
     id: r.id,

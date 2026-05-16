@@ -24,10 +24,22 @@ export const auditLog = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
-    userIdx: index("audit_user_idx").on(t.userId),
-    connectionIdx: index("audit_connection_idx").on(t.connectionId),
+    // Compound index serving the dominant access pattern: "show me
+    // the recent audit rows for user X on connection Y". Covers every
+    // recent-audit, undo, AI-tool, and detail-page read.
+    byConnRecent: index("audit_conn_recent_idx").on(
+      t.userId,
+      t.connectionId,
+      t.createdAt.desc(),
+    ),
+    // Per-session view (Sentry / "what did this Cursor session do?").
+    bySessionRecent: index("audit_session_created_idx").on(
+      t.sessionId,
+      t.createdAt.desc(),
+    ),
+    // Retention sweep (`WHERE created_at < $cutoff`). Kept as a single
+    // column so the partitioned scan is cheap.
     createdAtIdx: index("audit_created_at_idx").on(t.createdAt),
-    sessionIdx: index("audit_session_idx").on(t.sessionId),
   }),
 );
 

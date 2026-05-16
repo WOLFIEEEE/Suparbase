@@ -218,14 +218,23 @@ export function _resetSessionCache(): void {
 }
 
 async function bumpSession(row: AgentSessionRow, tableLabel: string): Promise<void> {
-  const nextTables = row.tablesTouched.includes(tableLabel)
-    ? row.tablesTouched
-    : [...row.tablesTouched, tableLabel];
+  // Compute the tables-touched union inside Postgres so two
+  // concurrent writes can't stomp each other's tablesTouched (the
+  // previous read-then-set form was racy: A reads [t1], B reads [t1],
+  // A writes [t1,t2], B writes [t1,t3] → t2 is lost).
+  // `tables_touched` is jsonb but stores a string[] — we round-trip
+  // it as text[] for the union, then jsonb_agg() back.
   await db
     .update(agentSessions)
     .set({
       mutationCount: sql`${agentSessions.mutationCount} + 1`,
-      tablesTouched: nextTables,
+      tablesTouched: sql`
+        CASE
+          WHEN ${agentSessions.tablesTouched} @> ${JSON.stringify([tableLabel])}::jsonb
+          THEN ${agentSessions.tablesTouched}
+          ELSE ${agentSessions.tablesTouched} || ${JSON.stringify([tableLabel])}::jsonb
+        END
+      `,
       lastSeenAt: new Date(),
     })
     .where(eq(agentSessions.id, row.id));

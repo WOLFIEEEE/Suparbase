@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { db } from "@/server/db";
 import { connections, type ConnectionRow } from "@/server/schema/connections";
 import { connectionMembers, type ConnectionRole } from "@/server/schema/team";
@@ -36,23 +36,30 @@ export function toSummary(row: ConnectionRow, myRole?: ConnectionRole): Connecti
 /**
  * Returns every connection the user has access to: those they own
  * and those they're a member of, with the caller's effective role.
+ * The owned/member queries both push their ORDER BY into Postgres
+ * via the (user_id, last_used_at DESC) index — no JS sort needed,
+ * the final merge preserves order because both inputs are sorted.
  */
 export async function listConnections(userId: string): Promise<ConnectionSummary[]> {
   const owned = await db
     .select()
     .from(connections)
-    .where(eq(connections.userId, userId));
+    .where(eq(connections.userId, userId))
+    .orderBy(desc(connections.lastUsedAt));
 
   const memberRows = await db
     .select({ row: connections, role: connectionMembers.role })
     .from(connectionMembers)
     .innerJoin(connections, eq(connections.id, connectionMembers.connectionId))
-    .where(eq(connectionMembers.userId, userId));
+    .where(eq(connectionMembers.userId, userId))
+    .orderBy(desc(connections.lastUsedAt));
 
+  // Merge with owner-status winning. Both inputs are already in
+  // last_used_at DESC order from Postgres; we re-sort only because
+  // the merge interleaves them.
   const map = new Map<string, ConnectionSummary>();
   for (const r of owned) map.set(r.id, toSummary(r, "owner"));
   for (const { row, role } of memberRows) {
-    // Owner status wins if both exist (shouldn't happen, but defensive).
     if (!map.has(row.id)) map.set(row.id, toSummary(row, role));
   }
   return Array.from(map.values()).sort(
@@ -61,33 +68,35 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
 }
 
 /**
- * Resolve the caller's role on a connection, owner, member role, or null.
- * Use this when a route needs to know the caller's permissions.
+ * Resolve the caller's role on a connection: owner, member role, or
+ * null. One LEFT JOIN against `connection_member` rather than two
+ * sequential round-trips — this is on the critical path of every
+ * protected API route, so the saved hop matters.
  */
 export async function getConnectionAccess(
   userId: string,
   id: string,
 ): Promise<{ conn: ConnectionRow; role: ConnectionRole } | null> {
-  const [row] = await db
-    .select()
+  const rows = await db
+    .select({
+      conn: connections,
+      memberRole: connectionMembers.role,
+    })
     .from(connections)
-    .where(eq(connections.id, id))
-    .limit(1);
-  if (!row) return null;
-  if (row.userId === userId) return { conn: row, role: "owner" };
-
-  const [member] = await db
-    .select()
-    .from(connectionMembers)
-    .where(
+    .leftJoin(
+      connectionMembers,
       and(
-        eq(connectionMembers.connectionId, id),
+        eq(connectionMembers.connectionId, connections.id),
         eq(connectionMembers.userId, userId),
       ),
     )
+    .where(eq(connections.id, id))
     .limit(1);
-  if (!member) return null;
-  return { conn: row, role: member.role };
+  const row = rows[0];
+  if (!row) return null;
+  if (row.conn.userId === userId) return { conn: row.conn, role: "owner" };
+  if (!row.memberRole) return null;
+  return { conn: row.conn, role: row.memberRole };
 }
 
 /**
@@ -162,8 +171,22 @@ export async function deleteConnection(userId: string, id: string): Promise<bool
   return rows.length > 0;
 }
 
+/**
+ * Bump `last_used_at` — but only if the row is more than 60s stale.
+ * This call runs on every successful proxied write, which on a busy
+ * connection means contending on the same row lock + writing WAL for
+ * a value the UI displays at minute-resolution anyway. The 60s
+ * threshold cuts the write rate from "every request" to "at most
+ * once per minute per connection" with no user-visible change.
+ */
+const TOUCH_THROTTLE_MS = 60_000;
 export async function touchLastUsed(id: string): Promise<void> {
-  await db.update(connections).set({ lastUsedAt: new Date() }).where(eq(connections.id, id));
+  const now = new Date();
+  const threshold = new Date(now.getTime() - TOUCH_THROTTLE_MS);
+  await db
+    .update(connections)
+    .set({ lastUsedAt: now })
+    .where(and(eq(connections.id, id), lt(connections.lastUsedAt, threshold)));
 }
 
 /**

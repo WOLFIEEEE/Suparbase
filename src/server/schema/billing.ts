@@ -1,4 +1,5 @@
 import { index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { users } from "./auth";
 
 /**
@@ -90,8 +91,16 @@ export const billingEvents = pgTable(
     uniqWebhookId: uniqueIndex("billing_event_webhook_id_unique").on(t.webhookId),
     byUser: index("billing_event_user_idx").on(t.userId, t.receivedAt),
     bySub: index("billing_event_sub_idx").on(t.dodoSubscriptionId, t.receivedAt),
-    /** Operator-facing: list events that were received but not applied. */
-    byUnapplied: index("billing_event_unapplied_idx").on(t.appliedAt, t.receivedAt),
+    /**
+     * Operator-facing: list events that were received but not applied.
+     * Partial index — only contains rows where `applied_at IS NULL`,
+     * which is the tail we ever query. Cheap to maintain (most rows
+     * apply quickly and drop out of the index) and serves the
+     * ORDER BY for free.
+     */
+    byUnapplied: index("billing_event_unapplied_idx")
+      .on(t.receivedAt.desc())
+      .where(sql`${t.appliedAt} IS NULL`),
   }),
 );
 

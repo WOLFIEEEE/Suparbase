@@ -66,16 +66,19 @@ export const agentSessions = pgTable(
     undoError: text("undo_error"),
   },
   (t) => ({
-    perConnIdx: index("agent_session_per_conn_idx").on(
-      t.userId,
-      t.connectionId,
-      t.lastSeenAt,
-    ),
-    perAgentIdx: index("agent_session_per_agent_idx").on(
+    // Single compound that covers both hot reads:
+    //   - attachToSession lookup: WHERE user_id=? AND conn_id=? AND
+    //     kind=? AND status='active' ORDER BY last_seen_at DESC LIMIT 1
+    //   - listSessions: WHERE user_id=? AND conn_id=? ORDER BY
+    //     last_seen_at DESC (uses the (user, conn, ...) prefix)
+    // Replaces the previous `per_conn_idx` and `per_agent_idx` which
+    // were both left-prefix-covered by this one.
+    perAgentRecent: index("agent_session_per_agent_recent_idx").on(
       t.userId,
       t.connectionId,
       t.kind,
       t.status,
+      t.lastSeenAt.desc(),
     ),
   }),
 );

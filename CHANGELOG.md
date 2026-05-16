@@ -3,6 +3,80 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.4.3 · 2026-05-15 · Database optimisation pass
+
+Schema-level + query-level performance pass. No behaviour changes;
+everything makes existing reads cheaper as the tables grow. One
+additive migration (drops + recreates indexes; no data touched).
+
+**New / replaced indexes (`drizzle/0013_daily_gamora.sql`):**
+- `audit_log`: replaced three narrow single-column indexes (`user_idx`,
+  `connection_idx`, `session_idx`) with two compounds that match the
+  actual access patterns —
+  - `audit_conn_recent_idx (user_id, connection_id, created_at DESC)`
+    serves every recent-audit, undo, AI-tool, and detail-page read in
+    one index hit (was: bitmap-AND across two narrow indexes).
+  - `audit_session_created_idx (session_id, created_at DESC)` serves
+    the "show me what this Cursor session did" view.
+  - `audit_created_at_idx` kept for the retention sweep.
+- `audit_log`: new GIN `jsonb_path_ops` index on `primary_key` so the
+  row-history `@>` query (`POST /api/v/[id]/audit/row`) doesn't
+  seq-scan the per-connection shard. Hot read in the row-detail page.
+- `agent_session`: replaced both compounds with one
+  `(user_id, connection_id, kind, status, last_seen_at DESC)` that
+  covers the proxy hot-path `attachToSession` lookup AND the
+  `listSessions` read via the (user, conn, …) prefix.
+- `connections`: replaced bare `(user_id)` with
+  `(user_id, last_used_at DESC)` so `listConnections` can push the
+  ORDER BY into Postgres (was: JS sort after fetching all rows).
+- `sentry_finding`: replaced `(user_id, conn_id, status)` with
+  `(user_id, conn_id, status, last_seen_at DESC)` to skip the heap
+  sort on `listFindings`.
+- `admin_action`: new `(created_at DESC)` for the global feed in
+  `listRecentAdminActions` (was: full-scan + top-N sort).
+- `billing_event_unapplied_idx` is now a **partial** index
+  `WHERE applied_at IS NULL ORDER BY received_at DESC`. Tiny (only
+  contains the tail you ever query), maintenance-free as rows drop
+  out on apply.
+- `pg_trgm` extension enabled + GIN trigram indexes on `users.email`
+  and `users.name` so the admin user search (`ILIKE '%term%'`)
+  doesn't full-scan once the user table grows past a few thousand.
+
+**Query refactors:**
+- `getConnectionAccess` is now one LEFT JOIN against `connection_member`
+  instead of two sequential round-trips. Every protected API route
+  shaves one round-trip — the single highest-frequency read in the
+  codebase.
+- `listUsers` in the admin panel replaced the correlated `(SELECT
+  count(*) FROM connections WHERE user_id = users.id)` (which ran
+  N times per page) with a CTE-based pre-aggregation. One GROUP BY
+  scan + a hash join, regardless of page size.
+- `listConnections` pushes its ORDER BY into Postgres via the new
+  `(user_id, last_used_at DESC)` index.
+- `touchLastUsed` now throttles: writes only when `last_used_at` is
+  >60s stale. Previously every successful proxied write contended on
+  the same row lock + wrote WAL; under load this was meaningful
+  serialisation.
+
+**Concurrency safety:**
+- `bumpSession` no longer reads `tablesTouched` into JS and writes it
+  back (which was racy under concurrent writes — two writers could
+  silently lose each other's table additions). The union now happens
+  inside Postgres via a `CASE WHEN ... @> ... THEN ... ELSE ... || ...`
+  expression on the jsonb column.
+
+**Retention safety:**
+- `runRetention()` deletes from `audit_log` in batches of 5000 rather
+  than one statement. A 50M-row purge would have held row locks and
+  WAL for the whole transaction; batched chunks keep individual
+  statements bounded. Iteration cap at 200 batches per run (1M rows)
+  so a runaway never holds the cron handler open — anything bigger
+  gets caught on the next tick.
+
+No app-visible changes. Existing reads get faster proportional to
+table size; writes get a tiny boost from fewer indexes on
+`audit_log` and `agent_session`.
+
 ## v3.4.2 · 2026-05-15 · Billing hardening
 
 Iron-clad audit pass over the v3.4 surface. No new features — every

@@ -57,12 +57,31 @@ export async function runRetention(
 ): Promise<RetentionResult> {
   const t0 = Date.now();
 
-  // 1. audit_log — drop write rows older than the cap.
+  // 1. audit_log — drop write rows older than the cap. Done in
+  // batches of 5000 so we hold row locks + write WAL for a bounded
+  // window per statement, even on tables with millions of rows.
+  // The createdAt scan uses `audit_created_at_idx`.
   const auditCutoff = daysAgo(config.auditRetentionDays);
-  const audit = await db
-    .delete(auditLog)
-    .where(lt(auditLog.createdAt, auditCutoff))
-    .returning({ id: auditLog.id });
+  let auditRowsPruned = 0;
+  const AUDIT_BATCH = 5000;
+  // Cap iterations so a runaway never holds the cron handler open;
+  // 1M rows in one pass is enough — anything bigger we'll catch on
+  // the next cron tick.
+  for (let iter = 0; iter < 200; iter++) {
+    const result = await db.execute<{ id: string }>(sql`
+      DELETE FROM ${auditLog}
+      WHERE id IN (
+        SELECT id FROM ${auditLog}
+        WHERE ${auditLog.createdAt} < ${auditCutoff}
+        ORDER BY ${auditLog.createdAt}
+        LIMIT ${AUDIT_BATCH}
+      )
+      RETURNING id
+    `);
+    const pruned = result.length ?? 0;
+    auditRowsPruned += pruned;
+    if (pruned < AUDIT_BATCH) break;
+  }
 
   // 2. sentry_scan — drop scans older than the cap. Findings keep
   // their FK as null (set-null on delete), so individual findings
@@ -105,7 +124,7 @@ export async function runRetention(
     .returning({ id: agentSessions.id });
 
   return {
-    auditRowsPruned: audit.length,
+    auditRowsPruned,
     scansPruned: scans.length,
     findingsPruned: findings.length,
     sessionsPruned: sessions.length,

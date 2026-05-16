@@ -82,7 +82,16 @@ export const sentryFindings = pgTable(
     quarantinePolicyName: text("quarantine_policy_name"),
   },
   (t) => ({
-    perConnIdx: index("sentry_finding_per_conn_idx").on(t.userId, t.connectionId, t.status),
+    // Matches listFindings:
+    //   WHERE user_id=? AND conn_id=? [AND status=?]
+    //   ORDER BY last_seen_at DESC
+    // The trailing column lets the planner skip the heap sort.
+    perConnRecent: index("sentry_finding_per_conn_recent_idx").on(
+      t.userId,
+      t.connectionId,
+      t.status,
+      t.lastSeenAt.desc(),
+    ),
     perTableIdx: index("sentry_finding_per_table_idx").on(
       t.userId,
       t.connectionId,

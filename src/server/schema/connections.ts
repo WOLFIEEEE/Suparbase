@@ -40,7 +40,13 @@ export const connections = pgTable(
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
-    userIdx: index("connections_user_idx").on(t.userId),
+    // Lists are always "this user's connections, most-recently-used
+    // first". A single compound (user_id, last_used_at DESC) serves
+    // it and supersedes the previous bare `user_idx`.
+    byUserRecent: index("connections_user_recent_idx").on(
+      t.userId,
+      t.lastUsedAt.desc(),
+    ),
     uniqueUserName: unique("connections_user_name_unique").on(t.userId, t.name),
   }),
 );

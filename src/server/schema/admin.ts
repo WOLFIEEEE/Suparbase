@@ -25,6 +25,9 @@ export const adminActions = pgTable(
   (t) => ({
     byAdmin: index("admin_action_by_admin_idx").on(t.adminUserId, t.createdAt),
     byTarget: index("admin_action_by_target_idx").on(t.targetUserId, t.createdAt),
+    // Global ORDER BY created_at DESC LIMIT N feed (no WHERE) used by
+    // listRecentAdminActions. Without this, the feed would full-scan.
+    byCreatedAt: index("admin_action_created_at_idx").on(t.createdAt.desc()),
   }),
 );
 
