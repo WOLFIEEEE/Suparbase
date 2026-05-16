@@ -4,7 +4,7 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { SignInForm } from "@/components/auth/SignInForm";
 
 interface SignInPageProps {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; reset?: string }>;
 }
 
 function mapError(error: string | undefined): string | null {
@@ -18,14 +18,18 @@ function mapError(error: string | undefined): string | null {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const session = await auth();
-  const { next, error } = await searchParams;
+  const { next, error, reset } = await searchParams;
   if (session?.user) redirect(next ?? "/connections");
 
   return (
     <AuthShell
       eyebrow="Welcome back"
       title="Sign in"
-      subtitle="Pick up where you left off: your saved connections and AI history are waiting."
+      subtitle={
+        reset === "1"
+          ? "Password updated. Sign in with the new one."
+          : "Pick up where you left off: your saved connections and AI history are waiting."
+      }
       footnote="By signing in you agree to a basic operator-side audit log of writes performed through your connections."
     >
       <SignInForm githubEnabled={isGithubEnabled()} error={mapError(error)} />

@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileSearch } from "lucide-react";
 import { getUserDetail } from "@/server/admin/repo";
 import { listBillingEventsForUser } from "@/server/billing/repo";
+import { listConnections } from "@/server/connections/repo";
 import { GrantPlanForm, ResetSubscriptionForm } from "./forms";
 
 // RFC 4122 UUID pattern. Guards against `/admin/users/garbage` which
@@ -25,7 +26,10 @@ export default async function AdminUserDetailPage({ params }: Props) {
   if (!UUID_RE.test(id)) notFound();
   const user = await getUserDetail(id);
   if (!user) notFound();
-  const events = await listBillingEventsForUser(id, 30);
+  const [events, userConnections] = await Promise.all([
+    listBillingEventsForUser(id, 30),
+    listConnections(id),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -93,6 +97,36 @@ export default async function AdminUserDetailPage({ params }: Props) {
           this row.
         </p>
         <ResetSubscriptionForm targetUserId={user.id} />
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl">Connections</h2>
+          <Link
+            href={`/admin/audit?user=${user.id}`}
+            className="inline-flex items-center gap-1 rounded-md border hairline px-3 py-1.5 text-xs text-fg-muted hover:border-line-strong hover:text-fg"
+          >
+            <FileSearch className="h-3 w-3" aria-hidden />
+            View audit log for this user
+          </Link>
+        </div>
+        {userConnections.length === 0 ? (
+          <p className="text-xs text-fg-muted">No connections.</p>
+        ) : (
+          <ul className="divide-y hairline overflow-hidden rounded-lg border hairline bg-bg-raised">
+            {userConnections.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3 text-xs">
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="truncate font-mono text-fg">{c.name}</p>
+                  <p className="text-fg-faint">
+                    <span className="font-mono">{c.hostname}</span> · {c.role} · {c.myRole}
+                  </p>
+                </div>
+                <span className="font-mono text-fg-faint">{new Date(c.lastUsedAt).toLocaleDateString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="space-y-3">

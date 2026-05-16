@@ -3,6 +3,70 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.6.0 · 2026-05-15 · Production-readiness Tier 1
+
+Closes the operator-blocking gaps from the production-readiness
+audit. Five customer-facing surfaces + three operator tools + the
+plumbing to make all of it observable.
+
+**Customer:**
+- **Forgot-password flow** — `POST /api/account/forgot-password` issues
+  a single-use, SHA-256-hashed, 1-hour token; `POST /api/account/reset-password`
+  consumes it and bcrypts the new password (cost 12). Pages at
+  `/forgot` and `/reset/[token]`. Enumeration-resistant (always 200,
+  whether the email exists or not). Per-IP rate-limited via the
+  signup bucket. Migration `0014_cuddly_fabian_cortez.sql` adds
+  `password_reset_token`. SignInForm "Forgot?" now links to `/forgot`.
+- **Self-service account deletion** — `/settings/account` exposes a
+  Danger Zone with a typed-confirmation Delete button. Cascades
+  through every `ON DELETE CASCADE` FK (connections, subscriptions,
+  agent sessions, dashboards, custom actions, etc.). `audit_log` and
+  `billing_event` retain rows with NULL user_id for forensics.
+  Fulfils GDPR Art. 17. Settings index now lists the page.
+- **Onboarding empty state** — `/connections` for new users renders
+  a 3-step "what is Suparbase" panel with a single primary CTA.
+- **Free-tier usage bar** — `/connections` shows
+  "1 / 1 connection · at limit · upgrade" with a real progress bar
+  for Free users. "New connection" button switches to "Upgrade to
+  add" once they hit the cap.
+
+**Operator:**
+- **`/api/health` upgraded** to return `{ db, email, billing,
+  observability, version }` — operator can curl after deploy and
+  verify every integration is wired. Returns 503 only when the DB
+  is unreachable; missing integrations report `false` without
+  failing the probe.
+- **Error-reporting shim** at `src/server/observability/report.ts`.
+  Routes errors to the structured logger by default; when
+  `SENTRY_DSN` is set, hands off to a globally-registered Sentry
+  client (set via Next's `instrumentation.ts` on the operator's
+  side). `reportError()` is the single call site we can grep for
+  when we wire a real provider.
+- **Global error boundary** at `src/app/global-error.tsx` — the
+  top-level UI a customer sees when Next catches an unhandled
+  exception. Logs to console (which Sentry's browser SDK picks up
+  when loaded) and shows the digest so the operator can match logs
+  to user reports.
+- **Admin audit search** at `/admin/audit` — multi-field filter
+  (user, connection, schema, table, verb, date range) against the
+  `audit_log` table for forensic queries. Backed by the
+  `audit_conn_recent_idx` we added in v3.4.3. Refuses to scan
+  without at least one filter set.
+- **Admin user detail extras** — `/admin/users/[id]` now shows the
+  user's connections list and a one-click "View audit log for this
+  user" link that pre-fills the audit search.
+
+**Touched:**
+- `src/server/auth/password-reset.ts` — token issuance + consumption +
+  bcrypt update, all in a transaction.
+- `src/server/auth/delete-account.ts` — single-statement cascade.
+- `src/server/email/templates/password-reset.ts` — themed email.
+- `src/server/observability/report.ts` — `reportError()` + `hasErrorReporter()`.
+- `src/server/admin/audit-search.ts` — filtered + counted queries.
+- New pages: `/forgot`, `/reset/[token]`, `/settings/account`,
+  `/admin/audit`, plus the global error boundary.
+- `/api/health` extended; `SENTRY_DSN` placeholder added to `.env.example`.
+
 ## v3.5.2 · 2026-05-15 · Single contact email
 
 Standardised every customer-facing email address to **contact@suparbase.com**.

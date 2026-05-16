@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CreditCard, Sparkles } from "lucide-react";
+import { ArrowRight, CreditCard, Sparkles, UserCog } from "lucide-react";
 
 const ITEMS = [
   {
@@ -13,6 +13,12 @@ const ITEMS = [
     icon: CreditCard,
     title: "Billing & plan",
     body: "Your current plan, upgrade options, and recent billing events.",
+  },
+  {
+    href: "/settings/account",
+    icon: UserCog,
+    title: "Account",
+    body: "Your identity, contact, and the irreversible delete-account control.",
   },
 ] as const;
 

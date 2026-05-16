@@ -10,4 +10,5 @@ export * from "./sentry";
 export * from "./agent-sessions";
 export * from "./billing";
 export * from "./admin";
+export * from "./password-reset";
 export * from "../views/schema";

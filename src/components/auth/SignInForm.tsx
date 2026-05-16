@@ -3,7 +3,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { toast } from "sonner";
 import {
   AlertCircle,
   ArrowRight,
@@ -15,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/ui/cn";
 
 interface Props {
@@ -90,27 +88,12 @@ export function SignInForm({ githubEnabled, error }: Props) {
             >
               Password
             </Label>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  // Tap on mobile shows the help via a toast (tooltips
-                  // don't open on touch). Hover/keyboard focus gets the
-                  // tooltip on desktop.
-                  onClick={() =>
-                    toast.message(
-                      "Self-service password reset isn't wired up yet: contact your admin.",
-                    )
-                  }
-                  className="cursor-help text-[10px] uppercase tracking-wider text-fg-faint hover:text-fg focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  Forgot?
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Self-service password reset isn&apos;t wired up yet: contact your admin.
-              </TooltipContent>
-            </Tooltip>
+            <Link
+              href="/forgot"
+              className="text-[10px] uppercase tracking-wider text-fg-faint hover:text-fg focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Forgot?
+            </Link>
           </div>
           <div className="relative">
             <Input
