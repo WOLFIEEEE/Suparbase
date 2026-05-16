@@ -7,13 +7,20 @@ import { Wordmark } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/workspace/ThemeToggle";
 import { cn } from "@/lib/ui/cn";
 
-const NAV_LINKS = [
+interface NavLinkDef {
+  href: string;
+  label: string;
+  /** When true, hide this link for signed-in users (they manage billing in /settings/billing). */
+  hideWhenSignedIn?: boolean;
+}
+
+const NAV_LINKS: readonly NavLinkDef[] = [
   { href: "/features", label: "Features" },
   { href: "/use-cases", label: "Use cases" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing", hideWhenSignedIn: true },
   { href: "/blog", label: "Blog" },
   { href: "/docs", label: "Docs" },
-] as const;
+];
 
 interface Props {
   /** When the consumer already has a session, render "Open workspace" instead of sign-in/sign-up. */
@@ -23,6 +30,7 @@ interface Props {
 export function PublicNav({ isSignedIn = false }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const navLinks = NAV_LINKS.filter((l) => !(isSignedIn && l.hideWhenSignedIn));
 
   return (
     <header className="sticky top-0 z-40 border-b hairline bg-bg/85 backdrop-blur">
@@ -32,7 +40,7 @@ export function PublicNav({ isSignedIn = false }: Props) {
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map(({ href, label }) => (
+          {navLinks.map(({ href, label }) => (
             <NavLink key={href} href={href} active={pathname === href || pathname.startsWith(href + "/")}>
               {label}
             </NavLink>
@@ -83,7 +91,7 @@ export function PublicNav({ isSignedIn = false }: Props) {
       {open && (
         <div className="border-t hairline bg-bg md:hidden">
           <nav className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-6 py-3" aria-label="Primary mobile">
-            {NAV_LINKS.map(({ href, label }) => (
+            {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}

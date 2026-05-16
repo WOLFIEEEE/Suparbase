@@ -12,7 +12,7 @@ export async function PublicLayout({ children }: Props) {
     <div className="flex min-h-screen flex-col bg-bg">
       <PublicNav isSignedIn={!!session?.user} />
       <main className="flex-1">{children}</main>
-      <PublicFooter />
+      <PublicFooter isSignedIn={!!session?.user} />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, Check, HelpCircle, Lock, Server, Sparkles } from "lucide-react";
+import { auth } from "@/server/auth";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import {
   CTABand,
@@ -111,6 +113,12 @@ const FAQ = [
 ] as const;
 
 export default async function PricingPage() {
+  // Signed-in users already have an account — sending them to the
+  // marketing pricing page makes no sense. /settings/billing has
+  // the same plan table plus their current state + upgrade CTA.
+  const session = await auth();
+  if (session?.user) redirect("/settings/billing");
+
   return (
     <PublicLayout>
       <PageShell>

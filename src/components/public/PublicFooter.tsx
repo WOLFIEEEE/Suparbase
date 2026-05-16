@@ -7,7 +7,7 @@ import { cn } from "@/lib/ui/cn";
 
 interface Column {
   heading: string;
-  links: Array<{ label: string; href: string; external?: boolean }>;
+  links: Array<{ label: string; href: string; external?: boolean; hideWhenSignedIn?: boolean }>;
 }
 
 const COLUMNS: Column[] = [
@@ -17,9 +17,11 @@ const COLUMNS: Column[] = [
       { label: "Features", href: "/features" },
       { label: "Agent Sentry", href: "/agent-sentry" },
       { label: "Use cases", href: "/use-cases" },
-      { label: "Pricing", href: "/pricing" },
+      // Signed-in users manage billing in /settings/billing — pricing
+      // is a marketing surface they don't need to see twice.
+      { label: "Pricing", href: "/pricing", hideWhenSignedIn: true },
       { label: "Changelog", href: "/changelog" },
-      { label: "Sign up", href: "/signup" },
+      { label: "Sign up", href: "/signup", hideWhenSignedIn: true },
     ],
   },
   {
@@ -44,7 +46,15 @@ const COLUMNS: Column[] = [
   },
 ];
 
-export function PublicFooter() {
+interface FooterProps {
+  isSignedIn?: boolean;
+}
+
+export function PublicFooter({ isSignedIn = false }: FooterProps) {
+  const columns: Column[] = COLUMNS.map((col) => ({
+    ...col,
+    links: col.links.filter((l) => !(isSignedIn && l.hideWhenSignedIn)),
+  }));
   const [latestArticle] = listArticles();
 
   return (
@@ -107,7 +117,7 @@ export function PublicFooter() {
               <Badge icon={Heart} label="free tier" />
             </div>
           </div>
-          {COLUMNS.map((col) => (
+          {columns.map((col) => (
             <FooterColumn key={col.heading} column={col} />
           ))}
         </section>

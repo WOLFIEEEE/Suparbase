@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   AlertTriangle,
   ArrowRight,
@@ -15,7 +14,6 @@ import {
   SquareCode,
   Undo2,
 } from "lucide-react";
-import { auth } from "@/server/auth";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { CTABand, FeatureCard, SectionHeading } from "@/components/public/sections";
@@ -81,9 +79,10 @@ const FEATURE_PREVIEWS = [
 ] as const;
 
 export default async function HomePage() {
-  const session = await auth();
-  if (session?.user) redirect("/connections");
-
+  // The marketing homepage stays accessible to signed-in users too —
+  // they may want to browse features, share the link, or click into
+  // the changelog. The "Open workspace" CTA in the nav takes them
+  // back to /connections whenever they're ready.
   return (
     <PublicLayout>
       <div className="relative overflow-hidden">

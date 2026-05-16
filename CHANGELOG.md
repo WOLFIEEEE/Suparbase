@@ -3,6 +3,25 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.4.1 · 2026-05-15 · Signed-in browsing fixes
+
+Two routing nits from the v3.4 ship reported by the operator:
+
+- **Homepage no longer redirects signed-in users.** `/` used to bounce
+  to `/connections` whenever a session was present, which blocked
+  signed-in users from sharing the marketing page or following a link
+  from the changelog back to the landing surface. Removed the
+  redirect; the nav still offers an "Open workspace" CTA for one-click
+  return to `/connections`.
+- **Pricing page redirects signed-in users to `/settings/billing`.**
+  The marketing pricing surface isn't useful to an existing customer
+  — they already have an account and need the in-app plan view (with
+  their current state + upgrade CTA). Pricing now `redirect()`s
+  whenever a session is present.
+- **Pricing + Sign-up links hidden** from the public nav and footer
+  for signed-in users (PublicNav `hideWhenSignedIn` flag, PublicFooter
+  accepts an `isSignedIn` prop the layout passes down).
+
 ## v3.4.0 · 2026-05-15 · Dodo Payments billing + admin panel
 
 The free tier becomes actually limited, the paid tier becomes
