@@ -30,6 +30,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
@@ -436,6 +438,8 @@ function UserDetail({
     onError: (e: AppError) => toast.error(e.message),
   });
 
+  const confirmDelete = useConfirm();
+
   const deleteMut = useMutation({
     mutationFn: () => deleteUserApi(connectionId, user!.id),
     onSuccess: () => {
@@ -570,11 +574,7 @@ function UserDetail({
           size="sm"
           variant="danger"
           className="w-full justify-start"
-          onClick={() => {
-            if (window.confirm(`Delete ${user.email ?? user.id}? This cannot be undone.`)) {
-              deleteMut.mutate();
-            }
-          }}
+          onClick={() => confirmDelete.ask(() => deleteMut.mutate())}
           disabled={deleteMut.isPending}
         >
           {deleteMut.isPending ? (
@@ -585,6 +585,21 @@ function UserDetail({
           Delete user
         </Button>
       </div>
+      <ConfirmDialog
+        {...confirmDelete.dialogProps}
+        title="Delete user?"
+        description={
+          <>
+            Permanently deletes{" "}
+            <strong>{user.email ?? user.id}</strong> from Supabase Auth. Their
+            sessions are revoked, identities removed, and all linked rows that
+            cascade from <code>auth.users</code> are dropped. This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete user"
+        tone="danger"
+        requireText="DELETE"
+      />
     </aside>
   );
 }

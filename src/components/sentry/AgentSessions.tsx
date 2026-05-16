@@ -37,6 +37,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AppError } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { relativeFromNow } from "@/lib/ui/time";
 import type {
   AgentKind,
@@ -262,42 +264,40 @@ function SessionDrawer({
     queryFn: () => fetchDetail(connectionId, sessionId),
   });
   const [undoing, setUndoing] = useState(false);
+  const confirmUndo = useConfirm();
 
   const undo = useCallback(async () => {
     if (!data) return;
-    if (
-      !confirm(
-        `Undo this session? ${data.writes.length} mutation${data.writes.length === 1 ? "" : "s"} will be reversed atomically.`,
-      )
-    )
-      return;
-    setUndoing(true);
-    try {
-      const res = await fetch(
-        `/api/connections/${encodeURIComponent(connectionId)}/sessions/${encodeURIComponent(sessionId)}/undo`,
-        { method: "POST" },
-      );
-      const j = (await res.json()) as Record<string, unknown>;
-      if (!res.ok) {
-        toast.error((j.message as string) ?? `HTTP ${res.status}`);
-        return;
-      }
-      const result = j as unknown as UndoResult;
-      if (result.error) {
-        toast.error(`Undo failed: ${result.error}`);
-      } else {
-        toast.success(
-          `Reversed ${result.reverted} of ${result.attempted} mutation${result.attempted === 1 ? "" : "s"}${result.skipped > 0 ? ` · ${result.skipped} skipped` : ""}.`,
+    confirmUndo.ask(async () => {
+      setUndoing(true);
+      try {
+        const res = await fetch(
+          `/api/connections/${encodeURIComponent(connectionId)}/sessions/${encodeURIComponent(sessionId)}/undo`,
+          { method: "POST" },
         );
+        const j = (await res.json()) as Record<string, unknown>;
+        if (!res.ok) {
+          toast.error((j.message as string) ?? `HTTP ${res.status}`);
+          return;
+        }
+        const result = j as unknown as UndoResult;
+        if (result.error) {
+          toast.error(`Undo failed: ${result.error}`);
+        } else {
+          toast.success(
+            `Reversed ${result.reverted} of ${result.attempted} mutation${result.attempted === 1 ? "" : "s"}${result.skipped > 0 ? ` · ${result.skipped} skipped` : ""}.`,
+          );
+        }
+        qc.invalidateQueries({ queryKey: ["agent-sessions", connectionId] });
+        qc.invalidateQueries({ queryKey: ["agent-session", connectionId, sessionId] });
+      } finally {
+        setUndoing(false);
       }
-      qc.invalidateQueries({ queryKey: ["agent-sessions", connectionId] });
-      qc.invalidateQueries({ queryKey: ["agent-session", connectionId, sessionId] });
-    } finally {
-      setUndoing(false);
-    }
-  }, [connectionId, data, qc, sessionId]);
+    });
+  }, [connectionId, data, qc, sessionId, confirmUndo]);
 
   return (
+    <>
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent side="right" className="!max-w-2xl">
         <DialogTitle className="flex items-center gap-2">
@@ -407,6 +407,24 @@ function SessionDrawer({
         )}
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      {...confirmUndo.dialogProps}
+      title="Undo this session?"
+      description={
+        <>
+          Reverses{" "}
+          <strong>
+            {data?.writes.length ?? 0} mutation{(data?.writes.length ?? 0) === 1 ? "" : "s"}
+          </strong>{" "}
+          atomically: deletes inserts, restores deletes, reverts updates to
+          their before-row state. Runs inside a single transaction — either
+          all reverts apply or none do.
+        </>
+      }
+      confirmLabel="Undo session"
+      tone="danger"
+    />
+    </>
   );
 }
 

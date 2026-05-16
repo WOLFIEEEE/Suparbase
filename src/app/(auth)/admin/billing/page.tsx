@@ -59,7 +59,8 @@ export default async function AdminBillingPage() {
           <code className="font-mono">/api/webhooks/dodo</code>, events will land here.
         </div>
       ) : (
-        <table className="w-full overflow-hidden rounded-lg border hairline bg-bg-raised text-xs">
+        <div className="overflow-x-auto rounded-lg border hairline bg-bg-raised">
+        <table className="w-full text-xs">
           <thead className="bg-bg-raised/60 text-left">
             <tr className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">
               <th className="px-4 py-2">Received</th>
@@ -89,6 +90,7 @@ export default async function AdminBillingPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

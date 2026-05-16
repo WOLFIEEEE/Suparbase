@@ -12,6 +12,7 @@
  */
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { Check, Copy } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 
@@ -127,16 +128,30 @@ function renderInline(text: string): ReactNode {
         if (endParen > close) {
           const label = text.slice(i + 1, close);
           const href = text.slice(close + 2, endParen);
+          // Internal links use Next.js Link (client-side nav). External
+          // ones open in a new tab with noopener noreferrer. This keeps
+          // tab-explosion to actually-external destinations.
+          const isInternal = href.startsWith("/") && !href.startsWith("//");
           out.push(
-            <a
-              key={key++}
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent underline-offset-2 hover:underline"
-            >
-              {label}
-            </a>,
+            isInternal ? (
+              <Link
+                key={key++}
+                href={href}
+                className="text-accent underline-offset-2 hover:underline"
+              >
+                {label}
+              </Link>
+            ) : (
+              <a
+                key={key++}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent underline-offset-2 hover:underline"
+              >
+                {label}
+              </a>
+            ),
           );
           i = endParen + 1;
           continue;

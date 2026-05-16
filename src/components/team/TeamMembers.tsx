@@ -36,6 +36,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { PaywallCard } from "@/components/billing/PaywallCard";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
@@ -82,21 +85,28 @@ export function TeamMembers({ connectionId }: Props) {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["team", connectionId] });
 
+  const confirmRemove = useConfirm();
+  const confirmRevoke = useConfirm();
+  const [removeTarget, setRemoveTarget] = useState<string>("");
+  const [revokeTarget, setRevokeTarget] = useState<string>("");
+
   const removeMember = useCallback(
     async (m: MemberSummary) => {
-      if (!confirm(`Remove ${m.email ?? m.name ?? "this member"} from the team?`)) return;
-      const res = await fetch(
-        `/api/connections/${encodeURIComponent(connectionId)}/members/${encodeURIComponent(m.id)}`,
-        { method: "DELETE" },
-      );
-      if (res.status === 204) {
-        toast.success("Member removed.");
-        refresh();
-      } else {
-        toast.error("Remove failed.");
-      }
+      setRemoveTarget(m.email ?? m.name ?? "this member");
+      confirmRemove.ask(async () => {
+        const res = await fetch(
+          `/api/connections/${encodeURIComponent(connectionId)}/members/${encodeURIComponent(m.id)}`,
+          { method: "DELETE" },
+        );
+        if (res.status === 204) {
+          toast.success("Member removed.");
+          refresh();
+        } else {
+          toast.error("Remove failed.");
+        }
+      });
     },
-    [connectionId],
+    [connectionId, confirmRemove],
   );
 
   const changeRole = useCallback(
@@ -145,19 +155,21 @@ export function TeamMembers({ connectionId }: Props) {
 
   const revokeInvite = useCallback(
     async (inv: InvitationSummary) => {
-      if (!confirm(`Revoke invitation for ${inv.email}?`)) return;
-      const res = await fetch(
-        `/api/connections/${encodeURIComponent(connectionId)}/members/invitations/${encodeURIComponent(inv.id)}`,
-        { method: "DELETE" },
-      );
-      if (res.status === 204) {
-        toast.success("Invitation revoked.");
-        refresh();
-      } else {
-        toast.error("Revoke failed.");
-      }
+      setRevokeTarget(inv.email);
+      confirmRevoke.ask(async () => {
+        const res = await fetch(
+          `/api/connections/${encodeURIComponent(connectionId)}/members/invitations/${encodeURIComponent(inv.id)}`,
+          { method: "DELETE" },
+        );
+        if (res.status === 204) {
+          toast.success("Invitation revoked.");
+          refresh();
+        } else {
+          toast.error("Revoke failed.");
+        }
+      });
     },
-    [connectionId],
+    [connectionId, confirmRevoke],
   );
 
   return (
@@ -312,6 +324,30 @@ export function TeamMembers({ connectionId }: Props) {
           onClose={() => setShareInvite(null)}
         />
       )}
+      <ConfirmDialog
+        {...confirmRemove.dialogProps}
+        title="Remove from team?"
+        description={
+          <>
+            Removes <strong>{removeTarget}</strong> from this connection. They lose
+            access immediately. You can re-invite them later.
+          </>
+        }
+        confirmLabel="Remove"
+        tone="danger"
+      />
+      <ConfirmDialog
+        {...confirmRevoke.dialogProps}
+        title="Revoke invitation?"
+        description={
+          <>
+            The invitation link for <strong>{revokeTarget}</strong> stops working
+            immediately. They can be re-invited later.
+          </>
+        }
+        confirmLabel="Revoke"
+        tone="danger"
+      />
     </section>
   );
 }
@@ -342,7 +378,10 @@ function InviteDialog({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<MemberRole>("editor");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{
+    message: string;
+    category?: string;
+  } | null>(null);
 
   const submit = async () => {
     setSaving(true);
@@ -358,7 +397,10 @@ function InviteDialog({
       );
       const j = (await res.json()) as Record<string, unknown>;
       if (!res.ok) {
-        setError((j.message as string | undefined) ?? `HTTP ${res.status}`);
+        setError({
+          message: (j.message as string | undefined) ?? `HTTP ${res.status}`,
+          category: typeof j.category === "string" ? j.category : undefined,
+        });
         return;
       }
       const created = j as unknown as InvitationCreated;
@@ -456,11 +498,19 @@ function InviteDialog({
               </span>
             </div>
           )}
-          {error && (
-            <div className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger">
-              {error}
+          {error && error.category === "plan_limit" ? (
+            <PaywallCard
+              title="Team invites need Hosted"
+              message={error.message}
+            />
+          ) : error ? (
+            <div
+              role="alert"
+              className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
+            >
+              {error.message}
             </div>
-          )}
+          ) : null}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel

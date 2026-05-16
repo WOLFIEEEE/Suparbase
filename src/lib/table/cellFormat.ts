@@ -10,7 +10,7 @@ const MAX_INLINE = 80;
 
 export function formatCellValue(col: Column, value: unknown): FormattedCell {
   if (value === null || value === undefined) {
-    return { text: ":", isNull: true, truncated: false };
+    return { text: "—", isNull: true, truncated: false };
   }
 
   switch (col.category) {

@@ -6,9 +6,12 @@
  * past chats, with New / Switch / Delete / Export actions.
  */
 
+import { useState } from "react";
 import { Download, MessageSquare, Plus, Trash2 } from "lucide-react";
 import type { Conversation } from "@/lib/chat/storage";
 import { exportAsMarkdown, relativeTime } from "@/lib/chat/storage";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { cn } from "@/lib/ui/cn";
 
 interface Props {
@@ -27,6 +30,8 @@ export function ChatConversationSidebar({
   onDelete,
 }: Props) {
   const ordered = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  const confirm = useConfirm();
+  const [pendingTitle, setPendingTitle] = useState<string>("");
 
   const handleExport = (conv: Conversation) => {
     const md = exportAsMarkdown(conv);
@@ -114,7 +119,8 @@ export function ChatConversationSidebar({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm(`Delete "${c.title}"?`)) onDelete(c.id);
+                        setPendingTitle(c.title);
+                        confirm.ask(() => onDelete(c.id));
                       }}
                       className="rounded p-1 text-fg-faint hover:bg-danger/10 hover:text-danger"
                       aria-label="Delete conversation"
@@ -129,6 +135,18 @@ export function ChatConversationSidebar({
           </ul>
         )}
       </div>
+      <ConfirmDialog
+        {...confirm.dialogProps}
+        title="Delete conversation?"
+        description={
+          <>
+            Permanently deletes <strong>{pendingTitle}</strong> and its messages
+            from this browser. Cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        tone="danger"
+      />
     </aside>
   );
 }

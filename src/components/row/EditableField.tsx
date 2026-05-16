@@ -234,7 +234,7 @@ function Editor({
       >
         <ReadOnlyValue col={col} value={value} formatted={formatted} />
         <Pencil
-          className="h-3 w-3 shrink-0 text-fg-faint opacity-0 transition-opacity group-hover:opacity-100"
+          className="h-3 w-3 shrink-0 text-fg-faint transition-opacity md:opacity-0 md:group-hover:opacity-100"
           aria-hidden
         />
       </button>
@@ -268,7 +268,7 @@ function Editor({
         }}
         className={sharedClass}
       >
-        {col.nullable && <option value="">: null :</option>}
+        {col.nullable && <option value="">— NULL —</option>}
         {col.enumValues.map((v) => (
           <option key={v} value={v}>
             {v}
@@ -292,7 +292,7 @@ function Editor({
         }}
         className={sharedClass}
       >
-        {col.nullable && <option value="">: null :</option>}
+        {col.nullable && <option value="">— NULL —</option>}
         <option value="true">true</option>
         <option value="false">false</option>
       </select>
@@ -324,6 +324,9 @@ function Editor({
         }}
         aria-label={editorAriaLabel}
         type={inputTypeFor(col)}
+        // Float columns need step="any" so values like 0.25 don't get
+        // rejected by the browser's default step=1 enforcement.
+        step={col.category === "float" ? "any" : undefined}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => void commit()}

@@ -1,5 +1,6 @@
 "use client";
 import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { AppError } from "@/lib/errors";
 
@@ -23,7 +24,11 @@ const TITLES: Record<AppError["category"], string> = {
   plan_limit: "Upgrade required",
 };
 
-const HINTS: Record<AppError["category"], string> = {
+/**
+ * Hints can be plain strings or rich JSX (so we can render real
+ * links instead of dumping URL text the user has to copy/paste).
+ */
+const HINTS: Record<AppError["category"], React.ReactNode> = {
   network: "Check your network connection and try again.",
   unauthorized: "Your session may have expired. Sign in again.",
   forbidden: "The key cannot access this resource: likely an RLS policy.",
@@ -33,11 +38,27 @@ const HINTS: Record<AppError["category"], string> = {
   server: "Try again in a moment.",
   client_bug: "We logged the issue. Try again.",
   validation: "Check the request and try again.",
-  no_key: "Add an OpenRouter API key in Settings → AI.",
+  no_key: (
+    <>
+      Add an OpenRouter API key in{" "}
+      <Link href="/settings/ai" className="underline hover:text-fg">
+        Settings → AI
+      </Link>
+      .
+    </>
+  ),
   no_postgres_url: "Add a direct Postgres URL on the RLS page first.",
   rls: "Postgres rejected this: RLS or read-only mode.",
   service_role_required: "Open connection settings and store a service_role key.",
-  plan_limit: "Your plan doesn't include this. Visit /settings/billing to upgrade.",
+  plan_limit: (
+    <>
+      Your plan doesn&apos;t include this.{" "}
+      <Link href="/settings/billing" className="underline hover:text-fg">
+        Upgrade in Billing
+      </Link>
+      .
+    </>
+  ),
 };
 
 export function ErrorBanner({ error }: { error: AppError }) {

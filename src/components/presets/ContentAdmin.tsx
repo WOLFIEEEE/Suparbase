@@ -463,7 +463,7 @@ function ContentRow({ row, connectionId, tableName, primaryKey, cols, isSelected
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="rounded p-1.5 text-fg-faint opacity-0 transition-opacity hover:bg-bg-sunken hover:text-fg group-hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent"
+                  className="rounded p-1.5 text-fg-faint transition-opacity hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent md:opacity-0 md:group-hover:opacity-100"
                   aria-label={`Actions for ${safeTitle}`}
                   onClick={(e) => e.stopPropagation()}
                 >

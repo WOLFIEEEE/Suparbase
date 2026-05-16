@@ -40,6 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AppError } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { cn } from "@/lib/ui/cn";
 import type {
   WidgetSpan,
@@ -66,22 +68,26 @@ export function DashboardEditor({ connectionId }: Props) {
     queryFn: () => fetchWidgets(connectionId),
   });
   const [editing, setEditing] = useState<WidgetSummary | "new" | null>(null);
+  const confirmDelete = useConfirm();
+  const [deleteTitle, setDeleteTitle] = useState<string>("");
 
   const onDelete = useCallback(
     async (w: WidgetSummary) => {
-      if (!confirm(`Delete widget "${w.title}"?`)) return;
-      const res = await fetch(
-        `/api/connections/${encodeURIComponent(connectionId)}/widgets/${encodeURIComponent(w.id)}`,
-        { method: "DELETE" },
-      );
-      if (res.status === 204) {
-        toast.success("Widget deleted.");
-        qc.invalidateQueries({ queryKey: ["widgets", connectionId] });
-      } else {
-        toast.error("Delete failed.");
-      }
+      setDeleteTitle(w.title);
+      confirmDelete.ask(async () => {
+        const res = await fetch(
+          `/api/connections/${encodeURIComponent(connectionId)}/widgets/${encodeURIComponent(w.id)}`,
+          { method: "DELETE" },
+        );
+        if (res.status === 204) {
+          toast.success("Widget deleted.");
+          qc.invalidateQueries({ queryKey: ["widgets", connectionId] });
+        } else {
+          toast.error("Delete failed.");
+        }
+      });
     },
-    [connectionId, qc],
+    [connectionId, qc, confirmDelete],
   );
 
   return (
@@ -161,6 +167,18 @@ export function DashboardEditor({ connectionId }: Props) {
           }}
         />
       )}
+      <ConfirmDialog
+        {...confirmDelete.dialogProps}
+        title="Delete widget?"
+        description={
+          <>
+            Permanently deletes the <strong>{deleteTitle}</strong> widget from this
+            dashboard.
+          </>
+        }
+        confirmLabel="Delete"
+        tone="danger"
+      />
     </div>
   );
 }

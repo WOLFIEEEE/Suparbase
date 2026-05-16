@@ -33,6 +33,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 import type { ConnectionSummary } from "@/lib/types/connection";
@@ -362,6 +364,9 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const confirmDeleteBucket = useConfirm();
+  const confirmDeleteObjects = useConfirm();
+  const [pendingCount, setPendingCount] = useState(0);
 
   // Reset selection / paging when the bucket or prefix changes.
   const resetState = useCallback(() => {
@@ -475,11 +480,7 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => {
-                if (window.confirm(`Delete bucket "${bucket.name}" and everything in it?`)) {
-                  deleteBucketMut.mutate(true);
-                }
-              }}
+              onClick={() => confirmDeleteBucket.ask(() => deleteBucketMut.mutate(true))}
               disabled={deleteBucketMut.isPending}
               aria-label="Delete bucket"
             >
@@ -557,9 +558,8 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
                   const paths = Array.from(selected).map((n) =>
                     prefix ? `${prefix}/${n}` : n,
                   );
-                  if (window.confirm(`Delete ${paths.length} item(s)?`)) {
-                    deleteMut.mutate(paths);
-                  }
+                  setPendingCount(paths.length);
+                  confirmDeleteObjects.ask(() => deleteMut.mutate(paths));
                 }}
                 disabled={deleteMut.isPending}
               >
@@ -600,6 +600,26 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
           </Button>
         </div>
       </footer>
+      <ConfirmDialog
+        {...confirmDeleteBucket.dialogProps}
+        title={`Delete bucket "${bucket?.name ?? ""}"?`}
+        description={
+          <>
+            Permanently deletes the bucket and <strong>every object inside it</strong>.
+            This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete bucket"
+        tone="danger"
+        requireText="DELETE"
+      />
+      <ConfirmDialog
+        {...confirmDeleteObjects.dialogProps}
+        title={`Delete ${pendingCount} object${pendingCount === 1 ? "" : "s"}?`}
+        description="The objects are removed from the bucket immediately. This cannot be undone."
+        confirmLabel="Delete"
+        tone="danger"
+      />
     </section>
   );
 }

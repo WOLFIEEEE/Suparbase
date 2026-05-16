@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { cn } from "@/lib/ui/cn";
 
 interface SqlColumn {
@@ -338,37 +340,39 @@ function ModeToggle({
   readOnly: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const confirmWrite = useConfirm();
   return (
-    <div className="inline-flex items-center rounded border hairline text-[11px]">
-      <button
-        type="button"
-        onClick={() => onChange(true)}
-        className={cn(
-          "inline-flex items-center gap-1 px-2 py-1",
-          readOnly ? "bg-accent/15 text-accent" : "text-fg-muted hover:bg-bg-sunken",
-        )}
-      >
-        <Lock className="h-3 w-3" aria-hidden /> Read-only
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          if (
-            window.confirm(
-              "Turn on write mode? Any SQL you run can change or delete data.",
-            )
-          ) {
-            onChange(false);
-          }
-        }}
-        className={cn(
-          "inline-flex items-center gap-1 border-l hairline px-2 py-1",
-          !readOnly ? "bg-danger/10 text-danger" : "text-fg-muted hover:bg-bg-sunken",
-        )}
-      >
-        <Unlock className="h-3 w-3" aria-hidden /> Write
-      </button>
-    </div>
+    <>
+      <div className="inline-flex items-center rounded border hairline text-[11px]">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={cn(
+            "inline-flex items-center gap-1 px-2 py-1",
+            readOnly ? "bg-accent/15 text-accent" : "text-fg-muted hover:bg-bg-sunken",
+          )}
+        >
+          <Lock className="h-3 w-3" aria-hidden /> Read-only
+        </button>
+        <button
+          type="button"
+          onClick={() => confirmWrite.ask(() => onChange(false))}
+          className={cn(
+            "inline-flex items-center gap-1 border-l hairline px-2 py-1",
+            !readOnly ? "bg-danger/10 text-danger" : "text-fg-muted hover:bg-bg-sunken",
+          )}
+        >
+          <Unlock className="h-3 w-3" aria-hidden /> Write
+        </button>
+      </div>
+      <ConfirmDialog
+        {...confirmWrite.dialogProps}
+        title="Turn on write mode?"
+        description="Any SQL you run can INSERT, UPDATE, DELETE, or DROP. Make sure you know what your query does before you press Run."
+        confirmLabel="I understand — enable writes"
+        tone="danger"
+      />
+    </>
   );
 }
 

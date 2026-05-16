@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 import {
   AlertCircle,
   ArrowRight,
@@ -93,6 +94,14 @@ export function SignInForm({ githubEnabled, error }: Props) {
               <TooltipTrigger asChild>
                 <button
                   type="button"
+                  // Tap on mobile shows the help via a toast (tooltips
+                  // don't open on touch). Hover/keyboard focus gets the
+                  // tooltip on desktop.
+                  onClick={() =>
+                    toast.message(
+                      "Self-service password reset isn't wired up yet: contact your admin.",
+                    )
+                  }
                   className="cursor-help text-[10px] uppercase tracking-wider text-fg-faint hover:text-fg focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Forgot?

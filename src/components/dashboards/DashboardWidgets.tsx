@@ -141,7 +141,7 @@ function WidgetCard({
               queryKey: ["widget-run", connectionId, widget.id, widget.updatedAt],
             })
           }
-          className="rounded p-1 text-fg-faint opacity-0 transition-opacity hover:bg-bg-sunken hover:text-fg group-hover:opacity-100"
+          className="rounded p-1 text-fg-faint transition-opacity hover:bg-bg-sunken hover:text-fg md:opacity-0 md:group-hover:opacity-100"
           aria-label="Refresh widget"
           title="Refresh"
         >

@@ -83,12 +83,19 @@ export function AppHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-xs">
-                  <div className="truncate font-medium text-fg">{session.user.name}</div>
-                  <div className="truncate text-fg-faint">{session.user.email}</div>
+                  <div className="truncate font-medium text-fg">
+                    {session.user.name ?? session.user.email}
+                  </div>
+                  {session.user.name && (
+                    <div className="truncate text-fg-faint">{session.user.email}</div>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/connections">All connections</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/billing">Billing &amp; plan</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings/ai">AI assistance</Link>

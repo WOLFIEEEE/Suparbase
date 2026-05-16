@@ -113,11 +113,13 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
         <h2 className="font-display text-xl">Plans</h2>
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {catalog.map((entry) => {
-            const isCurrent = entry.plan === active.plan;
+            // A cancelled/expired Hosted plan still has plan="hosted"
+            // in the row but the resolver downgrades to Free entitlement.
+            // We want "Current plan" to track the *entitled* plan and
+            // expose a Resubscribe CTA for lapsed customers.
+            const isCurrent = entry.plan === active.plan && active.isPaid;
             const isUpgrade =
-              !isCurrent &&
-              entry.plan === "hosted" &&
-              !active.isPaid;
+              entry.plan === "hosted" && !active.isPaid;
             return (
               <li key={entry.plan} className="flex">
                 <article
@@ -175,6 +177,8 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
                       >
                         {loading
                           ? "Opening Dodo…"
+                          : isLapsed(active)
+                          ? "Resubscribe"
                           : entry.trialDays > 0
                           ? `Start ${entry.trialDays}-day trial`
                           : "Subscribe"}
@@ -216,6 +220,38 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
   );
 }
 
+/**
+ * Map raw status enum to human-readable copy. The internal names
+ * (active / on_hold / cancelled / failed / expired) leak engineering
+ * jargon to paying customers; the labels here are what the user sees.
+ */
+function statusLabel(active: ActivePlanProps): { label: string; tone: "ok" | "warn" | "danger" | "neutral" } {
+  if (active.isTrialing) return { label: "Trialing", tone: "ok" };
+  if (active.isPaid) return { label: "Active", tone: "ok" };
+  switch (active.status) {
+    case "on_hold":
+      return { label: "Paused — payment issue", tone: "warn" };
+    case "cancelled":
+      return { label: "Cancelled", tone: "neutral" };
+    case "expired":
+      return { label: "Expired", tone: "neutral" };
+    case "failed":
+      return { label: "Past due", tone: "danger" };
+    default:
+      return { label: "—", tone: "neutral" };
+  }
+}
+
+function isLapsed(active: ActivePlanProps): boolean {
+  return (
+    !active.isPaid &&
+    (active.status === "cancelled" ||
+      active.status === "expired" ||
+      active.status === "on_hold" ||
+      active.status === "failed")
+  );
+}
+
 function CurrentPlanCard({ active }: { active: ActivePlanProps }) {
   const cliff = active.currentPeriodEnd
     ? new Date(active.currentPeriodEnd)
@@ -223,6 +259,24 @@ function CurrentPlanCard({ active }: { active: ActivePlanProps }) {
     ? new Date(active.trialEndsAt)
     : null;
   const cliffLabel = cliff ? formatDate(cliff) : null;
+  const status = statusLabel(active);
+
+  // Pick the correct date label based on status — saying "Renews" for
+  // a cancelled subscription is misleading.
+  const cliffHeading = active.isTrialing
+    ? "Trial ends"
+    : active.status === "cancelled" || active.status === "expired"
+    ? "Ended"
+    : "Renews";
+
+  const statusToneCls =
+    status.tone === "ok"
+      ? "text-accent"
+      : status.tone === "warn"
+      ? "text-amber-400"
+      : status.tone === "danger"
+      ? "text-danger"
+      : "text-fg";
 
   return (
     <section className="rounded-lg border hairline bg-bg-raised p-5">
@@ -230,18 +284,20 @@ function CurrentPlanCard({ active }: { active: ActivePlanProps }) {
         <div className="space-y-1">
           <p className="text-[11px] uppercase tracking-[0.18em] text-fg-faint">Current plan</p>
           <h2 className="font-display text-xl">
-            {active.plan === "hosted" ? "Hosted" : active.plan === "team" ? "Team" : "Free"}
+            {active.isPaid && active.plan === "hosted"
+              ? "Hosted"
+              : active.isPaid && active.plan === "team"
+              ? "Team"
+              : "Free"}
           </h2>
           <p className="text-xs text-fg-muted">
-            Status: <span className="font-mono text-fg">{active.status}</span>
+            Status: <span className={statusToneCls}>{status.label}</span>
             {active.grantedByAdmin && <span className="ml-2 text-fg-faint">· Admin grant</span>}
           </p>
         </div>
         {cliffLabel && (
           <div className="text-right">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-fg-faint">
-              {active.isTrialing ? "Trial ends" : "Renews"}
-            </p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-fg-faint">{cliffHeading}</p>
             <p className="font-mono text-sm">{cliffLabel}</p>
           </div>
         )}

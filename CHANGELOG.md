@@ -3,6 +3,108 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.5.1 · 2026-05-15 · UI bug pass + WCAG 2.2 swap
+
+Big polish ship. Closes every BLOCKER + HIGH + most MEDIUMs from the
+v3.5.x UI audit, swaps the accessibility statement + VPAT to WCAG 2.2
+Level AA (was 2.1), and replaces 12 native `window.confirm()` calls
+with a themed `ConfirmDialog` for destructive actions.
+
+**Real bugs:**
+- `formatCellValue` rendered a literal colon (`":"`) for NULL values
+  across the data grid, row detail, AI chat results, and inline
+  previews. Now renders `"—"`.
+- `TableListView` StatTiles fell back to `":"` while loading; same fix.
+- `GenericRow.leadDisplay` ran `String(value)` on jsonb / array
+  columns and printed `[object Object]`. Now uses `formatCellValue()`.
+- `/docs` "Settings → AI" link pointed at `/connections`. Fixed.
+- Landing-hero "supabase.com →" link actually opened
+  `github.com/supabase/supabase`. Fixed.
+- `Button` base class disabled focus-visible outline without adding a
+  replacement ring. Keyboard users had no visible focus on any button.
+  Added `focus-visible:ring-2 ring-accent ring-offset-2`.
+- Cancelled / expired Hosted users couldn't re-subscribe — the
+  `isUpgrade` short-circuit treated them as "current plan". Now exposes
+  a **Resubscribe** CTA.
+- Sonner toast theme was hard-coded `"dark"` then later `"system"`,
+  which ignored the user's manual `ThemeToggle` override. Now reactive
+  to `document.documentElement.dataset.theme` via MutationObserver.
+- Float column inline editor was missing `step="any"`; `0.25` was
+  rejected as invalid input.
+- `User.name` rendering as empty when name was null in the topbar /
+  app-header dropdowns. Now falls back to email.
+
+**12 destructive ops → themed ConfirmDialog:**
+- New `<ConfirmDialog>` component (`src/components/ui/confirm-dialog.tsx`)
+  + `useConfirm()` hook (`src/lib/ui/use-confirm.ts`). Supports the
+  "type DELETE to confirm" gate via the `requireText` prop.
+- Replaced `window.confirm()` in: storage bucket delete (with
+  type-DELETE gate), storage object batch delete, agent-session undo,
+  SQL playground write-mode toggle, auth-user delete (type-DELETE
+  gate), revoke-all-sessions, dashboard widget delete, custom action
+  delete, team-member remove, team-invitation revoke, Postgres URL
+  clear, chat-conversation delete, and the admin Reset Subscription
+  (type-RESET gate). The admin Reset previously had **zero**
+  confirmation — clicking it instantly wiped Dodo IDs.
+
+**Mobile UX:**
+- Row action "..." menus across 9 components (TableListView,
+  ConnectionList, 5 preset list views, DashboardWidgets,
+  EditableField pencil) were `opacity-0 group-hover:opacity-100` and
+  invisible on touch devices. Now visible by default on mobile,
+  opacity-toggle only on `md:` breakpoints.
+- TableListView page-select checkbox now has a visible label on
+  mobile (was hidden via `hidden sm:inline`).
+
+**Empty states + auto-clear:**
+- `/admin/users` "No users match." now branches between "no users
+  match `<search>`" + Clear-search link vs "No users yet." for empty
+  table.
+- `TableListView` empty filtered state now offers a Clear-search
+  button so users don't have to scroll back up to the input.
+- Admin grant / reset form status messages auto-clear after 4s instead
+  of lingering indefinitely.
+
+**Linkable hints / wired paywalls:**
+- `ErrorBanner` hints for `plan_limit` and `no_key` are now real
+  links into the relevant settings page, not plain text the user
+  has to copy.
+- Team-invite 402 (`category: "plan_limit"`) now renders the
+  `PaywallCard` with an upgrade CTA, matching the connection-form
+  flow.
+- BillingPanel humanises raw status strings (`on_hold` → "Paused —
+  payment issue", `cancelled` → "Cancelled", `failed` → "Past due").
+  Cliff-date label switches between "Trial ends" / "Renews" / "Ended"
+  per status.
+
+**Routing:**
+- Topbar + AppHeader account dropdowns gain a **Billing & plan** entry
+  (was missing despite billing now being a primary destination).
+- Chat markdown links to internal routes (`/c/[id]/...`, `/settings/...`)
+  now use Next.js `<Link>` for client-side navigation instead of
+  opening new tabs.
+- SignInForm "Forgot?" tooltip now also fires a toast on tap (mobile
+  users couldn't see the hover-only tooltip).
+
+**Table overflow:**
+- `/admin/billing` and `/agent-sentry` comparison tables wrapped in
+  `overflow-x-auto` so they don't blow up the page layout on mobile.
+
+**Accessibility statement + VPAT:**
+- Both updated from **WCAG 2.1** Level AA to **WCAG 2.2** Level AA.
+- Six new 2.2 criteria added to the VPAT with honest conformance
+  calls and remarks:
+  - 2.4.11 Focus Not Obscured (Minimum) — Supports
+  - 2.5.7 Dragging Movements — Supports
+  - 2.5.8 Target Size (Minimum) — Partially (filter-chip X,
+    inline-edit confirm/cancel, password-eye toggle are below 24×24)
+  - 3.2.6 Consistent Help — Partially (contact appears on most
+    pages but in different positions)
+  - 3.3.7 Redundant Entry — Supports
+  - 3.3.8 Accessible Authentication (Minimum) — Supports
+- 4.1.1 Parsing removed (obsolete in 2.2).
+- WCAG link points at the 2.2 spec.
+
 ## v3.5.0 · 2026-05-15 · Accessibility pass + VPAT 2.5
 
 Honest accessibility documentation backed by a real audit + 5 quick

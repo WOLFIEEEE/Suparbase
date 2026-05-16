@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AppError } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import type { ConnectionSummary } from "@/lib/types/connection";
 
 const PG_URL_REGEX = /^postgres(?:ql)?:\/\/.+/i;
@@ -56,6 +58,7 @@ export function PostgresUrlSection({ connection }: Props) {
     onError: (e: AppError) => toast.error(e.message),
   });
 
+  const confirmClear = useConfirm();
   const clearMut = useMutation({
     mutationFn: () => setUrl(connection.id, null),
     onSuccess: () => {
@@ -172,9 +175,7 @@ export function PostgresUrlSection({ connection }: Props) {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => {
-              if (confirm("Clear the direct Postgres URL?")) clearMut.mutate();
-            }}
+            onClick={() => confirmClear.ask(() => clearMut.mutate())}
             disabled={clearMut.isPending}
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -182,6 +183,13 @@ export function PostgresUrlSection({ connection }: Props) {
           </Button>
         </div>
       )}
+      <ConfirmDialog
+        {...confirmClear.dialogProps}
+        title="Clear direct Postgres URL?"
+        description="The RLS debugger and SQL playground will no longer work for this connection until you add it again."
+        confirmLabel="Clear URL"
+        tone="danger"
+      />
     </section>
   );
 }

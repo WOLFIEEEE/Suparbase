@@ -67,7 +67,18 @@ export default async function AdminUsersPage({ searchParams }: Props) {
           </li>
         ))}
         {users.length === 0 && (
-          <li className="px-4 py-6 text-center text-sm text-fg-muted">No users match.</li>
+          <li className="px-4 py-6 text-center text-sm text-fg-muted">
+            {search ? (
+              <>
+                No users match <strong className="text-fg">{search}</strong>.{" "}
+                <Link href="/admin/users" className="text-accent hover:underline">
+                  Clear search
+                </Link>
+              </>
+            ) : (
+              "No users yet."
+            )}
+          </li>
         )}
       </ul>
     </div>

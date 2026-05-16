@@ -6,11 +6,11 @@ import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "VPAT 2.5 · Suparbase",
   description:
-    "Voluntary Product Accessibility Template (VPAT) 2.5 Rev for Suparbase — conformance against WCAG 2.1 Level AA.",
+    "Voluntary Product Accessibility Template (VPAT) 2.5 Rev for Suparbase — conformance against WCAG 2.2 Level AA.",
 };
 
 const REPORT_DATE = "2026-05-15";
-const PRODUCT_VERSION = "v3.5.0";
+const PRODUCT_VERSION = "v3.5.1";
 const VENDOR_CONTACT = "accessibility@suparbase.com";
 
 type Conformance =
@@ -27,13 +27,16 @@ interface Criterion {
 }
 
 /**
- * Conformance levels per WCAG 2.1 Level AA. Drawn from the
+ * Conformance levels per WCAG 2.2 Level AA. Drawn from the
  * accessibility audit at /Users/khushwantparihar/Suparbase against
  * the actual code on `main`, not aspirational. When the audit
  * couldn't verify (e.g., contrast measured by eye, not by tool), the
  * remark says so.
  */
 const WCAG_AA: Criterion[] = [
+  // Sorted by criterion number. WCAG 2.2-new criteria are noted in
+  // their remarks. Level A criteria are listed first, then AA.
+  // 4.1.1 Parsing is obsolete in WCAG 2.2 and omitted here.
   {
     id: "1.1.1",
     name: "Non-text Content (Level A)",
@@ -236,7 +239,13 @@ const WCAG_AA: Criterion[] = [
     id: "2.4.7",
     name: "Focus Visible (Level AA)",
     conformance: "Supports",
-    remarks: "Global :focus-visible outline (2px solid accent, 2px offset). Radix wrappers add focus-visible:ring-2 ring-accent. Initially-hidden controls (e.g., row hover-only actions) reveal on keyboard focus.",
+    remarks: "Global :focus-visible outline (2px solid accent, 2px offset). Radix wrappers add focus-visible:ring-2 ring-accent. As of v3.5.1 the Button component carries an explicit focus-visible ring (previously its base class disabled the outline without adding a replacement). Initially-hidden controls (e.g., row hover-only actions) reveal on keyboard focus.",
+  },
+  {
+    id: "2.4.11",
+    name: "Focus Not Obscured (Minimum) (Level AA) [WCAG 2.2]",
+    conformance: "Supports",
+    remarks: "The sticky workspace topbar reserves the top edge of the viewport, but focused interactive elements are not obscured because the browser's scrollIntoView default brings them below the topbar. No custom CSS forces a focused element behind another layer.",
   },
   {
     id: "2.5.1",
@@ -261,6 +270,18 @@ const WCAG_AA: Criterion[] = [
     name: "Motion Actuation (Level A)",
     conformance: "Not Applicable",
     remarks: "No motion-based activation (no shake-to-undo, no tilt gestures).",
+  },
+  {
+    id: "2.5.7",
+    name: "Dragging Movements (Level AA) [WCAG 2.2]",
+    conformance: "Supports",
+    remarks: "No primary functionality requires a drag gesture. Selection, sorting, and reordering all have click or keyboard equivalents (Radix Select, Dropdown, native checkboxes).",
+  },
+  {
+    id: "2.5.8",
+    name: "Target Size (Minimum) (Level AA) [WCAG 2.2]",
+    conformance: "Partially Supports",
+    remarks: "Primary action buttons (sign-in, save, delete, upgrade) are well above the 24×24 CSS-pixel minimum. A few secondary controls — filter-chip remove (≈16×16 with p-0.5), inline-edit confirm / cancel icon buttons (h-3 w-3 + small padding), password-eye toggle — fall below. All affected controls have a larger keyboard or pointer alternative, but the targets themselves don't pass 2.5.8 in isolation. Tracked for a follow-up design pass.",
   },
   {
     id: "3.1.1",
@@ -299,6 +320,12 @@ const WCAG_AA: Criterion[] = [
     remarks: "Reused components (delete button, edit button, status chips, plan pills) are identified consistently across the product.",
   },
   {
+    id: "3.2.6",
+    name: "Consistent Help (Level A) [WCAG 2.2]",
+    conformance: "Partially Supports",
+    remarks: "Help contact (accessibility@suparbase.com, hello@suparbase.com) and a docs link appear on most pages but in slightly different positions (footer vs in-page callout vs nav menu). The contact information itself is consistent; the screen location is being normalised in a follow-up header pass.",
+  },
+  {
     id: "3.3.1",
     name: "Error Identification (Level A)",
     conformance: "Supports",
@@ -320,13 +347,19 @@ const WCAG_AA: Criterion[] = [
     id: "3.3.4",
     name: "Error Prevention (Legal, Financial, Data) (Level AA)",
     conformance: "Supports",
-    remarks: "Destructive flows (delete row, bulk delete, service-role warning) require confirmation dialogs. Bulk delete requires typing the word \"delete\". Row deletes show a 5-second undo toast. Agent Sentry supports one-click session undo.",
+    remarks: "Destructive flows (delete row, bulk delete, service-role warning, admin subscription reset, storage bucket delete, agent-session undo, SQL write-mode toggle) all gate behind themed confirmation dialogs as of v3.5.1. Bulk delete and admin reset require typing a confirmation word. Row deletes show a 5-second undo toast. Agent Sentry supports one-click session undo.",
   },
   {
-    id: "4.1.1",
-    name: "Parsing (Level A) [obsolete in WCAG 2.2]",
+    id: "3.3.7",
+    name: "Redundant Entry (Level A) [WCAG 2.2]",
     conformance: "Supports",
-    remarks: "Markup is well-formed React/HTML output; no duplicate IDs or unclosed elements observed. (This criterion is obsolete in WCAG 2.2 but retained here for VPAT 2.5 coverage.)",
+    remarks: "Forms don't ask the user to re-enter information they have already supplied in the same session. Sign-up collects credentials once; multi-step flows (connection creation, action / widget editors) preserve in-progress values.",
+  },
+  {
+    id: "3.3.8",
+    name: "Accessible Authentication (Minimum) (Level AA) [WCAG 2.2]",
+    conformance: "Supports",
+    remarks: "Authentication uses email + password (bcrypt) or GitHub OAuth. No cognitive function test (image puzzles, recall, transcription) is required. Password fields support browser autocomplete and password managers. Copy / paste is allowed in every credential field.",
   },
   {
     id: "4.1.2",
@@ -347,7 +380,7 @@ const SECTION_508 = [
   {
     chapter: "Chapter 3: Functional Performance Criteria",
     rows: [
-      { name: "302.1 Without Vision", conformance: "Partially Supports" as Conformance, remarks: "Operable with screen reader assuming WCAG 2.1 AA partial conformance noted above. Spot-tested with VoiceOver/Safari; not systematically tested with NVDA/JAWS." },
+      { name: "302.1 Without Vision", conformance: "Partially Supports" as Conformance, remarks: "Operable with screen reader assuming WCAG 2.2 AA partial conformance noted above. Spot-tested with VoiceOver/Safari; not systematically tested with NVDA/JAWS." },
       { name: "302.2 With Limited Vision", conformance: "Partially Supports" as Conformance, remarks: "Zoom + high-contrast colors work. Faint microcopy fails 4.5:1 (see 1.4.3)." },
       { name: "302.3 Without Perception of Color", conformance: "Supports" as Conformance, remarks: "Color is never the sole information carrier (see 1.4.1)." },
       { name: "302.4 Without Hearing", conformance: "Supports" as Conformance, remarks: "No audio." },
@@ -364,7 +397,7 @@ const EN_301_549 = [
   {
     chapter: "Chapter 4: Functional Performance Statements (mirrors Section 508 Chapter 3)",
     rows: [
-      { name: "4.2 Functional performance", conformance: "Partially Supports" as Conformance, remarks: "See WCAG 2.1 AA section above for criterion-level detail." },
+      { name: "4.2 Functional performance", conformance: "Partially Supports" as Conformance, remarks: "See WCAG 2.2 AA section above for criterion-level detail." },
     ],
   },
   {
@@ -395,7 +428,7 @@ const EN_301_549 = [
   {
     chapter: "Chapter 9: Web (mirrors WCAG 2.1 Level A and AA)",
     rows: [
-      { name: "9.1–9.4 (WCAG 2.1 A + AA)", conformance: "Partially Supports" as Conformance, remarks: "See WCAG 2.1 AA section above for criterion-level detail." },
+      { name: "9.1–9.4 (WCAG 2.1 A + AA)", conformance: "Partially Supports" as Conformance, remarks: "See WCAG 2.2 AA section above for criterion-level detail." },
     ],
   },
   {
@@ -414,7 +447,7 @@ const EN_301_549 = [
   {
     chapter: "Chapter 12: Documentation and Support Services",
     rows: [
-      { name: "12.1 Product Documentation", conformance: "Supports" as Conformance, remarks: "Documentation is web-based (/docs) and conforms to the same WCAG 2.1 AA posture as the product." },
+      { name: "12.1 Product Documentation", conformance: "Supports" as Conformance, remarks: "Documentation is web-based (/docs) and conforms to the same WCAG 2.2 AA posture as the product." },
       { name: "12.2 Support Services", conformance: "Supports" as Conformance, remarks: "Support is via email (hello@suparbase.com, accessibility@suparbase.com) — accessible through any user agent the customer prefers." },
     ],
   },
@@ -440,7 +473,7 @@ export default async function VpatPage() {
           <ProductInfo />
           <StandardsCovered />
           <Terms />
-          <Chapter title="WCAG 2.1 Level AA report" rows={WCAG_AA} />
+          <Chapter title="WCAG 2.2 Level AA report" rows={WCAG_AA} />
           <SectionGroup title="Revised Section 508 Report" groups={SECTION_508} />
           <SectionGroup title="EN 301 549 V3.2.1 (2021-03) Report" groups={EN_301_549} />
           <Footer />
@@ -478,9 +511,9 @@ function StandardsCovered() {
       <Prose>
         <ul>
           <li>
-            <strong>Web Content Accessibility Guidelines 2.1</strong> (WCAG 2.1) at
+            <strong>Web Content Accessibility Guidelines 2.2</strong> (WCAG 2.2) at
             conformance level AA, per the{" "}
-            <a href="https://www.w3.org/TR/WCAG21/" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noopener noreferrer">
               W3C Recommendation
             </a>
             . The product targets Level AA across the entire surface.
@@ -523,7 +556,7 @@ function Terms() {
           </li>
           <li>
             <strong>Not Evaluated</strong>: The product has not been evaluated against
-            the criterion. (Used only for WCAG 2.1 Level AAA in this report, which is
+            the criterion. (Used only for WCAG 2.2 Level AAA in this report, which is
             outside VPAT 2.5 AA scope.)
           </li>
         </ul>
@@ -635,11 +668,25 @@ function Footer() {
         </p>
         <ul>
           <li>
-            <strong>{REPORT_DATE}</strong> — initial VPAT 2.5 Rev publication
-            covering Suparbase {PRODUCT_VERSION}. Accompanies the v3.5.0 accessibility
-            pass: skip link added, bare-label form fields patched, title-attribute
-            tooltips replaced with Radix Tooltip, AI chat marked role=&quot;log&quot;
-            aria-live=&quot;polite&quot;, toast notifications respect system theme.
+            <strong>{REPORT_DATE}</strong> — updated to WCAG 2.2 Level AA (was
+            2.1). Added rows for the six new 2.2 success criteria: 2.4.11
+            Focus Not Obscured (Minimum), 2.5.7 Dragging Movements, 2.5.8
+            Target Size (Minimum), 3.2.6 Consistent Help, 3.3.7 Redundant
+            Entry, 3.3.8 Accessible Authentication (Minimum). 4.1.1 Parsing
+            removed (obsolete in 2.2). Accompanies the v3.5.1 UI bug pass:
+            replaced 12 native window.confirm() calls with themed
+            ConfirmDialog (including the destructive admin Reset, storage
+            bucket delete, agent-session undo, SQL write-mode toggle); added
+            an explicit focus-visible ring to the Button component; wired
+            PaywallCard into the team-invite flow; humanised billing status
+            copy; fixed NULL display rendering as colon character across the
+            data grid.
+          </li>
+          <li>
+            <strong>2026-05-15</strong> — initial VPAT 2.5 Rev publication
+            against WCAG 2.1 Level AA accompanying the v3.5.0 accessibility
+            pass (skip link, bare-label form fields, Radix Tooltip
+            replacements, AI chat live region, system-theme toasts).
           </li>
         </ul>
         <p>

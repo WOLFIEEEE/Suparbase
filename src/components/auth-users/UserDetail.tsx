@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/dialog";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import { cn } from "@/lib/ui/cn";
 
 interface Props {
@@ -128,20 +130,22 @@ export function UserDetail({ connectionId, userId }: Props) {
     });
   const related = relatedData?.tables ?? [];
 
+  const confirmRevokeAll = useConfirm();
   const revokeAll = useCallback(async () => {
-    if (!confirm("Revoke ALL active sessions for this user?")) return;
-    const res = await fetch(
-      `/api/v/${encodeURIComponent(connectionId)}/auth-users/${encodeURIComponent(userId)}/sessions`,
-      { method: "DELETE" },
-    );
-    if (res.ok) {
-      const j = (await res.json()) as { revoked: number };
-      toast.success(`Revoked ${j.revoked} session${j.revoked === 1 ? "" : "s"}.`);
-      qc.invalidateQueries({ queryKey: ["auth-sessions", connectionId, userId] });
-    } else {
-      toast.error("Revoke failed.");
-    }
-  }, [connectionId, qc, userId]);
+    confirmRevokeAll.ask(async () => {
+      const res = await fetch(
+        `/api/v/${encodeURIComponent(connectionId)}/auth-users/${encodeURIComponent(userId)}/sessions`,
+        { method: "DELETE" },
+      );
+      if (res.ok) {
+        const j = (await res.json()) as { revoked: number };
+        toast.success(`Revoked ${j.revoked} session${j.revoked === 1 ? "" : "s"}.`);
+        qc.invalidateQueries({ queryKey: ["auth-sessions", connectionId, userId] });
+      } else {
+        toast.error("Revoke failed.");
+      }
+    });
+  }, [connectionId, qc, userId, confirmRevokeAll]);
 
   const revokeOne = useCallback(
     async (sessionId: string) => {
@@ -425,6 +429,13 @@ export function UserDetail({ connectionId, userId }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        {...confirmRevokeAll.dialogProps}
+        title="Revoke ALL active sessions?"
+        description="Every device this user is signed in on is logged out immediately. They can sign in again with their credentials."
+        confirmLabel="Revoke all"
+        tone="danger"
+      />
     </div>
   );
 }

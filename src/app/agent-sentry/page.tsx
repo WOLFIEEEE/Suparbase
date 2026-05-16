@@ -298,8 +298,8 @@ export default async function AgentSentryPage() {
             title="What other tools catch, and what they miss."
             subtitle="Most existing options are scanners (point-in-time) or loggers (no remediation). Sentry is the only one combining continuous probing, agent attribution, and one-click undo."
           />
-          <div className="mt-10 overflow-hidden rounded-lg border hairline">
-            <table className="w-full border-collapse text-sm">
+          <div className="mt-10 overflow-x-auto rounded-lg border hairline">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
                 <tr className="bg-bg-raised text-left text-[10px] uppercase tracking-[0.16em] text-fg-faint">
                   <th className="border-b hairline px-4 py-3 font-normal">Tool</th>

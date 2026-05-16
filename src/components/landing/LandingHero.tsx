@@ -163,7 +163,7 @@ export function LandingHero() {
           Sign in <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
         <a
-          href="https://github.com/supabase/supabase"
+          href="https://supabase.com"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex h-11 items-center justify-center rounded-md border hairline px-5 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg"

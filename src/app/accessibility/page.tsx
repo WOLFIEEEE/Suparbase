@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     "Suparbase's accessibility statement: target standard, what we ship today, known gaps, and how to report issues.",
 };
 
-const LAST_UPDATED = "2026-05-15";
+const LAST_UPDATED = "2026-05-15"; // WCAG 2.2 alignment + v3.5.1 UI hardening pass
 
 /**
  * Plain-English accessibility statement. Companion document to the
@@ -25,13 +25,13 @@ export default async function AccessibilityPage() {
         <PageHeader
           eyebrow="Accessibility"
           title="The shape we're in, in plain English."
-          subtitle={`Last updated ${LAST_UPDATED}. We aim for WCAG 2.1 Level AA across every authenticated page and every public marketing page. We're close but not perfect — this page is honest about both.`}
+          subtitle={`Last updated ${LAST_UPDATED}. We aim for WCAG 2.2 Level AA across every authenticated page and every public marketing page. We're close but not perfect — this page is honest about both.`}
         />
         <div className="mt-12 max-w-3xl">
           <Prose>
             <h2>The standard we target</h2>
             <p>
-              <strong>WCAG 2.1 Level AA</strong> across the entire product surface — the
+              <strong>WCAG 2.2 Level AA</strong> across the entire product surface — the
               marketing site, the sign-in flow, the connections workspace, the data grid,
               the AI chat, the SQL playground, the admin panel, and the billing pages.
               The detailed conformance posture against every relevant criterion lives in
@@ -93,6 +93,24 @@ export default async function AccessibilityPage() {
                 <strong>Language of page</strong> declared on the root
                 <code> &lt;html lang=&quot;en&quot;&gt;</code>.
               </li>
+              <li>
+                <strong>Accessible authentication</strong>: no cognitive function
+                tests (no CAPTCHAs requiring puzzle-solving). Sign-in uses email +
+                password with browser autocomplete, or GitHub OAuth.
+                <em> (WCAG 2.2 — 3.3.8)</em>
+              </li>
+              <li>
+                <strong>No drag-only interactions</strong>: every action that uses
+                pointer movement (selection, navigation, editing) has a click or
+                keyboard equivalent.
+                <em> (WCAG 2.2 — 2.5.7)</em>
+              </li>
+              <li>
+                <strong>Redundant entry avoided</strong>: forms don&apos;t ask
+                users to re-enter information already supplied earlier in the
+                same flow.
+                <em> (WCAG 2.2 — 3.3.7)</em>
+              </li>
             </ul>
 
             <h2>Where we&apos;re still partial</h2>
@@ -133,6 +151,21 @@ export default async function AccessibilityPage() {
                 run before each release; if you&apos;re relying on this for
                 procurement, please run your own audit against the live site.
               </li>
+              <li>
+                <strong>Target sizes (WCAG 2.2 — 2.5.8)</strong>: a few
+                secondary controls (filter-chip remove, inline-edit confirm /
+                cancel icons, password-eye toggle) sit slightly below the 24×24
+                CSS-pixel minimum. Primary actions (sign-in, save, delete
+                buttons) clear it. The small controls always have a larger
+                keyboard or pointer alternative; we&apos;re tracking enlargement
+                in a follow-up design pass.
+              </li>
+              <li>
+                <strong>Help link consistency (WCAG 2.2 — 3.2.6)</strong>: the
+                contact email (<code>hello@suparbase.com</code>) and docs link
+                appear on most surfaces but not yet uniformly in the same
+                screen position. A future header pass will normalise this.
+              </li>
             </ul>
 
             <h2>What doesn&apos;t apply</h2>
@@ -149,7 +182,7 @@ export default async function AccessibilityPage() {
               button&quot; — please email{" "}
               <a href="mailto:accessibility@suparbase.com">accessibility@suparbase.com</a>.
               We aim to acknowledge within two business days and ship a fix within ten
-              for anything below WCAG 2.1 AA. Include:
+              for anything below WCAG 2.2 AA. Include:
             </p>
             <ul>
               <li>The page or flow where you saw the issue (URL is great).</li>
@@ -160,7 +193,7 @@ export default async function AccessibilityPage() {
 
             <h2>Assistive technologies we&apos;ve tested with</h2>
             <p>
-              Code-level review against WCAG 2.1 AA across every major page. Live
+              Code-level review against WCAG 2.2 AA across every major page. Live
               testing has been spot-check rather than systematic — primarily VoiceOver
               on macOS with Safari and keyboard-only navigation across all flows.
               Customers using NVDA, JAWS, TalkBack, or VoiceOver on iOS may notice
@@ -169,7 +202,7 @@ export default async function AccessibilityPage() {
 
             <h2>Conformance status</h2>
             <p>
-              <strong>Partially conformant with WCAG 2.1 Level AA.</strong> Most
+              <strong>Partially conformant with WCAG 2.2 Level AA.</strong> Most
               criteria are fully supported; a few are partial (see above), one is not
               supported only in the trivial sense that nothing applies (no media). The
               <Link href="/accessibility/vpat"> VPAT 2.5</Link> has the full criterion-
@@ -187,12 +220,12 @@ export default async function AccessibilityPage() {
               </Link>
               <br />
               <a
-                href="https://www.w3.org/TR/WCAG21/"
+                href="https://www.w3.org/TR/WCAG22/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1"
               >
-                WCAG 2.1 specification
+                WCAG 2.2 specification
                 <ArrowUpRight className="h-3 w-3" aria-hidden />
               </a>
               <br />

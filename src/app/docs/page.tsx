@@ -168,7 +168,7 @@ export default async function DocsPage() {
                   proxy.
                 </p>
                 <p>
-                  Bring your own OpenRouter API key on <Link href="/connections">Settings → AI</Link>. Tool-capable
+                  Bring your own OpenRouter API key on <Link href="/settings/ai">Settings → AI</Link>. Tool-capable
                   models are tagged <code>tools</code> in the picker.
                 </p>
               </section>

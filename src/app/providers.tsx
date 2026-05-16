@@ -1,9 +1,47 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+
+type Resolved = "light" | "dark";
+
+/**
+ * Track the *resolved* theme (data-theme attr on <html> with OS
+ * preference as fallback). The Sonner Toaster's `theme="system"`
+ * only watches prefers-color-scheme, so when the user toggles via
+ * ThemeToggle (which writes data-theme), Sonner doesn't notice.
+ * MutationObserver bridges the gap.
+ */
+function useResolvedTheme(): Resolved {
+  const [theme, setTheme] = useState<Resolved>("dark");
+  useEffect(() => {
+    const compute = (): Resolved => {
+      const explicit = document.documentElement.dataset.theme;
+      if (explicit === "light" || explicit === "dark") return explicit;
+      return window.matchMedia?.("(prefers-color-scheme: light)").matches
+        ? "light"
+        : "dark";
+    };
+    setTheme(compute());
+    const obs = new MutationObserver(() => setTheme(compute()));
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
+    const onMq = () => {
+      if (!document.documentElement.dataset.theme) setTheme(compute());
+    };
+    mq?.addEventListener?.("change", onMq);
+    return () => {
+      obs.disconnect();
+      mq?.removeEventListener?.("change", onMq);
+    };
+  }, []);
+  return theme;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -21,19 +59,18 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       }),
   );
+  const resolvedTheme = useResolvedTheme();
 
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         {/*
-          theme="system" honours the user's OS preference (and the
-          app's data-theme attribute via prefers-color-scheme).
-          Previously hard-coded "dark", which rendered dark toasts in
-          light mode — visually inconsistent for low-vision users on
-          high-contrast light themes.
+          Pass the resolved theme so toasts re-paint when the user
+          flips ThemeToggle — Sonner's own theme="system" only
+          watches prefers-color-scheme and ignores our data-theme.
         */}
-        <Toaster theme="system" position="bottom-right" richColors closeButton />
+        <Toaster theme={resolvedTheme} position="bottom-right" richColors closeButton />
       </QueryClientProvider>
     </SessionProvider>
   );

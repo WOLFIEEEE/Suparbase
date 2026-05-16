@@ -1,7 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { grantPlanAction, resetSubscriptionAction } from "./actions";
+
+// Auto-clear inline status messages so stale "Plan granted" copy
+// doesn't linger next to the button when an admin returns later.
+function useAutoClear(value: string | null, setValue: (v: string | null) => void, delayMs = 4000) {
+  useEffect(() => {
+    if (!value) return;
+    const t = setTimeout(() => setValue(null), delayMs);
+    return () => clearTimeout(t);
+  }, [value, setValue, delayMs]);
+}
 
 interface GrantProps {
   targetUserId: string;
@@ -11,6 +22,7 @@ export function GrantPlanForm({ targetUserId }: GrantProps) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [tone, setTone] = useState<"ok" | "err" | null>(null);
+  useAutoClear(message, setMessage);
 
   return (
     <form
@@ -78,24 +90,30 @@ export function ResetSubscriptionForm({ targetUserId }: GrantProps) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [tone, setTone] = useState<"ok" | "err" | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  useAutoClear(message, setMessage);
+
+  function runReset() {
+    return new Promise<void>((resolve, reject) => {
+      startTransition(async () => {
+        const fd = new FormData();
+        fd.set("targetUserId", targetUserId);
+        const result = await resetSubscriptionAction(fd);
+        if (result.ok) {
+          setMessage("Reset to Free.");
+          setTone("ok");
+          resolve();
+        } else {
+          setMessage(result.message ?? "Failed.");
+          setTone("err");
+          reject(new Error(result.message ?? "Failed."));
+        }
+      });
+    });
+  }
 
   return (
-    <form
-      action={(fd) =>
-        startTransition(async () => {
-          fd.set("targetUserId", targetUserId);
-          const result = await resetSubscriptionAction(fd);
-          if (result.ok) {
-            setMessage("Reset to Free.");
-            setTone("ok");
-          } else {
-            setMessage(result.message ?? "Failed.");
-            setTone("err");
-          }
-        })
-      }
-      className="flex items-center justify-between gap-3 rounded-lg border hairline bg-bg-raised p-4"
-    >
+    <div className="flex items-center justify-between gap-3 rounded-lg border hairline bg-bg-raised p-4">
       <span className="text-xs text-fg-muted">
         Set plan to Free and clear all Dodo identifiers.
       </span>
@@ -106,14 +124,32 @@ export function ResetSubscriptionForm({ targetUserId }: GrantProps) {
           </span>
         )}
         <button
-          type="submit"
+          type="button"
+          onClick={() => setConfirmOpen(true)}
           disabled={pending}
           className="inline-flex h-9 items-center rounded-md border border-danger/40 px-3 text-sm text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "…" : "Reset"}
         </button>
       </div>
-    </form>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Reset this subscription?"
+        description={
+          <>
+            Sets the user&apos;s plan to <strong>Free</strong> and clears all Dodo
+            identifiers (<code>dodo_customer_id</code>, <code>dodo_subscription_id</code>,
+            cliff dates). Use only when you&apos;ve already cancelled on Dodo&apos;s
+            side — otherwise the next webhook will re-create the row.
+          </>
+        }
+        confirmLabel="Reset to Free"
+        tone="danger"
+        requireText="RESET"
+        onConfirm={runReset}
+      />
+    </div>
   );
 }
 

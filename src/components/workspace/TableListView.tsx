@@ -275,7 +275,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total rows"
-          value={totalCount != null ? totalCount.toLocaleString() : ":"}
+          value={totalCount != null ? totalCount.toLocaleString() : "—"}
           hint={table.kind === "view" ? "read-only" : undefined}
         />
         <StatTile label="Columns" value={table.columns.length} hint={`${analysis?.hiddenColumns?.length ?? 0} hidden`} />
@@ -286,7 +286,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         />
         <StatTile
           label="Primary key"
-          value={table.primaryKey.length > 0 ? table.primaryKey.length : ":"}
+          value={table.primaryKey.length > 0 ? table.primaryKey.length : "—"}
           hint={table.primaryKey.length > 0 ? table.primaryKey.join(", ") : "none"}
         />
       </div>
@@ -300,7 +300,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
             onChange={() => selection.toggleMany(pageKeys, allPageSelected)}
             aria-label="Select all on this page"
           />
-          <span className="hidden sm:inline">page</span>
+          <span>Select page</span>
         </label>
         <div className="relative min-w-[16rem] flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-faint" aria-hidden />
@@ -334,11 +334,22 @@ function Body({ connectionId, table, analysis }: BodyProps) {
             </li>
           ))
         ) : rows.length === 0 ? (
-          <li className="surface rounded-md px-6 py-16 text-center text-sm text-fg-muted">
+          <li className="surface flex flex-col items-center gap-3 rounded-md px-6 py-16 text-center text-sm text-fg-muted">
             {debouncedSearch ? (
-              <>No rows match <span className="font-mono">{debouncedSearch}</span>.</>
+              <>
+                <span>
+                  No rows match <span className="font-mono">{debouncedSearch}</span>.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSearchInput("")}
+                  className="inline-flex h-8 items-center rounded-md border hairline px-3 text-xs text-fg-muted hover:border-line-strong hover:text-fg"
+                >
+                  Clear search
+                </button>
+              </>
             ) : (
-              <>No rows yet.</>
+              <span>No rows yet.</span>
             )}
           </li>
         ) : (
@@ -417,12 +428,17 @@ function GenericRow({
 
   // The "lead" value (first visible non-PK column, or the PK if none).
   const leadCol = visibleCols.find((c) => !table.primaryKey.includes(c)) ?? visibleCols[0];
+  const leadColMeta = leadCol ? table.columns.find((c) => c.name === leadCol) : null;
   const leadValue = leadCol ? row[leadCol] : null;
+  // Pipe through formatCellValue so jsonb / arrays don't render as
+  // "[object Object]" — same formatter used by the data grid itself.
   const leadDisplay =
     leadValue == null
       ? table.primaryKey.length > 0
         ? table.primaryKey.map((c) => String(row[c] ?? "")).join(", ")
         : "row"
+      : leadColMeta
+      ? formatCellValue(leadColMeta, leadValue).text
       : String(leadValue);
 
   // The "secondary" cells (the remaining visible cols, rendered as small chips).
@@ -494,7 +510,7 @@ function GenericRow({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="rounded p-1.5 text-fg-faint opacity-0 transition-opacity hover:bg-bg-sunken hover:text-fg group-hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent"
+                className="rounded p-1.5 text-fg-faint transition-opacity hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent md:opacity-0 md:group-hover:opacity-100"
                 aria-label={`Actions for ${leadDisplay}`}
                 onClick={(e) => e.stopPropagation()}
               >

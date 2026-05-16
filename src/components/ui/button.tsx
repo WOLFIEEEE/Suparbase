@@ -4,7 +4,12 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/ui/cn";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+  // focus-visible:ring-* gives keyboard users a visible focus state.
+  // The global :focus-visible outline in globals.css covers everything
+  // else; for Button specifically we want a 2px accent ring inset from
+  // the button edge so it reads well over both `bg-accent` (primary)
+  // and `bg-bg` (ghost) surfaces.
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {

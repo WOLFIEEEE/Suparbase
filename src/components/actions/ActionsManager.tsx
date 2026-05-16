@@ -41,6 +41,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AppError } from "@/lib/errors";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/lib/ui/use-confirm";
 import type {
   ActionKind,
   ActionParam,
@@ -71,22 +73,26 @@ export function ActionsManager({ connectionId }: ManagerProps) {
 
   const [editing, setEditing] = useState<ActionSummary | "new" | null>(null);
   const [runningInline, setRunningInline] = useState<ActionSummary | null>(null);
+  const confirmDelete = useConfirm();
+  const [deleteTarget, setDeleteTarget] = useState<string>("");
 
   const onDelete = useCallback(
     async (action: ActionSummary) => {
-      if (!confirm(`Delete "${action.label}"?`)) return;
-      const res = await fetch(
-        `/api/connections/${encodeURIComponent(connectionId)}/actions/${encodeURIComponent(action.id)}`,
-        { method: "DELETE" },
-      );
-      if (res.status === 204) {
-        toast.success("Action deleted.");
-        qc.invalidateQueries({ queryKey: ["actions", connectionId] });
-      } else {
-        toast.error("Delete failed.");
-      }
+      setDeleteTarget(action.label);
+      confirmDelete.ask(async () => {
+        const res = await fetch(
+          `/api/connections/${encodeURIComponent(connectionId)}/actions/${encodeURIComponent(action.id)}`,
+          { method: "DELETE" },
+        );
+        if (res.status === 204) {
+          toast.success("Action deleted.");
+          qc.invalidateQueries({ queryKey: ["actions", connectionId] });
+        } else {
+          toast.error("Delete failed.");
+        }
+      });
     },
-    [connectionId, qc],
+    [connectionId, qc, confirmDelete],
   );
 
   const grouped = useMemo(() => groupByScope(actions), [actions]);
@@ -158,6 +164,19 @@ export function ActionsManager({ connectionId }: ManagerProps) {
           </DialogContent>
         </Dialog>
       )}
+      <ConfirmDialog
+        {...confirmDelete.dialogProps}
+        title="Delete action?"
+        description={
+          <>
+            Permanently deletes <strong>{deleteTarget}</strong>. Any saved
+            references to this action (in dashboards, custom workflows) will
+            stop working.
+          </>
+        }
+        confirmLabel="Delete"
+        tone="danger"
+      />
     </div>
   );
 }
