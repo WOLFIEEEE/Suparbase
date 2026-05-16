@@ -186,7 +186,7 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
                       </button>
                     ) : entry.plan === "team" ? (
                       <a
-                        href="mailto:hello@suparbase.com?subject=Team plan inquiry"
+                        href="mailto:contact@suparbase.com?subject=Team plan inquiry"
                         className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-md border hairline px-3 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
                       >
                         Contact sales
@@ -212,7 +212,7 @@ export function BillingPanel({ email, active, catalog, billingConfigured, flashS
               Dodo Payments
             </a>{" "}
             (Merchant of Record). To change your card, cancel, or download an invoice, follow the
-            link in the receipt email. Questions? <a href="mailto:hello@suparbase.com" className="text-accent hover:underline">hello@suparbase.com</a>.
+            link in the receipt email. Questions? <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">contact@suparbase.com</a>.
           </span>
         </p>
       </section>

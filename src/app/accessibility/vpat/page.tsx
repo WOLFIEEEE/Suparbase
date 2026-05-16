@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const REPORT_DATE = "2026-05-15";
 const PRODUCT_VERSION = "v3.5.1";
-const VENDOR_CONTACT = "accessibility@suparbase.com";
+const VENDOR_CONTACT = "contact@suparbase.com";
 
 type Conformance =
   | "Supports"
@@ -323,7 +323,7 @@ const WCAG_AA: Criterion[] = [
     id: "3.2.6",
     name: "Consistent Help (Level A) [WCAG 2.2]",
     conformance: "Partially Supports",
-    remarks: "Help contact (accessibility@suparbase.com, hello@suparbase.com) and a docs link appear on most pages but in slightly different positions (footer vs in-page callout vs nav menu). The contact information itself is consistent; the screen location is being normalised in a follow-up header pass.",
+    remarks: "Help contact (contact@suparbase.com, contact@suparbase.com) and a docs link appear on most pages but in slightly different positions (footer vs in-page callout vs nav menu). The contact information itself is consistent; the screen location is being normalised in a follow-up header pass.",
   },
   {
     id: "3.3.1",
@@ -448,7 +448,7 @@ const EN_301_549 = [
     chapter: "Chapter 12: Documentation and Support Services",
     rows: [
       { name: "12.1 Product Documentation", conformance: "Supports" as Conformance, remarks: "Documentation is web-based (/docs) and conforms to the same WCAG 2.2 AA posture as the product." },
-      { name: "12.2 Support Services", conformance: "Supports" as Conformance, remarks: "Support is via email (hello@suparbase.com, accessibility@suparbase.com) — accessible through any user agent the customer prefers." },
+      { name: "12.2 Support Services", conformance: "Supports" as Conformance, remarks: "Support is via email (contact@suparbase.com, contact@suparbase.com) — accessible through any user agent the customer prefers." },
     ],
   },
 ];

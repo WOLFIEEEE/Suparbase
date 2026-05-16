@@ -171,10 +171,10 @@ export default async function AboutPage() {
               projects. Feedback always welcome.
             </p>
             <a
-              href="mailto:hello@suparbase.com"
+              href="mailto:contact@suparbase.com"
               className="mt-4 inline-flex items-center gap-1 text-xs text-accent hover:underline"
             >
-              hello@suparbase.com <ArrowUpRight className="h-3 w-3" aria-hidden />
+              contact@suparbase.com <ArrowUpRight className="h-3 w-3" aria-hidden />
             </a>
           </div>
         </div>

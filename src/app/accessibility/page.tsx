@@ -162,7 +162,7 @@ export default async function AccessibilityPage() {
               </li>
               <li>
                 <strong>Help link consistency (WCAG 2.2 — 3.2.6)</strong>: the
-                contact email (<code>hello@suparbase.com</code>) and docs link
+                contact email (<code>contact@suparbase.com</code>) and docs link
                 appear on most surfaces but not yet uniformly in the same
                 screen position. A future header pass will normalise this.
               </li>
@@ -180,7 +180,7 @@ export default async function AccessibilityPage() {
               If you hit an accessibility problem — anything from &quot;this contrast
               is too low&quot; to &quot;my screen reader can&apos;t find the submit
               button&quot; — please email{" "}
-              <a href="mailto:accessibility@suparbase.com">accessibility@suparbase.com</a>.
+              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>.
               We aim to acknowledge within two business days and ship a fix within ten
               for anything below WCAG 2.2 AA. Include:
             </p>

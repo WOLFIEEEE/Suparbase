@@ -3,6 +3,19 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.5.2 · 2026-05-15 · Single contact email
+
+Standardised every customer-facing email address to **contact@suparbase.com**.
+Previously we exposed `hello@`, `security@`, `privacy@`, `legal@`, and
+`accessibility@` across various pages — five inboxes nobody actually
+read. One inbox is easier to staff, route, and keep responsive.
+
+Touched: privacy, terms, about, docs, accessibility, accessibility/vpat,
+pricing, BillingPanel, PublicFooter, healthcare-saas use-case, CONTRIBUTING.
+Env-example placeholders (`invites@yourdomain.com`,
+`support@yourdomain.com`) unchanged — they're sample values, not real
+addresses.
+
 ## v3.5.1 · 2026-05-15 · UI bug pass + WCAG 2.2 swap
 
 Big polish ship. Closes every BLOCKER + HIGH + most MEDIUMs from the

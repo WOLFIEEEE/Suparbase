@@ -25,7 +25,7 @@ proposed solution. We may already have a related plan in flight.
 Please do **not** report security issues via public GitHub issues.
 
 - Open a [GitHub Security Advisory](https://github.com/WOLFIEEEE/Suparbase/security/advisories/new), **or**
-- Email `security@suparbase.com`.
+- Email `contact@suparbase.com`.
 
 We respond within 72 hours. Coordinated disclosure is appreciated.
 

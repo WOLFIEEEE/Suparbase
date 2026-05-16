@@ -32,7 +32,7 @@ const COLUMNS: Column[] = [
       { label: "Guides", href: "/guides" },
       { label: "Compare", href: "/compare" },
       { label: "Learn", href: "/learn" },
-      { label: "Contact", href: "mailto:hello@suparbase.com", external: true },
+      { label: "Contact", href: "mailto:contact@suparbase.com", external: true },
     ],
   },
   {
@@ -42,7 +42,7 @@ const COLUMNS: Column[] = [
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
       { label: "Accessibility", href: "/accessibility" },
-      { label: "Contact", href: "mailto:hello@suparbase.com", external: true },
+      { label: "Contact", href: "mailto:contact@suparbase.com", external: true },
     ],
   },
 ];
@@ -135,7 +135,7 @@ export function PublicFooter({ isSignedIn = false }: FooterProps) {
             <Link href="/terms" className="hover:text-fg">
               Terms
             </Link>
-            <a href="mailto:hello@suparbase.com" className="hover:text-fg">
+            <a href="mailto:contact@suparbase.com" className="hover:text-fg">
               Contact
             </a>
             <span className="font-mono">v{SITE.version}</span>

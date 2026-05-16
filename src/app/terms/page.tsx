@@ -35,7 +35,7 @@ export default async function TermsPage() {
             <h3>2. Your account</h3>
             <p>
               You&apos;re responsible for keeping your credentials safe. If your account is compromised, email us
-              immediately at <a href="mailto:security@suparbase.com">security@suparbase.com</a>. We won&apos;t reset
+              immediately at <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>. We won&apos;t reset
               your password from an email; we&apos;ll route a recovery flow through the in-app generate-link path.
             </p>
 
@@ -111,8 +111,8 @@ export default async function TermsPage() {
             <h2>Contact</h2>
             <p>
               For questions about these terms, email{" "}
-              <a href="mailto:legal@suparbase.com">legal@suparbase.com</a>. For everything else,{" "}
-              <a href="mailto:hello@suparbase.com">hello@suparbase.com</a>.
+              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>. For everything else,{" "}
+              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>.
             </p>
           </Prose>
         </div>
