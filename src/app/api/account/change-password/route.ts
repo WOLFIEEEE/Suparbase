@@ -20,7 +20,7 @@ export const runtime = "nodejs";
  * out the owner. New password must be ≥12 chars to match the signup
  * + reset minimums.
  *
- * For OAuth-only users (no `passwordHash`), returns 409 — they
+ * For OAuth-only users (no `passwordHash`), returns 409 - they
  * can't set a credentials password from this endpoint.
  *
  * Rate-limited per (ip + userId) so a leaked session can't grind

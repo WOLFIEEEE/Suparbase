@@ -88,7 +88,7 @@ export function Article() {
         </li>
       </ol>
 
-      <ArticleH2 id="pgvector">pgvector (Postgres) &mdash; #1</ArticleH2>
+      <ArticleH2 id="pgvector">pgvector (Postgres) - #1</ArticleH2>
 
       <p>
         The 2026 default for production RAG. pgvector reached parity with
@@ -141,7 +141,7 @@ export function Article() {
         live in) Postgres. Which is most of us.
       </p>
 
-      <ArticleH2 id="qdrant">Qdrant &mdash; #2</ArticleH2>
+      <ArticleH2 id="qdrant">Qdrant - #2</ArticleH2>
 
       <p>
         The best of the dedicated vector DBs in 2026. Rust, fast, well-
@@ -178,7 +178,7 @@ export function Article() {
         billion-scale today and don&apos;t want to operate Milvus.
       </p>
 
-      <ArticleH2 id="pinecone">Pinecone &mdash; #3</ArticleH2>
+      <ArticleH2 id="pinecone">Pinecone - #3</ArticleH2>
 
       <p>
         The 2023 winner that priced itself out of the indie market.
@@ -223,7 +223,7 @@ export function Article() {
         teams love Pinecone for the same reasons.
       </p>
 
-      <ArticleH2 id="weaviate">Weaviate &mdash; #4</ArticleH2>
+      <ArticleH2 id="weaviate">Weaviate - #4</ArticleH2>
 
       <p>
         Open-source, schema-aware, with built-in modules for embedding
@@ -262,7 +262,7 @@ export function Article() {
         same ground for less.
       </p>
 
-      <ArticleH2 id="lancedb">LanceDB &mdash; #5</ArticleH2>
+      <ArticleH2 id="lancedb">LanceDB - #5</ArticleH2>
 
       <p>
         The dark horse of 2024-2026. An embedded vector database built
@@ -304,7 +304,7 @@ export function Article() {
         win in those contexts.
       </p>
 
-      <ArticleH2 id="chroma">Chroma &mdash; #6</ArticleH2>
+      <ArticleH2 id="chroma">Chroma - #6</ArticleH2>
 
       <p>
         The &quot;npm install chromadb and you have a vector DB&quot; story
@@ -320,7 +320,7 @@ export function Article() {
         database yet. For production, migrate to pgvector or Qdrant.
       </p>
 
-      <ArticleH2 id="milvus">Milvus &mdash; #7</ArticleH2>
+      <ArticleH2 id="milvus">Milvus - #7</ArticleH2>
 
       <p>
         The choice for billion-vector scale. Distributed, GPU-accelerated,

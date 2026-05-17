@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Smoke spec — the bare minimum that should pass on every deploy.
+ * Smoke spec - the bare minimum that should pass on every deploy.
  * One file, no fixtures, no auth. Confirms:
  *   - the marketing home renders (no 500)
  *   - the public footer is reachable + links work
@@ -11,7 +11,7 @@ import { test, expect } from "@playwright/test";
  *   - the accessibility VPAT is rendered (long-content readability)
  *
  * Anything more elaborate (creating connections, running queries)
- * needs a throwaway database + seeded user — that's a follow-up
+ * needs a throwaway database + seeded user - that's a follow-up
  * once we add CI fixtures. For now this catches every route we
  * actually ship + the health endpoint, which is enough to detect
  * a broken deploy.
@@ -43,7 +43,7 @@ test.describe("Public surface smoke", () => {
   test("accessibility statement renders", async ({ page }) => {
     await page.goto("/accessibility");
     await expect(page.getByRole("heading", { name: /plain english/i })).toBeVisible();
-    // The link out to the VPAT is the contract — make sure it's there.
+    // The link out to the VPAT is the contract - make sure it's there.
     await expect(page.getByRole("link", { name: /vpat/i }).first()).toBeVisible();
   });
 
@@ -83,7 +83,7 @@ test.describe("Auth gating", () => {
     const res = await page.goto("/admin", { waitUntil: "networkidle" });
     // The /admin layout uses notFound() when the caller isn't on the
     // SUPARBASE_ADMIN_EMAILS allowlist; for anon visitors the auth
-    // layer redirects to /signin first. Either is acceptable — we
+    // layer redirects to /signin first. Either is acceptable - we
     // just need it to NOT render the admin UI.
     if (res) {
       expect([404, 200]).toContain(res.status());

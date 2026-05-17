@@ -47,7 +47,7 @@ export function Article() {
         </li>
         <li>
           A generated type that&apos;s in <code>.gitignore</code> means the
-          agent doesn&apos;t see it &mdash; you&apos;re back to schema-by-imagination.
+          agent doesn&apos;t see it - you&apos;re back to schema-by-imagination.
         </li>
         <li>
           Types that lie (<code>Maybe&lt;User&gt;</code> that&apos;s never null in

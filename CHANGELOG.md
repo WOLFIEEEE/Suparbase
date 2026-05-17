@@ -8,33 +8,33 @@ to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 Two themes in one release: a proper contact form replaces the
 scattered `mailto:contact@suparbase.com` links across the site,
 and six WCAG 2.2 AA criteria flip from "Partially Supports" to
-"Supports" in our VPAT — the ones we'd been documenting that
+"Supports" in our VPAT - the ones we'd been documenting that
 turned out to be cheap to actually fix.
 
 **New `/contact` page:**
 
-- `src/app/contact/page.tsx` — public form page with topic-aware
+- `src/app/contact/page.tsx` - public form page with topic-aware
   side cards (general, sales, support, security disclosures,
   privacy). Honours `?topic=sales|security|support|press` so
   links from `/pricing` and the legal pages preselect the right
   routing.
-- `src/components/contact/ContactForm.tsx` — client form with
+- `src/components/contact/ContactForm.tsx` - client form with
   topic select, message character counter, honeypot field
   (`name="website"` hidden off-screen + `tabIndex={-1}`),
   `aria-busy` on the submit button, `role="status"` /
   `role="alert"` for the result and error banners.
-- `src/app/api/contact/route.ts` — POST endpoint. Zod-validated,
+- `src/app/api/contact/route.ts` - POST endpoint. Zod-validated,
   per-IP rate-limited (5/hour via `checkContactRate`), honeypot
   enforced server-side, returns `200 { ok: true, delivered }`
   even when email isn't configured so the form still works in dev
   or unconfigured deployments.
-- `src/server/email/templates/contact-submission.ts` — themed
+- `src/server/email/templates/contact-submission.ts` - themed
   email sent TO `CONTACT_INBOX` (default `contact@suparbase.com`)
   with `Reply-To: <visitor>` so the operator's "Reply" lands in
   the visitor's inbox.
-- `src/lib/contact/topics.ts` — shared topic taxonomy so the
+- `src/lib/contact/topics.ts` - shared topic taxonomy so the
   client, API route, and email template can't drift.
-- `src/server/proxy/ratelimit.ts` — added `checkContactRate`
+- `src/server/proxy/ratelimit.ts` - added `checkContactRate`
   bucket (5 submissions/hour/IP).
 
 **Mailto swaps (every page that had a contact email now points at
@@ -46,39 +46,39 @@ the form instead):**
 - `AccountSettingsPanel`, `BillingPanel` (×2), `TwoFactorPanel`,
 - `lib/use-cases/content/healthcare-saas.tsx` (CTA + footer).
 - Intentional fallbacks kept: `global-error.tsx` (fires when the
-  app itself is broken — form might also be) and
+  app itself is broken - form might also be) and
   `ForgotPasswordForm.tsx` (only renders when email isn't
   configured at all).
 
-**Accessibility blocker fixes — six VPAT rows flip to "Supports":**
+**Accessibility blocker fixes - six VPAT rows flip to "Supports":**
 
-- **1.4.3 Contrast (Minimum)** — `--fg-faint` darkened in
+- **1.4.3 Contrast (Minimum)**: `--fg-faint` darkened in
   `globals.css`: dark mode `110 110 105` → `144 144 138`
   (4.6:1 vs old 3.9:1); light mode `130 130 134` → `102 102 107`
   (4.7:1 vs old 3.55:1). Both themes clear 4.5:1.
-- **2.5.8 Target Size (Minimum)** — every secondary icon button
+- **2.5.8 Target Size (Minimum)**: every secondary icon button
   bumped from `p-1` (~22px) to `p-1.5` (~26px), clearing the
   24×24 CSS-pixel minimum. Files: `EditableField` (Save / Cancel),
   `ResetPasswordForm`, `SchemaView`, `ChatConversationSidebar`,
   `TablesList`, `AiChat`, `TableListView`, `DashboardWidgets`,
   `AuthUsers`, `UsersAdmin`.
-- **1.3.1 / 2.4.6** — `scope="col"` on every comparison /
+- **1.3.1 / 2.4.6**: `scope="col"` on every comparison /
   pricing table header (`/compare/[slug]`, `/admin/billing`,
   `/agent-sentry`).
-- **3.2.6 Consistent Help** — fixed by the contact form itself.
+- **3.2.6 Consistent Help**: fixed by the contact form itself.
   One destination linked from the same footer position on every
   page, with `?topic=` preserved.
-- **4.1.3 Status Messages** — `aria-busy` on the Topbar refresh
+- **4.1.3 Status Messages**: `aria-busy` on the Topbar refresh
   button + on the contact-form submit. Inline-edit and account
   form spinners were already covered; this closes the loop.
 
 **Statement + VPAT updates:**
 
-- `src/app/accessibility/page.tsx` — "Where we're still partial"
+- `src/app/accessibility/page.tsx` - "Where we're still partial"
   trimmed to two genuine items (1.4.11 hairline borders,
   automated-tool verification). Conformance line bumped from
   "Partially conformant" to "Substantially conformant".
-- `src/app/accessibility/vpat/page.tsx` — `REPORT_DATE` →
+- `src/app/accessibility/vpat/page.tsx` - `REPORT_DATE` →
   2026-05-17, `PRODUCT_VERSION` → v3.10.0, `VENDOR_CONTACT` →
   `/contact`. New revision-history entry summarising the six
   flips. Six criterion rows updated: 1.3.1, 1.4.3, 2.5.8, 3.2.6,
@@ -88,7 +88,7 @@ No schema changes. No new dependencies.
 
 ## v3.9.1 · 2026-05-17 · Drop the footer Signal panel
 
-Removed the right-hand "Signal" aside from `PublicFooter` — it added
+Removed the right-hand "Signal" aside from `PublicFooter` - it added
 clutter without proportional value (release version + blog title
 + shipped count are all already reachable from the structured nav
 columns directly below). The manifesto block is now a single
@@ -104,7 +104,7 @@ Cosmetic only. Typecheck clean, 132 tests passing, build green.
 
 ## v3.9.0 · 2026-05-15 · Email verification + API docs + agent fingerprints
 
-Four shippable items from the "if you ask" backlog. No new schema —
+Four shippable items from the "if you ask" backlog. No new schema
 the email verification flow reuses NextAuth's existing
 `verificationTokens` table with a namespaced identifier so a future
 magic-link rollout won't collide.
@@ -114,17 +114,17 @@ magic-link rollout won't collide.
   tokens with a 24h TTL; previous in-flight tokens are cleared on
   each new issue. Confirmation marks `users.email_verified` and
   invalidates every outstanding token for the identifier.
-- `src/server/email/templates/email-verification.ts` — themed email
+- `src/server/email/templates/email-verification.ts` - themed email
   matching the invitation + reset templates.
-- `POST /api/account/verify-email/start` — re-send for the
+- `POST /api/account/verify-email/start` - re-send for the
   signed-in user, or accept `{ email }` from anonymous callers
   (enumeration-resistant). Per-(ip + email) rate-limited.
-- `POST /api/account/verify-email/confirm` — token consumption.
+- `POST /api/account/verify-email/confirm` - token consumption.
   200 / 410 (expired) / 409 (already verified) / 404 (unknown).
-- `/verify-email/[token]` — server-rendered landing page. Confirms
+- `/verify-email/[token]` - server-rendered landing page. Confirms
   on first GET; no client JS required, no token in client state.
 - Signup flow now fires the verification email automatically after
-  the user row commits. Fire-and-forget — delivery failure can't
+  the user row commits. Fire-and-forget - delivery failure can't
   roll signup back.
 - `/settings/account` gains an inline verification banner: amber
   with a Resend button when not verified, green confirmation when
@@ -142,7 +142,7 @@ magic-link rollout won't collide.
 
 **Public API documentation:**
 - `/docs/api` lists every stable REST endpoint a customer or
-  operator can script against — auth notes, CSRF policy, full
+  operator can script against - auth notes, CSRF policy, full
   request/response shapes for account, billing, operational
   endpoints. Explicit "NOT public yet" section names the routes
   whose shape may change without notice.
@@ -155,7 +155,7 @@ magic-link rollout won't collide.
   (via query param or JSON body) and routes to the annual product id
   when configured. Falls back to monthly when the env var is unset.
 - BillingPanel's existing Monthly/Annual toggle now actually
-  affects which product the checkout creates — passing
+  affects which product the checkout creates - passing
   `cadence` to the API + tracking it as a property on the
   `checkout_started` analytics event.
 
@@ -165,7 +165,7 @@ migration required.
 ## v3.8.1 · 2026-05-15 · Production-readiness completeness pass
 
 Six items that were honestly still on my plate after the v3.8.0
-batch. All real code work — no marketing, no scaffolding.
+batch. All real code work - no marketing, no scaffolding.
 
 **GDPR data export (closes a stale terms-of-service claim):**
 - New `src/server/auth/data-export.ts` assembles the user's full
@@ -173,7 +173,7 @@ batch. All real code work — no marketing, no scaffolding.
   memberships, saved views, dashboards, custom actions, agent
   sessions, and up to 100k audit log rows.
 - Encrypted columns (Supabase keys, Postgres URL, TOTP secret)
-  are **excluded** from the export — they wouldn't be useful
+  are **excluded** from the export - they wouldn't be useful
   outside this deployment, and including the encrypted blobs
   would be a forensic foot-gun.
 - `GET /api/account/export` returns the JSON with a
@@ -201,13 +201,13 @@ batch. All real code work — no marketing, no scaffolding.
   card, visible only when `active.isPaid`.
 
 **Unit tests for v3.6+ code:**
-- `tests/totp.test.ts` (9 specs) — MFA cookie sign/verify cycle:
+- `tests/totp.test.ts` (9 specs) - MFA cookie sign/verify cycle:
   same-user accept, different-user reject, tampered-signature
   reject, expired reject, malformed reject, secret-rotation
   invalidation, constant-time compare. Plus library-compat sanity
   for otpauth (RFC test-vector generates + validates, wrong code
   rejects).
-- `tests/password-reset.test.ts` (4 specs) — `hashToken()` is the
+- `tests/password-reset.test.ts` (4 specs) - `hashToken()` is the
   load-bearing primitive for the "we never store plaintext tokens"
   guarantee. Tests pin the SHA-256 contract, determinism, and the
   "no input normalisation" rule.
@@ -265,12 +265,12 @@ backend scaffolding queued from the production-readiness review.
 - Account-settings index now links to the 2FA page.
 
 **New customer-facing pages:**
-- `/status` — real-time public status page running the same checks
+- `/status` - real-time public status page running the same checks
   as `/api/health`: database, encrypted proxy, email (Resend),
   billing (Dodo), error reporting, admin panel. Each subsystem
   gets an Operational / Degraded / Down / Not-configured badge
   with a one-line hint. Server-rendered on every load.
-- `/roadmap` — three-section public roadmap (Recently shipped /
+- `/roadmap` - three-section public roadmap (Recently shipped /
   In progress / Next). Items link back to specific changelog
   entries when available.
 - PublicFooter Product column gains Roadmap + Status links.
@@ -285,7 +285,7 @@ backend scaffolding queued from the production-readiness review.
   (then we just swap the product id).
 
 **Sentry instrumentation example:**
-- New `instrumentation.example.ts` at the repo root — drop-in
+- New `instrumentation.example.ts` at the repo root - drop-in
   template for wiring `@sentry/nextjs` against the existing
   `reportError()` shim. No new dependency required; the example
   installs and ignites Sentry only when the operator opts in by
@@ -313,13 +313,13 @@ backend scaffolding queued from the production-readiness review.
 Three Tier-2 items shipped: product analytics scaffolding, a
 Playwright end-to-end harness, and payment-history (invoice
 download) on the billing page. **2FA is deferred** to a dedicated
-ship — half-implementing it would risk lockouts.
+ship - half-implementing it would risk lockouts.
 
 **Analytics (env-driven, no footprint until enabled):**
 - New module `src/lib/analytics` with `track()`, `identifyUser()`,
   `resetAnalytics()`. Dynamically loads `posthog-js` only when
   `NEXT_PUBLIC_POSTHOG_KEY` is set; honours `navigator.doNotTrack`;
-  no automatic event capture (explicit `track()` calls only — too
+  no automatic event capture (explicit `track()` calls only - too
   noisy + privacy-leaky on a data-admin tool).
 - `AnalyticsBoot` mounted inside Providers identifies the signed-in
   user (id + email + name + plan, never row data).
@@ -327,9 +327,9 @@ ship — half-implementing it would risk lockouts.
   `resetAnalytics` on sign-out.
 
 **Playwright end-to-end:**
-- `playwright.config.ts` — Chromium project, auto-spawns `pnpm dev`
+- `playwright.config.ts`. Chromium project, auto-spawns `pnpm dev`
   locally, traces + screenshots + video on retry/failure.
-- `e2e/smoke.spec.ts` — 9 specs covering the public surface that
+- `e2e/smoke.spec.ts` - 9 specs covering the public surface that
   must not break on deploy: home, sign-in, forgot-password,
   accessibility, VPAT, pricing, `/api/health` shape, `/connections`
   anon redirect, `/admin` 404s without allowlist.
@@ -354,29 +354,29 @@ audit. Five customer-facing surfaces + three operator tools + the
 plumbing to make all of it observable.
 
 **Customer:**
-- **Forgot-password flow** — `POST /api/account/forgot-password` issues
+- **Forgot-password flow**: `POST /api/account/forgot-password` issues
   a single-use, SHA-256-hashed, 1-hour token; `POST /api/account/reset-password`
   consumes it and bcrypts the new password (cost 12). Pages at
   `/forgot` and `/reset/[token]`. Enumeration-resistant (always 200,
   whether the email exists or not). Per-IP rate-limited via the
   signup bucket. Migration `0014_cuddly_fabian_cortez.sql` adds
   `password_reset_token`. SignInForm "Forgot?" now links to `/forgot`.
-- **Self-service account deletion** — `/settings/account` exposes a
+- **Self-service account deletion**: `/settings/account` exposes a
   Danger Zone with a typed-confirmation Delete button. Cascades
   through every `ON DELETE CASCADE` FK (connections, subscriptions,
   agent sessions, dashboards, custom actions, etc.). `audit_log` and
   `billing_event` retain rows with NULL user_id for forensics.
   Fulfils GDPR Art. 17. Settings index now lists the page.
-- **Onboarding empty state** — `/connections` for new users renders
+- **Onboarding empty state**: `/connections` for new users renders
   a 3-step "what is Suparbase" panel with a single primary CTA.
-- **Free-tier usage bar** — `/connections` shows
+- **Free-tier usage bar**: `/connections` shows
   "1 / 1 connection · at limit · upgrade" with a real progress bar
   for Free users. "New connection" button switches to "Upgrade to
   add" once they hit the cap.
 
 **Operator:**
 - **`/api/health` upgraded** to return `{ db, email, billing,
-  observability, version }` — operator can curl after deploy and
+  observability, version }` - operator can curl after deploy and
   verify every integration is wired. Returns 503 only when the DB
   is unreachable; missing integrations report `false` without
   failing the probe.
@@ -386,27 +386,27 @@ plumbing to make all of it observable.
   client (set via Next's `instrumentation.ts` on the operator's
   side). `reportError()` is the single call site we can grep for
   when we wire a real provider.
-- **Global error boundary** at `src/app/global-error.tsx` — the
+- **Global error boundary** at `src/app/global-error.tsx` - the
   top-level UI a customer sees when Next catches an unhandled
   exception. Logs to console (which Sentry's browser SDK picks up
   when loaded) and shows the digest so the operator can match logs
   to user reports.
-- **Admin audit search** at `/admin/audit` — multi-field filter
+- **Admin audit search** at `/admin/audit` - multi-field filter
   (user, connection, schema, table, verb, date range) against the
   `audit_log` table for forensic queries. Backed by the
   `audit_conn_recent_idx` we added in v3.4.3. Refuses to scan
   without at least one filter set.
-- **Admin user detail extras** — `/admin/users/[id]` now shows the
+- **Admin user detail extras**: `/admin/users/[id]` now shows the
   user's connections list and a one-click "View audit log for this
   user" link that pre-fills the audit search.
 
 **Touched:**
-- `src/server/auth/password-reset.ts` — token issuance + consumption +
+- `src/server/auth/password-reset.ts` - token issuance + consumption +
   bcrypt update, all in a transaction.
-- `src/server/auth/delete-account.ts` — single-statement cascade.
-- `src/server/email/templates/password-reset.ts` — themed email.
-- `src/server/observability/report.ts` — `reportError()` + `hasErrorReporter()`.
-- `src/server/admin/audit-search.ts` — filtered + counted queries.
+- `src/server/auth/delete-account.ts` - single-statement cascade.
+- `src/server/email/templates/password-reset.ts` - themed email.
+- `src/server/observability/report.ts` - `reportError()` + `hasErrorReporter()`.
+- `src/server/admin/audit-search.ts` - filtered + counted queries.
 - New pages: `/forgot`, `/reset/[token]`, `/settings/account`,
   `/admin/audit`, plus the global error boundary.
 - `/api/health` extended; `SENTRY_DSN` placeholder added to `.env.example`.
@@ -415,13 +415,13 @@ plumbing to make all of it observable.
 
 Standardised every customer-facing email address to **contact@suparbase.com**.
 Previously we exposed `hello@`, `security@`, `privacy@`, `legal@`, and
-`accessibility@` across various pages — five inboxes nobody actually
+`accessibility@` across various pages - five inboxes nobody actually
 read. One inbox is easier to staff, route, and keep responsive.
 
 Touched: privacy, terms, about, docs, accessibility, accessibility/vpat,
 pricing, BillingPanel, PublicFooter, healthcare-saas use-case, CONTRIBUTING.
 Env-example placeholders (`invites@yourdomain.com`,
-`support@yourdomain.com`) unchanged — they're sample values, not real
+`support@yourdomain.com`) unchanged - they're sample values, not real
 addresses.
 
 ## v3.5.1 · 2026-05-15 · UI bug pass + WCAG 2.2 swap
@@ -434,7 +434,7 @@ with a themed `ConfirmDialog` for destructive actions.
 **Real bugs:**
 - `formatCellValue` rendered a literal colon (`":"`) for NULL values
   across the data grid, row detail, AI chat results, and inline
-  previews. Now renders `"—"`.
+  previews. Now renders `"-"`.
 - `TableListView` StatTiles fell back to `":"` while loading; same fix.
 - `GenericRow.leadDisplay` ran `String(value)` on jsonb / array
   columns and printed `[object Object]`. Now uses `formatCellValue()`.
@@ -444,7 +444,7 @@ with a themed `ConfirmDialog` for destructive actions.
 - `Button` base class disabled focus-visible outline without adding a
   replacement ring. Keyboard users had no visible focus on any button.
   Added `focus-visible:ring-2 ring-accent ring-offset-2`.
-- Cancelled / expired Hosted users couldn't re-subscribe — the
+- Cancelled / expired Hosted users couldn't re-subscribe - the
   `isUpgrade` short-circuit treated them as "current plan". Now exposes
   a **Resubscribe** CTA.
 - Sonner toast theme was hard-coded `"dark"` then later `"system"`,
@@ -466,7 +466,7 @@ with a themed `ConfirmDialog` for destructive actions.
   delete, team-member remove, team-invitation revoke, Postgres URL
   clear, chat-conversation delete, and the admin Reset Subscription
   (type-RESET gate). The admin Reset previously had **zero**
-  confirmation — clicking it instantly wiped Dodo IDs.
+  confirmation - clicking it instantly wiped Dodo IDs.
 
 **Mobile UX:**
 - Row action "..." menus across 9 components (TableListView,
@@ -493,7 +493,7 @@ with a themed `ConfirmDialog` for destructive actions.
 - Team-invite 402 (`category: "plan_limit"`) now renders the
   `PaywallCard` with an upgrade CTA, matching the connection-form
   flow.
-- BillingPanel humanises raw status strings (`on_hold` → "Paused —
+- BillingPanel humanises raw status strings (`on_hold` → "Paused
   payment issue", `cancelled` → "Cancelled", `failed` → "Past due").
   Cliff-date label switches between "Trial ends" / "Renews" / "Ended"
   per status.
@@ -515,14 +515,14 @@ with a themed `ConfirmDialog` for destructive actions.
 - Both updated from **WCAG 2.1** Level AA to **WCAG 2.2** Level AA.
 - Six new 2.2 criteria added to the VPAT with honest conformance
   calls and remarks:
-  - 2.4.11 Focus Not Obscured (Minimum) — Supports
-  - 2.5.7 Dragging Movements — Supports
-  - 2.5.8 Target Size (Minimum) — Partially (filter-chip X,
+  - 2.4.11 Focus Not Obscured (Minimum). Supports
+  - 2.5.7 Dragging Movements. Supports
+  - 2.5.8 Target Size (Minimum). Partially (filter-chip X,
     inline-edit confirm/cancel, password-eye toggle are below 24×24)
-  - 3.2.6 Consistent Help — Partially (contact appears on most
+  - 3.2.6 Consistent Help. Partially (contact appears on most
     pages but in different positions)
-  - 3.3.7 Redundant Entry — Supports
-  - 3.3.8 Accessible Authentication (Minimum) — Supports
+  - 3.3.7 Redundant Entry. Supports
+  - 3.3.8 Accessible Authentication (Minimum). Supports
 - 4.1.1 Parsing removed (obsolete in 2.2).
 - WCAG link points at the 2.2 spec.
 
@@ -556,11 +556,11 @@ footer's Company column.
   `theme="system"` so light-mode users get light-mode toasts.
 
 **New pages:**
-- `/accessibility` — plain-English statement: what's solid, what's
+- `/accessibility` - plain-English statement: what's solid, what's
   partial, what doesn't apply, how to report issues, contact at
   `accessibility@suparbase.com`. Realistic about color-contrast
   verification not being tool-measured.
-- `/accessibility/vpat` — full VPAT 2.5 Rev: Product Information,
+- `/accessibility/vpat` - full VPAT 2.5 Rev: Product Information,
   Standards Covered, Terms, WCAG 2.1 Level AA criterion-by-criterion
   table (all 45 criteria), Revised Section 508 functional-performance
   table, EN 301 549 V3.2.1 chapter mapping, legal disclaimer, and
@@ -584,7 +584,7 @@ additive migration (drops + recreates indexes; no data touched).
 **New / replaced indexes (`drizzle/0013_daily_gamora.sql`):**
 - `audit_log`: replaced three narrow single-column indexes (`user_idx`,
   `connection_idx`, `session_idx`) with two compounds that match the
-  actual access patterns —
+  actual access patterns
   - `audit_conn_recent_idx (user_id, connection_id, created_at DESC)`
     serves every recent-audit, undo, AI-tool, and detail-page read in
     one index hit (was: bitmap-AND across two narrow indexes).
@@ -617,7 +617,7 @@ additive migration (drops + recreates indexes; no data touched).
 **Query refactors:**
 - `getConnectionAccess` is now one LEFT JOIN against `connection_member`
   instead of two sequential round-trips. Every protected API route
-  shaves one round-trip — the single highest-frequency read in the
+  shaves one round-trip - the single highest-frequency read in the
   codebase.
 - `listUsers` in the admin panel replaced the correlated `(SELECT
   count(*) FROM connections WHERE user_id = users.id)` (which ran
@@ -632,7 +632,7 @@ additive migration (drops + recreates indexes; no data touched).
 
 **Concurrency safety:**
 - `bumpSession` no longer reads `tablesTouched` into JS and writes it
-  back (which was racy under concurrent writes — two writers could
+  back (which was racy under concurrent writes - two writers could
   silently lose each other's table additions). The union now happens
   inside Postgres via a `CASE WHEN ... @> ... THEN ... ELSE ... || ...`
   expression on the jsonb column.
@@ -642,7 +642,7 @@ additive migration (drops + recreates indexes; no data touched).
   than one statement. A 50M-row purge would have held row locks and
   WAL for the whole transaction; batched chunks keep individual
   statements bounded. Iteration cap at 200 batches per run (1M rows)
-  so a runaway never holds the cron handler open — anything bigger
+  so a runaway never holds the cron handler open - anything bigger
   gets caught on the next tick.
 
 No app-visible changes. Existing reads get faster proportional to
@@ -651,7 +651,7 @@ table size; writes get a tiny boost from fewer indexes on
 
 ## v3.4.2 · 2026-05-15 · Billing hardening
 
-Iron-clad audit pass over the v3.4 surface. No new features — every
+Iron-clad audit pass over the v3.4 surface. No new features - every
 change closes a latent bug, a coverage gap, or a consistency hole.
 Total: 21 new tests (116 passing), one additive migration.
 
@@ -659,7 +659,7 @@ Total: 21 new tests (116 passing), one additive migration.
 - **Webhook idempotency now tracks "applied" separately from
   "received".** Previously, if `applyEvent` threw (transient DB
   error, etc.) we returned 200 and the unique-violation short-circuit
-  swallowed every retry — the subscription stayed desynchronised
+  swallowed every retry - the subscription stayed desynchronised
   forever. New `billing_event.applied_at` column + the receive/apply
   split: failed applies now return 5xx so Dodo retries; the next
   receipt finds `applied_at IS NULL` and re-runs the mutation.
@@ -669,7 +669,7 @@ Total: 21 new tests (116 passing), one additive migration.
   forever. Now: open-ended grants stay open-ended, dated grants
   expire as configured.
 - **Tautology in webhook `applyEvent`** (`plan: ... ? plan : plan`)
-  removed. The intent — "downgrade on expire/cancel" — is already
+  removed. The intent - "downgrade on expire/cancel" - is already
   handled by the resolver via status; the `plan` column is always
   `hosted`.
 - **`/admin/users/<garbage>` no longer 500s.** UUID format checked
@@ -680,13 +680,13 @@ Total: 21 new tests (116 passing), one additive migration.
   error.
 - **`plan_limit` added to `ErrorCategory`** + matching strings in
   `ErrorBanner`. Previously the code referenced a category the type
-  union didn't include — only worked because of an `as` cast.
+  union didn't include - only worked because of an `as` cast.
 
 **Consistency:**
 - MRR maths in `/admin` now reads from `PLAN_LIMITS.hosted.monthlyPriceCents`
   (was a hardcoded `1200`). Single source of truth.
 - Trial length centralised as `PLAN_LIMITS.hosted.trialDays = 7`.
-  Checkout route + billing page CTA both pull from the catalog —
+  Checkout route + billing page CTA both pull from the catalog
   bumping the trial to 14 days is one edit.
 - `PlanLimits.maxConnections` is now `number | null` (null = unlimited).
   Previously `Number.POSITIVE_INFINITY`, which JSON-serialises to
@@ -696,14 +696,14 @@ Total: 21 new tests (116 passing), one additive migration.
   the start of it.
 
 **Tests** (21 new):
-- `tests/dodo-events.test.ts` — pure event-name → status mapping
+- `tests/dodo-events.test.ts` - pure event-name → status mapping
   pinned for all 8 subscription events + trial detection + date
   parsing + unrecognised events.
 - `tests/billing-plans.test.ts` extended with regression guards for
   the admin-grant cliff bug + the null-sentinel unlimited cap.
 
 **Defence-in-depth:**
-- Webhook secret parsing — replaced the misleading `try/catch` (which
+- Webhook secret parsing - replaced the misleading `try/catch` (which
   never caught) with an explicit base64 regex + length check. The
   utf-8 fallback now only fires when the secret genuinely isn't
   base64.
@@ -715,7 +715,7 @@ Total: 21 new tests (116 passing), one additive migration.
 
 **Operator surface:**
 - `/admin/billing` now shows an amber callout listing events that
-  were received but not yet applied — the operator's first stop when
+  were received but not yet applied - the operator's first stop when
   a payment landed but the user's plan didn't flip. The main table
   gains an "Applied" column (✓ / pending).
 - `PRODUCTION.md` gains a v3.4 billing + admin smoke checklist
@@ -728,8 +728,8 @@ Total: 21 new tests (116 passing), one additive migration.
   unit-tested without a DB or HTTP harness.
 - Migration `drizzle/0012_organic_quasar.sql` adds
   `billing_event.applied_at` + `billing_event_unapplied_idx`.
-  Additive only — existing rows backfill to `NULL` (treated as
-  unapplied — the apply will idempotently re-run on next receipt).
+  Additive only - existing rows backfill to `NULL` (treated as
+  unapplied - the apply will idempotently re-run on next receipt).
 
 ## v3.4.1 · 2026-05-15 · Signed-in browsing fixes
 
@@ -743,7 +743,7 @@ Two routing nits from the v3.4 ship reported by the operator:
   return to `/connections`.
 - **Pricing page redirects signed-in users to `/settings/billing`.**
   The marketing pricing surface isn't useful to an existing customer
-  — they already have an account and need the in-app plan view (with
+  - they already have an account and need the in-app plan view (with
   their current state + upgrade CTA). Pricing now `redirect()`s
   whenever a session is present.
 - **Pricing + Sign-up links hidden** from the public nav and footer
@@ -758,7 +758,7 @@ happening. Spec: [`specs/032-dodo-billing-admin/`](specs/032-dodo-billing-admin/
 
 **Billing.** New `subscriptions` and `billing_events` tables. The
 `Hosted` plan ($12/user/mo, 7-day trial) is sold via Dodo Payments'
-hosted checkout (product `pdt_0Nev0FKdzw0UxPeUBKItA` — "Supar Saver").
+hosted checkout (product `pdt_0Nev0FKdzw0UxPeUBKItA` - "Supar Saver").
 The checkout call lives in `src/server/billing/dodo.ts`; the webhook
 handler at `POST /api/webhooks/dodo` verifies the Standard Webhooks
 signature (HMAC-SHA256 of `${webhook-id}.${webhook-timestamp}.${body}`,
@@ -766,7 +766,7 @@ signature (HMAC-SHA256 of `${webhook-id}.${webhook-timestamp}.${body}`,
 changes for `subscription.active`, `.renewed`, `.on_hold`,
 `.cancelled`, `.expired`, `.failed`, `.updated`, `.plan_changed`.
 Integration is env-driven (`DODO_API_KEY`, `DODO_WEBHOOK_SECRET`,
-`DODO_HOSTED_PRODUCT_ID`, `DODO_MODE`) — without those, the billing
+`DODO_HOSTED_PRODUCT_ID`, `DODO_MODE`) - without those, the billing
 UI shows "coming soon" and the app still boots.
 
 **Hard limits.** Free tier is now capped at 1 connection (further
@@ -780,37 +780,37 @@ as Free, so an expired sub doesn't keep extras alive.
 current plan, trial cliff or renewal date, and a plan-comparison
 table with a "Start 7-day trial" CTA that kicks off Dodo checkout.
 Cancel / payment-method updates go through Dodo's customer flow via
-the receipt email — we don't duplicate that form in-app.
+the receipt email - we don't duplicate that form in-app.
 
 **Admin panel.** New `/admin` surface, gated by an env allowlist
 `SUPARBASE_ADMIN_EMAILS` (CSV, lowercased compare). 404s for
-everyone else — we don't acknowledge it exists. Pages:
-- `/admin` — dashboard: total users, signups in last 7 days, paying
+everyone else - we don't acknowledge it exists. Pages:
+- `/admin` - dashboard: total users, signups in last 7 days, paying
   users, est. MRR.
-- `/admin/users` — searchable list of all users with their plan,
+- `/admin/users` - searchable list of all users with their plan,
   status, connection count.
-- `/admin/users/[id]` — grant a plan (Hosted or Team, with an
-  optional cliff + note — recorded as comped, no Dodo charge), reset
+- `/admin/users/[id]` - grant a plan (Hosted or Team, with an
+  optional cliff + note - recorded as comped, no Dodo charge), reset
   a subscription back to Free, view recent billing events for this
   user.
-- `/admin/billing` — last 200 webhook receipts for debugging.
+- `/admin/billing` - last 200 webhook receipts for debugging.
 Every admin action writes an `admin_actions` audit row BEFORE the
 mutation so half-failures still leave a trace.
 
 **New tests** (3 new files, 33 new tests, total 95 passing):
-- `tests/dodo-webhook.test.ts` — signature verification (valid,
+- `tests/dodo-webhook.test.ts` - signature verification (valid,
   tampered, wrong secret, stale, missing headers, multi-version
   header, whsec_ prefix handling).
-- `tests/billing-plans.test.ts` — `resolvePlan` collapses lapsed
+- `tests/billing-plans.test.ts` - `resolvePlan` collapses lapsed
   statuses to Free; `requireFeature` enforces per-plan caps for
   every (plan, status, feature) cell.
-- `tests/admin-guard.test.ts` — env CSV parsing case-insensitivity,
+- `tests/admin-guard.test.ts` - env CSV parsing case-insensitivity,
   whitespace tolerance, empty handling.
 
 **Plumbing.** New `/api/webhooks/*` middleware exemption (webhooks
 are auth'd by HMAC, not by Origin). Migration
 `drizzle/0011_adorable_tombstone.sql` adds the three new tables
-(`subscription`, `billing_event`, `admin_action`) — additive only,
+(`subscription`, `billing_event`, `admin_action`) - additive only,
 no destructive change.
 
 ## v3.3.1 · 2026-05-15 · GitHub links removed + Signal panel refresh
@@ -846,13 +846,13 @@ current numbers.
   GitHub URL is no longer surfaced to search engines.
 - **`SITE.github`**: constant removed from `src/lib/seo/site.ts`.
 
-GitHub OAuth on the sign-in / sign-up pages is **unchanged** — that's
+GitHub OAuth on the sign-in / sign-up pages is **unchanged**: that's
 the social-login provider, not a link to the source.
 
 ## v3.3.0 · 2026-05-15 · Proprietary licensing + free hosted tier
 
 Repositioning release. Suparbase is now a privately held product with
-a free hosted tier — not an open-source MIT project. No code-behaviour
+a free hosted tier - not an open-source MIT project. No code-behaviour
 changes; all updates are to licensing, copy, and marketing surfaces.
 
 - **`LICENSE`**: replaced MIT grant with a proprietary copyright
@@ -894,7 +894,7 @@ changes; all updates are to licensing, copy, and marketing surfaces.
   saas-admin / vibe-coders use-case pages, and the suparbase-vs-
   supabase-studio comparison all dropped self-referential MIT / OSS
   claims. Third-party OSS mentions (Postgres, Supabase, libSQL,
-  Weaviate, etc.) preserved — they describe other products.
+  Weaviate, etc.) preserved - they describe other products.
 - **`SECURITY.md`**: minor reword to remove self-hoster references
   from the supported-versions and out-of-scope sections.
 
@@ -917,7 +917,7 @@ user how to recover.
   that rejects with a clear "use literal values, not placeholders"
   message before the SQL ever reaches Postgres.
 - **`POST /api/connections/[id]/widgets/ai-generate`**: `malformed`
-  category now maps to HTTP 422 instead of 502 — it's the model's
+  category now maps to HTTP 422 instead of 502 - it's the model's
   output that failed validation, not an upstream incident, and the
   user can fix it by rephrasing.
 
@@ -948,7 +948,7 @@ config, you review and save.
     `validateWebhookUrl` the save path uses (blocks SSRF targets +
     cloud-metadata + IPv6 loopback)
   A 422 still returns the generated action so the UI can populate
-  the form anyway — the user can fix the issue inline.
+  the form anyway - the user can fix the issue inline.
 - **Editor UI**: collapsible "Generate with AI" panel above the
   action form, mirrors the widget editor's pattern. Default open
   for new actions, closed on edit. Passes the form's current
@@ -1001,7 +1001,7 @@ for the AI chat.
 
 The user reviews the populated fields and clicks Save just like
 the existing manual flow. No new column saved, no new schema
-table — the widget that ends up in `dashboard_widget` is identical
+table - the widget that ends up in `dashboard_widget` is identical
 to one a human typed by hand.
 
 ## v3.1.5 · 2026-05-15 · Production hardening pass
@@ -1011,46 +1011,46 @@ fixable without a real Supabase project to validate against. The
 remaining "actually run it" steps live in the new
 [PRODUCTION.md](PRODUCTION.md).
 
-**Session cache** — TTL dropped from 5 min to 60 s so cross-instance
+**Session cache**: TTL dropped from 5 min to 60 s so cross-instance
 staleness windows are bounded; hard `MAX_CACHE_ENTRIES = 2048` cap
 with LRU eviction on insert; `touchLru` on read.
 
-**Rate limits everywhere destructive** — new
+**Rate limits everywhere destructive**: new
 `src/server/security/route-guards.ts` with `limitOr429()`. Applied
 to action create / update / delete, widget create / update / delete,
 sentry finding mutate, quarantine apply + dismiss, member mutate +
 remove, invitation create + revoke. Undo session uses the AI bucket.
 
-**Audit retention** — new `src/server/audit/retention.ts` prunes
+**Audit retention**: new `src/server/audit/retention.ts` prunes
 audit_log / sentry_scan / resolved sentry_findings / closed
 agent_sessions on configurable windows. New `/api/cron/retention`
 route gated by `CRON_SECRET` Bearer auth; fail-closed when secret
 isn't set.
 
-**Structured redacted logger** — new `src/server/log.ts` emits JSON
+**Structured redacted logger**: new `src/server/log.ts` emits JSON
 lines with `level / msg / ts / ctx`. Every value runs through the
 existing `redact()` so JWTs and provider tokens never reach the log
 stream. Levels honour `LOG_LEVEL` env. Sentry / Logflare / Datadog
 plug-in is a five-line `emit()` swap.
 
-**CSRF at the edge** — new `src/middleware.ts` rejects cross-origin
+**CSRF at the edge**: new `src/middleware.ts` rejects cross-origin
 POST / PUT / PATCH / DELETE on `/api/**`, `/c/**`, `/connections/**`,
 `/settings/**`. Exempts `/api/auth/*` so NextAuth callbacks pass.
 
-**Test coverage** — 9 new undo-SQL tests covering timestamptz, uuid,
+**Test coverage**: 9 new undo-SQL tests covering timestamptz, uuid,
 bigint as string, numeric with decimals, text[] / int[] through
 jsonb cast, jsonb with nested objects, Infinity / NaN → NULL,
 composite primary keys, identifier + value quoting combined.
 **62 tests total, all passing.**
 
-**PRODUCTION.md** — 90-minute end-to-end validation checklist for
+**PRODUCTION.md**: 90-minute end-to-end validation checklist for
 the v3 surface, plus launch-day hardening, observability,
 backups, multi-instance gotchas, and deferred caveats.
 
-**README** — "public beta (v3.1.5)" status badge + honest paragraph
+**README**: "public beta (v3.1.5)" status badge + honest paragraph
 about what's tested vs. what isn't, linking PRODUCTION.md.
 
-**.env.example** — documents `CRON_SECRET` and `LOG_LEVEL`.
+**.env.example**: documents `CRON_SECRET` and `LOG_LEVEL`.
 
 ## v3.1.4 · 2026-05-15 · Two new marketing pages
 

@@ -52,7 +52,7 @@ interface Props {
  * Customer-facing billing page. Shows the current plan, an upgrade
  * CTA when on Free, and a renewal/trial cliff when on Hosted. Real
  * billing details (cancel, update card, invoices) live on Dodo's
- * customer flow — when paid, we link out instead of duplicating
+ * customer flow - when paid, we link out instead of duplicating
  * forms in-app.
  */
 export function BillingPanel({
@@ -138,7 +138,7 @@ export function BillingPanel({
           tone="success"
           icon={CheckCircle2}
           title="Checkout complete"
-          body="Your subscription will activate once Dodo confirms the payment — usually within a few seconds."
+          body="Your subscription will activate once Dodo confirms the payment - usually within a few seconds."
         />
       )}
       {flashStatus === "cancelled" && (
@@ -289,7 +289,7 @@ export function BillingPanel({
                         <ArrowUpRight className="h-3 w-3" aria-hidden />
                       </Link>
                     ) : (
-                      <span className="block text-[11px] text-fg-faint">—</span>
+                      <span className="block text-[11px] text-fg-faint">-</span>
                     )}
                   </div>
                 </article>
@@ -320,7 +320,7 @@ export function BillingPanel({
                         year: "numeric",
                         month: "short",
                         day: "numeric",
-                      }) : "—"}
+                      }) : "-"}
                     </td>
                     <td className="px-4 py-2 font-mono text-fg">
                       {formatMoney(p.totalAmount, p.currency)}
@@ -339,7 +339,7 @@ export function BillingPanel({
                           PDF <ArrowUpRight className="h-3 w-3" aria-hidden />
                         </a>
                       ) : (
-                        <span className="text-fg-faint">—</span>
+                        <span className="text-fg-faint">-</span>
                       )}
                     </td>
                   </tr>
@@ -378,7 +378,7 @@ function formatMoney(amountMinor: number, currency: string): string {
       currency: currency || "USD",
     }).format(major);
   } catch {
-    // Bad currency code from Dodo — fall back to a manual format.
+    // Bad currency code from Dodo - fall back to a manual format.
     return `${(currency || "USD").toUpperCase()} ${major.toFixed(2)}`;
   }
 }
@@ -393,7 +393,7 @@ function PaymentStatusPill({ status }: { status: string }) {
       : "bg-danger/15 text-danger";
   return (
     <span className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] ${tone}`}>
-      {status || "—"}
+      {status || "-"}
     </span>
   );
 }
@@ -408,7 +408,7 @@ function statusLabel(active: ActivePlanProps): { label: string; tone: "ok" | "wa
   if (active.isPaid) return { label: "Active", tone: "ok" };
   switch (active.status) {
     case "on_hold":
-      return { label: "Paused — payment issue", tone: "warn" };
+      return { label: "Paused - payment issue", tone: "warn" };
     case "cancelled":
       return { label: "Cancelled", tone: "neutral" };
     case "expired":
@@ -416,7 +416,7 @@ function statusLabel(active: ActivePlanProps): { label: string; tone: "ok" | "wa
     case "failed":
       return { label: "Past due", tone: "danger" };
     default:
-      return { label: "—", tone: "neutral" };
+      return { label: "-", tone: "neutral" };
   }
 }
 
@@ -445,7 +445,7 @@ function CurrentPlanCard({
   const cliffLabel = cliff ? formatDate(cliff) : null;
   const status = statusLabel(active);
 
-  // Pick the correct date label based on status — saying "Renews" for
+  // Pick the correct date label based on status - saying "Renews" for
   // a cancelled subscription is misleading.
   const cliffHeading = active.isTrialing
     ? "Trial ends"

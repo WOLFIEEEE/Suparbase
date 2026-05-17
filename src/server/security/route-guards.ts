@@ -50,7 +50,7 @@ export function limitOr429(
  * GET / HEAD requests are not protected (they don't write); same-origin
  * fetches from the SPA pass because the browser sets Origin to the same
  * host. Non-browser clients (curl, server-to-server) without an Origin
- * header are also allowed through — they're already auth'd via the
+ * header are also allowed through - they're already auth'd via the
  * NextAuth session cookie, which carries the actual identity proof, and
  * a curl user explicitly intending to call the API is not the CSRF
  * threat model.
@@ -62,7 +62,7 @@ const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 export function csrfOr403(req: NextRequest): NextResponse | null {
   if (!UNSAFE_METHODS.has(req.method)) return null;
   const origin = req.headers.get("origin");
-  if (!origin) return null; // see docstring — server-to-server / curl are OK
+  if (!origin) return null; // see docstring - server-to-server / curl are OK
   let allowedHost: string;
   try {
     // Prefer the explicit canonical URL the deployment was configured

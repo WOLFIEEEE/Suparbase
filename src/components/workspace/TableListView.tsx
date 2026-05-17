@@ -275,7 +275,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total rows"
-          value={totalCount != null ? totalCount.toLocaleString() : "—"}
+          value={totalCount != null ? totalCount.toLocaleString() : "-"}
           hint={table.kind === "view" ? "read-only" : undefined}
         />
         <StatTile label="Columns" value={table.columns.length} hint={`${analysis?.hiddenColumns?.length ?? 0} hidden`} />
@@ -286,7 +286,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         />
         <StatTile
           label="Primary key"
-          value={table.primaryKey.length > 0 ? table.primaryKey.length : "—"}
+          value={table.primaryKey.length > 0 ? table.primaryKey.length : "-"}
           hint={table.primaryKey.length > 0 ? table.primaryKey.join(", ") : "none"}
         />
       </div>
@@ -431,7 +431,7 @@ function GenericRow({
   const leadColMeta = leadCol ? table.columns.find((c) => c.name === leadCol) : null;
   const leadValue = leadCol ? row[leadCol] : null;
   // Pipe through formatCellValue so jsonb / arrays don't render as
-  // "[object Object]" — same formatter used by the data grid itself.
+  // "[object Object]" - same formatter used by the data grid itself.
   const leadDisplay =
     leadValue == null
       ? table.primaryKey.length > 0

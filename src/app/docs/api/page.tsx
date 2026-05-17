@@ -6,14 +6,14 @@ import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "API · Suparbase",
   description:
-    "REST endpoints customers and operators can script against — account, billing, health, and admin search.",
+    "REST endpoints customers and operators can script against - account, billing, health, and admin search.",
 };
 
 /**
  * Public REST API reference. Limited to endpoints that survive
  * across releases and require only standard cookie-session auth.
  *
- * We deliberately don't publish every internal route — `/api/v/...`
+ * We deliberately don't publish every internal route - `/api/v/...`
  * (the encrypted proxy), `/api/connections/.../widgets/run`, and
  * similar are tied to the UI's workflow rather than a stable
  * external contract. They MAY be called by power users but
@@ -26,7 +26,7 @@ export default async function ApiDocsPage() {
         <PageHeader
           eyebrow="API"
           title="Programmatic surface."
-          subtitle="The endpoints we'll keep stable across versions. Auth is the same session cookie the UI uses — sign in with curl + browser dev tools, or use one of the documented `Authorization` headers below."
+          subtitle="The endpoints we'll keep stable across versions. Auth is the same session cookie the UI uses - sign in with curl + browser dev tools, or use one of the documented `Authorization` headers below."
         />
         <div className="mt-12 max-w-3xl">
           <Prose>
@@ -46,7 +46,7 @@ export default async function ApiDocsPage() {
             </ol>
             <p>
               The session cookie is <code>httpOnly</code>, so it cannot be
-              accessed from page JavaScript — that&apos;s by design. There is no
+              accessed from page JavaScript - that&apos;s by design. There is no
               long-lived API token yet; if you have a use case that needs one,
               send us a note via{" "}
               <Link href="/contact">our contact form</Link>.
@@ -69,7 +69,7 @@ export default async function ApiDocsPage() {
             </h3>
             <p>
               Trigger a password-reset email. Body <code>{`{ email: string }`}</code>.
-              Always returns <code>200 {`{ ok: true, configured: boolean }`}</code> —
+              Always returns <code>200 {`{ ok: true, configured: boolean }`}</code>
               enumeration-resistant. <code>configured: false</code> means email
               isn&apos;t wired on this deployment.
             </p>
@@ -141,7 +141,7 @@ export default async function ApiDocsPage() {
             </h3>
             <p>
               Kick off a Dodo hosted checkout. Body empty. Returns
-              <code> {`{ checkoutUrl: string }`}</code> — the client navigates to it.
+              <code> {`{ checkoutUrl: string }`}</code>: the client navigates to it.
               <code> 409</code> when the user already has an active subscription;
               <code> 503</code> when billing isn&apos;t configured.
             </p>
@@ -192,17 +192,17 @@ export default async function ApiDocsPage() {
               Manual trigger for audit-log + sentry-finding retention. Requires{" "}
               <code>Authorization: Bearer {`<CRON_SECRET>`}</code>. Returns the
               row counts pruned per table. Designed for cron-job.org / Coolify
-              cron / GitHub Actions — not for in-app calls.
+              cron / GitHub Actions - not for in-app calls.
             </p>
 
             <h2>What's NOT public yet</h2>
             <p>
               The following exist and work, but their shape may change without
-              notice — script against them at your own risk:
+              notice - script against them at your own risk:
             </p>
             <ul>
               <li>
-                <code>/api/v/{`<id>`}/*</code> — the encrypted proxy. The
+                <code>/api/v/{`<id>`}/*</code>: the encrypted proxy. The
                 contract follows{" "}
                 <a
                   href="https://postgrest.org/en/stable/api.html"
@@ -214,25 +214,25 @@ export default async function ApiDocsPage() {
                 under the hood, but our auth + filtering layer wraps it.
               </li>
               <li>
-                <code>/api/connections/{`<id>`}/sentry/*</code> — Agent Sentry
+                <code>/api/connections/{`<id>`}/sentry/*</code>: Agent Sentry
                 scans + findings + quarantines.
               </li>
               <li>
-                <code>/api/connections/{`<id>`}/sessions/*</code> — agent
+                <code>/api/connections/{`<id>`}/sessions/*</code>: agent
                 sessions + one-click undo.
               </li>
               <li>
-                <code>/api/connections/{`<id>`}/{`{widgets,actions,members}`}/*</code> —
+                <code>/api/connections/{`<id>`}/{`{widgets,actions,members}`}/*</code>
                 tied closely to the UI; expect shape changes.
               </li>
               <li>
-                <code>/api/ai/*</code> — AI chat conversations + analysis.
+                <code>/api/ai/*</code>: AI chat conversations + analysis.
               </li>
             </ul>
             <p>
               If you need a stable contract on any of these, let us know via{" "}
               <Link href="/contact">our contact form</Link>
-              {" "}— we&apos;ll publish it here once we know it&apos;s worth
+              {" "}- we&apos;ll publish it here once we know it&apos;s worth
               keeping stable.
             </p>
           </Prose>

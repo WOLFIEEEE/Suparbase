@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Verification landing page. Confirms the token server-side on the
- * first GET — there's no form to submit, the user clicks the link
+ * first GET - there's no form to submit, the user clicks the link
  * from the email and we either congratulate them or explain why
  * the link is no longer valid.
  *
@@ -35,7 +35,7 @@ export default async function VerifyEmailPage({ params }: Props) {
           <PageHeader
             eyebrow="Verified"
             title="Email confirmed."
-            subtitle={`Thanks — ${result.email} is verified. You can now receive invitations, password-reset links, and account notices from Suparbase.`}
+            subtitle={`Thanks - ${result.email} is verified. You can now receive invitations, password-reset links, and account notices from Suparbase.`}
           />
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link

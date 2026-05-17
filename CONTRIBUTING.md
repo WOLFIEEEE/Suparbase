@@ -10,8 +10,8 @@ Open an issue at [github.com/WOLFIEEEE/Suparbase/issues](https://github.com/WOLF
 Please include:
 
 - **What happened** and **what you expected to happen**.
-- **Steps to reproduce** — the minimal sequence that triggers the bug.
-- **Environment** — Suparbase version (footer of any signed-in page),
+- **Steps to reproduce**: the minimal sequence that triggers the bug.
+- **Environment**: Suparbase version (footer of any signed-in page),
   whether you're on the hosted plan or a self-hosted deployment, and
   the browser / OS if it's a UI issue.
 - **Logs or screenshots** if you have them. Please redact API keys,

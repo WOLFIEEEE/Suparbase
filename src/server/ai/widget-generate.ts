@@ -9,7 +9,7 @@ import { redact } from "@/lib/redact";
  * description plus the introspected schema, asks OpenRouter to
  * return a strictly-typed widget config, validates it with Zod, and
  * returns it. The caller is expected to then re-run the generated
- * SQL read-only as a safety pass — never trust the model's SQL
+ * SQL read-only as a safety pass - never trust the model's SQL
  * without executing it against the actual database.
  */
 

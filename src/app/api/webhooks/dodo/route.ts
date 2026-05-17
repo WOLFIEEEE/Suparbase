@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
 
   const update = mapDodoEventToUpdate(event);
   if (!update) {
-    // Unknown event type — record it (already done) and log at info
+    // Unknown event type - record it (already done) and log at info
     // so an operator browsing logs notices unrecognised events.
     log.info("dodo webhook: unrecognised event type", {
       eventType,

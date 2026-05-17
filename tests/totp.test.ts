@@ -4,7 +4,7 @@ import { signMfaCookie, verifyMfaCookie } from "@/server/auth/totp";
 
 /**
  * Pure-logic tests for the 2FA cookie helpers. We don't exercise
- * `enable2FA` / `disable2FA` / `verifyTotpForUser` here — those hit
+ * `enable2FA` / `disable2FA` / `verifyTotpForUser` here - those hit
  * the DB. The cookie path is the load-bearing piece for the
  * middleware enforcement; it must be ironclad.
  */

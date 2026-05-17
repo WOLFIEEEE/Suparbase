@@ -10,12 +10,12 @@ export const metadata: Metadata = {
     "Suparbase's accessibility statement: target standard, what we ship today, known gaps, and how to report issues.",
 };
 
-const LAST_UPDATED = "2026-05-17"; // v3.10.0 — contrast, target-size, scope, contact-form fixes
+const LAST_UPDATED = "2026-05-17"; // v3.10.0 - contrast, target-size, scope, contact-form fixes
 
 /**
  * Plain-English accessibility statement. Companion document to the
  * VPAT 2.5 Rev (at /accessibility/vpat). Designed to be readable by
- * a customer — not a procurement-grade conformance report. Honest
+ * a customer - not a procurement-grade conformance report. Honest
  * about what's solid and what's still partial.
  */
 export default async function AccessibilityPage() {
@@ -25,13 +25,13 @@ export default async function AccessibilityPage() {
         <PageHeader
           eyebrow="Accessibility"
           title="The shape we're in, in plain English."
-          subtitle={`Last updated ${LAST_UPDATED}. We aim for WCAG 2.2 Level AA across every authenticated page and every public marketing page. We're close but not perfect — this page is honest about both.`}
+          subtitle={`Last updated ${LAST_UPDATED}. We aim for WCAG 2.2 Level AA across every authenticated page and every public marketing page. We're close but not perfect - this page is honest about both.`}
         />
         <div className="mt-12 max-w-3xl">
           <Prose>
             <h2>The standard we target</h2>
             <p>
-              <strong>WCAG 2.2 Level AA</strong> across the entire product surface — the
+              <strong>WCAG 2.2 Level AA</strong> across the entire product surface - the
               marketing site, the sign-in flow, the connections workspace, the data grid,
               the AI chat, the SQL playground, the admin panel, and the billing pages.
               The detailed conformance posture against every relevant criterion lives in
@@ -44,7 +44,7 @@ export default async function AccessibilityPage() {
               <li>
                 <strong>Keyboard navigation</strong> reaches every interactive control.
                 We use semantic <code>&lt;button&gt;</code>, <code>&lt;a&gt;</code>, and
-                native form elements throughout — there are no click-only
+                native form elements throughout - there are no click-only
                 <code>&lt;div&gt;</code>s.
               </li>
               <li>
@@ -53,7 +53,7 @@ export default async function AccessibilityPage() {
                 explicit ring styling on dialogs, dropdowns, and form controls.
               </li>
               <li>
-                <strong>Skip-to-content link</strong> on every page — tab once from the
+                <strong>Skip-to-content link</strong> on every page - tab once from the
                 address bar to jump past the header and nav.
               </li>
               <li>
@@ -83,7 +83,7 @@ export default async function AccessibilityPage() {
               </li>
               <li>
                 <strong>Text resizing</strong> to 200% works without horizontal scroll
-                or content cut-off — all sizing uses relative units.
+                or content cut-off - all sizing uses relative units.
               </li>
               <li>
                 <strong>Screen-reader announcements</strong> for toast notifications and
@@ -97,52 +97,52 @@ export default async function AccessibilityPage() {
                 <strong>Accessible authentication</strong>: no cognitive function
                 tests (no CAPTCHAs requiring puzzle-solving). Sign-in uses email +
                 password with browser autocomplete, or GitHub OAuth.
-                <em> (WCAG 2.2 — 3.3.8)</em>
+                <em> (WCAG 2.2 - 3.3.8)</em>
               </li>
               <li>
                 <strong>No drag-only interactions</strong>: every action that uses
                 pointer movement (selection, navigation, editing) has a click or
                 keyboard equivalent.
-                <em> (WCAG 2.2 — 2.5.7)</em>
+                <em> (WCAG 2.2 - 2.5.7)</em>
               </li>
               <li>
                 <strong>Redundant entry avoided</strong>: forms don&apos;t ask
                 users to re-enter information already supplied earlier in the
                 same flow.
-                <em> (WCAG 2.2 — 3.3.7)</em>
+                <em> (WCAG 2.2 - 3.3.7)</em>
               </li>
               <li>
                 <strong>Target sizes ≥ 24×24 CSS pixels</strong>: every
-                interactive control — including the filter-chip remove, inline-edit
-                confirm / cancel, and password-eye toggle — now clears the
+                interactive control - including the filter-chip remove, inline-edit
+                confirm / cancel, and password-eye toggle - now clears the
                 minimum hit area.
-                <em> (WCAG 2.2 — 2.5.8)</em>
+                <em> (WCAG 2.2 - 2.5.8)</em>
               </li>
               <li>
                 <strong>Consistent help</strong>: a single{" "}
                 <Link href="/contact">/contact</Link> form is linked from
                 the footer, every legal page, and every help surface, in the
                 same position.
-                <em> (WCAG 2.2 — 3.2.6)</em>
+                <em> (WCAG 2.2 - 3.2.6)</em>
               </li>
               <li>
                 <strong>Status messages</strong>: skeleton loaders, the
                 &ldquo;Refreshing schema&rdquo; spinner, and async form submits
                 expose <code>aria-busy</code> / <code>role=&quot;status&quot;</code>{" "}
                 so screen readers announce loading without stealing focus.
-                <em> (WCAG 2.2 — 4.1.3)</em>
+                <em> (WCAG 2.2 - 4.1.3)</em>
               </li>
               <li>
-                <strong>Body-text contrast</strong>: every text token — including
-                de-emphasised microcopy — now meets the 4.5:1 ratio against its
+                <strong>Body-text contrast</strong>: every text token - including
+                de-emphasised microcopy - now meets the 4.5:1 ratio against its
                 background in both light and dark themes.
-                <em> (WCAG 2.2 — 1.4.3)</em>
+                <em> (WCAG 2.2 - 1.4.3)</em>
               </li>
               <li>
                 <strong>Table headers</strong>: comparison and pricing tables now
                 ship explicit <code>scope=&quot;col&quot;</code> on every column
                 header.
-                <em> (WCAG 2.2 — 2.4.6)</em>
+                <em> (WCAG 2.2 - 2.4.6)</em>
               </li>
             </ul>
 
@@ -159,7 +159,7 @@ export default async function AccessibilityPage() {
                 threshold on focus / hover. Visible enough in practice; below spec on
                 paper. A planned token bump will fix this without breaking the visual
                 hierarchy.
-                <em> (WCAG 2.2 — 1.4.11)</em>
+                <em> (WCAG 2.2 - 1.4.11)</em>
               </li>
               <li>
                 <strong>Color-contrast verification</strong>: ratios above were
@@ -179,9 +179,9 @@ export default async function AccessibilityPage() {
 
             <h2>How to report an issue</h2>
             <p>
-              If you hit an accessibility problem — anything from &quot;this contrast
+              If you hit an accessibility problem - anything from &quot;this contrast
               is too low&quot; to &quot;my screen reader can&apos;t find the submit
-              button&quot; — please send us a note via{" "}
+              button&quot; - please send us a note via{" "}
               <Link href="/contact">our contact form</Link> and pick
               &ldquo;Support&rdquo; as the topic. We aim to acknowledge within
               two business days and ship a fix within ten for anything below
@@ -197,7 +197,7 @@ export default async function AccessibilityPage() {
             <h2>Assistive technologies we&apos;ve tested with</h2>
             <p>
               Code-level review against WCAG 2.2 AA across every major page. Live
-              testing has been spot-check rather than systematic — primarily VoiceOver
+              testing has been spot-check rather than systematic - primarily VoiceOver
               on macOS with Safari and keyboard-only navigation across all flows.
               Customers using NVDA, JAWS, TalkBack, or VoiceOver on iOS may notice
               gaps we haven&apos;t caught; please report them.

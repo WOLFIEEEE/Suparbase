@@ -67,7 +67,7 @@ export function Article() {
       <ArticleH2 id="rls-policies">RLS policies in production</ArticleH2>
       <p>
         An AI-written RLS policy can look correct and be wrong. The failure
-        mode is silent &mdash; a user sees a row they shouldn&apos;t,
+        mode is silent - a user sees a row they shouldn&apos;t,
         forever, until someone notices. Test policy changes with a real
         simulator (see our <Link href="/blog/row-level-security-postgres-2026">RLS guide</Link>
         ); have a human review the test output.

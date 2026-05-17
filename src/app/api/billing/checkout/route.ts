@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Pick up the user's display name if we have one, else the email
-  // local-part — Dodo requires a customer object.
+  // local-part. Dodo requires a customer object.
   const userRows = await db
     .select({ name: users.name })
     .from(users)
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   // Cadence selection: client can request annual via `?cadence=annual`
   // (GET-friendly, mirrors the form pattern used elsewhere) or via a
   // JSON body `{ cadence: "annual" }`. Falls back to monthly when the
-  // operator hasn't published an annual Dodo product yet — UI still
+  // operator hasn't published an annual Dodo product yet - UI still
   // displays the toggle, the user just gets the monthly checkout.
   let cadence: "monthly" | "annual" = "monthly";
   const cadenceParam = req.nextUrl.searchParams.get("cadence");

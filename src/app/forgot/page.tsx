@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function ForgotPasswordPage() {
   const session = await auth();
-  // Already signed in? Redirect — changing password while signed in
+  // Already signed in? Redirect - changing password while signed in
   // belongs in settings, not on a public page.
   if (session?.user) redirect("/connections");
 

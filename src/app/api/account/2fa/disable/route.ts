@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const BodySchema = z.object({
-  /** Current password — required to disable 2FA, defends against
+  /** Current password - required to disable 2FA, defends against
    *  session-hijack downgrades. */
   password: z.string().min(8).max(200),
 });
@@ -23,7 +23,7 @@ const BodySchema = z.object({
  * against a stolen session being used to weaken account security).
  * On success, clears the encrypted secret and all recovery codes.
  *
- * For OAuth-only users (no password), this endpoint returns 409 —
+ * For OAuth-only users (no password), this endpoint returns 409
  * those users need to contact support to disable 2FA.
  */
 export async function POST(req: NextRequest) {

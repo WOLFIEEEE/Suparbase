@@ -7,7 +7,7 @@ body:
       value: |
         Significant features ship via the Spec-Kit workflow (see
         [`CONTRIBUTING.md`](https://github.com/WOLFIEEEE/Suparbase/blob/main/CONTRIBUTING.md)).
-        This issue is the *first step* — we'll triage it and decide whether
+        This issue is the *first step* - we'll triage it and decide whether
         it becomes a `specs/NNN-…` cycle.
 
   - type: textarea

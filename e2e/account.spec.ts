@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 /**
  * Account-flow smoke specs. These don't actually create accounts
  * (no fixture / seeded user yet), but they verify every reachable
- * UI element renders correctly without needing auth — the bits a
+ * UI element renders correctly without needing auth - the bits a
  * customer might land on from a marketing link or a forgotten
  * bookmark.
  *
@@ -25,7 +25,7 @@ test.describe("Account-adjacent surfaces (unauth)", () => {
     await page.goto("/forgot");
     await page.getByLabel(/email/i).fill("nope@example.com");
     await page.getByRole("button", { name: /send reset link/i }).click();
-    // The success state is enumeration-resistant — same banner whether
+    // The success state is enumeration-resistant - same banner whether
     // or not the email exists. Either configured/unconfigured.
     await expect(
       page.getByText(/check your inbox|email isn't configured/i).first(),

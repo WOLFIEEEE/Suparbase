@@ -4,7 +4,7 @@
 #  1. Wait (up to 30s) for the secrets files to appear in /secrets.
 #     They are produced by the `bootstrap` compose service.
 #  2. For every *_FILE env var pointing at a real file, export its
-#     contents as the corresponding plain env var — but ONLY if the
+#     contents as the corresponding plain env var - but ONLY if the
 #     plain env var is empty. Operator-supplied values always win.
 #  3. Compose DATABASE_URL from the resolved POSTGRES_PASSWORD, unless
 #     the operator already supplied a full DATABASE_URL.

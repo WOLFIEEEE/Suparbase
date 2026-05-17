@@ -44,10 +44,10 @@ const SESSION_WINDOW_MS = 5 * 60 * 1000;
  *     eviction on insert. Bounded under sustained load even if hot
  *     callers never trigger the cold-path opportunistic sweep.
  *   - For a single-instance Coolify deploy (the default) none of this
- *     matters — the cache is exact. The TTL exists only to keep
+ *     matters - the cache is exact. The TTL exists only to keep
  *     multi-instance deployments correct enough.
  */
-/** Cache TTL — kept well below SESSION_WINDOW_MS so cross-instance
+/** Cache TTL - kept well below SESSION_WINDOW_MS so cross-instance
  *  stale-cache windows are bounded to 60s in the worst case. */
 const CACHE_TTL_MS = 60 * 1000;
 /** Hard cap; LRU-evict on insert past this. Realistic upper bound for
@@ -200,7 +200,7 @@ export async function attachToSession(
     return { id: created.id, kind: created.kind, label: created.label };
   } catch (e) {
     // Hot-path failure should never block the user-visible response,
-    // but we do want telemetry on it — without this, a silent crash
+    // but we do want telemetry on it - without this, a silent crash
     // here means no audit attribution and no visible signal.
     const { log } = await import("@/server/log");
     log.warn("attachToSession failed (writes will land without session_id)", {
@@ -222,7 +222,7 @@ async function bumpSession(row: AgentSessionRow, tableLabel: string): Promise<vo
   // concurrent writes can't stomp each other's tablesTouched (the
   // previous read-then-set form was racy: A reads [t1], B reads [t1],
   // A writes [t1,t2], B writes [t1,t3] → t2 is lost).
-  // `tables_touched` is jsonb but stores a string[] — we round-trip
+  // `tables_touched` is jsonb but stores a string[] - we round-trip
   // it as text[] for the union, then jsonb_agg() back.
   await db
     .update(agentSessions)

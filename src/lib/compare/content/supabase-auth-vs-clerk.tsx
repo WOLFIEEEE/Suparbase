@@ -79,8 +79,8 @@ export function Body() {
       <ArticleH2 id="honest-take">Honest take</ArticleH2>
       <p>
         For most projects on Supabase, Supabase Auth is the right call. The RLS integration is the killer
-        feature you don&apos;t want to fight. For projects where auth is non-trivial &mdash; enterprise SSO,
-        complex org models, end-user-facing auth UIs &mdash; Clerk earns its keep. The two products are sized
+        feature you don&apos;t want to fight. For projects where auth is non-trivial - enterprise SSO,
+        complex org models, end-user-facing auth UIs. Clerk earns its keep. The two products are sized
         for different jobs; pick on shape, not on benchmarks.
       </p>
     </>

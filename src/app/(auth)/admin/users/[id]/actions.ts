@@ -80,7 +80,7 @@ export async function grantPlanAction(formData: FormData): Promise<{ ok: boolean
 }
 
 function endOfDayUtc(ymd: string): Date {
-  // Accept YYYY-MM-DD; reject anything else (defensive — Zod already
+  // Accept YYYY-MM-DD; reject anything else (defensive. Zod already
   // checked it's a non-empty string but didn't enforce shape).
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
   if (!m) return new Date(Number.NaN);

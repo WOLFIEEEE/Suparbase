@@ -20,7 +20,7 @@ export const maxDuration = 60;
  *   - cron-job.org / GitHub Actions: same shape
  *
  * Daily is the sensible cadence; hourly is fine but wasteful. The
- * handler is idempotent — running it twice does nothing extra.
+ * handler is idempotent - running it twice does nothing extra.
  */
 export async function POST(req: NextRequest) {
   const secret = process.env.CRON_SECRET?.trim();

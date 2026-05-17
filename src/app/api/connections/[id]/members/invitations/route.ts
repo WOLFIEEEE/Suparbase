@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
 
   // Plan limits: team invitations are a Hosted-tier feature. The
-  // check is on the *owner's* plan, not the invitee's — the invitee
+  // check is on the *owner's* plan, not the invitee's - the invitee
   // doesn't have an account yet.
   try {
     const active = await getActivePlan(session.user.id);

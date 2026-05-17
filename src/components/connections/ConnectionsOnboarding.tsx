@@ -18,7 +18,7 @@ const STEPS: Step[] = [
   {
     icon: Lock,
     title: "Your key never reaches the browser",
-    body: "Every request goes through an authenticated server-side proxy. Your browser only holds the session cookie — Supabase keys stay on the server.",
+    body: "Every request goes through an authenticated server-side proxy. Your browser only holds the session cookie. Supabase keys stay on the server.",
   },
   {
     icon: Sparkles,

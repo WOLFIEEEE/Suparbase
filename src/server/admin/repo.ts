@@ -30,7 +30,7 @@ export interface AdminUserRow {
 
 /**
  * Searchable list of all users with a flattened plan view. Limited to
- * 200 rows per page — the admin panel surfaces a search box for the
+ * 200 rows per page - the admin panel surfaces a search box for the
  * common "find one user by email" workflow.
  */
 export async function listUsers(params: {

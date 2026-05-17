@@ -1,4 +1,4 @@
-# 032 — Dodo Payments billing + admin panel (v3.4.0)
+# 032. Dodo Payments billing + admin panel (v3.4.0)
 
 ## Goal
 
@@ -7,7 +7,7 @@ for operating the SaaS. Free tier stays as the default (1 connection,
 solo workspace). Paid plan ("Supar Saver", `pdt_0Nev0FKdzw0UxPeUBKItA`,
 7-day trial) unlocks unlimited connections and the team workspace.
 
-The integration is **scaffolded against env vars** — without
+The integration is **scaffolded against env vars**: without
 `DODO_API_KEY` / `DODO_WEBHOOK_SECRET`, the billing UI degrades to a
 "coming soon" state and the app still boots. Free-tier limits are
 enforced unconditionally because they don't depend on Dodo.
@@ -36,11 +36,11 @@ what's going on.
   - **No team invites** (`POST /api/connections/[id]/members/invitations`
     returns 402 if the *owner* is on the free plan).
 - Customer-facing billing surface:
-  - `/settings/billing` — shows current plan, trial countdown, paid
+  - `/settings/billing` - shows current plan, trial countdown, paid
     renewal date; "Upgrade" button kicks off Dodo checkout.
   - Checkout redirects to `/settings/billing?status=success|cancelled`
     after Dodo returns.
-- Webhook handler at `/api/webhooks/dodo` — verifies the Standard
+- Webhook handler at `/api/webhooks/dodo` - verifies the Standard
   Webhooks signature (HMAC-SHA256 of
   `${webhook-id}.${webhook-timestamp}.${raw_body}`), records the event,
   upserts the user's subscription row.
@@ -58,9 +58,9 @@ what's going on.
 
 ### Out of scope
 
-- Multiple paid plans (no Team / Pro tier in this release — Team is
+- Multiple paid plans (no Team / Pro tier in this release. Team is
   still "Contact sales" → manual admin grant).
-- Custom billing portal — Dodo's customer flow handles cancel /
+- Custom billing portal. Dodo's customer flow handles cancel /
   payment-method updates. The UI just links out.
 - Tax / VAT collection (Dodo is Merchant of Record, so this is
   already handled upstream).
@@ -95,7 +95,7 @@ can tell them apart from real paying customers in the dashboard.
 ### `billing_events`
 
 Audit log of every webhook receipt. Doubles as the idempotency store
-— `webhook_id` is unique so retries are no-ops.
+- `webhook_id` is unique so retries are no-ops.
 
 ```
 id                  uuid PK
@@ -169,7 +169,7 @@ catches and turns into a 402.
 
 ### Return
 
-`GET /api/billing/return` — Dodo redirects here after success/cancel.
+`GET /api/billing/return`. Dodo redirects here after success/cancel.
 We don't trust the redirect for state (could be forged); we just
 flash the user to `/settings/billing?status=...`. The webhook is the
 authoritative state source.
@@ -183,7 +183,7 @@ authoritative state source.
    `${webhook-id}.${webhook-timestamp}.${raw_body}` using
    `DODO_WEBHOOK_SECRET`. The result is base64; constant-time
    compare against the `webhook-signature` header (which can hold
-   multiple comma-separated versioned signatures — we accept any
+   multiple comma-separated versioned signatures - we accept any
    match prefixed `v1,`).
 3. Reject if the timestamp is older than 5 minutes (replay defence).
 4. Insert into `billing_events` with `webhook_id` unique. If insert
@@ -212,7 +212,7 @@ want a misconfigured Origin policy to block payments.
 
 `requireAdmin()` reads `SUPARBASE_ADMIN_EMAILS` (comma-separated),
 compares against `session.user.email` (lowercased). On mismatch:
-404 (not 403 — don't acknowledge the surface exists).
+404 (not 403 - don't acknowledge the surface exists).
 
 ### Routes
 
@@ -246,18 +246,18 @@ DODO_HOSTED_PRODUCT_ID=pdt_0Nev0FKdzw0UxPeUBKItA
 
 - New tables only; no destructive schema change. Drizzle generator
   emits a single migration file.
-- Existing users default to `free` plan via app-layer lookup —
+- Existing users default to `free` plan via app-layer lookup
   they don't get a `subscriptions` row inserted until they interact
   with billing. The plan resolver treats "no row" as free.
 
 ## Test coverage
 
-- `tests/billing-webhook.test.ts` — verifies signature, rejects
+- `tests/billing-webhook.test.ts` - verifies signature, rejects
   tampered body, rejects stale timestamp, deduplicates by `webhook-id`,
   upserts plan correctly for each event type.
-- `tests/billing-plans.test.ts` — `requireFeature` accept/reject for
+- `tests/billing-plans.test.ts` - `requireFeature` accept/reject for
   every (plan, status, feature) cell.
-- `tests/admin-guard.test.ts` — env allowlist parsing, case
+- `tests/admin-guard.test.ts` - env allowlist parsing, case
   insensitivity, empty env disables access.
 
 ## Out of band

@@ -265,7 +265,7 @@ function WidgetFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
   const [error, setError] = useState<string | null>(null);
   const isEdit = !!initial;
 
-  // AI-generate state — lives next to the form so the prompt and the
+  // AI-generate state - lives next to the form so the prompt and the
   // resulting preview are visible at the same time as the populated
   // fields the user is about to save.
   const [aiOpen, setAiOpen] = useState(!isEdit);
@@ -389,7 +389,7 @@ function WidgetFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
           Saves a SQL query as a KPI tile, chart, or list on the dashboard.
         </DialogDescription>
 
-        {/* AI-generate panel — collapsed by default on edit, open on
+        {/* AI-generate panel - collapsed by default on edit, open on
             create. Lives above the form so the user can ask once,
             review the populated fields below, tweak, and save. */}
         <section className="rounded-lg border hairline bg-bg-sunken/40">

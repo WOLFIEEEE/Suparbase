@@ -124,7 +124,7 @@ jobs:
           DATABASE_URL: postgres://ci:ci@localhost:5432/ci
 
       - name: Re-apply (idempotency check)
-        # A second run must be a no-op — drizzle's migrator records every
+        # A second run must be a no-op - drizzle's migrator records every
         # applied migration in __drizzle_migrations and skips repeats.
         run: node dist/migrator.mjs
         env:

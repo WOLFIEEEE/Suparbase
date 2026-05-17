@@ -285,7 +285,7 @@ export async function generateAction(input: GenerateActionInput): Promise<Genera
 
 // ---------------------------------------------------------------------------
 // Structural validators run after generation. These are the "safety pass"
-// equivalent to the read-only SQL execution the widget generator does —
+// equivalent to the read-only SQL execution the widget generator does
 // here we can't safely execute arbitrary writes/webhooks, so we lean
 // on structural checks instead.
 // ---------------------------------------------------------------------------

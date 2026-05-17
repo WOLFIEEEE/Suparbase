@@ -51,7 +51,7 @@ export function renderContactSubmissionEmail(
     input.message,
     `--------`,
     ``,
-    `Reply directly to this email to respond — Reply-To is set to the`,
+    `Reply directly to this email to respond. Reply-To is set to the`,
     `visitor's address.`,
     ``,
     `Suparbase`,
@@ -109,7 +109,7 @@ export function renderContactSubmissionEmail(
             <tr>
               <td style="padding:8px 32px 24px 32px;">
                 <p style="margin:0;font-size:11px;line-height:1.55;color:#999;">
-                  Reply to this email to respond directly &mdash; Reply-To is set to the visitor.
+                  Reply to this email to respond directly. Reply-To is set to the visitor.
                 </p>
               </td>
             </tr>

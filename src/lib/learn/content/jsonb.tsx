@@ -25,7 +25,7 @@ export function Body() {
         Use cases: provider-variable webhook payloads, user-defined
         metadata, sparse columns where promoting them all to first-class
         columns would create wide sparse tables. The 2026 best practice is
-        "promote on demand" &mdash; start in JSONB, move a key to a real
+        "promote on demand" - start in JSONB, move a key to a real
         column the first time you filter on it.
       </p>
       <p>

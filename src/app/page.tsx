@@ -79,7 +79,7 @@ const FEATURE_PREVIEWS = [
 ] as const;
 
 export default async function HomePage() {
-  // The marketing homepage stays accessible to signed-in users too —
+  // The marketing homepage stays accessible to signed-in users too
   // they may want to browse features, share the link, or click into
   // the changelog. The "Open workspace" CTA in the nav takes them
   // back to /connections whenever they're ready.

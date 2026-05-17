@@ -18,7 +18,7 @@ import { log } from "@/server/log";
  *   - admin_action target/admin (set-null)
  *
  * Result: nothing tying back to the deleted user remains except
- * historical audit rows with null user_id (intentional — operator
+ * historical audit rows with null user_id (intentional - operator
  * forensics keep value).
  *
  * Compliance: this fulfils GDPR Art. 17 ("right to be forgotten")

@@ -87,7 +87,7 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
         <h2 className="font-display text-xl">Profile</h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <ReadField label="Email" value={email} mono />
-          <ReadField label="Display name" value={name ?? "—"} />
+          <ReadField label="Display name" value={name ?? "-"} />
         </div>
         <p className="text-xs text-fg-faint">
           To change your email or name, reach out via{" "}
@@ -104,7 +104,7 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
           Download a JSON file containing your account record, connection
           metadata, audit log (most recent 100k entries), saved views,
           dashboards, custom actions, and agent sessions. Encrypted columns
-          (Supabase keys, Postgres URL, TOTP secret) are excluded — they
+          (Supabase keys, Postgres URL, TOTP secret) are excluded - they
           wouldn&apos;t be usable outside this deployment anyway. GDPR Art.
           15 / Art. 20.
         </p>
@@ -131,7 +131,7 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
             memberships. <strong className="text-fg">This cannot be undone.</strong>{" "}
             Audit log rows are retained without your user id for operator
             forensics. If you&apos;re on a paid plan, cancel via the receipt
-            email <em>before</em> deleting so you stop being charged — we
+            email <em>before</em> deleting so you stop being charged - we
             don&apos;t auto-cancel Dodo subscriptions on account delete.
           </p>
         </div>

@@ -17,13 +17,13 @@ const BodySchema = z.object({
 /**
  * POST /api/auth/forgot-password
  *
- * Always returns 200 with `{ ok: true, configured: <bool> }` — the
+ * Always returns 200 with `{ ok: true, configured: <bool> }` - the
  * shape doesn't reveal whether the email is a known account. That's
  * deliberate enumeration defence; the UI shows the same "if the
  * email matches an account, we sent a link" confirmation either way.
  *
  * `configured: false` is returned only when email isn't wired up at
- * all on this deployment — the UI surfaces that so the user knows
+ * all on this deployment - the UI surfaces that so the user knows
  * to email support directly.
  *
  * Rate-limited per client IP (reuse the signup bucket) to defend
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!isEmailConfigured()) {
-    // No email delivery on this deployment — be honest so the UI
+    // No email delivery on this deployment - be honest so the UI
     // can show the right message ("email support to reset").
     return NextResponse.json({ ok: true, configured: false });
   }

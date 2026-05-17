@@ -268,7 +268,7 @@ function Editor({
         }}
         className={sharedClass}
       >
-        {col.nullable && <option value="">— NULL —</option>}
+        {col.nullable && <option value="">- NULL -</option>}
         {col.enumValues.map((v) => (
           <option key={v} value={v}>
             {v}
@@ -292,7 +292,7 @@ function Editor({
         }}
         className={sharedClass}
       >
-        {col.nullable && <option value="">— NULL —</option>}
+        {col.nullable && <option value="">- NULL -</option>}
         <option value="true">true</option>
         <option value="false">false</option>
       </select>

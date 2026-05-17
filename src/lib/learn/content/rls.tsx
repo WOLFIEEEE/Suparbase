@@ -32,7 +32,7 @@ export function Body() {
         Two switches enable RLS per table:{" "}
         <code>ALTER TABLE ... ENABLE ROW LEVEL SECURITY</code> and at least
         one <code>CREATE POLICY</code>. Without policies, RLS denies
-        everything &mdash; default-deny is the safe behaviour but a common
+        everything - default-deny is the safe behaviour but a common
         cause of "my reads stopped working".
       </p>
     </>

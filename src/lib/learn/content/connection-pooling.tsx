@@ -18,7 +18,7 @@ export function Body() {
         and Postgres. The pooler holds a small set of upstream connections
         and multiplexes many client connections over them. Without a
         pooler, every serverless request would open a fresh Postgres
-        connection &mdash; expensive (~10MB per connection) and quickly
+        connection - expensive (~10MB per connection) and quickly
         exhausts the default <code>max_connections</code> limit of 100.
       </p>
       <p>

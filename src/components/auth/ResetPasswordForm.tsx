@@ -17,7 +17,7 @@ const MIN_LENGTH = 12;
 
 /**
  * Consume a single-use reset token + set a new password. On success
- * we redirect to /signin?reset=1 — the user has to sign in fresh
+ * we redirect to /signin?reset=1 - the user has to sign in fresh
  * (we don't auto-create a session post-reset, that's a deliberate
  * step that prevents a half-compromised account from sliding through).
  */

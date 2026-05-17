@@ -20,8 +20,8 @@ artifact that motivated this. Bug fixes can be terse.
 Tick what you ran. If you skipped one, say why.
 -->
 
-- [ ] `pnpm typecheck` — clean
-- [ ] `pnpm build` — passes; bundle deltas noted below if changed
+- [ ] `pnpm typecheck` - clean
+- [ ] `pnpm build` - passes; bundle deltas noted below if changed
 - [ ] Manual smoke walk of the affected route(s)
 - [ ] If a spec-kit feature: walked the `quickstart.md` checklist
 - [ ] `rg "console\.(log|warn|error)" src/` returns nothing
@@ -31,7 +31,7 @@ Tick what you ran. If you skipped one, say why.
 
 <!--
 If you touched components shared by authenticated routes, paste the
-relevant rows of `pnpm build`'s "Route (app)" table — before vs after.
+relevant rows of `pnpm build`'s "Route (app)" table - before vs after.
 The Constitution caps first-paint JS at 520 KB gz per authed route.
 Otherwise: "no UI changes".
 -->
@@ -44,7 +44,7 @@ Otherwise: "no UI changes".
 
 <!--
 Reference any of the nine principles in
-`.specify/memory/constitution.md` that this PR interacts with — perf,
+`.specify/memory/constitution.md` that this PR interacts with - perf,
 accessibility, vault, server/client boundary, etc. If you're not sure,
 list a guess and the reviewer will confirm.
 -->

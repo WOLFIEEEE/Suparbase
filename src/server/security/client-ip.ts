@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
  * Used by rate-limit buckets that key on caller identity for
  * pre-auth endpoints (forgot-password, reset-password, 2fa/verify).
  * The trust model is "behind Coolify/Vercel/whatever sets the
- * standard forwarded headers" — these headers MUST NOT be trusted
+ * standard forwarded headers" - these headers MUST NOT be trusted
  * if the app is exposed directly to the internet without an L7
  * proxy in front (which would also be a deployment bug).
  */

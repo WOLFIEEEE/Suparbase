@@ -6,7 +6,7 @@ import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "VPAT 2.5 · Suparbase",
   description:
-    "Voluntary Product Accessibility Template (VPAT) 2.5 Rev for Suparbase — conformance against WCAG 2.2 Level AA.",
+    "Voluntary Product Accessibility Template (VPAT) 2.5 Rev for Suparbase - conformance against WCAG 2.2 Level AA.",
 };
 
 const REPORT_DATE = "2026-05-17";
@@ -124,7 +124,7 @@ const WCAG_AA: Criterion[] = [
     name: "Contrast (Minimum) (Level AA)",
     conformance: "Supports",
     remarks:
-      "Primary text in both light and dark modes is ≈18:1 against the background. Muted text ≈8.5–9.5:1. Accent and danger tokens clear 4.5:1. As of v3.10.0 the faint-foreground token (microcopy / eyebrow labels) was darkened to clear 4.5:1 in both modes — dark mode now ≈4.6:1, light mode ≈4.7:1. Ratios were computed by inspection of CSS tokens, not measured with axe-core / Lighthouse; customers should run their own automated audit for procurement-grade verification.",
+      "Primary text in both light and dark modes is ≈18:1 against the background. Muted text ≈8.5–9.5:1. Accent and danger tokens clear 4.5:1. As of v3.10.0 the faint-foreground token (microcopy / eyebrow labels) was darkened to clear 4.5:1 in both modes - dark mode now ≈4.6:1, light mode ≈4.7:1. Ratios were computed by inspection of CSS tokens, not measured with axe-core / Lighthouse; customers should run their own automated audit for procurement-grade verification.",
   },
   {
     id: "1.4.4",
@@ -149,7 +149,7 @@ const WCAG_AA: Criterion[] = [
     name: "Non-text Contrast (Level AA)",
     conformance: "Partially Supports",
     remarks:
-      "Focus rings (2px solid accent + 2px offset) and accent buttons clear 3:1. Input/card resting borders are intentionally hairline (≈1.5–1.7:1) — they meet 3:1 only on focus / hover. Compensated by strong focus states; acknowledged below spec on resting state.",
+      "Focus rings (2px solid accent + 2px offset) and accent buttons clear 3:1. Input/card resting borders are intentionally hairline (≈1.5–1.7:1) - they meet 3:1 only on focus / hover. Compensated by strong focus states; acknowledged below spec on resting state.",
   },
   {
     id: "1.4.12",
@@ -282,7 +282,7 @@ const WCAG_AA: Criterion[] = [
     id: "2.5.8",
     name: "Target Size (Minimum) (Level AA) [WCAG 2.2]",
     conformance: "Supports",
-    remarks: "Primary action buttons (sign-in, save, delete, upgrade) are well above the 24×24 CSS-pixel minimum. As of v3.10.0 every secondary icon button — filter-chip remove, inline-edit confirm / cancel, password-eye toggle, schema tree expand, dashboard widget controls — was bumped to p-1.5, putting their target areas at ≥24×24 CSS pixels.",
+    remarks: "Primary action buttons (sign-in, save, delete, upgrade) are well above the 24×24 CSS-pixel minimum. As of v3.10.0 every secondary icon button - filter-chip remove, inline-edit confirm / cancel, password-eye toggle, schema tree expand, dashboard widget controls - was bumped to p-1.5, putting their target areas at ≥24×24 CSS pixels.",
   },
   {
     id: "3.1.1",
@@ -449,7 +449,7 @@ const EN_301_549 = [
     chapter: "Chapter 12: Documentation and Support Services",
     rows: [
       { name: "12.1 Product Documentation", conformance: "Supports" as Conformance, remarks: "Documentation is web-based (/docs) and conforms to the same WCAG 2.2 AA posture as the product." },
-      { name: "12.2 Support Services", conformance: "Supports" as Conformance, remarks: "Support is via email (contact@suparbase.com, contact@suparbase.com) — accessible through any user agent the customer prefers." },
+      { name: "12.2 Support Services", conformance: "Supports" as Conformance, remarks: "Support is via email (contact@suparbase.com, contact@suparbase.com) - accessible through any user agent the customer prefers." },
     ],
   },
 ];
@@ -457,7 +457,7 @@ const EN_301_549 = [
 /**
  * VPAT 2.5 Rev 508 (Web). Format adapted to render cleanly on a web
  * page rather than a Word document; content follows ITI's template
- * exactly — Product Information block, Standards Covered, Terms,
+ * exactly. Product Information block, Standards Covered, Terms,
  * then Chapter tables.
  */
 export default async function VpatPage() {
@@ -521,7 +521,7 @@ function StandardsCovered() {
           </li>
           <li>
             <strong>Revised Section 508 Standards</strong> (36 CFR Part 1194, App. A,
-            B, and C — published Jan 18, 2017), the U.S. federal procurement standard.
+            B, and C - published Jan 18, 2017), the U.S. federal procurement standard.
           </li>
           <li>
             <strong>EN 301 549 V3.2.1 (2021-03)</strong>, the European procurement
@@ -662,14 +662,14 @@ function Footer() {
           Suparbase does not warrant this VPAT for legal or procurement purposes
           beyond a good-faith disclosure of the product&apos;s current state.
           Customers requiring formal third-party audit reports should request
-          one — we will commission one against the production build on request.
+          one - we will commission one against the production build on request.
         </p>
         <p>
           Revisions:
         </p>
         <ul>
           <li>
-            <strong>{REPORT_DATE}</strong> — accompanies the v3.10.0 release.
+            <strong>{REPORT_DATE}</strong> - accompanies the v3.10.0 release.
             Flipped six criteria from &ldquo;Partially Supports&rdquo; to
             &ldquo;Supports&rdquo;: 1.3.1 (table headers now ship explicit
             scope=&quot;col&quot;), 1.4.3 (faint-foreground token darkened to
@@ -680,7 +680,7 @@ function Footer() {
             and 302.2. 1.4.11 remains partial (hairline borders).
           </li>
           <li>
-            <strong>2026-05-15</strong> — updated to WCAG 2.2 Level AA (was
+            <strong>2026-05-15</strong> - updated to WCAG 2.2 Level AA (was
             2.1). Added rows for the six new 2.2 success criteria: 2.4.11
             Focus Not Obscured (Minimum), 2.5.7 Dragging Movements, 2.5.8
             Target Size (Minimum), 3.2.6 Consistent Help, 3.3.7 Redundant
@@ -695,7 +695,7 @@ function Footer() {
             data grid.
           </li>
           <li>
-            <strong>2026-05-15</strong> — initial VPAT 2.5 Rev publication
+            <strong>2026-05-15</strong> - initial VPAT 2.5 Rev publication
             against WCAG 2.1 Level AA accompanying the v3.5.0 accessibility
             pass (skip link, bare-label form fields, Radix Tooltip
             replacements, AI chat live region, system-theme toasts).

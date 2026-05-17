@@ -2,7 +2,7 @@
 SYNC IMPACT REPORT
 ==================
 Version change: 3.2.0 → 3.3.0
-Reason for MINOR bump: codifies the v1.0 visual language — unified Inter
+Reason for MINOR bump: codifies the v1.0 visual language - unified Inter
 family for body + display (Fraunces removed), the row-card list pattern
 as the default for every table, and the consistent PageHeader chrome on
 every authenticated workspace surface. No principle removed; no
@@ -127,7 +127,7 @@ states. Form fields MUST have associated labels and accessible error
 messaging. Data tables MUST be navigable by keyboard. Color contrast
 MUST meet WCAG AA. Use semantic HTML and Radix primitives; ARIA only
 where semantics are insufficient. Rationale: admin tools are used for
-hours — accessibility correctness is a productivity feature.
+hours - accessibility correctness is a productivity feature.
 
 ### V. Server-Side Vault & Proxy (NON-NEGOTIABLE)
 User-supplied Supabase credentials (project URL + API key) MUST be
@@ -190,7 +190,7 @@ and to their LLM provider accounts; both deserve identical treatment.
 AI features are opt-in, server-side, and cost-transparent. The app MAY
 call third-party LLM providers to classify schemas, suggest field
 semantics, and route tables to purpose-built presets. The app MUST:
-- Never call an LLM with the user's row data — only schema metadata
+- Never call an LLM with the user's row data - only schema metadata
   (table names, column names, column types, foreign-key targets).
 - Require the user to provide their own OpenRouter API key, stored in
   the shared vault under the same encryption guarantees as Supabase

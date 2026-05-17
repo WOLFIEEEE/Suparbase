@@ -18,7 +18,7 @@ function clientKey(req: NextRequest): string {
 /**
  * Fire-and-forget verification email. Runs after the signup row is
  * committed so a delivery failure can't roll the account back. Logs
- * any failure but never bubbles — the user can request a re-send
+ * any failure but never bubbles - the user can request a re-send
  * later from /settings/account.
  */
 async function dispatchVerificationEmail(email: string): Promise<void> {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const user = await createUserAccount(parsed.data);
-    // Fire and forget — never block signup on email delivery.
+    // Fire and forget - never block signup on email delivery.
     void dispatchVerificationEmail(user.email);
     return NextResponse.json({ ok: true, user }, { status: 201 });
   } catch (e) {

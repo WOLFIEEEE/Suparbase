@@ -15,7 +15,7 @@ const COLUMNS: Column[] = [
       { label: "Features", href: "/features" },
       { label: "Agent Sentry", href: "/agent-sentry" },
       { label: "Use cases", href: "/use-cases" },
-      // Signed-in users manage billing in /settings/billing — pricing
+      // Signed-in users manage billing in /settings/billing - pricing
       // is a marketing surface they don't need to see twice.
       { label: "Pricing", href: "/pricing", hideWhenSignedIn: true },
       { label: "Roadmap", href: "/roadmap" },
@@ -63,7 +63,7 @@ export function PublicFooter({ isSignedIn = false }: FooterProps) {
       <div className="relative mx-auto w-full max-w-6xl px-6">
         <StatusBar />
 
-        {/* Compact manifesto block — single column, no signal aside. */}
+        {/* Compact manifesto block - single column, no signal aside. */}
         <section className="py-10">
           <div className="max-w-2xl space-y-4">
             <h2 className="font-display text-2xl leading-tight sm:text-3xl">

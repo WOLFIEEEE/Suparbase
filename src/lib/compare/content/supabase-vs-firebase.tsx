@@ -38,7 +38,7 @@ export function Body() {
           language.
         </li>
         <li>
-          You want SQL. Joins, window functions, CTEs, aggregates &mdash; all
+          You want SQL. Joins, window functions, CTEs, aggregates - all
           first-class.
         </li>
         <li>

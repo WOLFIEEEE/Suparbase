@@ -5,7 +5,7 @@ import { hashToken } from "@/server/auth/password-reset";
 /**
  * Tests for the pure helpers in password-reset.ts. The full
  * issuance/consumption lifecycle hits the DB, which is stubbed in
- * tests — so we focus on the SHA-256 hashing primitive that's the
+ * tests - so we focus on the SHA-256 hashing primitive that's the
  * load-bearing piece for the "we never store plaintext tokens"
  * guarantee.
  */
@@ -30,7 +30,7 @@ describe("password-reset hashToken", () => {
   });
 
   it("input is treated as raw bytes (no normalisation)", () => {
-    // Trailing whitespace must matter — a hash collision between
+    // Trailing whitespace must matter - a hash collision between
     // "x" and "x " would let an attacker substitute equivalent
     // looking tokens.
     expect(hashToken("x")).not.toBe(hashToken("x "));

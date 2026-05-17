@@ -35,7 +35,7 @@ export function Body() {
       <ul>
         <li>
           Your domain has stable entities with stable relationships. Users,
-          orgs, projects, posts &mdash; classic SaaS shape.
+          orgs, projects, posts - classic SaaS shape.
         </li>
         <li>
           You need joins, aggregates, window functions for reporting and
@@ -76,7 +76,7 @@ export function Body() {
       <ArticleH2 id="the-jsonb-gotcha">The JSONB gotcha</ArticleH2>
       <p>
         Postgres&apos;s <code>jsonb</code> column type covers 90% of the
-        cases people used to pick MongoDB for &mdash; flexible attributes,
+        cases people used to pick MongoDB for - flexible attributes,
         sparse fields, third-party payloads. With functional indexes you can
         even query JSON keys as if they were real columns. The remaining 10%
         (deeply nested writes against the same document at high concurrency)
@@ -93,7 +93,7 @@ export function Body() {
       </p>
       <p>
         If you&apos;re currently on MongoDB and considering a migration,
-        the question isn&apos;t &quot;is Postgres better in general&quot; &mdash;
+        the question isn&apos;t &quot;is Postgres better in general&quot; -
         it&apos;s &quot;is the engineering cost of migration worth the
         operational savings and the developer-experience gains?&quot; The
         answer is usually yes if you&apos;re past the prototype phase, no

@@ -12,7 +12,7 @@ interface Props {
  * Free-tier usage indicator shown above the connection list. Tells
  * the user where they sit on the plan and pre-empts the 402 paywall
  * with an obvious upgrade nudge. Hidden for paid plans (handled by
- * the caller — render this only when `!active.isPaid`).
+ * the caller - render this only when `!active.isPaid`).
  *
  * Renders a progress bar of `used/cap` connections, plus a row of
  * "what unlocking gets you" affordances and a Subscribe CTA.

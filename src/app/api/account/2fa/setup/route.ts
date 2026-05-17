@@ -9,7 +9,7 @@ export const runtime = "nodejs";
  * GET /api/account/2fa/setup
  *
  * Returns a fresh TOTP secret + otpauth URL + QR data URL for the
- * signed-in user to scan. Does NOT persist anything — the secret
+ * signed-in user to scan. Does NOT persist anything - the secret
  * is committed via `/api/account/2fa/enable` after the user proves
  * they can produce a valid code.
  */

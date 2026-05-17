@@ -64,7 +64,7 @@ export function GrantPlanForm({ targetUserId }: GrantProps) {
         <input
           name="note"
           type="text"
-          placeholder="e.g. design partner — comp through 2026-12-31"
+          placeholder="e.g. design partner - comp through 2026-12-31"
           className="h-9 w-full rounded-md border hairline bg-bg px-2 text-sm"
         />
       </Field>
@@ -141,7 +141,7 @@ export function ResetSubscriptionForm({ targetUserId }: GrantProps) {
             Sets the user&apos;s plan to <strong>Free</strong> and clears all Dodo
             identifiers (<code>dodo_customer_id</code>, <code>dodo_subscription_id</code>,
             cliff dates). Use only when you&apos;ve already cancelled on Dodo&apos;s
-            side — otherwise the next webhook will re-create the row.
+            side - otherwise the next webhook will re-create the row.
           </>
         }
         confirmLabel="Reset to Free"

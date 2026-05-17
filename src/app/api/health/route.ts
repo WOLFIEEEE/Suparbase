@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 /**
  * Lightweight readiness check. Hit from UptimeRobot / Coolify
  * health probes / `curl` after deploy. The response shape lets the
- * operator confirm wiring at a glance — db reachable, email +
+ * operator confirm wiring at a glance - db reachable, email +
  * billing + observability configured.
  *
  * Returns 503 only when the database is unreachable (the one

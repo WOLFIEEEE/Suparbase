@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Admin allowlist is configured via SUPARBASE_ADMIN_EMAILS — a CSV of
+ * Admin allowlist is configured via SUPARBASE_ADMIN_EMAILS - a CSV of
  * email addresses (compared case-insensitively). If the env is unset
  * or empty, the admin panel is disabled entirely. Bootstrap admins
  * never live in the database; this keeps the panel guarded even if
@@ -34,7 +34,7 @@ export interface AdminSession {
 /**
  * Returns the authenticated admin session, or null when the caller
  * isn't on the allowlist (or isn't signed in at all). Routes/pages
- * should treat null the same as "not authenticated" — typically
+ * should treat null the same as "not authenticated" - typically
  * `notFound()` (don't acknowledge the surface).
  */
 export async function getAdminSession(): Promise<AdminSession | null> {

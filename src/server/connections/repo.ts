@@ -37,7 +37,7 @@ export function toSummary(row: ConnectionRow, myRole?: ConnectionRole): Connecti
  * Returns every connection the user has access to: those they own
  * and those they're a member of, with the caller's effective role.
  * The owned/member queries both push their ORDER BY into Postgres
- * via the (user_id, last_used_at DESC) index — no JS sort needed,
+ * via the (user_id, last_used_at DESC) index - no JS sort needed,
  * the final merge preserves order because both inputs are sorted.
  */
 export async function listConnections(userId: string): Promise<ConnectionSummary[]> {
@@ -70,7 +70,7 @@ export async function listConnections(userId: string): Promise<ConnectionSummary
 /**
  * Resolve the caller's role on a connection: owner, member role, or
  * null. One LEFT JOIN against `connection_member` rather than two
- * sequential round-trips — this is on the critical path of every
+ * sequential round-trips - this is on the critical path of every
  * protected API route, so the saved hop matters.
  */
 export async function getConnectionAccess(
@@ -172,7 +172,7 @@ export async function deleteConnection(userId: string, id: string): Promise<bool
 }
 
 /**
- * Bump `last_used_at` — but only if the row is more than 60s stale.
+ * Bump `last_used_at` - but only if the row is more than 60s stale.
  * This call runs on every successful proxied write, which on a busy
  * connection means contending on the same row lock + writing WAL for
  * a value the UI displays at minute-resolution anyway. The 60s

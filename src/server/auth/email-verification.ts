@@ -6,7 +6,7 @@ import { users, verificationTokens } from "@/server/schema";
 
 /**
  * Email verification flow. Reuses NextAuth's `verificationTokens`
- * table (which is otherwise unused — we don't ship the email
+ * table (which is otherwise unused - we don't ship the email
  * magic-link provider) and namespaces the identifier so a future
  * magic-link rollout won't collide.
  *
@@ -46,7 +46,7 @@ export async function issueVerifyToken(
     .limit(1);
   const user = userRows[0];
   if (!user?.email) return null;
-  // No-op if already verified — caller shows a "you're already
+  // No-op if already verified - caller shows a "you're already
   // verified" message instead of issuing a useless token.
   if (user.verified) {
     return { token: "", userEmail: user.email, expiresAt: new Date(0) };
@@ -56,7 +56,7 @@ export async function issueVerifyToken(
   const tokenHash = hashVerifyToken(token);
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
 
-  // Clear any prior in-flight tokens for this identifier — only the
+  // Clear any prior in-flight tokens for this identifier - only the
   // most recent link should work.
   await db
     .delete(verificationTokens)
@@ -128,7 +128,7 @@ export async function confirmVerifyToken(token: string): Promise<ConfirmResult> 
       .update(users)
       .set({ emailVerified: new Date() })
       .where(sql`lower(${users.email}) = ${lower}`);
-    // Drop every verification row for this identifier — the user
+    // Drop every verification row for this identifier - the user
     // is verified now, future tokens would be no-ops.
     await tx
       .delete(verificationTokens)
@@ -138,7 +138,7 @@ export async function confirmVerifyToken(token: string): Promise<ConfirmResult> 
   return { ok: true, email: user.email };
 }
 
-/** Active (unexpired) tokens for an email — used as a rate cap. */
+/** Active (unexpired) tokens for an email - used as a rate cap. */
 export async function activeVerifyTokenCount(email: string): Promise<number> {
   const lower = email.trim().toLowerCase();
   const rows = await db

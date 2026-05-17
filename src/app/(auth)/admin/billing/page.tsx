@@ -21,7 +21,7 @@ export default async function AdminBillingPage() {
         <h1 className="font-display text-display-md">Webhook events</h1>
         <p className="text-sm text-fg-muted">
           The last 200 webhooks received from Dodo Payments. Useful when a payment
-          succeeded but the user&apos;s plan didn&apos;t flip — search for their
+          succeeded but the user&apos;s plan didn&apos;t flip - search for their
           subscription id here.
         </p>
       </header>
@@ -83,8 +83,8 @@ export default async function AdminBillingPage() {
                     <span className="text-amber-400">pending</span>
                   )}
                 </td>
-                <td className="px-4 py-2 font-mono text-fg-muted">{e.dodoSubscriptionId ?? "—"}</td>
-                <td className="px-4 py-2 font-mono text-fg-muted">{e.userId ?? "—"}</td>
+                <td className="px-4 py-2 font-mono text-fg-muted">{e.dodoSubscriptionId ?? "-"}</td>
+                <td className="px-4 py-2 font-mono text-fg-muted">{e.userId ?? "-"}</td>
                 <td className="px-4 py-2 text-right font-mono text-fg-faint">{e.webhookId.slice(0, 12)}…</td>
               </tr>
             ))}

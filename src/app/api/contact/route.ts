@@ -28,7 +28,7 @@ const ContactSchema = z.object({
     .min(10, "Message must be at least 10 characters.")
     .max(5000, "Message is too long (max 5000 characters)."),
   referrer: z.string().max(2048).optional().nullable(),
-  /** Honeypot — bots fill it, humans don't see it. Must be empty. */
+  /** Honeypot - bots fill it, humans don't see it. Must be empty. */
   website: z.string().max(0).optional(),
 });
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message }, { status: 400 });
   }
 
-  // Honeypot tripped — pretend we accepted so bots don't tune their payload.
+  // Honeypot tripped - pretend we accepted so bots don't tune their payload.
   if (parsed.data.website && parsed.data.website.length > 0) {
     log.warn("contact: honeypot tripped", { ip });
     return NextResponse.json({ ok: true, delivered: false, reason: "blocked" });

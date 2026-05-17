@@ -55,7 +55,7 @@ async function ensureClient(): Promise<PostHogLike | null> {
       if (!ph) return null;
       ph.init(process.env.NEXT_PUBLIC_POSTHOG_KEY as string, {
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
-        // We don't autocapture clicks — too noisy + privacy-leaky on a
+        // We don't autocapture clicks - too noisy + privacy-leaky on a
         // data-admin tool. Explicit events only.
         autocapture: false,
         capture_pageview: true,
@@ -75,7 +75,7 @@ async function ensureClient(): Promise<PostHogLike | null> {
 }
 
 /**
- * Track an event. Safe to call before posthog is loaded — calls
+ * Track an event. Safe to call before posthog is loaded - calls
  * queue inside the SDK's own buffer.
  *
  * Naming convention: `noun_verb` (snake_case), past tense for things
@@ -92,7 +92,7 @@ export function track(event: string, props?: Record<string, unknown>): void {
 
 /**
  * Identify the signed-in user. Call this once after sign-in / when
- * the session loads. Only id + email + plan info — never row data.
+ * the session loads. Only id + email + plan info - never row data.
  */
 export function identifyUser(input: {
   id: string;

@@ -15,7 +15,7 @@ interface Props {
 export default async function ResetPasswordPage({ params }: Props) {
   const session = await auth();
   // Signed-in users belong in /settings/account if they want to
-  // change password — the public reset flow is for locked-out users.
+  // change password - the public reset flow is for locked-out users.
   if (session?.user) redirect("/connections");
 
   const { token } = await params;

@@ -19,7 +19,7 @@ const BodySchema = z.object({
  *
  * Validates the user's typed code against the proposed secret, then
  * persists the encrypted secret + 10 fresh recovery codes. Returns
- * the recovery codes — these are the only time they're sent in
+ * the recovery codes - these are the only time they're sent in
  * plaintext. The client MUST show them to the user once and offer
  * a download.
  *

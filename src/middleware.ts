@@ -83,7 +83,7 @@ export async function middleware(req: NextRequest) {
 /**
  * True when the path is a customer-facing protected page that
  * should be gated behind 2FA. API routes are intentionally NOT in
- * this list — the verify endpoints (`/api/account/2fa/verify`) need
+ * this list - the verify endpoints (`/api/account/2fa/verify`) need
  * to be reachable WHILE the user is in the pending-2FA state.
  *
  * The page-level gate is sufficient: the only way to do anything

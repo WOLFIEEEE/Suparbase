@@ -59,7 +59,7 @@ SELECT id, 19.99, 'pending' FROM users LIMIT 1;
 ```sql
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
--- Intentionally permissive — Sentry should still flag this.
+-- Intentionally permissive. Sentry should still flag this.
 CREATE POLICY "read all to authed" ON users FOR SELECT TO authenticated USING (true);
 ```
 
@@ -81,7 +81,7 @@ CREATE POLICY "read all to authed" ON users FOR SELECT TO authenticated USING (t
 - [ ] Open `/c/<id>/agents`. Confirm a single `Cursor 0.45.0` session
       with all the writes attributed to it.
 - [ ] Click into the session, then **Undo session**.
-- [ ] Verify the table state matches the original — INSERTs gone,
+- [ ] Verify the table state matches the original - INSERTs gone,
       UPDATEs reverted, DELETEs restored.
 - [ ] Re-check `agent_session.status` is now `undone` and the local
       session cache evicted (subsequent writes open a fresh session).
@@ -143,7 +143,7 @@ verifies Postgres actually accepts it on the way back.
 
 ## 2. Launch-day hardening
 
-Items in this section don't need a real project — they're code/config
+Items in this section don't need a real project - they're code/config
 checks before going live.
 
 ### 2.1 Environment
@@ -269,9 +269,9 @@ These are intentionally not blocking launch but worth knowing:
 - **Run the retention endpoint manually** to confirm the cron secret
   + auth shape: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" $URL/api/cron/retention`.
 - **Check the structured logs** for `attachToSession failed` or
-  similar — these were silent in v3.1.4, now they tell you what
+  similar - these were silent in v3.1.4, now they tell you what
   went wrong.
-- **The probe is read-only** — running `POST /api/connections/<id>/sentry/scan`
+- **The probe is read-only**: running `POST /api/connections/<id>/sentry/scan`
   from curl is a safe diagnostic.
 - **The undo audit trail** lives in `agent_session.undo_attempted_count`
   + `undo_reverted_count` + `undo_error`. If an undo half-applied,
@@ -288,7 +288,7 @@ sandbox.
 
 ### One-time setup
 
-- [ ] `pnpm db:push` (or run `dist/migrator.mjs`) — applies the
+- [ ] `pnpm db:push` (or run `dist/migrator.mjs`) - applies the
   `subscription`, `billing_event`, `admin_action` tables and the
   `billing_event.applied_at` column.
 - [ ] Set `SUPARBASE_ADMIN_EMAILS=<your email>` in the host env.
@@ -300,8 +300,8 @@ sandbox.
 
 ### Admin panel happy-path (no Dodo required)
 
-- [ ] Visit `/admin` — dashboard loads with user/MRR stats.
-- [ ] Visit `/admin/users` — search by email works; pill shows the
+- [ ] Visit `/admin` - dashboard loads with user/MRR stats.
+- [ ] Visit `/admin/users` - search by email works; pill shows the
   user's plan.
 - [ ] Open a user → **Grant a plan** → choose Hosted, leave date
   blank → save. The user's plan flips to Hosted with `granted_by_admin`
@@ -325,7 +325,7 @@ sandbox.
 
 - [ ] In the Dodo dashboard, send a test event (`subscription.active`)
   with `metadata.user_id` set to a real Suparbase user id.
-- [ ] Hit `/admin/billing` — the event row shows `Applied ✓`.
+- [ ] Hit `/admin/billing` - the event row shows `Applied ✓`.
 - [ ] The targeted user's plan in `/admin/users/[id]` flips to Hosted
   with the correct `current_period_end`.
 - [ ] Re-send the same event → second row does NOT appear (dedupe on
@@ -346,7 +346,7 @@ sandbox.
 
 ### Known limitations
 
-- Self-serve plan changes aren't supported in-app — cancel + re-sub
+- Self-serve plan changes aren't supported in-app - cancel + re-sub
   through Dodo, then admin grants if needed.
 - The admin grant `expiresAt` is set to 23:59:59 UTC of the chosen
   day, not local time.
@@ -364,7 +364,7 @@ the happy path, but Sentry + PostHog + UptimeRobot are recommended.
 
 ### One-time setup
 
-- [ ] `pnpm db:push` — applies migrations `0014_cuddly_fabian_cortez`
+- [ ] `pnpm db:push` - applies migrations `0014_cuddly_fabian_cortez`
   (password_reset_token) and `0015_real_proudstar` (TOTP secret +
   user_recovery_code table).
 - [ ] Verify `AUTH_SECRET` is set to a strong random value. The 2FA
@@ -421,7 +421,7 @@ the happy path, but Sentry + PostHog + UptimeRobot are recommended.
 - [ ] `curl https://<host>/api/health` → 200 with
   `{ db: true, email: <bool>, billing: <bool>,
      observability: <bool>, version: "<x.y.z>" }`.
-- [ ] Visit `/status` while signed out — every subsystem renders
+- [ ] Visit `/status` while signed out - every subsystem renders
   with an Operational / Not-configured badge that matches what
   `/api/health` returned.
 - [ ] (If Sentry is wired) trigger an error: visit `/admin/users/<not-a-uuid>`
@@ -439,7 +439,7 @@ the happy path, but Sentry + PostHog + UptimeRobot are recommended.
 ### Known limitations
 
 - 2FA enforcement gates protected *pages*. API routes are not
-  gated — a leaked session cookie can still hit `/api/v/...`
+  gated - a leaked session cookie can still hit `/api/v/...`
   endpoints. This is acceptable because session cookies are
   `httpOnly: true; secure: true; sameSite: lax` and exfiltration
   requires XSS, which is broadly prevented by Next's auto-escape

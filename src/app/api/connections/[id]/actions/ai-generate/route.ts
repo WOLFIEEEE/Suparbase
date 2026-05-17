@@ -23,7 +23,7 @@ const BodySchema = z.object({
   prompt: z.string().min(3).max(1_000),
   scope: z.enum(["global", "table", "row"]).optional(),
   kind: z.enum(["sql", "webhook"]).optional(),
-  /** Optional focus table — when the user opens AI-generate from
+  /** Optional focus table - when the user opens AI-generate from
    *  /c/[id]/tables/[name] or a row-detail page, this scopes the
    *  schema context the model sees. */
   tableSchema: z.string().max(120).optional(),
@@ -53,7 +53,7 @@ interface Params {
  *   7. Return. The save path will run its own validation pass when
  *      the user clicks Create.
  *
- * We do NOT execute the action against the project — writes would
+ * We do NOT execute the action against the project - writes would
  * actually fire, and webhooks would actually call third-party hosts.
  * Structural validation is the right safety pass for this shape.
  */
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     );
   }
 
-  // Structural safety pass — the equivalent of the read-only SQL
+  // Structural safety pass - the equivalent of the read-only SQL
   // execution the widget builder runs.
   try {
     validateScopeShape(action);

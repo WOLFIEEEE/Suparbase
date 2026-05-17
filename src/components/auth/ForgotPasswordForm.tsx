@@ -10,11 +10,11 @@ import { Label } from "@/components/ui/label";
 /**
  * Forgot-password request form. POSTs to /api/account/forgot-password
  * and always shows a generic "if that email matches an account, the
- * link is on its way" confirmation — the server returns 200 whether
+ * link is on its way" confirmation - the server returns 200 whether
  * the email exists or not (enumeration defence).
  *
  * If the server returns `configured: false`, the deployment hasn't
- * wired Resend yet — we tell the user to email support directly so
+ * wired Resend yet - we tell the user to email support directly so
  * they're not waiting on an email that will never arrive.
  */
 export function ForgotPasswordForm() {

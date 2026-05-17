@@ -37,14 +37,14 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
     : null;
 
   // Surface every plan in the catalog so the user can compare what
-  // they have vs what's available — even Team, which is custom.
+  // they have vs what's available - even Team, which is custom.
   const catalog = Object.entries(PLAN_LIMITS).map(([plan, limits]) => ({
     plan: plan as keyof typeof PLAN_LIMITS,
     ...limits,
   }));
 
   // Fetch payment history from Dodo if we know the customer id.
-  // Failures are silent — the BillingPanel renders without history
+  // Failures are silent - the BillingPanel renders without history
   // rather than showing an error.
   let payments: DodoPayment[] = [];
   const dodoConfig = readDodoConfig();

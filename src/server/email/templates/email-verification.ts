@@ -38,7 +38,7 @@ export function renderEmailVerificationEmail(
     ``,
     url,
     ``,
-    `If you didn't create a Suparbase account, ignore this email — no`,
+    `If you didn't create a Suparbase account, ignore this email - no`,
     `account will be created.`,
     ``,
     `- Suparbase`,

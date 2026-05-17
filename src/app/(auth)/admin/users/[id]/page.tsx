@@ -9,7 +9,7 @@ import { GrantPlanForm, ResetSubscriptionForm } from "./forms";
 
 // RFC 4122 UUID pattern. Guards against `/admin/users/garbage` which
 // would otherwise let Postgres reject the malformed cast and bubble
-// up as a 500 — confusing for the operator.
+// up as a 500 - confusing for the operator.
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -45,7 +45,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
       <header className="space-y-1">
         <h1 className="font-display text-display-md">{user.email}</h1>
         <p className="text-sm text-fg-muted">
-          {user.name ?? "—"} · joined {user.createdAt ? formatDate(user.createdAt) : "?"} ·{" "}
+          {user.name ?? "-"} · joined {user.createdAt ? formatDate(user.createdAt) : "?"} ·{" "}
           {user.connectionCount} connection{user.connectionCount === 1 ? "" : "s"}
         </p>
       </header>
@@ -55,20 +55,20 @@ export default async function AdminUserDetailPage({ params }: Props) {
         <Field label="Status" value={user.status} />
         <Field
           label="Trial ends"
-          value={user.trialEndsAt ? formatDate(user.trialEndsAt) : "—"}
+          value={user.trialEndsAt ? formatDate(user.trialEndsAt) : "-"}
         />
         <Field
           label="Renews"
-          value={user.currentPeriodEnd ? formatDate(user.currentPeriodEnd) : "—"}
+          value={user.currentPeriodEnd ? formatDate(user.currentPeriodEnd) : "-"}
         />
         <Field
           label="Dodo customer"
-          value={user.dodoCustomerId ? user.dodoCustomerId : "—"}
+          value={user.dodoCustomerId ? user.dodoCustomerId : "-"}
           mono
         />
         <Field
           label="Dodo subscription"
-          value={user.dodoSubscriptionId ? user.dodoSubscriptionId : "—"}
+          value={user.dodoSubscriptionId ? user.dodoSubscriptionId : "-"}
           mono
         />
       </section>

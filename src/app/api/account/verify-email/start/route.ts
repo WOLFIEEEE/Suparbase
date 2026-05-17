@@ -17,7 +17,7 @@ export const runtime = "nodejs";
  * Two modes:
  *   1. Authenticated: re-send the verification email to the
  *      signed-in user's email (ignores any body).
- *   2. Anonymous: accept `{ email }` in the body — used by the
+ *   2. Anonymous: accept `{ email }` in the body - used by the
  *      sign-up page to fire the initial verification email
  *      immediately after account creation. Enumeration-resistant:
  *      always returns 200.

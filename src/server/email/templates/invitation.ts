@@ -115,7 +115,7 @@ export function renderInvitationEmail(input: InvitationEmailInput): RenderedEmai
                 <div style="padding:12px 14px;background:#f4f4f0;border:1px solid #e2e2dc;border-radius:8px;font-size:12px;line-height:1.55;color:#555;">
                   This invitation is for <strong style="color:#111113;">${escape(input.recipientEmail)}</strong>
                   and expires on <strong style="color:#111113;">${expiresHuman}</strong>.
-                  Sign in with that email to accept &mdash; Suparbase verifies the address before adding you to the workspace.
+                  Sign in with that email to accept. Suparbase verifies the address before adding you to the workspace.
                 </div>
               </td>
             </tr>

@@ -36,7 +36,7 @@ const config: Config = {
       fontFamily: {
         // v1.0: unified to Inter Variable everywhere except mono.
         // `font-display` uses the same family with tighter tracking + heavier
-        // weight via the display-{xl,lg,md} sizes below — produces the
+        // weight via the display-{xl,lg,md} sizes below - produces the
         // "Inter Display" look without loading a second font family.
         sans: ["'Inter Variable'", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["'JetBrains Mono Variable'", "ui-monospace", "monospace"],

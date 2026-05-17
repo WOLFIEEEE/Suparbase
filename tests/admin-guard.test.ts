@@ -3,7 +3,7 @@ import { isAdminEmail, isAdminPanelEnabled } from "@/server/admin/guard";
 
 /**
  * Admin allowlist parsing. The CSV in SUPARBASE_ADMIN_EMAILS is the
- * single source of truth — no `is_admin` column in the DB by design.
+ * single source of truth - no `is_admin` column in the DB by design.
  *
  * The tests pin the case-insensitivity + whitespace tolerance + empty
  * string handling so a contributor doesn't accidentally regress them.

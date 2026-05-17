@@ -3,14 +3,14 @@ import type { Plan, SubscriptionRow, SubscriptionStatus } from "@/server/schema"
 
 /**
  * The catalog of plans and what each entitles you to. The Free tier
- * is the implicit default — a user with no `subscriptions` row, or a
+ * is the implicit default - a user with no `subscriptions` row, or a
  * row whose status has lapsed (cancelled/expired/on_hold/failed) is
  * resolved to `free` at entitlement time.
  */
 export interface PlanLimits {
   /**
    * Max number of personal connections (owned by this user).
-   * `null` means unlimited — use this sentinel rather than
+   * `null` means unlimited - use this sentinel rather than
    * `Number.POSITIVE_INFINITY`, which JSON-serialises to `null`
    * anyway and breaks client-side type checks.
    */
@@ -59,7 +59,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     maxConnections: null,
     canInviteTeam: true,
     label: "Team",
-    description: "Custom enterprise plan — SSO, dedicated infra, DPA.",
+    description: "Custom enterprise plan - SSO, dedicated infra, DPA.",
     monthlyPriceCents: 0, // priced manually
     annualPriceCents: 0,
     trialDays: 0,
@@ -115,7 +115,7 @@ export function resolvePlan(row: SubscriptionRow | null): ActivePlan {
   //   - paid status required (active | trialing)
   //   - real-billing rows need a future current_period_end / trial_ends_at
   //   - admin grants without a cliff are open-ended (cliff IS NULL)
-  //   - admin grants WITH a cliff still honour it — comp accounts
+  //   - admin grants WITH a cliff still honour it - comp accounts
   //     don't outlive their stated expiry
   const cliffSatisfied = isAdminGrant ? cliff === null || cliffOk : cliffOk;
   const entitled =

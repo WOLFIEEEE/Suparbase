@@ -17,7 +17,7 @@ export default async function AdminDashboardPage() {
       <header className="space-y-1">
         <h1 className="font-display text-display-md">Dashboard</h1>
         <p className="text-sm text-fg-muted">
-          Snapshot of the SaaS — refreshes on each load. Drill into{" "}
+          Snapshot of the SaaS - refreshes on each load. Drill into{" "}
           <Link href="/admin/users" className="text-accent hover:underline">
             users
           </Link>{" "}

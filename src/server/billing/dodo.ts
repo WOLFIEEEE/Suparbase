@@ -5,7 +5,7 @@ import { redact } from "@/lib/redact";
 /**
  * Dodo Payments REST + webhook helpers.
  *
- * The integration is deliberately tiny — one POST to create a
+ * The integration is deliberately tiny - one POST to create a
  * checkout session, one signature-verify helper for incoming webhooks.
  * Everything else flows through the webhook → database, which is
  * Dodo's recommended pattern.
@@ -143,7 +143,7 @@ export interface DodoPayment {
 /**
  * List the most recent payments for one Dodo customer. Used by the
  * /settings/billing page to render an invoice history with download
- * links — Dodo hosts the actual PDF, we just surface the URL.
+ * links. Dodo hosts the actual PDF, we just surface the URL.
  *
  * Returns [] when the customer has no payments or Dodo rejects the
  * query; never throws to the caller's UI path.
@@ -182,7 +182,7 @@ export async function listCustomerPayments(
 /**
  * Mint a customer-portal session URL. The user clicks it and lands
  * on Dodo's hosted UI for managing their payment method,
- * cancelling, or pulling invoices — without us needing to re-build
+ * cancelling, or pulling invoices - without us needing to re-build
  * any of that surface in-app.
  *
  * Returns `null` when Dodo doesn't return a URL (older sandbox
@@ -217,7 +217,7 @@ export async function createPortalSession(
  * Spec: the signed payload is `${webhook-id}.${webhook-timestamp}.${raw_body}`,
  * HMAC-SHA256-ed with the secret, then base64-encoded. The signature
  * header carries one or more comma-separated entries prefixed with
- * `v1,` — any one matching means we trust the message.
+ * `v1,` - any one matching means we trust the message.
  *
  * Throws DodoError("signature_stale") when the timestamp is more than
  * 5 minutes old to defend against replay.
@@ -254,7 +254,7 @@ export function verifyWebhookSignature(params: {
   }
 
   // Secrets distributed via Standard Webhooks dashboards conventionally
-  // arrive with a `whsec_` prefix wrapping a base64 body — strip it
+  // arrive with a `whsec_` prefix wrapping a base64 body - strip it
   // and decode. If the body doesn't look like base64 we treat the
   // entire (post-prefix) string as raw UTF-8 bytes. The earlier
   // try/catch around Buffer.from was a no-op since Buffer.from

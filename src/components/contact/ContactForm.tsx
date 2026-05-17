@@ -95,7 +95,7 @@ export function ContactForm({ initialTopic = "general" }: Props) {
             <p className="text-xs text-fg-muted">
               {state.delivered ? (
                 <>
-                  Thanks &mdash; we&rsquo;ll reply to{" "}
+                  Thanks - we&rsquo;ll reply to{" "}
                   <span className="font-mono text-fg">{email}</span> within one
                   business day. For security reports, please also encrypt
                   sensitive details with our PGP key on{" "}
@@ -207,7 +207,7 @@ export function ContactForm({ initialTopic = "general" }: Props) {
         />
       </div>
 
-      {/* Honeypot — visually hidden, off-screen, and aria-hidden so screen
+      {/* Honeypot - visually hidden, off-screen, and aria-hidden so screen
           readers skip it. Bots that fill every input get caught server-side. */}
       <div className="absolute left-[-9999px] top-[-9999px]" aria-hidden>
         <label htmlFor="contact-website">Website</label>

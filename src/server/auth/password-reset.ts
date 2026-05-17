@@ -31,7 +31,7 @@ export function hashToken(token: string): string {
 
 /**
  * Issue a token for the user with this email. Returns null when no
- * user exists — the caller should still return 200 to defeat
+ * user exists - the caller should still return 200 to defeat
  * enumeration. Records the requester IP for forensic audit.
  */
 export async function issueResetToken(
@@ -97,7 +97,7 @@ export async function consumeResetToken(
       .update(passwordResetTokens)
       .set({ consumedAt: new Date() })
       .where(eq(passwordResetTokens.id, row.id));
-    // Invalidate every other outstanding token for this user — a
+    // Invalidate every other outstanding token for this user - a
     // successful reset should void any in-flight links.
     await tx
       .update(passwordResetTokens)

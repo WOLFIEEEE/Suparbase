@@ -1,12 +1,12 @@
-# Suparbase — Coolify deployment
+# Suparbase. Coolify deployment
 #
 # Three services:
-#   bootstrap  — runs ONCE on first deploy. Generates strong random secrets
+#   bootstrap  - runs ONCE on first deploy. Generates strong random secrets
 #                into a shared docker volume (suparbase_secrets). On every
 #                subsequent boot, it is a no-op: existing secrets are reused.
-#   db         — supabase/postgres. Reads its password from the secrets volume
+#   db         - supabase/postgres. Reads its password from the secrets volume
 #                via POSTGRES_PASSWORD_FILE.
-#   app        — this Next.js app. Reads AUTH_SECRET, SUPARBASE_ENCRYPTION_KEY,
+#   app        - this Next.js app. Reads AUTH_SECRET, SUPARBASE_ENCRYPTION_KEY,
 #                and POSTGRES_PASSWORD from the volume via *_FILE env vars.
 #                The entrypoint composes DATABASE_URL at runtime.
 #
@@ -14,10 +14,10 @@
 # Operator-supplied env values always win over the auto-generated secrets.
 #
 # Optional env vars you'll likely want to set in Coolify:
-#   AUTH_URL                — your public origin (defaults to https://suparbase.com)
-#   AUTH_GITHUB_ID          — only if you want GitHub OAuth available
-#   AUTH_GITHUB_SECRET      — only if you want GitHub OAuth available
-#   SUPARBASE_AI_DEFAULT_MODEL  — default OpenRouter model for new users
+#   AUTH_URL                - your public origin (defaults to https://suparbase.com)
+#   AUTH_GITHUB_ID          - only if you want GitHub OAuth available
+#   AUTH_GITHUB_SECRET      - only if you want GitHub OAuth available
+#   SUPARBASE_AI_DEFAULT_MODEL  - default OpenRouter model for new users
 #
 # ⚠ Losing the `suparbase_secrets` volume destroys your encryption key
 #   and every encrypted Supabase / OpenRouter credential stored in this
@@ -52,7 +52,7 @@ services:
           fi
           chmod 444 "$$target"
         }
-        # Standard base64 of exactly 32 random bytes — must decode back to 32
+        # Standard base64 of exactly 32 random bytes - must decode back to 32
         # bytes for AES-256-GCM. Do NOT strip padding/charset, that corrupts it.
         gen_b64key() {
           target="/secrets/$$1"
@@ -64,7 +64,7 @@ services:
               return 0
             fi
             echo "[bootstrap] $$target exists but decodes to $$n bytes (need 32); regenerating"
-            # File may be 0444 from a prior run — re-allow write before overwriting.
+            # File may be 0444 from a prior run - re-allow write before overwriting.
             chmod 644 "$$target" || true
           fi
           head -c 32 /dev/urandom | base64 | tr -d '\n' > "$$target"

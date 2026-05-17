@@ -20,7 +20,7 @@ const BodySchema = z.object({
  *
  * Consumes a single-use reset token + sets a new password (bcrypt
  * cost 12). Returns 410 for expired tokens, 409 for already-used,
- * 404 for unknown — distinct codes so the UI can render the right
+ * 404 for unknown - distinct codes so the UI can render the right
  * recovery instruction.
  *
  * On success, also revokes any other outstanding tokens for the same

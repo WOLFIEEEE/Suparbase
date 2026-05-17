@@ -27,7 +27,7 @@ export function Article() {
         Human code review still matters. So does the fact that humans don&apos;t
         always read carefully on a Friday afternoon. AI reviewers shipped on
         GitHub PRs in 2025 are the cheap second pair of eyes that catches the
-        boring bugs &mdash; especially in database PRs, where boring bugs are
+        boring bugs - especially in database PRs, where boring bugs are
         usually the expensive ones.
       </p>
 

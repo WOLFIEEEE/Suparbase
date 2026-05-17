@@ -6,7 +6,7 @@ import { redact } from "@/lib/redact";
  * Error-reporting shim. By default routes errors to the structured
  * logger (`log.error`). When `SENTRY_DSN` is set, a future plugin
  * can substitute the actual Sentry SDK by re-exporting `report()`
- * from this module — every call site already passes through here.
+ * from this module - every call site already passes through here.
  *
  * The intent is: don't bake a Sentry dependency into the build until
  * the operator opts in, but make sure every catch site that should
@@ -33,7 +33,7 @@ interface SentryClient {
 
 /**
  * Look up the optional Sentry client at module-init time. We don't
- * `import` `@sentry/nextjs` directly — that would force every
+ * `import` `@sentry/nextjs` directly - that would force every
  * deployment to install it. Instead, we look for a global hook the
  * Next instrumentation file can register, plus fall back to
  * checking process for a Sentry SDK if the operator manually wired
@@ -79,7 +79,7 @@ export function reportError(err: unknown, ctx: ErrorContext = {}): void {
         },
       });
     } catch {
-      // Never let reporter errors escape — fail open to logging.
+      // Never let reporter errors escape - fail open to logging.
     }
   }
 }

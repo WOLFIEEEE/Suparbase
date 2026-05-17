@@ -24,7 +24,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export default async function AdminAuditPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   // Only apply filters that pass shape validation. Anything weird is
-  // silently dropped — the search form clears it on next submit.
+  // silently dropped - the search form clears it on next submit.
   const params: AuditSearchParams = {};
   if (sp.user && UUID_RE.test(sp.user)) params.userId = sp.user;
   if (sp.conn && UUID_RE.test(sp.conn)) params.connectionId = sp.conn;
@@ -42,7 +42,7 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
     if (!Number.isNaN(d.getTime())) params.until = d;
   }
 
-  // Only run the query when at least one filter is set — otherwise
+  // Only run the query when at least one filter is set - otherwise
   // we'd return every audit row in the system (cheap with the
   // index, but useless to the operator).
   const hasFilter = Object.keys(params).length > 0;
@@ -120,8 +120,8 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
                 {rows.map((r) => (
                   <tr key={r.id} className="hover:bg-bg/30">
                     <td className="px-4 py-2 font-mono text-fg-faint">{formatDateTime(r.createdAt)}</td>
-                    <td className="px-4 py-2 font-mono text-fg-muted">{r.userEmail ?? "—"}</td>
-                    <td className="px-4 py-2 text-fg-muted">{r.connectionName ?? "—"}</td>
+                    <td className="px-4 py-2 font-mono text-fg-muted">{r.userEmail ?? "-"}</td>
+                    <td className="px-4 py-2 text-fg-muted">{r.connectionName ?? "-"}</td>
                     <td className="px-4 py-2 font-mono text-fg">
                       {r.schemaName}.{r.tableName}
                     </td>
@@ -130,7 +130,7 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-4 py-2 font-mono text-fg-muted">{r.httpStatus}</td>
                     <td className="px-4 py-2 font-mono text-fg-faint">
-                      {r.primaryKey ? JSON.stringify(r.primaryKey).slice(0, 40) : "—"}
+                      {r.primaryKey ? JSON.stringify(r.primaryKey).slice(0, 40) : "-"}
                     </td>
                   </tr>
                 ))}
@@ -191,7 +191,7 @@ function SelectField({
       >
         {options.map((o) => (
           <option key={o} value={o}>
-            {o || "—"}
+            {o || "-"}
           </option>
         ))}
       </select>

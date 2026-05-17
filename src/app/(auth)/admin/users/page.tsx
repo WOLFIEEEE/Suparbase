@@ -23,7 +23,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
         <h1 className="font-display text-display-md">Users</h1>
         <p className="text-sm text-fg-muted">
           {users.length === 200
-            ? "Showing the most recent 200 — narrow with search to find specific accounts."
+            ? "Showing the most recent 200 - narrow with search to find specific accounts."
             : `${users.length} user${users.length === 1 ? "" : "s"} found.`}
         </p>
       </header>
@@ -57,7 +57,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p className="truncate font-mono text-xs text-fg-muted">{u.email}</p>
                 <p className="text-xs text-fg-faint">
-                  {u.name ?? "—"} · joined {u.createdAt ? formatDate(u.createdAt) : "?"} · {u.connectionCount} conn
+                  {u.name ?? "-"} · joined {u.createdAt ? formatDate(u.createdAt) : "?"} · {u.connectionCount} conn
                   {u.connectionCount === 1 ? "" : "s"}
                 </p>
               </div>

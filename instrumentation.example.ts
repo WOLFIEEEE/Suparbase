@@ -11,7 +11,7 @@
  * Next.js auto-invokes `register()` once per server-instance boot.
  * The `reportError()` helper in `src/server/observability/report.ts`
  * looks up `globalThis.__sentry` at call time and forwards the
- * exception — so the existing call sites pick this up automatically.
+ * exception - so the existing call sites pick this up automatically.
  *
  * No code paths import from `@sentry/nextjs` directly. This keeps
  * the dependency optional: deployments that don't want analytics /

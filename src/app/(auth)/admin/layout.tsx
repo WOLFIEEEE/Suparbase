@@ -7,7 +7,7 @@ import { AppFooter } from "@/components/workspace/AppFooter";
 
 /**
  * /admin shell. Renders only for emails in SUPARBASE_ADMIN_EMAILS;
- * everything else 404s — we don't acknowledge that an admin surface
+ * everything else 404s - we don't acknowledge that an admin surface
  * exists.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

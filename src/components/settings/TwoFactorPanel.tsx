@@ -335,10 +335,10 @@ function RecoveryCodesPanel({
       <div className="flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />
         <div>
-          <p className="font-medium text-fg">Recovery codes — save these now.</p>
+          <p className="font-medium text-fg">Recovery codes - save these now.</p>
           <p className="mt-1 text-xs text-fg-muted">
             Use one if you lose access to your authenticator app. Each code
-            works exactly once. We won&apos;t show them again — copy or
+            works exactly once. We won&apos;t show them again - copy or
             download before leaving this page.
           </p>
         </div>
@@ -394,7 +394,7 @@ function EnabledPanel({
           <div>
             <p className="font-medium text-fg">2FA is on.</p>
             <p className="mt-1 text-xs text-fg-muted">
-              Enabled {enabledAt ? new Date(enabledAt).toLocaleDateString() : "—"}.
+              Enabled {enabledAt ? new Date(enabledAt).toLocaleDateString() : "-"}.
               Every sign-in requires a code from your authenticator (or one of
               your recovery codes).
             </p>
@@ -422,7 +422,7 @@ function EnabledPanel({
             <Link href="/contact?topic=support" className="text-accent hover:underline">
               our contact form
             </Link>{" "}
-            to disable 2FA — we&apos;ll re-verify your identity through other
+            to disable 2FA - we&apos;ll re-verify your identity through other
             means.
           </p>
         ) : (

@@ -76,7 +76,7 @@ export function Body() {
       <p>
         Plenty of teams in 2026 use both: Neon as the database, Supabase
         as a managed PostgREST + GoTrue layer pointed at the same Postgres.
-        It works, but it&apos;s an awkward middle ground &mdash; you&apos;re
+        It works, but it&apos;s an awkward middle ground - you&apos;re
         paying for two services with overlapping responsibilities. Pick
         one and lean in.
       </p>

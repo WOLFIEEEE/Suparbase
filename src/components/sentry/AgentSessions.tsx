@@ -417,7 +417,7 @@ function SessionDrawer({
             {data?.writes.length ?? 0} mutation{(data?.writes.length ?? 0) === 1 ? "" : "s"}
           </strong>{" "}
           atomically: deletes inserts, restores deletes, reverts updates to
-          their before-row state. Runs inside a single transaction — either
+          their before-row state. Runs inside a single transaction - either
           all reverts apply or none do.
         </>
       }

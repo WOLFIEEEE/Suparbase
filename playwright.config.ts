@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * Playwright end-to-end test config. Kept deliberately small:
  *   - One project (Chromium desktop). Mobile / Firefox come after we
  *     have a real signal that the suite is worth maintaining.
- *   - Tests live in `e2e/`, not `tests/` — that's vitest territory.
+ *   - Tests live in `e2e/`, not `tests/` - that's vitest territory.
  *   - The dev server is auto-spawned with `pnpm dev` unless
  *     PLAYWRIGHT_BASE_URL is set (then we assume CI / staging).
  *   - Single retry in CI for flakiness; zero locally for fast fail.

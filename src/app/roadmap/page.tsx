@@ -42,7 +42,7 @@ const ITEMS: Item[] = [
   {
     status: "shipped",
     title: "Invoice history",
-    body: "Dodo-hosted PDF invoices accessible from /settings/billing — no more digging through receipt emails.",
+    body: "Dodo-hosted PDF invoices accessible from /settings/billing - no more digging through receipt emails.",
     ref: { href: "/changelog", label: "v3.7.0" },
   },
   {
@@ -129,7 +129,7 @@ export default async function RoadmapPage() {
         <PageHeader
           eyebrow="Roadmap"
           title="What we shipped, what's next."
-          subtitle="No promises on dates — but we ship in tagged releases and write each one up in the changelog. If you want to push something up the list, email contact@suparbase.com."
+          subtitle="No promises on dates - but we ship in tagged releases and write each one up in the changelog. If you want to push something up the list, email contact@suparbase.com."
           actions={
             <Link
               href="/changelog"

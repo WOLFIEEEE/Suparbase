@@ -113,7 +113,7 @@ const FAQ = [
 ] as const;
 
 export default async function PricingPage() {
-  // Signed-in users already have an account — sending them to the
+  // Signed-in users already have an account - sending them to the
   // marketing pricing page makes no sense. /settings/billing has
   // the same plan table plus their current state + upgrade CTA.
   const session = await auth();

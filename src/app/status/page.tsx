@@ -25,7 +25,7 @@ interface CheckResult {
 
 /**
  * Real-time public status page. Hits the same checks as
- * /api/health but renders them as a human-readable summary —
+ * /api/health but renders them as a human-readable summary
  * useful for an at-a-glance "is the deploy live + everything
  * wired" view that customers can refresh themselves.
  *
@@ -141,7 +141,7 @@ export default async function StatusPage() {
               This page renders the same data the operator gets from{" "}
               <code className="font-mono">GET /api/health</code>. For
               programmatic monitoring (UptimeRobot, Pingdom, etc.), hit that
-              endpoint directly — it returns a stable JSON shape with{" "}
+              endpoint directly - it returns a stable JSON shape with{" "}
               <code className="font-mono">db</code>, <code className="font-mono">email</code>,{" "}
               <code className="font-mono">billing</code>, <code className="font-mono">observability</code>,
               and <code className="font-mono">version</code>.

@@ -35,8 +35,8 @@ export function renderPasswordResetEmail(input: PasswordResetEmailInput): Render
   const subject = "Reset your Suparbase password";
 
   const ipLine = input.requestedFromIp
-    ? `Requested from ${input.requestedFromIp}. If that doesn't sound like you, ignore this email — your password stays unchanged.`
-    : `If you didn't ask for this, ignore the email — your password stays unchanged.`;
+    ? `Requested from ${input.requestedFromIp}. If that doesn't sound like you, ignore this email - your password stays unchanged.`
+    : `If you didn't ask for this, ignore the email - your password stays unchanged.`;
 
   const text = [
     `Reset your Suparbase password`,
@@ -115,7 +115,7 @@ export function renderPasswordResetEmail(input: PasswordResetEmailInput): Render
               <td style="padding:0 32px 28px 32px;">
                 <p style="margin:0;font-size:11px;line-height:1.55;color:#999;">
                   The link can only be used once. After you reset, all your existing
-                  sign-in sessions stay active — sign out and back in if you suspect
+                  sign-in sessions stay active - sign out and back in if you suspect
                   someone else used your old password.
                 </p>
               </td>

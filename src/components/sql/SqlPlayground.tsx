@@ -369,7 +369,7 @@ function ModeToggle({
         {...confirmWrite.dialogProps}
         title="Turn on write mode?"
         description="Any SQL you run can INSERT, UPDATE, DELETE, or DROP. Make sure you know what your query does before you press Run."
-        confirmLabel="I understand — enable writes"
+        confirmLabel="I understand - enable writes"
         tone="danger"
       />
     </>

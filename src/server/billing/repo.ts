@@ -94,12 +94,12 @@ export async function upsertSubscription(input: UpsertSubscriptionInput): Promis
  * Recorded as part of the webhook handler. The handler runs in two
  * idempotency steps:
  *
- *   1. `recordBillingEvent` — insert (or no-op on duplicate). Returns
+ *   1. `recordBillingEvent` - insert (or no-op on duplicate). Returns
  *      `alreadyApplied: true` when a prior receipt has already been
  *      acted on, in which case the handler short-circuits 200 OK.
  *      Otherwise the row is in the DB but `applied_at` is still null.
  *
- *   2. `markBillingEventApplied` — set `applied_at = now()` after the
+ *   2. `markBillingEventApplied` - set `applied_at = now()` after the
  *      caller has successfully mutated `subscriptions`. If step 2
  *      throws, the next receipt finds `applied_at IS NULL` and re-runs
  *      apply, so transient DB errors don't permanently desync state.
@@ -204,7 +204,7 @@ export interface BillingStats {
 /**
  * Quick aggregate for the admin dashboard. Counts subscriptions that
  * are currently entitled (trialing or active) and projects MRR from
- * the price catalog (not from per-user discounts — Dodo handles those
+ * the price catalog (not from per-user discounts. Dodo handles those
  * upstream, and we don't store them).
  */
 export async function getBillingStats(): Promise<BillingStats> {
@@ -244,7 +244,7 @@ export async function getBillingStats(): Promise<BillingStats> {
 }
 
 /**
- * Count this user's owned connections — used as the gate for the
+ * Count this user's owned connections - used as the gate for the
  * Free tier's max-1-connection rule.
  */
 export async function countOwnedConnections(userId: string): Promise<number> {

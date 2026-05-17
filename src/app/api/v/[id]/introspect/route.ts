@@ -20,7 +20,7 @@ interface Params {
  * internally, so a fresh `CREATE TABLE` on the project won't show up
  * via /rest/v1/ for ~10 minutes by default. Sending
  * `NOTIFY pgrst, 'reload schema'` tells it to drop the cache now.
- * This requires the optional Direct Postgres URL — without it we
+ * This requires the optional Direct Postgres URL - without it we
  * still introspect, but the result may be slightly stale.
  */
 export async function GET(req: NextRequest, ctx: Params) {

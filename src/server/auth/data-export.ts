@@ -18,14 +18,14 @@ import {
  * GDPR Art. 15 / Art. 20 data export. Returns a single JSON document
  * containing every row that ties back to this user, with:
  *
- *   - Plaintext metadata (name, plan, dates) — included.
+ *   - Plaintext metadata (name, plan, dates) - included.
  *   - Encrypted blobs (Supabase API keys, Postgres URLs, TOTP secret,
- *     OpenRouter key) — INCLUDED AS BASE64 of the ciphertext.
+ *     OpenRouter key) - INCLUDED AS BASE64 of the ciphertext.
  *     We deliberately don't decrypt: the export is for the user's
  *     records, and exporting their own credentials in plaintext to
  *     a downloadable JSON is a worse outcome than them not having
  *     them. They can paste the keys back from their original source.
- *   - Audit log rows — included with primary keys + before/after
+ *   - Audit log rows - included with primary keys + before/after
  *     snapshots. This is the customer's data; they're entitled to it.
  *
  * Capped at 100k audit rows per export. Anything bigger would
@@ -127,7 +127,7 @@ export async function buildUserExport(userId: string): Promise<UserExport> {
     .from(agentSessions)
     .where(eq(agentSessions.userId, userId));
 
-  // Audit log — most recent first, capped. We strip the encrypted
+  // Audit log - most recent first, capped. We strip the encrypted
   // primary key column data only if it looks like it contains a JWT-
   // shaped string (defensive; row data isn't credentials, but customers
   // might paste API keys into row values).

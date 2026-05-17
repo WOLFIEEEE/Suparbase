@@ -24,6 +24,6 @@ docs
 .DS_Store
 *.log
 
-# Drizzle files we DO want in the image are explicitly in `drizzle/` —
+# Drizzle files we DO want in the image are explicitly in `drizzle/`
 # don't ignore them here. We only ignore extra noise:
 .drizzle-tmp

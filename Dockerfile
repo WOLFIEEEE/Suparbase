@@ -39,7 +39,7 @@ ENV DATABASE_URL=postgres://placeholder \
     SUPARBASE_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 
 # `pnpm run build` chains `next build` AND `pnpm build:migrator`
-# (esbuild → dist/migrator.mjs — ~250 KB, fully self-contained).
+# (esbuild → dist/migrator.mjs - ~250 KB, fully self-contained).
 RUN pnpm run build
 
 

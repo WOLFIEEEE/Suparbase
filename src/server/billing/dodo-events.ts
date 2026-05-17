@@ -3,7 +3,7 @@ import type { Plan, SubscriptionStatus } from "@/server/schema";
 /**
  * Pure mapping layer for Dodo webhook events. Extracted from the
  * route handler so it can be unit-tested without a DB or HTTP
- * harness — the handler glues this to upsertSubscription + the
+ * harness - the handler glues this to upsertSubscription + the
  * idempotency store.
  */
 
@@ -35,11 +35,11 @@ export interface SubscriptionUpdate {
 
 /**
  * Translate a Dodo event into a `subscriptions` row mutation. Returns
- * null when the event type is unrecognised — the caller should record
+ * null when the event type is unrecognised - the caller should record
  * the event for forensics but leave the subscription row alone.
  *
  * `plan` is always `"hosted"` because that's the only product we sell
- * self-serve. The plan doesn't change on expire/cancel — the resolver
+ * self-serve. The plan doesn't change on expire/cancel - the resolver
  * (`resolvePlan`) downgrades entitlement based on `status` separately.
  */
 export function mapDodoEventToUpdate(event: DodoWebhookEvent): SubscriptionUpdate | null {
@@ -68,7 +68,7 @@ export function mapStatus(
   switch (eventType) {
     case "subscription.active":
       // `payloadStatus` reflects whether the subscription is in trial
-      // — Dodo emits "trialing" via the data.status field.
+      //. Dodo emits "trialing" via the data.status field.
       if (payloadStatus === "trialing") return "trialing";
       return "active";
     case "subscription.renewed":

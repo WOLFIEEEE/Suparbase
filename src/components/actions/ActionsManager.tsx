@@ -380,7 +380,7 @@ function ActionFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
 
   const isEdit = !!initial;
 
-  // AI-generate state. Same shape as the widget builder — collapsible
+  // AI-generate state. Same shape as the widget builder - collapsible
   // panel, prompt textarea, populate the form on success. There's no
   // executable preview here (writes would actually fire, webhooks
   // would actually call third-party hosts), so the safety pass is
@@ -520,7 +520,7 @@ function ActionFormDialog({ connectionId, initial, onClose, onSaved }: FormDialo
         </DialogDescription>
 
         {/* AI-generate panel. Default open on create, closed on edit.
-            No live preview here — actions write to the project, so the
+            No live preview here - actions write to the project, so the
             safety pass is structural validation (placeholder counts,
             webhook URL safety) done server-side. */}
         <section className="rounded-lg border hairline bg-bg-sunken/40">

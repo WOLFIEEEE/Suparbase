@@ -69,7 +69,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         {/*
           Pass the resolved theme so toasts re-paint when the user
-          flips ThemeToggle — Sonner's own theme="system" only
+          flips ThemeToggle. Sonner's own theme="system" only
           watches prefers-color-scheme and ignores our data-theme.
         */}
         <Toaster theme={resolvedTheme} position="bottom-right" richColors closeButton />

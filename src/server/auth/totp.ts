@@ -16,7 +16,7 @@ import { encryptKey, decryptKey } from "@/server/crypto/vault";
  * exactly once.
  *
  * Verification accepts the current 30-second window plus a single
- * window of clock skew on either side — total tolerance is ~90s.
+ * window of clock skew on either side - total tolerance is ~90s.
  *
  * Issuer label is "Suparbase" so authenticator apps group entries.
  */
@@ -35,7 +35,7 @@ export interface SetupResult {
 
 /**
  * Generate a fresh TOTP secret + the QR for the user. Doesn't
- * persist anything — the caller commits via `enable2FA` after the
+ * persist anything - the caller commits via `enable2FA` after the
  * user proves they scanned it by submitting a valid code.
  */
 export async function generate2FASetup(email: string): Promise<SetupResult> {
@@ -57,7 +57,7 @@ export async function generate2FASetup(email: string): Promise<SetupResult> {
   });
   const otpauthUrl = totp.toString();
 
-  // Render the QR as inline SVG data URL — small (<2 KB) and works
+  // Render the QR as inline SVG data URL - small (<2 KB) and works
   // inside emails / dark-mode / no external requests.
   const qrSvg = await QRCode.toString(otpauthUrl, {
     type: "svg",
@@ -71,7 +71,7 @@ export async function generate2FASetup(email: string): Promise<SetupResult> {
 
 /**
  * Activate 2FA. Validates the submitted code against the proposed
- * secret BEFORE persistence — if the user typed wrong, we don't
+ * secret BEFORE persistence - if the user typed wrong, we don't
  * want to enable 2FA with a secret they can't reproduce.
  *
  * Returns the recovery codes (plaintext) on success. The caller
@@ -147,7 +147,7 @@ export async function consumeRecoveryCode(userId: string, code: string): Promise
   if (!normalised) return false;
   const hash = hashRecoveryCode(normalised);
   // SELECT ... FOR UPDATE would be safer under concurrency, but
-  // we're inside a single user's session — racing yourself isn't a
+  // we're inside a single user's session - racing yourself isn't a
   // real concern. Just check + update.
   const rows = await db
     .select()
@@ -235,7 +235,7 @@ function hashRecoveryCode(plaintext: string): string {
 
 /**
  * Signed-cookie helpers for the "mfa-verified" session marker.
- * Independent of NextAuth's JWT — the middleware checks both:
+ * Independent of NextAuth's JWT - the middleware checks both:
  *   1. JWT claims requires2FA
  *   2. cookie present + signature valid + not expired
  *

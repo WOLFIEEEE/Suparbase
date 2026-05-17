@@ -19,7 +19,7 @@
 > in CI. What's missing is end-to-end validation against a real
 > Supabase project for the v3 surface (Agent Sentry, agent sessions,
 > undo). See [PRODUCTION.md](PRODUCTION.md) for the validation
-> checklist — about 90 minutes against a throw-away project gets you
+> checklist - about 90 minutes against a throw-away project gets you
 > the rest of the way to confident production.
 >
 > Release notes for every version live in [`CHANGELOG.md`](CHANGELOG.md).

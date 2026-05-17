@@ -7,14 +7,14 @@ import { agentSessions } from "@/server/schema/agent-sessions";
 
 /**
  * Retention helpers. Without these, the audit-shaped tables grow
- * forever — on a busy connection that's gigabytes per month.
+ * forever - on a busy connection that's gigabytes per month.
  *
  * What gets pruned:
  *   - audit_log: rows older than `auditRetentionDays`.
  *   - sentry_scan: rows older than `scanRetentionDays`.
  *   - sentry_finding: only resolved + archived rows older than
  *     `resolvedFindingRetentionDays`. Open / quarantined findings are
- *     never pruned — they represent active state.
+ *     never pruned - they represent active state.
  *   - agent_session: only undone / closed sessions older than
  *     `agentSessionRetentionDays`, AFTER the linked audit_log rows
  *     have been pruned. Sessions whose writes still exist in audit_log
@@ -57,7 +57,7 @@ export async function runRetention(
 ): Promise<RetentionResult> {
   const t0 = Date.now();
 
-  // 1. audit_log — drop write rows older than the cap. Done in
+  // 1. audit_log: drop write rows older than the cap. Done in
   // batches of 5000 so we hold row locks + write WAL for a bounded
   // window per statement, even on tables with millions of rows.
   // The createdAt scan uses `audit_created_at_idx`.
@@ -65,7 +65,7 @@ export async function runRetention(
   let auditRowsPruned = 0;
   const AUDIT_BATCH = 5000;
   // Cap iterations so a runaway never holds the cron handler open;
-  // 1M rows in one pass is enough — anything bigger we'll catch on
+  // 1M rows in one pass is enough - anything bigger we'll catch on
   // the next cron tick.
   for (let iter = 0; iter < 200; iter++) {
     const result = await db.execute<{ id: string }>(sql`
@@ -83,7 +83,7 @@ export async function runRetention(
     if (pruned < AUDIT_BATCH) break;
   }
 
-  // 2. sentry_scan — drop scans older than the cap. Findings keep
+  // 2. sentry_scan: drop scans older than the cap. Findings keep
   // their FK as null (set-null on delete), so individual findings
   // discovered in a pruned scan remain usable.
   const scanCutoff = daysAgo(config.scanRetentionDays);
@@ -92,7 +92,7 @@ export async function runRetention(
     .where(lt(sentryScans.startedAt, scanCutoff))
     .returning({ id: sentryScans.id });
 
-  // 3. sentry_finding — only prune findings that have been
+  // 3. sentry_finding: only prune findings that have been
   // explicitly resolved (or acknowledged + aged out). Open + quarantined
   // findings represent live state and must persist.
   const findingCutoff = daysAgo(config.resolvedFindingRetentionDays);
@@ -107,7 +107,7 @@ export async function runRetention(
     )
     .returning({ id: sentryFindings.id });
 
-  // 4. agent_session — drop closed / undone sessions whose linked
+  // 4. agent_session: drop closed / undone sessions whose linked
   // audit_log rows are also gone (otherwise the UI can't display them).
   // Cheapest correct ordering: prune audit_log first (already done),
   // then prune sessions whose lastSeenAt is older than the cap AND

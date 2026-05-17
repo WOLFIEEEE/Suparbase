@@ -11,7 +11,7 @@ export const runtime = "nodejs";
  * POST /api/billing/portal
  *
  * Mint a Dodo customer-portal URL and return it. The client
- * navigates to the URL — that gives the customer access to manage
+ * navigates to the URL - that gives the customer access to manage
  * their payment method, cancel, or view invoices on Dodo's side.
  *
  * 404s when the user has no Dodo customer record yet (Free plan,

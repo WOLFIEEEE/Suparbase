@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import { resolve } from "path";
 
 /**
- * Vitest config — unit tests for pure functions only (no DB, no network).
+ * Vitest config - unit tests for pure functions only (no DB, no network).
  * Lives in tests/ at the repo root so they don't clutter src/.
  *
  * Test scope today (intentionally narrow):
@@ -28,7 +28,7 @@ export default defineConfig({
     // because vitest evaluates the list top-down.
     alias: [
       // src files import "server-only" to fence themselves from client
-      // bundles. In a node test runner that throws — stub it out.
+      // bundles. In a node test runner that throws - stub it out.
       { find: "server-only", replacement: resolve(__dirname, "./tests/server-only-stub.ts") },
       // Stub @/server/db so importing repos / probe / undo doesn't open
       // a real Postgres connection. Tests must mock the calls they need.

@@ -6,14 +6,14 @@ import { validateWebhookUrl } from "@/server/actions/repo";
  * corresponds to a real attack vector or a known internal endpoint
  * we don't want exposed to an action invocation:
  *
- *   - 169.254.169.254 — AWS / GCP / Oracle / DO cloud metadata
- *   - metadata.google.internal / metadata.azure.com — DNS-named metadata
- *   - 127.x / ::1 — loopback (IPv4 + IPv6)
- *   - 10.x / 192.168.x / 172.16-31.x — RFC1918 private
- *   - 169.254.x — link-local (covers AWS metadata + IPv4 link-local)
- *   - fe80:: — IPv6 link-local
- *   - fc00:: / fd00:: — IPv6 unique local
- *   - 0.0.0.0 — wildcard
+ *   - 169.254.169.254 - AWS / GCP / Oracle / DO cloud metadata
+ *   - metadata.google.internal / metadata.azure.com - DNS-named metadata
+ *   - 127.x / ::1 - loopback (IPv4 + IPv6)
+ *   - 10.x / 192.168.x / 172.16-31.x - RFC1918 private
+ *   - 169.254.x - link-local (covers AWS metadata + IPv4 link-local)
+ *   - fe80:: - IPv6 link-local
+ *   - fc00:: / fd00:: - IPv6 unique local
+ *   - 0.0.0.0 - wildcard
  *
  * The tests pin the blocklist shape so a future contributor can't
  * accidentally drop one of these rules.
@@ -50,7 +50,7 @@ const ALLOWED = [
   "https://api.example.com/webhook",
   "https://hooks.slack.com/services/T0/B0/abc",
   "https://api.stripe.com/v1/refunds",
-  // Public CGN range — annoying, but technically not in any private block.
+  // Public CGN range - annoying, but technically not in any private block.
   // We don't try to defend against carrier-grade NAT.
   "https://203.0.113.5/",
   // 172.32+ is public.

@@ -5,7 +5,7 @@ import { useCallback, useRef, useState } from "react";
 /**
  * Tiny hook to manage ConfirmDialog open-state for call sites that
  * just want to gate a single action behind "are you sure?". Returns
- * an `ask(action)` function — call it from your onClick to open the
+ * an `ask(action)` function - call it from your onClick to open the
  * dialog; pass the props returned from `dialogProps` straight into
  * `<ConfirmDialog {...dialogProps} />`.
  *

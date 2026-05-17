@@ -93,7 +93,7 @@ export const billingEvents = pgTable(
     bySub: index("billing_event_sub_idx").on(t.dodoSubscriptionId, t.receivedAt),
     /**
      * Operator-facing: list events that were received but not applied.
-     * Partial index — only contains rows where `applied_at IS NULL`,
+     * Partial index - only contains rows where `applied_at IS NULL`,
      * which is the tail we ever query. Cheap to maintain (most rows
      * apply quickly and drop out of the index) and serves the
      * ORDER BY for free.
