@@ -3,6 +3,82 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.11.0 · 2026-05-17 · Guest checkout
+
+Pay first, set a password after. The Hosted plan CTA on /pricing
+now skips the signup-first dance: enter your email, complete Dodo's
+hosted checkout, land on a welcome page where you pick a password
+and we sign you in. The subscription is already attached.
+
+**New surfaces:**
+
+- `/checkout/[plan]/page.tsx` - public checkout page. Email +
+  optional display name, monthly / annual cadence toggle (when the
+  operator has published an annual Dodo product), pricing pulled
+  from `PLAN_LIMITS`. If the visitor is already signed in we
+  redirect them to `/settings/billing` instead.
+- `src/components/checkout/GuestCheckoutForm.tsx` - client form.
+  Submits to the new API and hands the visitor off to Dodo's
+  hosted checkout on success. Honours the `cancelled=1` query
+  parameter when Dodo redirects back after a back-button.
+- `POST /api/billing/guest-checkout/route.ts` - public API. Zod
+  validates, IP rate-limited via the signup bucket, looks up or
+  creates the user row, mints a single-use `welcome:` token, fires
+  the welcome email best-effort, then creates the Dodo checkout
+  with `metadata: { user_id, cadence, signup_path: "guest_checkout" }`
+  and `return_url=/api/billing/return?status=success&welcome=<token>`.
+- `/welcome/[token]/page.tsx` + `WelcomeClaimForm.tsx` - lands the
+  visitor after Dodo's success redirect. Picks a password (12+
+  chars), POSTs to `/api/account/claim-welcome`, then immediately
+  calls `signIn("credentials")` and routes to `/connections`.
+- `POST /api/account/claim-welcome/route.ts` - consumes the
+  welcome token (single-use, 7-day TTL, single transaction with
+  `email_verified` stamp), bcrypts the password, persists.
+- `src/server/auth/welcome-token.ts` - issue / peek / consume.
+  Reuses NextAuth's `verificationTokens` table with the
+  `welcome:<userId>` namespace so it can't collide with the
+  email-verify or password-reset flows.
+- `src/server/email/templates/welcome-payment.ts` - themed email
+  matching the other transactional templates. Sent at checkout
+  start so the visitor has a fallback claim path if they close
+  the tab before Dodo's redirect.
+- `src/app/api/billing/return/route.ts` - forwards the `welcome`
+  query parameter into `/welcome/<token>` on success, drops the
+  visitor back on `/checkout/hosted?cancelled=1` on cancel.
+
+**Pricing-page change:**
+
+- The Hosted plan CTA now says "Start free trial" and routes to
+  `/checkout/hosted` instead of `/signup`. Free and Team CTAs
+  unchanged (Free has no payment; Team is sales-led).
+
+**Edge cases covered:**
+
+- Email already has an active subscription -> 409 with a friendly
+  redirect to `/signin?email=`.
+- Email exists but no password (OAuth-only or prior abandoned
+  guest checkout) -> reuse the row, new welcome token issued.
+- Welcome token expired (>7 days) -> page renders an explainer
+  and points the visitor at `/forgot` (which works regardless of
+  password state).
+- Welcome token already claimed -> page shows "you already
+  claimed this account" with a Sign-in link.
+- Dodo not configured on this deployment -> form replaced with a
+  setup banner pointing at `/contact?topic=sales`.
+- Webhook continues to work unchanged: `metadata.user_id` lets the
+  subscription attach to the user row regardless of which checkout
+  path created it.
+
+**Signup error reword:**
+
+- The "email already exists" error now says: "An account with this
+  email already exists. Sign in, or use forgot-password if you
+  haven't set one yet." This handles the guest-checkout user who
+  later tries to sign up via the normal path.
+
+No schema changes (the welcome flow reuses the existing
+`verificationTokens` table). No new dependencies.
+
 ## v3.10.0 · 2026-05-17 · Contact form + accessibility blocker fixes
 
 Two themes in one release: a proper contact form replaces the

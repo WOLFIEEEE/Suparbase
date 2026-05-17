@@ -54,7 +54,7 @@ const TIERS: Tier[] = [
     cadence: "per user / month",
     blurb:
       "For teams running real Supabase workloads. Unlimited connections, team workspace, longer retention, support.",
-    cta: { label: "Get started", href: "/signup" },
+    cta: { label: "Start free trial", href: "/checkout/hosted" },
     highlight: true,
     badge: "Most popular",
     features: [

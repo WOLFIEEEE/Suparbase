@@ -31,7 +31,11 @@ export async function createUserAccount(input: SignupInput) {
     .where(sql`lower(${users.email}) = ${input.email}`)
     .limit(1);
   if (existing.length > 0) {
-    throw new SignupError("email_taken", "An account with this email already exists.", "email");
+    throw new SignupError(
+      "email_taken",
+      "An account with this email already exists. Sign in, or use forgot-password if you haven't set one yet.",
+      "email",
+    );
   }
 
   const passwordHash = await hashPassword(input.password);
