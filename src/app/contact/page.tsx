@@ -76,7 +76,7 @@ export default async function ContactPage({
               body={
                 <>
                   Pick <em>Security report</em> and include a reproduction.
-                  For sensitive details, encrypt with our PGP key on{" "}
+                  Our full disclosure policy (scope, response SLA) lives on{" "}
                   <Link href="/security.txt" className="text-accent hover:underline">
                     /security.txt
                   </Link>

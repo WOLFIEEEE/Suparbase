@@ -97,12 +97,11 @@ export function ContactForm({ initialTopic = "general" }: Props) {
                 <>
                   Thanks - we&rsquo;ll reply to{" "}
                   <span className="font-mono text-fg">{email}</span> within one
-                  business day. For security reports, please also encrypt
-                  sensitive details with our PGP key on{" "}
+                  business day. Security reports follow the policy on{" "}
                   <a href="/security.txt" className="text-accent hover:underline">
                     /security.txt
                   </a>
-                  .
+                  : we acknowledge within 24 hours.
                 </>
               ) : (
                 state.message ??

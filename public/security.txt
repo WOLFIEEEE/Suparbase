@@ -1,0 +1,16 @@
+# Suparbase security disclosure policy (RFC 9116)
+# https://www.rfc-editor.org/rfc/rfc9116.html
+
+Contact: https://suparbase.com/contact?topic=security
+Expires: 2027-05-17T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://suparbase.com/security.txt
+Policy: https://suparbase.com/terms
+
+# Scope: suparbase.com and any production deployment we operate.
+# Out of scope: third-party services we use (Supabase, Dodo Payments,
+# Resend, OpenRouter, etc.) — please report those to the relevant vendor.
+
+# We acknowledge reports within 24 hours and aim to deliver a fix or
+# mitigation within 10 business days for any issue at or above the
+# CVSS v3 "High" threshold (7.0+).
