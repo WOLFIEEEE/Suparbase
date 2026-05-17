@@ -316,7 +316,7 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
             <button
               type="button"
               onClick={() => setSearchInput("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-fg-faint hover:text-fg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-fg-faint hover:text-fg"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" />
@@ -475,7 +475,7 @@ function EventRow({ row, connectionId, tableName, primaryKey, tsCol, eventCol, p
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-0.5 shrink-0 rounded p-0.5 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="mt-0.5 shrink-0 rounded p-1.5 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label={expanded ? "Collapse payload" : "Expand payload"}
             aria-expanded={expanded}
           >
@@ -513,7 +513,7 @@ function EventRow({ row, connectionId, tableName, primaryKey, tsCol, eventCol, p
           {detailHref && (
             <Link
               href={detailHref}
-              className="shrink-0 rounded p-1 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="shrink-0 rounded p-1.5 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="Open event"
             >
               <span aria-hidden>→</span>

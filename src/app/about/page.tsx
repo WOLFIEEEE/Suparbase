@@ -170,12 +170,12 @@ export default async function AboutPage() {
               One Supabase connection, the full admin surface, no credit card. Paid plans cover teams and unlimited
               projects. Feedback always welcome.
             </p>
-            <a
-              href="mailto:contact@suparbase.com"
+            <Link
+              href="/contact"
               className="mt-4 inline-flex items-center gap-1 text-xs text-accent hover:underline"
             >
-              contact@suparbase.com <ArrowUpRight className="h-3 w-3" aria-hidden />
-            </a>
+              Get in touch <ArrowUpRight className="h-3 w-3" aria-hidden />
+            </Link>
           </div>
         </div>
       </section>

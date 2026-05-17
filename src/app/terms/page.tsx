@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 
@@ -34,9 +35,10 @@ export default async function TermsPage() {
 
             <h3>2. Your account</h3>
             <p>
-              You&apos;re responsible for keeping your credentials safe. If your account is compromised, email us
-              immediately at <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>. We won&apos;t reset
-              your password from an email; we&apos;ll route a recovery flow through the in-app generate-link path.
+              You&apos;re responsible for keeping your credentials safe. If your account is compromised, reach us
+              immediately via <Link href="/contact?topic=security">our contact form</Link> (pick &ldquo;Security
+              report&rdquo;). We won&apos;t reset your password from an email; we&apos;ll route a recovery flow
+              through the in-app generate-link path.
             </p>
 
             <h3>3. Acceptable use</h3>
@@ -110,9 +112,9 @@ export default async function TermsPage() {
 
             <h2>Contact</h2>
             <p>
-              For questions about these terms, email{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>. For everything else,{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>.
+              For questions about these terms, send a note via{" "}
+              <Link href="/contact">our contact form</Link>. For everything else,
+              same place.
             </p>
           </Prose>
         </div>

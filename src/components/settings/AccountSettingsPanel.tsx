@@ -90,10 +90,10 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
           <ReadField label="Display name" value={name ?? "—"} />
         </div>
         <p className="text-xs text-fg-faint">
-          To change your email or name, email{" "}
-          <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">
-            contact@suparbase.com
-          </a>{" "}
+          To change your email or name, reach out via{" "}
+          <Link href="/contact?topic=support" className="text-accent hover:underline">
+            our contact form
+          </Link>{" "}
           from the address on your account.
         </p>
       </section>

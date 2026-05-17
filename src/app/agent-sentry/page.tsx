@@ -302,9 +302,9 @@ export default async function AgentSentryPage() {
             <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
                 <tr className="bg-bg-raised text-left text-[10px] uppercase tracking-[0.16em] text-fg-faint">
-                  <th className="border-b hairline px-4 py-3 font-normal">Tool</th>
-                  <th className="border-b hairline px-4 py-3 font-normal">What it catches</th>
-                  <th className="border-b hairline px-4 py-3 font-normal">What it misses</th>
+                  <th scope="col" className="border-b hairline px-4 py-3 font-normal">Tool</th>
+                  <th scope="col" className="border-b hairline px-4 py-3 font-normal">What it catches</th>
+                  <th scope="col" className="border-b hairline px-4 py-3 font-normal">What it misses</th>
                 </tr>
               </thead>
               <tbody>

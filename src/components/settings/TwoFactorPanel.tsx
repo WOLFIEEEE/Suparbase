@@ -418,10 +418,10 @@ function EnabledPanel({
         {!hasPassword ? (
           <p className="text-xs text-fg-muted">
             This account signs in via OAuth, so password-based disable
-            isn&apos;t available here. Email{" "}
-            <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">
-              contact@suparbase.com
-            </a>{" "}
+            isn&apos;t available here. Reach out via{" "}
+            <Link href="/contact?topic=support" className="text-accent hover:underline">
+              our contact form
+            </Link>{" "}
             to disable 2FA — we&apos;ll re-verify your identity through other
             means.
           </p>

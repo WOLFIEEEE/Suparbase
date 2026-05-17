@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     "Suparbase's accessibility statement: target standard, what we ship today, known gaps, and how to report issues.",
 };
 
-const LAST_UPDATED = "2026-05-15"; // WCAG 2.2 alignment + v3.5.1 UI hardening pass
+const LAST_UPDATED = "2026-05-17"; // v3.10.0 — contrast, target-size, scope, contact-form fixes
 
 /**
  * Plain-English accessibility statement. Companion document to the
@@ -111,6 +111,39 @@ export default async function AccessibilityPage() {
                 same flow.
                 <em> (WCAG 2.2 — 3.3.7)</em>
               </li>
+              <li>
+                <strong>Target sizes ≥ 24×24 CSS pixels</strong>: every
+                interactive control — including the filter-chip remove, inline-edit
+                confirm / cancel, and password-eye toggle — now clears the
+                minimum hit area.
+                <em> (WCAG 2.2 — 2.5.8)</em>
+              </li>
+              <li>
+                <strong>Consistent help</strong>: a single{" "}
+                <Link href="/contact">/contact</Link> form is linked from
+                the footer, every legal page, and every help surface, in the
+                same position.
+                <em> (WCAG 2.2 — 3.2.6)</em>
+              </li>
+              <li>
+                <strong>Status messages</strong>: skeleton loaders, the
+                &ldquo;Refreshing schema&rdquo; spinner, and async form submits
+                expose <code>aria-busy</code> / <code>role=&quot;status&quot;</code>{" "}
+                so screen readers announce loading without stealing focus.
+                <em> (WCAG 2.2 — 4.1.3)</em>
+              </li>
+              <li>
+                <strong>Body-text contrast</strong>: every text token — including
+                de-emphasised microcopy — now meets the 4.5:1 ratio against its
+                background in both light and dark themes.
+                <em> (WCAG 2.2 — 1.4.3)</em>
+              </li>
+              <li>
+                <strong>Table headers</strong>: comparison and pricing tables now
+                ship explicit <code>scope=&quot;col&quot;</code> on every column
+                header.
+                <em> (WCAG 2.2 — 2.4.6)</em>
+              </li>
             </ul>
 
             <h2>Where we&apos;re still partial</h2>
@@ -121,28 +154,12 @@ export default async function AccessibilityPage() {
             </p>
             <ul>
               <li>
-                <strong>Color contrast for de-emphasised text</strong>: our smallest
-                helper text uses a faint-foreground token (≈3.5–3.9:1 against the
-                background) which is below the 4.5:1 minimum for normal body text. It
-                only appears in microcopy / eyebrow labels. We&apos;ll darken this token
-                in a future design pass.
-              </li>
-              <li>
                 <strong>Non-text contrast on resting borders</strong>: input field
                 outlines at rest are a hairline (≈1.5–1.7:1) and only meet the 3:1
                 threshold on focus / hover. Visible enough in practice; below spec on
-                paper.
-              </li>
-              <li>
-                <strong>Table headers on marketing comparison pages</strong>: a handful
-                of comparison and pricing tables omit <code>scope=&quot;col&quot;</code>
-                on header cells. Auto-association usually works for simple tables but
-                we&apos;ll add the attribute explicitly.
-              </li>
-              <li>
-                <strong>Loading-state announcements</strong>: route-level skeleton
-                loaders and the &quot;Refreshing schema&quot; spinner don&apos;t
-                announce a busy state. Form submit and toast feedback is announced.
+                paper. A planned token bump will fix this without breaking the visual
+                hierarchy.
+                <em> (WCAG 2.2 — 1.4.11)</em>
               </li>
               <li>
                 <strong>Color-contrast verification</strong>: ratios above were
@@ -150,21 +167,6 @@ export default async function AccessibilityPage() {
                 automated tool like axe-core or Lighthouse. We plan to do a measured
                 run before each release; if you&apos;re relying on this for
                 procurement, please run your own audit against the live site.
-              </li>
-              <li>
-                <strong>Target sizes (WCAG 2.2 — 2.5.8)</strong>: a few
-                secondary controls (filter-chip remove, inline-edit confirm /
-                cancel icons, password-eye toggle) sit slightly below the 24×24
-                CSS-pixel minimum. Primary actions (sign-in, save, delete
-                buttons) clear it. The small controls always have a larger
-                keyboard or pointer alternative; we&apos;re tracking enlargement
-                in a follow-up design pass.
-              </li>
-              <li>
-                <strong>Help link consistency (WCAG 2.2 — 3.2.6)</strong>: the
-                contact email (<code>contact@suparbase.com</code>) and docs link
-                appear on most surfaces but not yet uniformly in the same
-                screen position. A future header pass will normalise this.
               </li>
             </ul>
 
@@ -179,10 +181,11 @@ export default async function AccessibilityPage() {
             <p>
               If you hit an accessibility problem — anything from &quot;this contrast
               is too low&quot; to &quot;my screen reader can&apos;t find the submit
-              button&quot; — please email{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>.
-              We aim to acknowledge within two business days and ship a fix within ten
-              for anything below WCAG 2.2 AA. Include:
+              button&quot; — please send us a note via{" "}
+              <Link href="/contact">our contact form</Link> and pick
+              &ldquo;Support&rdquo; as the topic. We aim to acknowledge within
+              two business days and ship a fix within ten for anything below
+              WCAG 2.2 AA. Include:
             </p>
             <ul>
               <li>The page or flow where you saw the issue (URL is great).</li>
@@ -202,9 +205,11 @@ export default async function AccessibilityPage() {
 
             <h2>Conformance status</h2>
             <p>
-              <strong>Partially conformant with WCAG 2.2 Level AA.</strong> Most
-              criteria are fully supported; a few are partial (see above), one is not
-              supported only in the trivial sense that nothing applies (no media). The
+              <strong>Substantially conformant with WCAG 2.2 Level AA.</strong>{" "}
+              The overwhelming majority of criteria are fully supported; two
+              remain partial (see above), and several criteria are
+              &ldquo;Not Applicable&rdquo; only in the trivial sense that
+              nothing applies (no media). The
               <Link href="/accessibility/vpat"> VPAT 2.5</Link> has the full criterion-
               by-criterion breakdown.
             </p>

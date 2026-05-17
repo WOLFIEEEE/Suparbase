@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 
@@ -170,9 +171,9 @@ export default async function PrivacyPage() {
 
             <h2>Contact</h2>
             <p>
-              For anything privacy-related, email{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>. For general support,{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>.
+              For anything privacy-related, send a note via{" "}
+              <Link href="/contact">our contact form</Link>. For general
+              support, same place.
             </p>
           </Prose>
         </div>

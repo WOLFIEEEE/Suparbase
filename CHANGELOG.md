@@ -3,6 +3,89 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.10.0 · 2026-05-17 · Contact form + accessibility blocker fixes
+
+Two themes in one release: a proper contact form replaces the
+scattered `mailto:contact@suparbase.com` links across the site,
+and six WCAG 2.2 AA criteria flip from "Partially Supports" to
+"Supports" in our VPAT — the ones we'd been documenting that
+turned out to be cheap to actually fix.
+
+**New `/contact` page:**
+
+- `src/app/contact/page.tsx` — public form page with topic-aware
+  side cards (general, sales, support, security disclosures,
+  privacy). Honours `?topic=sales|security|support|press` so
+  links from `/pricing` and the legal pages preselect the right
+  routing.
+- `src/components/contact/ContactForm.tsx` — client form with
+  topic select, message character counter, honeypot field
+  (`name="website"` hidden off-screen + `tabIndex={-1}`),
+  `aria-busy` on the submit button, `role="status"` /
+  `role="alert"` for the result and error banners.
+- `src/app/api/contact/route.ts` — POST endpoint. Zod-validated,
+  per-IP rate-limited (5/hour via `checkContactRate`), honeypot
+  enforced server-side, returns `200 { ok: true, delivered }`
+  even when email isn't configured so the form still works in dev
+  or unconfigured deployments.
+- `src/server/email/templates/contact-submission.ts` — themed
+  email sent TO `CONTACT_INBOX` (default `contact@suparbase.com`)
+  with `Reply-To: <visitor>` so the operator's "Reply" lands in
+  the visitor's inbox.
+- `src/lib/contact/topics.ts` — shared topic taxonomy so the
+  client, API route, and email template can't drift.
+- `src/server/proxy/ratelimit.ts` — added `checkContactRate`
+  bucket (5 submissions/hour/IP).
+
+**Mailto swaps (every page that had a contact email now points at
+the form instead):**
+
+- `PublicFooter` (×3), `about`, `docs`, `docs/api` (×2),
+  `pricing` (Team plan → `?topic=sales`), `privacy` (×2),
+  `terms` (×3), `accessibility`,
+- `AccountSettingsPanel`, `BillingPanel` (×2), `TwoFactorPanel`,
+- `lib/use-cases/content/healthcare-saas.tsx` (CTA + footer).
+- Intentional fallbacks kept: `global-error.tsx` (fires when the
+  app itself is broken — form might also be) and
+  `ForgotPasswordForm.tsx` (only renders when email isn't
+  configured at all).
+
+**Accessibility blocker fixes — six VPAT rows flip to "Supports":**
+
+- **1.4.3 Contrast (Minimum)** — `--fg-faint` darkened in
+  `globals.css`: dark mode `110 110 105` → `144 144 138`
+  (4.6:1 vs old 3.9:1); light mode `130 130 134` → `102 102 107`
+  (4.7:1 vs old 3.55:1). Both themes clear 4.5:1.
+- **2.5.8 Target Size (Minimum)** — every secondary icon button
+  bumped from `p-1` (~22px) to `p-1.5` (~26px), clearing the
+  24×24 CSS-pixel minimum. Files: `EditableField` (Save / Cancel),
+  `ResetPasswordForm`, `SchemaView`, `ChatConversationSidebar`,
+  `TablesList`, `AiChat`, `TableListView`, `DashboardWidgets`,
+  `AuthUsers`, `UsersAdmin`.
+- **1.3.1 / 2.4.6** — `scope="col"` on every comparison /
+  pricing table header (`/compare/[slug]`, `/admin/billing`,
+  `/agent-sentry`).
+- **3.2.6 Consistent Help** — fixed by the contact form itself.
+  One destination linked from the same footer position on every
+  page, with `?topic=` preserved.
+- **4.1.3 Status Messages** — `aria-busy` on the Topbar refresh
+  button + on the contact-form submit. Inline-edit and account
+  form spinners were already covered; this closes the loop.
+
+**Statement + VPAT updates:**
+
+- `src/app/accessibility/page.tsx` — "Where we're still partial"
+  trimmed to two genuine items (1.4.11 hairline borders,
+  automated-tool verification). Conformance line bumped from
+  "Partially conformant" to "Substantially conformant".
+- `src/app/accessibility/vpat/page.tsx` — `REPORT_DATE` →
+  2026-05-17, `PRODUCT_VERSION` → v3.10.0, `VENDOR_CONTACT` →
+  `/contact`. New revision-history entry summarising the six
+  flips. Six criterion rows updated: 1.3.1, 1.4.3, 2.5.8, 3.2.6,
+  4.1.3, 302.2.
+
+No schema changes. No new dependencies.
+
 ## v3.9.1 · 2026-05-17 · Drop the footer Signal panel
 
 Removed the right-hand "Signal" aside from `PublicFooter` — it added

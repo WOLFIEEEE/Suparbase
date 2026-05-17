@@ -89,7 +89,7 @@ export function ResetPasswordForm({ token }: Props) {
             onClick={() => setShow((v) => !v)}
             aria-label={show ? "Hide password" : "Show password"}
             aria-pressed={show}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-fg-faint hover:bg-bg-raised hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-fg-faint hover:bg-bg-raised hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             {show ? <EyeOff className="h-3.5 w-3.5" aria-hidden /> : <Eye className="h-3.5 w-3.5" aria-hidden />}
           </button>

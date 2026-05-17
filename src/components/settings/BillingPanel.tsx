@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ArrowUpRight, CheckCircle2, Clock, CreditCard, ShieldAlert, Sparkles } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/ui/cn";
@@ -280,13 +281,13 @@ export function BillingPanel({
                         {!loading && <Sparkles className="h-3.5 w-3.5" aria-hidden />}
                       </button>
                     ) : entry.plan === "team" ? (
-                      <a
-                        href="mailto:contact@suparbase.com?subject=Team plan inquiry"
+                      <Link
+                        href="/contact?topic=sales"
                         className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-md border hairline px-3 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
                       >
                         Contact sales
                         <ArrowUpRight className="h-3 w-3" aria-hidden />
-                      </a>
+                      </Link>
                     ) : (
                       <span className="block text-[11px] text-fg-faint">—</span>
                     )}
@@ -358,7 +359,7 @@ export function BillingPanel({
               Dodo Payments
             </a>{" "}
             (Merchant of Record). To change your card or cancel, follow the link in any
-            receipt email. Questions? <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">contact@suparbase.com</a>.
+            receipt email. Questions? <Link href="/contact?topic=support" className="text-accent hover:underline">our contact form</Link>.
           </span>
         </p>
       </section>

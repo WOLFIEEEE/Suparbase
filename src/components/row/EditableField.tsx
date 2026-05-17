@@ -353,7 +353,7 @@ function Editor({
               e.preventDefault();
               void commit();
             }}
-            className="rounded p-1 text-fg-muted hover:bg-accent/10 hover:text-accent"
+            className="rounded p-1.5 text-fg-muted hover:bg-accent/10 hover:text-accent"
             aria-label="Save"
           >
             <Check className="h-3 w-3" aria-hidden />
@@ -364,7 +364,7 @@ function Editor({
               e.preventDefault();
               cancel();
             }}
-            className="rounded p-1 text-fg-muted hover:bg-bg-sunken hover:text-fg"
+            className="rounded p-1.5 text-fg-muted hover:bg-bg-sunken hover:text-fg"
             aria-label="Cancel"
           >
             <X className="h-3 w-3" aria-hidden />

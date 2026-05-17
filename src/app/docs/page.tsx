@@ -251,7 +251,7 @@ export default async function DocsPage() {
             <div className="mt-16 rounded-lg border hairline bg-bg-raised/40 p-5 text-sm">
               <p className="text-fg">Question not answered here?</p>
               <p className="mt-1 text-fg-muted">
-                Email <a href="mailto:contact@suparbase.com" className="text-accent hover:underline">contact@suparbase.com</a> and we&apos;ll get back to you.
+                Drop a note via <Link href="/contact" className="text-accent hover:underline">our contact form</Link> and we&apos;ll get back to you.
               </p>
             </div>
           </div>

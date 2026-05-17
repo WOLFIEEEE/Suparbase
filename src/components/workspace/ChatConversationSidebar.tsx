@@ -109,7 +109,7 @@ export function ChatConversationSidebar({
                         e.stopPropagation();
                         handleExport(c);
                       }}
-                      className="rounded p-1 text-fg-faint hover:bg-bg-raised hover:text-fg"
+                      className="rounded p-1.5 text-fg-faint hover:bg-bg-raised hover:text-fg"
                       aria-label="Export as markdown"
                       title="Export as markdown"
                     >
@@ -122,7 +122,7 @@ export function ChatConversationSidebar({
                         setPendingTitle(c.title);
                         confirm.ask(() => onDelete(c.id));
                       }}
-                      className="rounded p-1 text-fg-faint hover:bg-danger/10 hover:text-danger"
+                      className="rounded p-1.5 text-fg-faint hover:bg-danger/10 hover:text-danger"
                       aria-label="Delete conversation"
                       title="Delete"
                     >

@@ -122,6 +122,7 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
                 size="sm"
                 onClick={refreshSchema}
                 disabled={refreshing}
+                aria-busy={refreshing}
                 aria-label="Refresh schema"
               >
                 {refreshing ? (

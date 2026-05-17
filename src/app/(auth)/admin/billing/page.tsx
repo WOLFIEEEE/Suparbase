@@ -63,12 +63,12 @@ export default async function AdminBillingPage() {
         <table className="w-full text-xs">
           <thead className="bg-bg-raised/60 text-left">
             <tr className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">
-              <th className="px-4 py-2">Received</th>
-              <th className="px-4 py-2">Event</th>
-              <th className="px-4 py-2">Applied</th>
-              <th className="px-4 py-2">Subscription</th>
-              <th className="px-4 py-2">User</th>
-              <th className="px-4 py-2 text-right">Webhook id</th>
+              <th scope="col" className="px-4 py-2">Received</th>
+              <th scope="col" className="px-4 py-2">Event</th>
+              <th scope="col" className="px-4 py-2">Applied</th>
+              <th scope="col" className="px-4 py-2">Subscription</th>
+              <th scope="col" className="px-4 py-2">User</th>
+              <th scope="col" className="px-4 py-2 text-right">Webhook id</th>
             </tr>
           </thead>
           <tbody className="divide-y hairline">

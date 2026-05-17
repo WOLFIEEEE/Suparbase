@@ -48,8 +48,8 @@ export default async function ApiDocsPage() {
               The session cookie is <code>httpOnly</code>, so it cannot be
               accessed from page JavaScript — that&apos;s by design. There is no
               long-lived API token yet; if you have a use case that needs one,
-              email{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>.
+              send us a note via{" "}
+              <Link href="/contact">our contact form</Link>.
             </p>
 
             <h2>CSRF</h2>
@@ -230,10 +230,10 @@ export default async function ApiDocsPage() {
               </li>
             </ul>
             <p>
-              If you need a stable contract on any of these, email{" "}
-              <a href="mailto:contact@suparbase.com">contact@suparbase.com</a>
-              — we&apos;ll publish it here once we know it&apos;s worth keeping
-              stable.
+              If you need a stable contract on any of these, let us know via{" "}
+              <Link href="/contact">our contact form</Link>
+              {" "}— we&apos;ll publish it here once we know it&apos;s worth
+              keeping stable.
             </p>
           </Prose>
         </div>

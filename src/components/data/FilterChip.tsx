@@ -31,7 +31,7 @@ export function FilterChip({ chip, onRemove }: Props) {
       <button
         type="button"
         onClick={onRemove}
-        className="ml-1 rounded p-0.5 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="ml-1 rounded p-1.5 text-fg-faint hover:bg-bg-sunken hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-label="Remove filter"
       >
         <X className="h-3 w-3" aria-hidden />

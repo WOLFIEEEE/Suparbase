@@ -950,7 +950,7 @@ function CopyButton({ text }: { text: string }) {
           /* ignore */
         }
       }}
-      className="absolute right-1.5 top-1.5 hidden rounded p-1 text-fg-faint hover:bg-bg-sunken hover:text-fg group-hover:inline-flex"
+      className="absolute right-1.5 top-1.5 hidden rounded p-1.5 text-fg-faint hover:bg-bg-sunken hover:text-fg group-hover:inline-flex"
       aria-label="Copy message"
       title="Copy message"
     >

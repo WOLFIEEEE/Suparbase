@@ -315,7 +315,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
             <button
               type="button"
               onClick={() => setSearchInput("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-fg-faint hover:text-fg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-fg-faint hover:text-fg"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" />

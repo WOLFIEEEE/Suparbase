@@ -16,7 +16,10 @@
     --bg-sunken: 6 6 7;
     --fg: 245 245 241;
     --fg-muted: 168 168 162;
-    --fg-faint: 110 110 105;
+    /* Bumped from 110/110/105 → 144/144/138 to clear 4.5:1 against bg.
+       WCAG 2.1 1.4.3 wants ≥4.5:1 for normal text; the old value was
+       3.9:1 and showed up in microcopy + eyebrow labels. */
+    --fg-faint: 144 144 138;
     --line: 38 38 42;
     --line-strong: 64 64 70;
     --accent: 182 255 60;
@@ -35,7 +38,9 @@
     --bg-sunken: 244 244 240;
     --fg: 17 17 19;
     --fg-muted: 78 78 84;
-    --fg-faint: 130 130 134;
+    /* Bumped from 130/130/134 → 102/102/107 to clear 4.5:1 against
+       the light bg. Was 3.55:1; now ~4.7:1. */
+    --fg-faint: 102 102 107;
     --line: 222 222 218;
     --line-strong: 192 192 188;
     --accent: 74 110 23;

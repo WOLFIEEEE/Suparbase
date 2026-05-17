@@ -38,12 +38,12 @@ export function Page() {
                 Start free
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
-              <a
-                href="mailto:contact@suparbase.com?subject=Healthcare%20compliance"
+              <Link
+                href="/contact?topic=sales"
                 className="inline-flex h-11 items-center rounded-md border hairline px-5 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
               >
                 Talk to us
-              </a>
+              </Link>
             </>
           }
         />
@@ -120,7 +120,7 @@ export function Page() {
       <CTABand
         title="Talk to us about your compliance posture."
         body="We'll help you map the features to your auditor's checklist."
-        primary={{ href: "mailto:contact@suparbase.com?subject=Healthcare%20compliance", label: "Email us" }}
+        primary={{ href: "/contact?topic=sales", label: "Talk to us" }}
         secondary={{ href: "/docs#security", label: "Read the security model" }}
       />
     </>

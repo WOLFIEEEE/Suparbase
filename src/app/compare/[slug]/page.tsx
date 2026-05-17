@@ -106,11 +106,11 @@ export default async function ComparePage({ params }: Params) {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b hairline bg-bg-raised text-left">
-                  <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-fg-faint">
+                  <th scope="col" className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-fg-faint">
                     Feature
                   </th>
-                  <th className="px-4 py-3 text-sm font-display">{c.leftName}</th>
-                  <th className="px-4 py-3 text-sm font-display">{c.rightName}</th>
+                  <th scope="col" className="px-4 py-3 text-sm font-display">{c.leftName}</th>
+                  <th scope="col" className="px-4 py-3 text-sm font-display">{c.rightName}</th>
                 </tr>
               </thead>
               <tbody>

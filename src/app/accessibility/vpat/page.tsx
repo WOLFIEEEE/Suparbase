@@ -9,9 +9,10 @@ export const metadata: Metadata = {
     "Voluntary Product Accessibility Template (VPAT) 2.5 Rev for Suparbase — conformance against WCAG 2.2 Level AA.",
 };
 
-const REPORT_DATE = "2026-05-15";
-const PRODUCT_VERSION = "v3.5.1";
-const VENDOR_CONTACT = "contact@suparbase.com";
+const REPORT_DATE = "2026-05-17";
+const PRODUCT_VERSION = "v3.10.0";
+const VENDOR_CONTACT = "/contact";
+const VENDOR_CONTACT_DISPLAY = "/contact form";
 
 type Conformance =
   | "Supports"
@@ -77,9 +78,9 @@ const WCAG_AA: Criterion[] = [
   {
     id: "1.3.1",
     name: "Info and Relationships (Level A)",
-    conformance: "Partially Supports",
+    conformance: "Supports",
     remarks:
-      "Most forms (sign-in, sign-up, connection form, bulk-delete, row form, AI settings, team invite, action editor) use programmatic label association via htmlFor/id pairs or wrapping <label> elements. As of v3.5.0 the previously-bare labels in TeamMembers, ActionsManager Field helper, and EditableField inline editor were patched. A small set of comparison/pricing/admin tables on marketing pages omit scope=\"col\" on header cells — implicit association usually works for simple tables but is implementation-defined. Lists, headings, and landmarks (<nav>, <main>, <header>, <footer>, <aside>) are used semantically.",
+      "Every form (sign-in, sign-up, connection form, bulk-delete, row form, AI settings, team invite, action editor, contact form) uses programmatic label association via htmlFor/id pairs or wrapping <label> elements. As of v3.5.0 the previously-bare labels in TeamMembers, ActionsManager Field helper, and EditableField inline editor were patched. As of v3.10.0 comparison/pricing/admin tables on marketing pages ship explicit scope=\"col\" on every column header. Lists, headings, and landmarks (<nav>, <main>, <header>, <footer>, <aside>) are used semantically.",
   },
   {
     id: "1.3.2",
@@ -121,9 +122,9 @@ const WCAG_AA: Criterion[] = [
   {
     id: "1.4.3",
     name: "Contrast (Minimum) (Level AA)",
-    conformance: "Partially Supports",
+    conformance: "Supports",
     remarks:
-      "Primary text in both light and dark modes is ≈18:1 against the background. Muted text ≈8.5–9.5:1. Accent and danger tokens clear 4.5:1. The faint-foreground token used for microcopy / eyebrow labels is ≈3.5–3.9:1 — below the 4.5:1 minimum for normal text. A design pass to darken this token is queued. Ratios were computed by inspection of CSS tokens, not measured with axe-core / Lighthouse; customers should run their own automated audit for procurement-grade verification.",
+      "Primary text in both light and dark modes is ≈18:1 against the background. Muted text ≈8.5–9.5:1. Accent and danger tokens clear 4.5:1. As of v3.10.0 the faint-foreground token (microcopy / eyebrow labels) was darkened to clear 4.5:1 in both modes — dark mode now ≈4.6:1, light mode ≈4.7:1. Ratios were computed by inspection of CSS tokens, not measured with axe-core / Lighthouse; customers should run their own automated audit for procurement-grade verification.",
   },
   {
     id: "1.4.4",
@@ -280,8 +281,8 @@ const WCAG_AA: Criterion[] = [
   {
     id: "2.5.8",
     name: "Target Size (Minimum) (Level AA) [WCAG 2.2]",
-    conformance: "Partially Supports",
-    remarks: "Primary action buttons (sign-in, save, delete, upgrade) are well above the 24×24 CSS-pixel minimum. A few secondary controls — filter-chip remove (≈16×16 with p-0.5), inline-edit confirm / cancel icon buttons (h-3 w-3 + small padding), password-eye toggle — fall below. All affected controls have a larger keyboard or pointer alternative, but the targets themselves don't pass 2.5.8 in isolation. Tracked for a follow-up design pass.",
+    conformance: "Supports",
+    remarks: "Primary action buttons (sign-in, save, delete, upgrade) are well above the 24×24 CSS-pixel minimum. As of v3.10.0 every secondary icon button — filter-chip remove, inline-edit confirm / cancel, password-eye toggle, schema tree expand, dashboard widget controls — was bumped to p-1.5, putting their target areas at ≥24×24 CSS pixels.",
   },
   {
     id: "3.1.1",
@@ -322,8 +323,8 @@ const WCAG_AA: Criterion[] = [
   {
     id: "3.2.6",
     name: "Consistent Help (Level A) [WCAG 2.2]",
-    conformance: "Partially Supports",
-    remarks: "Help contact (contact@suparbase.com, contact@suparbase.com) and a docs link appear on most pages but in slightly different positions (footer vs in-page callout vs nav menu). The contact information itself is consistent; the screen location is being normalised in a follow-up header pass.",
+    conformance: "Supports",
+    remarks: "As of v3.10.0 a single /contact form is the canonical help destination, linked from the footer (every page), every legal and docs surface, and the in-app account settings panel. The form preserves the requested topic via query string (?topic=sales, ?topic=security, etc.) so help is reachable from a consistent position regardless of which page the visitor lands on.",
   },
   {
     id: "3.3.1",
@@ -370,9 +371,9 @@ const WCAG_AA: Criterion[] = [
   {
     id: "4.1.3",
     name: "Status Messages (Level AA)",
-    conformance: "Partially Supports",
+    conformance: "Supports",
     remarks:
-      "Toast notifications use sonner's default polite live region. Form alerts use role=\"alert\". As of v3.5.0 the AI chat conversation is marked role=\"log\" aria-live=\"polite\". Remaining gap: inline loading-state spinners (Refresh schema, EditableField commit, route-level skeletons) don't carry aria-busy or live-region announcement. Will be addressed in a follow-up pass.",
+      "Toast notifications use sonner's default polite live region. Form alerts use role=\"alert\". As of v3.5.0 the AI chat conversation is marked role=\"log\" aria-live=\"polite\". As of v3.10.0 inline loading-state spinners (Refresh schema, EditableField commit, contact-form submit, route-level skeletons) expose aria-busy or role=\"status\" so screen readers announce loading without stealing focus.",
   },
 ];
 
@@ -381,7 +382,7 @@ const SECTION_508 = [
     chapter: "Chapter 3: Functional Performance Criteria",
     rows: [
       { name: "302.1 Without Vision", conformance: "Partially Supports" as Conformance, remarks: "Operable with screen reader assuming WCAG 2.2 AA partial conformance noted above. Spot-tested with VoiceOver/Safari; not systematically tested with NVDA/JAWS." },
-      { name: "302.2 With Limited Vision", conformance: "Partially Supports" as Conformance, remarks: "Zoom + high-contrast colors work. Faint microcopy fails 4.5:1 (see 1.4.3)." },
+      { name: "302.2 With Limited Vision", conformance: "Supports" as Conformance, remarks: "Zoom + high-contrast colors work. All body text (including faint microcopy) clears 4.5:1 as of v3.10.0. Resting borders still hover near the 3:1 line for 1.4.11 (tracked separately)." },
       { name: "302.3 Without Perception of Color", conformance: "Supports" as Conformance, remarks: "Color is never the sole information carrier (see 1.4.1)." },
       { name: "302.4 Without Hearing", conformance: "Supports" as Conformance, remarks: "No audio." },
       { name: "302.5 With Limited Hearing", conformance: "Supports" as Conformance, remarks: "No audio." },
@@ -497,7 +498,7 @@ function ProductInfo() {
           ["Product Version", PRODUCT_VERSION],
           ["Report Date", REPORT_DATE],
           ["Product Description", "Authenticated admin workspace for Supabase projects. Encrypted credential vault, server-side PostgREST proxy, RLS debugger, SQL playground, AI-assisted writes, row history, custom actions, dashboard widgets, team workspace, billing, and admin panel."],
-          ["Contact for Accessibility", VENDOR_CONTACT],
+          ["Contact for Accessibility", VENDOR_CONTACT_DISPLAY],
           ["Notes", "This report reflects code-level review of the production build on the date above. Color contrast was reviewed by inspection of CSS custom properties, not measured with an automated tool. Customers requiring measured WCAG ratios should run axe-core or Lighthouse against their deployed instance."],
         ]}
       />
@@ -668,7 +669,18 @@ function Footer() {
         </p>
         <ul>
           <li>
-            <strong>{REPORT_DATE}</strong> — updated to WCAG 2.2 Level AA (was
+            <strong>{REPORT_DATE}</strong> — accompanies the v3.10.0 release.
+            Flipped six criteria from &ldquo;Partially Supports&rdquo; to
+            &ldquo;Supports&rdquo;: 1.3.1 (table headers now ship explicit
+            scope=&quot;col&quot;), 1.4.3 (faint-foreground token darkened to
+            clear 4.5:1 in both themes), 2.5.8 (every secondary icon button
+            bumped to ≥24×24 CSS pixels), 3.2.6 (single /contact form is the
+            canonical help destination across every page), 4.1.3 (inline
+            spinners and form submits expose aria-busy / role=&quot;status&quot;),
+            and 302.2. 1.4.11 remains partial (hairline borders).
+          </li>
+          <li>
+            <strong>2026-05-15</strong> — updated to WCAG 2.2 Level AA (was
             2.1). Added rows for the six new 2.2 success criteria: 2.4.11
             Focus Not Obscured (Minimum), 2.5.7 Dragging Movements, 2.5.8
             Target Size (Minimum), 3.2.6 Consistent Help, 3.3.7 Redundant
@@ -690,8 +702,8 @@ function Footer() {
           </li>
         </ul>
         <p>
-          Questions or accessibility issue reports:{" "}
-          <a href={`mailto:${VENDOR_CONTACT}`}>{VENDOR_CONTACT}</a>.
+          Questions or accessibility issue reports: send a note via{" "}
+          <a href={VENDOR_CONTACT}>{VENDOR_CONTACT_DISPLAY}</a>.
         </p>
       </Prose>
     </Section>

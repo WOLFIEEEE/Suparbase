@@ -71,3 +71,10 @@ const SIGNUP_WINDOW_MS = 60 * 60_000;
 export function checkSignupRate(clientKey: string): RateLimitResult {
   return check("signup", clientKey, SIGNUP_BUDGET, SIGNUP_WINDOW_MS);
 }
+
+const CONTACT_BUDGET = 5;
+const CONTACT_WINDOW_MS = 60 * 60_000;
+
+export function checkContactRate(clientKey: string): RateLimitResult {
+  return check("contact", clientKey, CONTACT_BUDGET, CONTACT_WINDOW_MS);
+}
