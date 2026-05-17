@@ -3,6 +3,22 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.9.1 · 2026-05-17 · Drop the footer Signal panel
+
+Removed the right-hand "Signal" aside from `PublicFooter` — it added
+clutter without proportional value (release version + blog title
++ shipped count are all already reachable from the structured nav
+columns directly below). The manifesto block is now a single
+left-aligned headline + paragraph + CTA pair.
+
+- `SignalPanel` and `SignalRow` components deleted.
+- `LATEST_RELEASE_DATE` / `FEATURES_SHIPPED` constants gone.
+- Unused `listArticles` + `cn` imports cleaned up.
+- Manifesto block layout switched from
+  `grid md:grid-cols-[1fr_minmax(0,18rem)]` to a single column.
+
+Cosmetic only. Typecheck clean, 132 tests passing, build green.
+
 ## v3.9.0 · 2026-05-15 · Email verification + API docs + agent fingerprints
 
 Four shippable items from the "if you ask" backlog. No new schema —

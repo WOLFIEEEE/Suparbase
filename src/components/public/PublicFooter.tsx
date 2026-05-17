@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Heart, Server, Shield } from "lucide-react";
-import { listArticles } from "@/lib/blog/articles";
 import { Logo } from "@/components/brand/Logo";
 import { SITE } from "@/lib/seo/site";
-import { cn } from "@/lib/ui/cn";
 
 interface Column {
   heading: string;
@@ -58,8 +56,6 @@ export function PublicFooter({ isSignedIn = false }: FooterProps) {
     ...col,
     links: col.links.filter((l) => !(isSignedIn && l.hideWhenSignedIn)),
   }));
-  const [latestArticle] = listArticles();
-
   return (
     <footer className="relative isolate mt-24 overflow-hidden border-t hairline bg-bg-raised/40">
       <FooterBackdrop />
@@ -67,9 +63,9 @@ export function PublicFooter({ isSignedIn = false }: FooterProps) {
       <div className="relative mx-auto w-full max-w-6xl px-6">
         <StatusBar />
 
-        {/* Compact manifesto block: short headline + signal panel */}
-        <section className="grid grid-cols-1 gap-8 py-10 md:grid-cols-[1fr_minmax(0,18rem)]">
-          <div className="space-y-4">
+        {/* Compact manifesto block — single column, no signal aside. */}
+        <section className="py-10">
+          <div className="max-w-2xl space-y-4">
             <h2 className="font-display text-2xl leading-tight sm:text-3xl">
               Encrypted credentials, server-side proxy,{" "}
               <span className="text-accent">AI-assisted admin.</span>
@@ -94,9 +90,6 @@ export function PublicFooter({ isSignedIn = false }: FooterProps) {
               </Link>
             </div>
           </div>
-
-          {/* Signal column: live-ish signals about the project */}
-          <SignalPanel latestArticleTitle={latestArticle?.title} latestArticleSlug={latestArticle?.slug} />
         </section>
 
         {/* Three structured columns */}
@@ -175,112 +168,6 @@ function StatusBar() {
       </div>
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Signal panel, the right-hand "live" pane in the manifesto block
-// ---------------------------------------------------------------------------
-
-interface SignalPanelProps {
-  latestArticleTitle?: string;
-  latestArticleSlug?: string;
-}
-
-function SignalPanel({ latestArticleTitle, latestArticleSlug }: SignalPanelProps) {
-  return (
-    <aside className="relative space-y-3 self-start rounded-lg border hairline bg-bg p-5 text-xs">
-      <div className="flex items-center justify-between gap-2 border-b hairline pb-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-fg-faint">
-          Signal
-        </span>
-        <span className="inline-flex items-center gap-1 text-[10px] text-fg-faint">
-          <span aria-hidden className="relative inline-flex h-1.5 w-1.5">
-            <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-60" />
-            <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          </span>
-          live
-        </span>
-      </div>
-      <SignalRow
-        label="Latest release"
-        value={`v${SITE.version}`}
-        sub={LATEST_RELEASE_DATE}
-        href="/changelog"
-        valueTone="accent"
-      />
-      {latestArticleTitle && latestArticleSlug && (
-        <SignalRow
-          label="From the blog"
-          value={truncate(latestArticleTitle, 36)}
-          href={`/blog/${latestArticleSlug}`}
-        />
-      )}
-      <SignalRow
-        label="Shipped"
-        value={`${FEATURES_SHIPPED} features`}
-        sub="across 30 specs"
-        href="/changelog"
-      />
-      <SignalRow
-        label="Free tier"
-        value="1 project · no card"
-        href="/pricing"
-      />
-      <p className="border-t hairline pt-3 text-[10px] leading-relaxed text-fg-faint">
-        Every release is a tagged git commit. No vapourware, no "coming soon."
-      </p>
-    </aside>
-  );
-}
-
-const LATEST_RELEASE_DATE = "May 2026";
-const FEATURES_SHIPPED = 30;
-
-function SignalRow({
-  label,
-  value,
-  sub,
-  href,
-  external,
-  valueTone,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  href: string;
-  external?: boolean;
-  valueTone?: "accent";
-}) {
-  const valueClass = cn(
-    "font-mono text-fg",
-    valueTone === "accent" && "text-accent",
-  );
-  const body = (
-    <>
-      <span className="text-fg-faint">{label}</span>
-      <span className="flex flex-col items-end gap-0.5 text-right">
-        <span className="inline-flex items-center gap-1">
-          <span className={valueClass}>{value}</span>
-          <ArrowUpRight className="h-3 w-3 text-fg-faint transition-colors group-hover:text-accent" aria-hidden />
-        </span>
-        {sub && <span className="font-mono text-[9px] uppercase tracking-wider text-fg-faint">{sub}</span>}
-      </span>
-    </>
-  );
-  const classes = "group flex items-start justify-between gap-3 text-[11px] transition-colors hover:text-fg";
-  return external ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
-      {body}
-    </a>
-  ) : (
-    <Link href={href} className={classes}>
-      {body}
-    </Link>
-  );
-}
-
-function truncate(s: string, n: number): string {
-  return s.length <= n ? s : s.slice(0, n - 1) + "…";
 }
 
 // ---------------------------------------------------------------------------
