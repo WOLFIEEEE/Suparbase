@@ -15,8 +15,8 @@ enforced unconditionally because they don't depend on Dodo.
 ## Why now
 
 v3.3.0 repositioned Suparbase as a privately-held SaaS with a free
-tier. v3.3.1 cleaned up every "open source / MIT" affordance. The
-free tier needs to be **actually limited** (otherwise there's no
+tier. v3.3.1 cleaned up the remaining legacy licensing affordances.
+The free tier needs to be **actually limited** (otherwise there's no
 reason to upgrade), and the paid tier needs an **actually working
 checkout** (otherwise there's no way to upgrade). This release closes
 both gaps and gives the operator (one admin email) a window to see
