@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Activity, FileSearch, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
+import { Activity, FileSearch, LayoutDashboard, Mail, ShieldCheck, Users } from "lucide-react";
 import { getAdminSession } from "@/server/admin/guard";
 import { AppHeader } from "@/components/workspace/AppHeader";
 import { AppFooter } from "@/components/workspace/AppFooter";
@@ -30,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <NavItem href="/admin/users" icon={Users} label="Users" />
                 <NavItem href="/admin/audit" icon={FileSearch} label="Audit search" />
                 <NavItem href="/admin/billing" icon={Activity} label="Webhook events" />
+                <NavItem href="/admin/email" icon={Mail} label="Email" />
               </ul>
             </nav>
           </aside>
