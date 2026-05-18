@@ -93,3 +93,32 @@ function parseDate(s: string | undefined): Date | null {
   const t = Date.parse(s);
   return Number.isFinite(t) ? new Date(t) : null;
 }
+
+/**
+ * Notification-only events. These don't mutate `subscriptions` (the
+ * subsequent state-change event will), but they DO warrant a user
+ * email so the customer knows what happened. Returning `null` from
+ * `mapDodoEventToUpdate` for these is correct - the route handler
+ * separately checks `mapDodoEventToNotification` and dispatches the
+ * email. Keeping them in their own map prevents the state machine
+ * from being polluted with side-effect-only branches.
+ */
+export type BillingNotificationKind =
+  | "payment_failed"
+  | "payment_refunded"
+  | "trial_ending";
+
+export function mapDodoEventToNotification(
+  eventType: string,
+): BillingNotificationKind | null {
+  switch (eventType) {
+    case "payment.failed":
+      return "payment_failed";
+    case "payment.refunded":
+      return "payment_refunded";
+    case "subscription.trial_ending":
+      return "trial_ending";
+    default:
+      return null;
+  }
+}

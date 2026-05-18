@@ -4,6 +4,8 @@ import { db } from "@/server/db";
 import { auditLog } from "@/server/schema/audit";
 import { sentryFindings, sentryScans } from "@/server/schema/sentry";
 import { agentSessions } from "@/server/schema/agent-sessions";
+import { users, verificationTokens } from "@/server/schema/auth";
+import { subscriptions } from "@/server/schema/billing";
 
 /**
  * Retention helpers. Without these, the audit-shaped tables grow
@@ -31,6 +33,14 @@ export interface RetentionConfig {
   scanRetentionDays: number;
   resolvedFindingRetentionDays: number;
   agentSessionRetentionDays: number;
+  /**
+   * Days after creation before a passwordless / unverified user row
+   * that has no subscription is considered abandoned and removed.
+   * Captures guest-checkout sessions where the visitor never came
+   * back to claim, and stale rows where someone started signup but
+   * never verified.
+   */
+  abandonedUserRetentionDays: number;
 }
 
 export const DEFAULT_RETENTION: RetentionConfig = {
@@ -38,6 +48,7 @@ export const DEFAULT_RETENTION: RetentionConfig = {
   scanRetentionDays: 30,
   resolvedFindingRetentionDays: 60,
   agentSessionRetentionDays: 90,
+  abandonedUserRetentionDays: 14,
 };
 
 export interface RetentionResult {
@@ -45,6 +56,8 @@ export interface RetentionResult {
   scansPruned: number;
   findingsPruned: number;
   sessionsPruned: number;
+  expiredTokensPruned: number;
+  abandonedUsersPruned: number;
   durationMs: number;
 }
 
@@ -123,11 +136,49 @@ export async function runRetention(
     )
     .returning({ id: agentSessions.id });
 
+  // 5. verificationTokens: any expired row is unreachable - they're
+  // single-use and TTL is checked at read time, but we still want to
+  // keep the table tidy. Covers email-verify + password-reset +
+  // welcome: tokens uniformly.
+  const expiredTokens = await db
+    .delete(verificationTokens)
+    .where(lt(verificationTokens.expires, new Date()))
+    .returning({ identifier: verificationTokens.identifier });
+
+  // 6. abandoned users: rows with no password hash, no verified
+  // email, no active or trialing subscription, older than the
+  // cutoff. Two scenarios this catches:
+  //   - Guest-checkout where the visitor closed the tab before
+  //     completing the Dodo flow. We created the row optimistically;
+  //     if no payment ever arrived, it's pure orphan.
+  //   - Half-finished signups where the user never confirmed their
+  //     email and never logged in.
+  // We deliberately keep rows with ANY subscription history - even
+  // a cancelled or expired sub means there was a real customer, and
+  // their audit_log + billing_event rows reference user_id.
+  const abandonedCutoff = daysAgo(config.abandonedUserRetentionDays);
+  const abandoned = await db.execute<{ id: string }>(sql`
+    DELETE FROM ${users}
+    WHERE ${users.id} IN (
+      SELECT u.id
+      FROM ${users} u
+      LEFT JOIN ${subscriptions} s ON s.user_id = u.id
+      WHERE u.password_hash IS NULL
+        AND u."emailVerified" IS NULL
+        AND u."createdAt" < ${abandonedCutoff}
+        AND s.id IS NULL
+      LIMIT 5000
+    )
+    RETURNING id
+  `);
+
   return {
     auditRowsPruned,
     scansPruned: scans.length,
     findingsPruned: findings.length,
     sessionsPruned: sessions.length,
+    expiredTokensPruned: expiredTokens.length,
+    abandonedUsersPruned: abandoned.length ?? 0,
     durationMs: Date.now() - t0,
   };
 }

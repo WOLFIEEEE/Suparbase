@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { runRetention } from "@/server/audit/retention";
+import { executeScheduledDeletions } from "@/server/auth/delete-account";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,8 +43,14 @@ export async function POST(req: NextRequest) {
     );
   }
   try {
+    // Run scheduled-deletion BEFORE retention pruning so the cascade
+    // deletes propagate cleanly: a user removed here loses their
+    // cascade-attached rows, and the audit_log pruning that runs
+    // next can then sweep older anonymised rows. Order matters only
+    // for the user-facing optics; both are independently idempotent.
+    const deletedAccounts = await executeScheduledDeletions();
     const result = await runRetention();
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, accountsHardDeleted: deletedAccounts });
   } catch (e) {
     return NextResponse.json(
       { category: "server", message: (e as Error).message ?? "Retention failed." },

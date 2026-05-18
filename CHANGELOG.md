@@ -3,6 +3,114 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.12.0 · 2026-05-18 · Production hardening (critical gaps)
+
+Closes the four CRITICAL gaps flagged in the v3.11.x production-
+readiness audit. No new features; everything here is about
+preventing the kind of mistake that only shows up in incident
+post-mortems.
+
+**1. Rate-limit on `/api/account/claim-welcome`:**
+
+The guest-checkout welcome flow consumes a single-use token to set
+a password and sign in. Without a rate limit, a leaked token could
+be brute-forced. Now reuses the signup IP bucket
+(`checkSignupRate`, 5/hour/IP). Generous enough that a legit user
+who mistypes never trips it, slow enough that token enumeration is
+impractical.
+
+**2. Retention cron now sweeps abandoned guest users + expired
+   verification tokens:**
+
+`src/server/audit/retention.ts` gains two new passes:
+- `expiredTokensPruned`: deletes any `verificationTokens` row past
+  expiry (email-verify, password-reset, welcome:* all covered).
+  Previously cleaned only on access.
+- `abandonedUsersPruned`: deletes users with no password hash, no
+  verified email, no subscription history, created > 14 days ago.
+  This is the orphan trail of guest-checkout sessions where the
+  visitor closed the tab, and half-finished signups that never
+  verified. The 14-day window is conservative; rows with ANY
+  subscription history (active, cancelled, expired) stay.
+
+Both run inside the existing `runRetention()` so they're driven by
+the same cron secret + cadence. `DEFAULT_RETENTION` gains
+`abandonedUserRetentionDays: 14`.
+
+**3. Three missing Dodo events wired:**
+
+`payment.failed`, `payment.refunded`, `subscription.trial_ending`
+were previously recorded as billing events but never affected the
+user or sent an email - they just sat in the table.
+
+Added `mapDodoEventToNotification(eventType)` in
+`src/server/billing/dodo-events.ts` that returns the right
+`BillingNotificationKind` for each. The webhook handler
+(`src/app/api/webhooks/dodo/route.ts`) now dispatches a themed
+email via the new `billing-notification` template before marking
+the event applied:
+
+- `payment_failed`: "We couldn't charge your card. Update payment
+  method." Links to `/settings/billing`.
+- `payment_refunded`: "Your refund has been processed. Funds in
+  5-10 business days."
+- `trial_ending`: "Your trial ends on <date>. Add a card to keep
+  your subscription."
+
+Email is best-effort: a Resend outage doesn't fail the webhook (we
+mark applied and log a warning so Dodo doesn't retry forever).
+Subscription state mutations (`subscription.on_hold`, etc.) are
+unchanged and still owned by `mapDodoEventToUpdate`.
+
+**4. Soft-delete account flow (matches privacy/terms promise):**
+
+The terms and privacy pages already promised "soft-delete at
+cancellation, hard-delete 30 days later." The code was doing an
+immediate hard-delete. This release fixes that drift.
+
+- **Schema** (`drizzle/0016_*.sql`): adds
+  `users.deletion_scheduled_at timestamp with time zone null`.
+  Additive, no downtime.
+- **`src/server/auth/delete-account.ts`** rewritten:
+  - `scheduleAccountDeletion(userId, days=30)` - sets the
+    timestamp. Replaces the old hard-delete entry point.
+  - `cancelScheduledDeletion(userId)` - clears it.
+  - `executeScheduledDeletions()` - the cron-callable hard-delete
+    pass. Wired into `/api/cron/retention`.
+  - `getDeletionStatus(userId)` - read helper for the UI.
+- **`src/server/auth/credentials.ts`** refuses sign-in when the
+  grace period has elapsed (account is queued for deletion on the
+  next cron tick; we don't want a session re-creating state for a
+  row about to disappear). Within the grace window, sign-in still
+  works so the user can cancel.
+- **`AccountSettingsPanel`** gains:
+  - A `DeletionPendingBanner` showing the deadline + a Cancel
+    button while the grace period is active.
+  - "Deletion already scheduled" disabled state on the delete
+    button when one is pending.
+  - Updated confirm-dialog copy: "Schedule deletion?" (was
+    "Delete account?").
+- **`deleteMyAccount` server action** now schedules instead of
+  hard-deleting. User is signed out immediately, lands on
+  `/?deletion=scheduled`.
+- **`cancelMyDeletion` server action** added for the in-grace
+  reverse action.
+
+**Operational notes:**
+
+- The retention cron is the ONLY hard-deleter; nothing else mutates
+  the row after `deletion_scheduled_at` is set.
+- Cascade behaviour on hard-delete is unchanged: connections,
+  subscriptions, agent sessions, etc. cascade away; audit_log keeps
+  anonymised rows via set-null FK.
+- Customers on a paid plan still need to cancel their Dodo
+  subscription separately - we don't auto-cancel because we don't
+  want to leave them with an unintended billing relationship if
+  they reverse the deletion.
+
+Typecheck clean, 132 tests passing, build green. Schema migration
+0016 generated and ready to apply.
+
 ## v3.11.0 · 2026-05-17 · Guest checkout
 
 Pay first, set a password after. The Hosted plan CTA on /pricing

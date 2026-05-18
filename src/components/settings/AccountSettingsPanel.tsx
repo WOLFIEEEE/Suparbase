@@ -3,16 +3,21 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowRight, CheckCircle2, Download, Mail, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Clock, Download, Mail, ShieldCheck, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { deleteMyAccount } from "@/app/(auth)/(account)/settings/account/actions";
+import {
+  cancelMyDeletion,
+  deleteMyAccount,
+} from "@/app/(auth)/(account)/settings/account/actions";
 
 interface Props {
   email: string;
   name: string | null;
   emailVerifiedAt: string | null;
+  /** ISO timestamp of when the account is scheduled to be hard-deleted, or null. */
+  deletionScheduledAt: string | null;
 }
 
 /**
@@ -22,10 +27,20 @@ interface Props {
  * log + billing events keep their rows with NULL user_id for operator
  * forensics. Required for GDPR Art. 17 ("right to be forgotten").
  */
-export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
+export function AccountSettingsPanel({
+  email,
+  name,
+  emailVerifiedAt,
+  deletionScheduledAt,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [cancelPending, startCancelTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const deletionPending = deletionScheduledAt
+    ? new Date(deletionScheduledAt)
+    : null;
 
   function runDelete() {
     return new Promise<void>((resolve, reject) => {
@@ -33,10 +48,11 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
         try {
           const result = await deleteMyAccount();
           if (result.ok) {
-            toast.success("Account deleted.");
+            toast.success("Account scheduled for deletion.");
             // Hard-replace to clear any cached React Query state then
-            // land on the marketing home.
-            router.replace("/");
+            // land on the marketing home. User is signed out; they can
+            // sign back in any time before the deadline to cancel.
+            router.replace("/?deletion=scheduled");
             router.refresh();
             resolve();
           } else {
@@ -51,6 +67,22 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
     });
   }
 
+  function runCancel() {
+    startCancelTransition(async () => {
+      try {
+        const result = await cancelMyDeletion();
+        if (result.ok) {
+          toast.success("Deletion cancelled. Your account is safe.");
+          router.refresh();
+        } else {
+          toast.error(result.message ?? "Could not cancel deletion.");
+        }
+      } catch (e) {
+        toast.error((e as Error).message ?? "Network error.");
+      }
+    });
+  }
+
   return (
     <div className="space-y-8">
       <header className="space-y-1">
@@ -59,6 +91,14 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
           Identity, contact, and the danger-zone controls.
         </p>
       </header>
+
+      {deletionPending && (
+        <DeletionPendingBanner
+          scheduledFor={deletionPending}
+          onCancel={runCancel}
+          cancelPending={cancelPending}
+        />
+      )}
 
       <EmailVerificationCard email={email} verifiedAt={emailVerifiedAt} />
 
@@ -126,42 +166,120 @@ export function AccountSettingsPanel({ email, name, emailVerifiedAt }: Props) {
         <div className="space-y-2">
           <h3 className="font-medium text-fg">Delete this account</h3>
           <p className="text-xs leading-relaxed text-fg-muted">
-            Removes you, your saved Supabase connections, encrypted credentials,
-            saved views, dashboards, custom actions, agent sessions, and team
-            memberships. <strong className="text-fg">This cannot be undone.</strong>{" "}
-            Audit log rows are retained without your user id for operator
-            forensics. If you&apos;re on a paid plan, cancel via the receipt
-            email <em>before</em> deleting so you stop being charged - we
+            Schedules your account for deletion after a{" "}
+            <strong className="text-fg">30-day grace period</strong>. During the
+            grace window you can sign back in and cancel from this page. After
+            the deadline, your row and every linked record (connections,
+            encrypted credentials, saved views, dashboards, custom actions,
+            agent sessions, team memberships) are hard-deleted; audit log rows
+            are retained anonymised for operator forensics. If you&apos;re on a
+            paid plan, cancel via the receipt email{" "}
+            <em>before</em> the grace period ends so you stop being charged - we
             don&apos;t auto-cancel Dodo subscriptions on account delete.
           </p>
         </div>
         <Button
           variant="danger"
           onClick={() => setConfirmOpen(true)}
-          disabled={pending}
+          disabled={pending || !!deletionPending}
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden />
-          {pending ? "Deleting…" : "Delete my account"}
+          {deletionPending
+            ? "Deletion already scheduled"
+            : pending
+            ? "Scheduling…"
+            : "Delete my account"}
         </Button>
       </section>
 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Delete account?"
+        title="Schedule account for deletion?"
         description={
           <>
-            Permanently removes <strong>{email}</strong> and every Suparbase row
-            tied to it. Cannot be undone. Cancel any active Dodo subscription
-            first to stop further charges.
+            Your account (<strong>{email}</strong>) will be hard-deleted in
+            <strong> 30 days</strong>. You&rsquo;ll be signed out immediately;
+            sign back in any time before the deadline to cancel. Cancel your
+            Dodo subscription separately to stop further charges.
           </>
         }
-        confirmLabel="Delete my account"
+        confirmLabel="Schedule deletion"
         tone="danger"
         requireText="DELETE MY ACCOUNT"
         onConfirm={runDelete}
       />
     </div>
+  );
+}
+
+function DeletionPendingBanner({
+  scheduledFor,
+  onCancel,
+  cancelPending,
+}: {
+  scheduledFor: Date;
+  onCancel: () => void;
+  cancelPending: boolean;
+}) {
+  const now = Date.now();
+  const msLeft = scheduledFor.getTime() - now;
+  const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
+  const human = scheduledFor.toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+  const overdue = msLeft <= 0;
+
+  return (
+    <section
+      role="alert"
+      aria-live="polite"
+      className="space-y-3 rounded-lg border border-warn/50 bg-warn/10 p-5"
+    >
+      <div className="flex items-start gap-3">
+        <Clock className="mt-0.5 h-5 w-5 shrink-0 text-warn" aria-hidden />
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="font-medium text-fg">
+            {overdue
+              ? "Your account deletion is processing now."
+              : `Account deletion scheduled in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.`}
+          </p>
+          <p className="text-xs leading-relaxed text-fg-muted">
+            {overdue ? (
+              <>
+                The grace period ended at <strong className="text-fg">{human}</strong>.
+                The scheduled retention job will hard-delete your data on its
+                next run; sign-in is already locked. If this is a mistake,
+                please contact us before the job runs.
+              </>
+            ) : (
+              <>
+                On <strong className="text-fg">{human}</strong>, your account
+                and every linked record will be permanently deleted. You can
+                cancel any time before then.
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+      {!overdue && (
+        <Button
+          variant="secondary"
+          onClick={onCancel}
+          disabled={cancelPending}
+          aria-busy={cancelPending}
+        >
+          <XCircle className="h-3.5 w-3.5" aria-hidden />
+          {cancelPending ? "Cancelling…" : "Cancel deletion"}
+        </Button>
+      )}
+    </section>
   );
 }
 

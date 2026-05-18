@@ -15,7 +15,10 @@ export default async function AccountSettingsPage() {
   if (!session?.user?.id) redirect("/signin");
 
   const rows = await db
-    .select({ emailVerified: users.emailVerified })
+    .select({
+      emailVerified: users.emailVerified,
+      deletionScheduledAt: users.deletionScheduledAt,
+    })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
@@ -25,6 +28,7 @@ export default async function AccountSettingsPage() {
       email={session.user.email ?? ""}
       name={session.user.name ?? null}
       emailVerifiedAt={rows[0]?.emailVerified?.toISOString() ?? null}
+      deletionScheduledAt={rows[0]?.deletionScheduledAt?.toISOString() ?? null}
     />
   );
 }

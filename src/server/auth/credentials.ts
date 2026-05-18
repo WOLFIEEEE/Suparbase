@@ -33,6 +33,17 @@ export const credentialsProvider = Credentials({
     const valid = await verifyPassword(password, row?.passwordHash ?? null);
     if (!row || !valid) return null;
 
+    // If the account is scheduled for deletion AND the grace period
+    // has already elapsed, refuse sign-in. The retention cron will
+    // hard-delete on its next tick. Inside the grace window we still
+    // allow sign-in so the user can cancel from settings.
+    if (
+      row.deletionScheduledAt &&
+      row.deletionScheduledAt.getTime() <= Date.now()
+    ) {
+      return null;
+    }
+
     return {
       id: row.id,
       email: row.email ?? email,

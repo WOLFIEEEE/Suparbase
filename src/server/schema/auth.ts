@@ -41,6 +41,18 @@ export const users = pgTable("users", {
   totpSecretEncrypted: bytea("totp_secret_encrypted"),
   /** When the user activated 2FA. Null = 2FA disabled. */
   totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+  /**
+   * Soft-delete grace period. When non-null, the account is scheduled
+   * for hard-deletion at this timestamp. Sign-in is blocked once it's
+   * passed (the cron job will hard-delete on its next tick). The user
+   * can cancel the deletion by signing in BEFORE the deadline and
+   * clicking "Cancel deletion" on their account settings.
+   *
+   * Privacy/Terms promise a 30-day window; the actual delay is
+   * `accountDeletionGraceDays` in the retention config so operators
+   * can tune it without code changes.
+   */
+  deletionScheduledAt: timestamp("deletion_scheduled_at", { withTimezone: true }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
 });
 

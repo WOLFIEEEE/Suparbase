@@ -5,7 +5,12 @@ import { db } from "@/server/db";
 import { users } from "@/server/schema";
 import { hashPassword } from "@/server/auth/passwords";
 import { consumeWelcomeToken } from "@/server/auth/welcome-token";
+import { checkSignupRate } from "@/server/proxy/ratelimit";
 import { log } from "@/server/log";
+
+function clientKey(req: NextRequest): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -36,6 +41,23 @@ const ClaimSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate-limit by IP. Reuses the signup bucket because the threat
+  // model is the same (unauthenticated POST that mutates account
+  // state). 5 attempts per hour per IP is more than generous for a
+  // legit user who mistyped a password; it slows token enumeration
+  // to a crawl.
+  const limit = checkSignupRate(clientKey(req));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "Too many attempts from this network. Try again in a few minutes.",
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

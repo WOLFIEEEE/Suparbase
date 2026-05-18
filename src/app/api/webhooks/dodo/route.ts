@@ -6,7 +6,16 @@ import {
   recordBillingEvent,
   upsertSubscription,
 } from "@/server/billing/repo";
-import { mapDodoEventToUpdate, type DodoWebhookEvent } from "@/server/billing/dodo-events";
+import {
+  mapDodoEventToNotification,
+  mapDodoEventToUpdate,
+  type DodoWebhookEvent,
+} from "@/server/billing/dodo-events";
+import { eq } from "drizzle-orm";
+import { db } from "@/server/db";
+import { users } from "@/server/schema";
+import { isEmailConfigured, sendEmail } from "@/server/email/resend";
+import { renderBillingNotificationEmail } from "@/server/email/templates/billing-notification";
 import { log } from "@/server/log";
 
 export const dynamic = "force-dynamic";
@@ -104,6 +113,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, unmapped: true });
   }
 
+  // Notification-only events (payment.failed, payment.refunded,
+  // subscription.trial_ending). They don't mutate subscriptions
+  // because a follow-up state event (or no event at all, for
+  // trial_ending) is the source of truth. We send the user an email
+  // so they know what happened, then mark applied so Dodo doesn't
+  // keep retrying.
+  const notification = mapDodoEventToNotification(eventType);
+  if (notification) {
+    await dispatchBillingNotification(userId, notification, event);
+    await markBillingEventApplied(webhookId);
+    return NextResponse.json({ ok: true, notified: notification });
+  }
+
   const update = mapDodoEventToUpdate(event);
   if (!update) {
     // Unknown event type - record it (already done) and log at info
@@ -137,4 +159,64 @@ export async function POST(req: NextRequest) {
     );
   }
   return NextResponse.json({ ok: true });
+}
+
+/**
+ * Best-effort notification email. Looks up the user's email, renders
+ * the appropriate template, sends. Failure (no email configured,
+ * Resend rejection, user deleted between webhook arrival and lookup)
+ * is logged but never throws - the webhook itself stays successful
+ * so Dodo doesn't enter retry hell over a transient email outage.
+ */
+async function dispatchBillingNotification(
+  userId: string,
+  kind: ReturnType<typeof mapDodoEventToNotification>,
+  event: DodoWebhookEvent,
+): Promise<void> {
+  if (!kind) return;
+  if (!isEmailConfigured()) {
+    log.info("dodo webhook: notification skipped (email not configured)", {
+      userId,
+      kind,
+    });
+    return;
+  }
+  try {
+    const userRows = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const email = userRows[0]?.email;
+    if (!email) {
+      log.warn("dodo webhook: user not found for notification", { userId, kind });
+      return;
+    }
+    const rendered = renderBillingNotificationEmail({
+      kind,
+      recipientEmail: email,
+      trialEndsAt: event.data?.trial_end ?? null,
+    });
+    const result = await sendEmail({
+      to: email,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+      tag: `billing-${kind}`,
+    });
+    if (!result.delivered) {
+      log.warn("dodo webhook: notification send failed", {
+        userId,
+        kind,
+        reason: result.reason,
+        error: result.error,
+      });
+    }
+  } catch (e) {
+    log.error("dodo webhook: notification exception", {
+      userId,
+      kind,
+      err: (e as Error).message,
+    });
+  }
 }
