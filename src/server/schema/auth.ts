@@ -53,6 +53,16 @@ export const users = pgTable("users", {
    * can tune it without code changes.
    */
   deletionScheduledAt: timestamp("deletion_scheduled_at", { withTimezone: true }),
+  /**
+   * Set when Resend reports a hard bounce or a spam complaint against
+   * this address. Acts as a global suppression flag: `sendEmail()`
+   * checks the recipient against this column and refuses to send if
+   * non-null. Cleared if the user updates their email or contacts
+   * support to confirm the address is good.
+   */
+  emailUndeliverableAt: timestamp("email_undeliverable_at", { withTimezone: true }),
+  /** Free-text reason for the suppression (e.g. "hard_bounce", "spam_complaint"). */
+  emailUndeliverableReason: text("email_undeliverable_reason"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
 });
 

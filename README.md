@@ -173,7 +173,75 @@ same `users` table).
 
 The Postgres data directory lives on a named volume
 (`suparbase_db_data`). Redeploys, app restarts, and image rebuilds do
-not touch it. Use Coolify's snapshot feature for backups.
+not touch it. Use Coolify's snapshot feature for backups (see below).
+
+### Backups (production checklist)
+
+Suparbase is the system of record for: user accounts, encrypted
+Supabase credentials, audit log, billing events, agent sessions,
+saved views, and AI conversation history. None of it is recoverable
+from anywhere else once the volume is gone. Two complementary backup
+mechanisms - run both:
+
+**1. Coolify automated snapshots (cheap, fast restore):**
+
+Open the Postgres service in Coolify, **Backups** tab, enable the
+"Daily" preset. Coolify writes nightly logical dumps to the host
+filesystem (or to S3 when you wire `BACKUP_S3_*` env vars on the
+service). Verified restore: stop the app container, **Restore** from
+the chosen dump, start the app container. Test this drill once a
+quarter on a staging copy - a backup you've never restored is a
+hope, not a backup.
+
+**2. Off-host `pg_dump` (resilient to host loss):**
+
+Coolify's snapshots sit on the same host as the data. If the host
+itself is lost, the snapshots are too. Add a daily cron on a machine
+you control:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+DEST=/srv/backups/suparbase
+mkdir -p "$DEST"
+pg_dump \
+  --format=custom \
+  --no-owner \
+  --no-privileges \
+  --compress=9 \
+  --file="$DEST/suparbase_${TS}.dump" \
+  "$DATABASE_URL"
+# Encrypt at rest (the dump contains encrypted vault entries already,
+# but layered defence is cheap with age).
+age -r "$RECIPIENT_AGE_KEY" -o "$DEST/suparbase_${TS}.dump.age" "$DEST/suparbase_${TS}.dump"
+rm "$DEST/suparbase_${TS}.dump"
+# Retain the last 30 dailies.
+find "$DEST" -name "suparbase_*.dump.age" -mtime +30 -delete
+```
+
+Ship the encrypted dumps to object storage (S3 / R2 / Backblaze)
+with a retention policy. Restore drill: decrypt, then
+`pg_restore -d $DATABASE_URL suparbase_TS.dump`. The credential vault
+columns stay encrypted at rest in the dump, so the
+`SUPARBASE_ENCRYPTION_KEY` env var must also be backed up - separately,
+not in the same vault as the data. We store ours in a password manager
+with two human owners.
+
+**3. After every restore, verify:**
+
+```bash
+curl -fsSL https://your-domain.example/api/health   # → {"status":"ok"}
+# Sign in, open a saved connection, click a row, then "Test email"
+# from /admin/email. If all three work, the restore is good.
+```
+
+**What's NOT backed up (and shouldn't be):**
+
+- The customer's Supabase databases - those are theirs, they own
+  the backup story over there.
+- The credential vault key itself - that's an operational secret
+  managed alongside the deployment, not the data.
 
 ### Updating
 

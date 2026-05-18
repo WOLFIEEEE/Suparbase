@@ -82,6 +82,14 @@ export interface ActivePlan {
   isPaid: boolean;
   /** True when the user is currently inside a free trial. */
   isTrialing: boolean;
+  /**
+   * True when there's a dunning situation: Dodo couldn't charge the
+   * card, the subscription is on_hold or the payment attempt failed.
+   * UI uses this to render a "Update payment method" banner. The user
+   * is treated as `isPaid=false` in this state (entitlement is gated
+   * on `active | trialing` only) so usage limits apply immediately.
+   */
+  isPastDue: boolean;
   /** Optional renewal cliff used by the UI to render "Renews on Jan 14". */
   currentPeriodEnd: Date | null;
   /** Trial end cliff (only meaningful when isTrialing). */
@@ -89,6 +97,11 @@ export interface ActivePlan {
   /** Whether this entitlement came from a manual admin grant. */
   grantedByAdmin: boolean;
 }
+
+const PAST_DUE_STATUSES: ReadonlySet<SubscriptionStatus> = new Set([
+  "on_hold",
+  "failed",
+]);
 
 /**
  * Resolve a subscription row (or the absence of one) to the user's
@@ -103,6 +116,7 @@ export function resolvePlan(row: SubscriptionRow | null): ActivePlan {
       limits: PLAN_LIMITS.free,
       isPaid: false,
       isTrialing: false,
+      isPastDue: false,
       currentPeriodEnd: null,
       trialEndsAt: null,
       grantedByAdmin: false,
@@ -127,6 +141,7 @@ export function resolvePlan(row: SubscriptionRow | null): ActivePlan {
     limits: PLAN_LIMITS[effectivePlan],
     isPaid: entitled,
     isTrialing: entitled && row.status === "trialing",
+    isPastDue: PAST_DUE_STATUSES.has(row.status),
     currentPeriodEnd: row.currentPeriodEnd,
     trialEndsAt: row.trialEndsAt,
     grantedByAdmin: row.grantedByAdmin !== null,

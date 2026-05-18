@@ -3,6 +3,113 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.13.0 · 2026-05-18 · Production hardening (important + nice-to-have)
+
+Follow-up to v3.12.0. Closes every Important and Nice-to-have item
+from the production-readiness audit. No new features; this is the
+"don't make a mistake under load" release.
+
+**Dunning UX (Past-due banner):**
+
+`ActivePlan` gains an `isPastDue` flag derived from
+`status IN ("on_hold", "failed")`. The auth layout
+(`src/app/(auth)/layout.tsx`) resolves the active plan once per
+request and hoists a `PastDueBanner` above every signed-in page if
+the subscription is dunning. The banner explains the situation in
+plain English and links straight to `/settings/billing` so the
+user can launch Dodo's customer portal. Soft-fails on a DB error
+(banner just doesn't render; never locks anyone out).
+
+**CSP hardening (drop `'unsafe-inline'` from script-src):**
+
+`src/middleware.ts` now generates a fresh nonce per request, sets
+`x-nonce` on the request headers (so Next.js' own hydration scripts
+pick it up), and emits a Content-Security-Policy header with
+`script-src 'self' 'nonce-<x>' 'strict-dynamic'` in production.
+Dev mode keeps `unsafe-inline 'unsafe-eval'` because HMR needs
+them. Style-src still allows `'unsafe-inline'` (Radix primitives
+inject runtime positioning styles and a couple of our components
+ship inline animation stylesheets; XSS via CSS is materially less
+dangerous than via JS). Also adds an explicit
+`X-Frame-Options: DENY` for defense-in-depth alongside the existing
+`frame-ancestors 'none'`. The duplicate CSP in `next.config.ts`
+was removed - middleware now owns all security headers.
+
+**Resend bounce + complaint handling:**
+
+New `POST /api/webhooks/resend` route. Reuses the existing
+Standard Webhooks verifier (same crypto Dodo uses; Resend uses
+Svix headers but the signing format is identical). Listens for:
+
+- `email.bounced`: hard bounces (transient bounces are no-op'd)
+  set `users.email_undeliverable_at` + reason on the row via
+  `suppressEmail()`.
+- `email.complained`: spam complaints, same suppression.
+- Anything else: 200 OK, no-op.
+
+`sendEmail()` consults the suppression list before every send and
+returns `reason: "suppressed"` if the recipient is flagged. The
+operator can clear the flag manually via `unsuppressEmail(userId)`
+or directly in SQL. Schema migration `0017_*.sql` adds the two
+columns (`email_undeliverable_at`, `email_undeliverable_reason`).
+
+To activate, set `RESEND_WEBHOOK_SECRET` to the value Resend gives
+you when creating the webhook. Without it the endpoint returns 503
+so Resend retries instead of trusting unsigned events.
+
+**`List-Unsubscribe` headers on every transactional email:**
+
+`sendEmail()` now sets `List-Unsubscribe: <mailto:...>` and
+`List-Unsubscribe-Post: List-Unsubscribe=One-Click` on every send.
+Gmail / Yahoo / Outlook reward senders who honour RFC 8058 with
+better deliverability and surface a standardised Unsubscribe button
+in their UI. The mailto routes to `EMAIL_UNSUBSCRIBE_TO` (env), or
+`EMAIL_REPLY_TO`, or `contact@suparbase.com` - whichever is set.
+
+**Redact-pattern hardening:**
+
+`src/lib/redact.ts` gains patterns for: Resend keys (`re_*`),
+Standard Webhooks signing secrets (`whsec_*`), GitHub tokens
+(`ghp_/gho_/ghu_/ghs_/ghr_`), 32-byte base64 keys (catches
+`SUPARBASE_ENCRYPTION_KEY` shape), and 64-char hex (HMAC secrets).
+Token-type markers distinguish `[REDACTED_KEY]` / `[REDACTED_SECRET]`
+/ `[REDACTED_TOKEN]` / `[REDACTED_HASH]` so an operator browsing
+logs can tell which class of secret leaked.
+
+11 new unit tests in `tests/redact.test.ts` lock in the behaviour.
+
+**Backup runbook (README):**
+
+Added a real backup section to the Coolify deploy guide. Documents
+both Coolify's automated snapshots AND an off-host `pg_dump`-based
+script for resilience to host loss. Includes the verify-restore
+drill (3 commands) and what's intentionally NOT backed up
+(customer Supabase data, the vault key).
+
+**Patch-version dependency bump:**
+
+- `date-fns` 4.1.0 → 4.2.1
+- `posthog-js` 1.373.5 → 1.374.0
+- `react-hook-form` 7.75.0 → 7.76.0
+- `next` to latest 15.x
+
+Skipped major bumps that need migration (Next 16, Zod 4, Tailwind 4,
+TypeScript 6, lucide-react 1, drizzle major). Those go in a
+dedicated upgrade ship.
+
+**E2E test for guest checkout:**
+
+`e2e/guest-checkout.spec.ts` covers: form renders, plan redirects
+(`/checkout/free` → `/signup`, `/checkout/team` → `/contact`),
+welcome-token error path, and the billing-not-configured fallback.
+Doesn't drive Dodo's hosted checkout - that needs sandbox creds -
+but catches every Suparbase-side surface in the flow.
+
+**Schema:** migration 0017 (additive, no downtime).
+
+Typecheck clean, 143 tests passing (+11 from redact tests), build
+green.
+
 ## v3.12.0 · 2026-05-18 · Production hardening (critical gaps)
 
 Closes the four CRITICAL gaps flagged in the v3.11.x production-

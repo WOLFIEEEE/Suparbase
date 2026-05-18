@@ -1,5 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
+import { isEmailSuppressed } from "./suppression";
+import { log } from "@/server/log";
 
 /**
  * Singleton Resend client. We lazy-instantiate so the SDK isn't loaded
@@ -7,13 +9,20 @@ import { Resend } from "resend";
  * each request (useful in dev / Coolify when toggling the key).
  *
  * Configuration:
- *   RESEND_API_KEY  , required. Get one at https://resend.com/api-keys
- *   EMAIL_FROM      , required. Must be a verified sender, e.g.
- *                      "Suparbase <invites@yourdomain.com>"
- *   EMAIL_REPLY_TO  , optional. Where replies are routed.
+ *   RESEND_API_KEY  required. Get one at https://resend.com/api-keys
+ *   EMAIL_FROM      required. Must be a verified sender, e.g.
+ *                     "Suparbase <invites@yourdomain.com>"
+ *   EMAIL_REPLY_TO  optional. Where replies are routed.
  *
  * `isEmailConfigured()` returns false when the key/from address is
  * missing, so calling code can fall back gracefully.
+ *
+ * Every send includes a `List-Unsubscribe` mailto header per RFC
+ * 8058. Transactional emails don't strictly need unsubscribe
+ * (Gmail / Yahoo carve them out), but providers downgrade reputation
+ * when senders push >5k/day without one, so we ship it on every
+ * message. The mailto routes to the operator inbox, who can manually
+ * suppress on request.
  */
 
 let cached: Resend | null = null;
@@ -50,6 +59,18 @@ function getClient(): Resend | null {
   return cached;
 }
 
+function unsubscribeMailbox(): string {
+  // Resend's verified domain owns the bounce inbox; we surface a
+  // human-friendly mailto for List-Unsubscribe so a recipient who
+  // wants out of even transactional mail can ask. Falls back to the
+  // EMAIL_REPLY_TO env, then a sensible default.
+  return (
+    process.env.EMAIL_UNSUBSCRIBE_TO?.trim() ||
+    process.env.EMAIL_REPLY_TO?.trim() ||
+    "contact@suparbase.com"
+  );
+}
+
 export interface SendEmailInput {
   to: string | string[];
   subject: string;
@@ -59,10 +80,17 @@ export interface SendEmailInput {
   text?: string;
   /** Optional reply-to override. Falls back to EMAIL_REPLY_TO env. */
   replyTo?: string;
-  /** Optional headers (e.g. List-Unsubscribe). */
+  /** Optional additional headers. Merged with the default List-Unsubscribe. */
   headers?: Record<string, string>;
   /** Optional opaque tag for Resend dashboard filtering. */
   tag?: string;
+  /**
+   * Skip the suppression-list pre-check. Defaults to false. The
+   * Resend bounce webhook itself uses this to send the "we've stopped
+   * mailing you" confirmation through the same pipeline without an
+   * infinite loop.
+   */
+  skipSuppression?: boolean;
 }
 
 export interface SendEmailResult {
@@ -71,7 +99,7 @@ export interface SendEmailResult {
   /** Whether the email was actually dispatched. */
   delivered: boolean;
   /** When `delivered=false`, why. */
-  reason?: "no_key" | "no_from" | "failed";
+  reason?: "no_key" | "no_from" | "suppressed" | "failed";
   error?: string;
 }
 
@@ -90,6 +118,44 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     return { id: null, delivered: false, reason: "no_key" };
   }
 
+  // Suppression check. Skip if the caller opts out (e.g. the webhook
+  // that just suppressed wants to send a confirmation). Only checks
+  // single-recipient sends; bulk arrays fall through (we don't ship
+  // bulk transactional sends today).
+  if (!input.skipSuppression && typeof input.to === "string") {
+    try {
+      const suppressed = await isEmailSuppressed(input.to);
+      if (suppressed) {
+        log.info("email send suppressed (bounce / complaint flag)", {
+          to: input.to,
+          tag: input.tag,
+        });
+        return {
+          id: null,
+          delivered: false,
+          reason: "suppressed",
+          error: "Recipient is on the suppression list.",
+        };
+      }
+    } catch (e) {
+      log.warn("email suppression check failed (sending anyway)", {
+        err: (e as Error).message,
+      });
+    }
+  }
+
+  const unsubscribe = unsubscribeMailbox();
+  const headers: Record<string, string> = {
+    // RFC 8058 List-Unsubscribe / List-Unsubscribe-Post. The mailto
+    // is a guaranteed unsubscribe path; List-Unsubscribe-Post tells
+    // mailbox providers we honour one-click List-Unsubscribe and
+    // surfaces the standardised "Unsubscribe" button in clients that
+    // support it (Gmail, Apple Mail, Outlook).
+    "List-Unsubscribe": `<mailto:${unsubscribe}?subject=unsubscribe>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    ...(input.headers ?? {}),
+  };
+
   try {
     const res = await client.emails.send({
       from: config.from,
@@ -98,7 +164,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       html: input.html,
       text: input.text,
       replyTo: input.replyTo ?? config.replyTo ?? undefined,
-      headers: input.headers,
+      headers,
       tags: input.tag ? [{ name: "category", value: input.tag }] : undefined,
     });
     if (res.error) {
