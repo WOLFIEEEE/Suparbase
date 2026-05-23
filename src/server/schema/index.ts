@@ -8,6 +8,7 @@ export * from "./dashboard-widgets";
 export * from "./team";
 export * from "./sentry";
 export * from "./agent-sessions";
+export * from "./sync";
 export * from "./billing";
 export * from "./admin";
 export * from "./password-reset";

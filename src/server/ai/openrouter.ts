@@ -169,6 +169,98 @@ interface ChatCompletionsRequest {
   userPrompt: string;
 }
 
+export interface JsonCompletionResult {
+  /** Parsed JSON content from the model — caller validates with its own schema. */
+  content: unknown;
+  model: string;
+  usage: OpenRouterUsage;
+}
+
+/**
+ * Generic JSON chat completion. Same transport/error handling as
+ * `runAnalysis` but returns the parsed-but-unvalidated JSON so callers can
+ * apply their own zod schema. Used by features beyond schema analysis
+ * (e.g. the sync AI advisor).
+ */
+export async function runJsonCompletion(req: {
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+  maxTokens?: number;
+}): Promise<JsonCompletionResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MAX_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(`${ENDPOINT}/chat/completions`, {
+      method: "POST",
+      headers: authHeaders(req.apiKey),
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: req.model,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        max_tokens: req.maxTokens ?? 2000,
+        messages: [
+          { role: "system", content: req.systemPrompt },
+          { role: "user", content: req.userPrompt },
+        ],
+      }),
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    throw new OpenRouterError("network", `Could not reach OpenRouter (${(e as Error).message ?? "unknown"}).`);
+  }
+  clearTimeout(timer);
+
+  if (res.status === 401 || res.status === 403) {
+    throw new OpenRouterError("unauthorized", "OpenRouter rejected this key.");
+  }
+  if (res.status === 429) {
+    throw new OpenRouterError("rate_limited", "OpenRouter rate-limited this request.");
+  }
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = await res.text();
+    } catch {
+      /* ignore */
+    }
+    throw new OpenRouterError("server", `OpenRouter ${res.status}: ${redact(detail.slice(0, 200))}`);
+  }
+
+  let payload: ChatCompletionsResponse;
+  try {
+    payload = (await res.json()) as ChatCompletionsResponse;
+  } catch {
+    throw new OpenRouterError("malformed", "OpenRouter returned non-JSON.");
+  }
+  if (payload.error) {
+    throw new OpenRouterError("server", payload.error.message ?? "OpenRouter returned an error.");
+  }
+  const raw = payload.choices?.[0]?.message?.content;
+  if (typeof raw !== "string" || raw.trim() === "") {
+    throw new OpenRouterError("malformed", "OpenRouter response had no message content.");
+  }
+  let content: unknown;
+  try {
+    content = JSON.parse(raw);
+  } catch {
+    throw new OpenRouterError("malformed", "Model output was not valid JSON.");
+  }
+  return {
+    content,
+    model: payload.model ?? req.model,
+    usage: {
+      promptTokens: payload.usage?.prompt_tokens ?? 0,
+      completionTokens: payload.usage?.completion_tokens ?? 0,
+      totalTokens: payload.usage?.total_tokens ?? 0,
+    },
+  };
+}
+
 interface ChatCompletionsResponse {
   model?: string;
   choices?: Array<{ message?: { content?: string } }>;

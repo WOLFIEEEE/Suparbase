@@ -3,6 +3,51 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.14.0 · 2026-05-24 · Database sync (base → target)
+
+One-directional sync to refresh a target (e.g. staging) from a base
+(e.g. prod) without leaking real user data. The **base is sacred** —
+opened only in a forced-read-only session (`default_transaction_read_only`),
+with no writable base handle anywhere in the code. Direct-Postgres-only:
+both connections need a Direct Postgres URL. Spec:
+[`specs/032-db-sync/`](specs/032-db-sync/).
+
+**Engine (`src/server/sync/`):**
+
+Authoritative `pg_catalog` introspection (`catalog.ts`) — columns,
+identity/generated, PK/FK/unique/check via `pg_constraint`, indexes,
+sequences, enums. FK dependency graph (`graph.ts`) gives parents-first
+copy order, cycle detection, and "downstream-of-excluded" risk analysis.
+`runner.ts` runs the whole data load in **one target transaction**
+(all-or-nothing) with `COPY`-streamed full-replace per table
+(`data-copy.ts`), sequence reset (`sequences.ts`), and safety guards
+(`safety.ts`: read-only base, self-clobber refusal, advisory lock,
+typed-name confirmation).
+
+**User/PII handling:** `auth` schema always excluded; tables can be
+marked exclude (keep target's own users) or skip; any synced FK pointing
+at an excluded/unsynced table must be resolved (null-out or remap).
+
+**Schema sync:** when enabled, a catalog diff (`schema-diff.ts` +
+`ddl-generate.ts`) creates missing enums/tables/columns/constraints/
+indexes before the load; destructive drops are gated behind an explicit
+toggle.
+
+**AI advisor (opt-in):** infers undeclared relationships, classifies
+tables (PII/seed/transactional), and suggests FK resolutions that
+pre-fill the config. Privacy-tiered (schema-only default → value-shapes
+→ raw, redacted server-side); advisory only, never emits SQL.
+
+**Anonymization:** per-column masks (null / hash / email / fixed) applied
+in the base SELECT projection during copy.
+
+**Scheduling:** `/api/cron/sync` runs due profiles unattended on an
+interval (Bearer `CRON_SECRET`).
+
+**UI:** `/c/[id]/sync` — saved profiles, dry-run plan preview with table
+rules + FK/anon editors, live SSE run progress, and run history.
+Migrations `0018` / `0019`.
+
 ## v3.13.0 · 2026-05-18 · Production hardening (important + nice-to-have)
 
 Follow-up to v3.12.0. Closes every Important and Nice-to-have item

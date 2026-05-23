@@ -46,4 +46,5 @@ Spec-kit features (chronological):
 - [specs/029-resend-email/](specs/029-resend-email/) · v2.4.1, Resend transactional email (invitations delivered via email when configured)
 - [specs/030-agent-sentry/](specs/030-agent-sentry/) · v3.0, Agent Sentry security watchdog (anon-probe + pg_policies inspector + one-click quarantine)
 - [specs/031-agent-sessions/](specs/031-agent-sessions/) · v3.1, agent session attribution + one-click session undo (PocketOS-class safety net)
+- [specs/032-db-sync/](specs/032-db-sync/) · v3.14, database sync (base→target full-replace; read-only base; schema+data; exclude-users + FK resolution; AI advisor; anonymization; scheduled refreshes). Requires Direct Postgres URL on both connections.
 <!-- SPECKIT END -->

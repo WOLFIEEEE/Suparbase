@@ -127,6 +127,20 @@
       "when": 1779115596166,
       "tag": "0017_fast_blonde_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1779570067171,
+      "tag": "0018_broad_whistler",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1779572172906,
+      "tag": "0019_groovy_namora",
+      "breakpoints": true
     }
   ]
 }

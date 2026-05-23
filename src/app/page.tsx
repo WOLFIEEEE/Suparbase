@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowLeftRight,
   ArrowRight,
   CheckCircle2,
   Database,
@@ -46,6 +47,11 @@ const PROMISES = [
 ] as const;
 
 const FEATURE_PREVIEWS = [
+  {
+    icon: ArrowLeftRight,
+    title: "Prod → staging sync",
+    body: "Pick a base and target; full-replace per table with FK-safe user handling, schema sync, and AI-suggested exclusions. The base is read, never written.",
+  },
   {
     icon: Sparkles,
     title: "AI chat with tool-use",
@@ -209,8 +215,8 @@ export default async function HomePage() {
       </div>
 
       <CTABand
-        title="Drop in your key and ship."
-        body="Five minutes to set up. Free tier for solo projects. No credit card."
+        title="Drop in your key — and refresh staging from prod."
+        body="A full Supabase admin with one-click prod→staging sync. Five minutes to set up. Free tier for solo projects, no credit card."
         primary={{ href: "/signup", label: "Get started" }}
         secondary={{ href: "/features", label: "See features" }}
       />
