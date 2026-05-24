@@ -14,6 +14,7 @@ import { copyTable } from "./data-copy";
 import { resetSequences } from "./sequences";
 import {
   assertDistinctDatabases,
+  assertDistinctLive,
   openBaseClient,
   openTargetClient,
   withTargetLock,
@@ -21,6 +22,14 @@ import {
 import { tableIdent } from "./sql-util";
 
 const TX_STATEMENT_TIMEOUT_MS = 30 * 60 * 1000;
+
+/** Thrown to roll back the data transaction when a run is cancelled. */
+export class SyncAbortedError extends Error {
+  constructor() {
+    super("Sync aborted.");
+    this.name = "SyncAbortedError";
+  }
+}
 
 export interface RunHooks {
   onPhase?(phase: SyncRunPhase, detail?: string): void;
@@ -38,6 +47,8 @@ export interface RunParams {
   schemas?: string[];
   dryRun: boolean;
   hooks?: RunHooks;
+  /** Cooperative cancellation: checked before each table copy. */
+  shouldAbort?: () => Promise<boolean>;
 }
 
 export interface RunResult {
@@ -93,9 +104,13 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
       };
     }
 
+    // Stronger self-clobber check now that both sessions are open.
+    await assertDistinctLive(baseSql, targetSql);
+
     const syncedSet = new Set(plan.order);
 
-    await withTargetLock(targetSql, target.id, async () => {
+    try {
+      await withTargetLock(targetSql, target.id, async () => {
       // Schema apply (pre-copy): runs in autocommit BEFORE the data
       // transaction. Enum ADD VALUE can't be used in the same transaction it's
       // created in, and CREATE TABLE/TYPE should persist regardless of the data
@@ -127,6 +142,9 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
 
         hooks?.onPhase?.("data_copy");
         for (const qualified of plan.order) {
+          if (params.shouldAbort && (await params.shouldAbort())) {
+            throw new SyncAbortedError();
+          }
           const tablePlan = planForTable(plan, qualified)!;
           hooks?.onTableStart?.(qualified, tablePlan.estimatedRows);
           const t0 = Date.now();
@@ -152,8 +170,17 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
             await tx.unsafe(stmt);
           }
         }
+        });
       });
-    });
+    } catch (e) {
+      // A cancelled run rolls back the transaction (target untouched) and
+      // finishes cleanly with an `aborted` status rather than a hard error.
+      if (e instanceof SyncAbortedError) {
+        hooks?.onPhase?.("done");
+        return { status: "aborted", plan, stats };
+      }
+      throw e;
+    }
 
     hooks?.onPhase?.("done");
     return { status: "succeeded", plan, stats };

@@ -197,6 +197,18 @@ export function buildSyncPlan(input: PlanInput): SyncPlan {
     });
   }
 
+  // Triggers fire during COPY — Supabase's non-superuser role can't set
+  // session_replication_role = replica to suppress them. Warn so the user
+  // can confirm they're safe on a bulk full-replace (or drop them first).
+  const triggered = base.tables
+    .filter((t) => actionFor(tableConfig, t.qualified) === "sync" && t.triggers.length > 0)
+    .map((t) => t.qualified);
+  if (triggered.length > 0) {
+    warnings.push(
+      `These synced tables have triggers that will fire during the copy (they can't be disabled on Supabase): ${triggered.join(", ")}. Confirm they're safe on a bulk load, or drop them first.`,
+    );
+  }
+
   const excluded = base.tables
     .filter((t) => actionFor(tableConfig, t.qualified) === "exclude")
     .map((t) => t.qualified);

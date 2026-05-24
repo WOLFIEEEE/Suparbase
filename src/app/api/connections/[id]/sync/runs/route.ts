@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
 import { getConnectionAccess, getConnectionForUser, requireRole } from "@/server/connections/repo";
 import { checkAiRate } from "@/server/proxy/ratelimit";
-import { createRun, getProfile, listRuns, updateRun } from "@/server/sync/repo";
+import { createRun, getProfile, getRun, listRuns, updateRun } from "@/server/sync/repo";
 import { startRunSchema } from "@/server/sync/validate";
 import { executeSyncRun } from "@/server/sync/runner";
 import { verifyConfirmation } from "@/server/sync/safety";
@@ -113,6 +113,7 @@ export async function POST(req: NextRequest, ctx: Params) {
           tableConfig: profile.tableConfig,
           options: profile.options,
           dryRun,
+          shouldAbort: async () => (await getRun(userId, run.id))?.status === "aborted",
           hooks: {
             onPhase: (phase, detail) => send("phase", { phase, detail }),
             onTableStart: (table, estimatedRows) => send("table_start", { table, estimatedRows }),

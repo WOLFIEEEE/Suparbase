@@ -101,6 +101,37 @@ export function assertDistinctDatabases(base: ConnectionRow, target: ConnectionR
   }
 }
 
+/**
+ * Stronger, runtime self-clobber check: two connections can point at the same
+ * physical database through different endpoints (e.g. Supabase's pooler host
+ * vs. the direct host), which the URL comparison can't catch. Compare the
+ * cluster's `system_identifier` + `current_database()`. Best-effort: if the
+ * function isn't callable on this role, we silently rely on the URL check.
+ */
+export async function assertDistinctLive(
+  baseSql: postgres.Sql<Record<string, never>>,
+  targetSql: postgres.Sql<Record<string, never>>,
+): Promise<void> {
+  try {
+    const [baseRows, targetRows] = await Promise.all([
+      baseSql<{ sysid: string; db: string }[]>`
+        SELECT (pg_control_system()).system_identifier::text AS sysid, current_database() AS db`,
+      targetSql<{ sysid: string; db: string }[]>`
+        SELECT (pg_control_system()).system_identifier::text AS sysid, current_database() AS db`,
+    ]);
+    const b = baseRows[0];
+    const t = targetRows[0];
+    if (b && t && b.sysid && b.sysid === t.sysid && b.db === t.db) {
+      throw new SyncSafetyError(
+        `Base and target resolve to the same database (cluster ${b.sysid}, db "${b.db}"). Refusing to sync.`,
+      );
+    }
+  } catch (e) {
+    if (e instanceof SyncSafetyError) throw e;
+    // pg_control_system() may be restricted; fall back to the URL-level check.
+  }
+}
+
 /** Stable 63-bit advisory-lock key derived from a connection id. */
 function advisoryKey(connectionId: string): bigint {
   const digest = createHash("sha1").update(`sync:${connectionId}`).digest();

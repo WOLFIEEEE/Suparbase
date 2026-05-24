@@ -113,6 +113,13 @@ export async function analyze(
   return res.json();
 }
 
+export async function abortRun(connId: string, runId: string): Promise<void> {
+  const res = await fetch(`/api/connections/${connId}/sync/runs/${runId}/abort`, {
+    method: "POST",
+  });
+  if (!res.ok) await asError(res);
+}
+
 export async function listRuns(connId: string): Promise<{ runs: RunJson[] }> {
   const res = await fetch(`/api/connections/${connId}/sync/runs`);
   if (!res.ok) await asError(res);

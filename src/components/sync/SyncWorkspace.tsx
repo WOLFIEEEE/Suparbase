@@ -25,6 +25,7 @@ import type {
   SyncTableConfig,
 } from "./api";
 import {
+  abortRun,
   analyze,
   createProfile,
   deleteProfile,
@@ -199,6 +200,7 @@ export function SyncWorkspace({ connectionId, targetName, targetHasPostgresUrl }
 interface RunState {
   active: boolean;
   dryRun: boolean;
+  runId?: string;
   phase?: string;
   tables: Record<string, { estimatedRows?: number; rowsCopied?: number; durationMs?: number; done: boolean }>;
   warnings: string[];
@@ -535,7 +537,23 @@ function ProfileEditor({
         tableConfig={tableConfig}
       />}
 
-      {run && <RunProgress run={run} />}
+      {run && (
+        <RunProgress
+          run={run}
+          onAbort={
+            run.active && run.runId
+              ? async () => {
+                  try {
+                    await abortRun(connectionId, run.runId!);
+                    toast.message("Abort requested — finishing the current table, then rolling back.");
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  }
+                }
+              : undefined
+          }
+        />
+      )}
 
       <ConfirmDialog
         open={confirmOpen}
@@ -561,7 +579,7 @@ function reduceEvent(prev: RunState | null, e: { event: string; data: Record<str
   const base: RunState = prev ?? { active: true, dryRun: false, tables: {}, warnings: [] };
   switch (e.event) {
     case "run":
-      return { ...base, active: true, dryRun: Boolean(e.data.dryRun), tables: {}, warnings: [], status: undefined, error: undefined };
+      return { ...base, active: true, dryRun: Boolean(e.data.dryRun), runId: String(e.data.id), tables: {}, warnings: [], status: undefined, error: undefined };
     case "phase":
       return { ...base, phase: String(e.data.phase) };
     case "table_start": {
@@ -634,6 +652,11 @@ function PlanView({ plan, tableConfig, action, universe, onAction, onResolve, on
           <p className="text-xs text-fg-faint">
             Applied before the data load (drops/constraints where relevant). Turn on “Apply schema
             changes” to include these in a run.
+          </p>
+          <p className="text-[11px] text-warn">
+            Note: structural changes (CREATE/ALTER/DROP) run outside the data transaction, so unlike
+            the data load they are not rolled back if a later step fails. They are idempotent on
+            re-run.
           </p>
           <ul className="mt-1 space-y-0.5 text-xs">
             {plan.schemaDiff.summary.slice(0, 50).map((s, i) => (
@@ -862,7 +885,7 @@ function AdvisorPanel({
   );
 }
 
-function RunProgress({ run }: { run: RunState }) {
+function RunProgress({ run, onAbort }: { run: RunState; onAbort?: () => void }) {
   const tables = Object.entries(run.tables);
   return (
     <div className="space-y-3 rounded border hairline p-4">
@@ -871,6 +894,11 @@ function RunProgress({ run }: { run: RunState }) {
         <span className="font-medium text-fg">
           {run.dryRun ? "Dry run" : "Sync"} {run.active ? `· ${run.phase ?? "starting"}…` : `· ${run.status ?? "done"}`}
         </span>
+        {onAbort && (
+          <Button size="sm" variant="ghost" className="ml-auto" onClick={onAbort}>
+            Abort
+          </Button>
+        )}
       </div>
       {run.error && <Alert tone="danger">{run.error}</Alert>}
       {tables.length > 0 && (

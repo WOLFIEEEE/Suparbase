@@ -3,6 +3,29 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.14.1 · 2026-05-24 · Database sync hardening
+
+Correctness follow-up to v3.14.0, before the feature is trusted on a live
+prod/staging pair.
+
+- **Unit tests** for the pure sync logic (`tests/sync-*.test.ts`): FK
+  topo-sort / cycle detection / at-risk-FK analysis, the schema diff
+  (create/add/drop, type-change + extra-NOT-NULL blockers, enum values),
+  plan blocking + FK-resolution transforms + anonymization validation, and
+  identifier/literal quoting (the injection-sensitive surface).
+- **Trigger detection.** The catalog now reads user triggers; synced tables
+  that have them are flagged in the plan — they fire during `COPY` because
+  Supabase's non-superuser role can't `SET session_replication_role`.
+- **Cooperative abort.** A running sync can be cancelled
+  (`POST …/sync/runs/[rid]/abort` + an Abort button); the runner checks
+  between tables and rolls back the data transaction, leaving the target
+  untouched.
+- **Stronger self-clobber guard.** Beyond the URL check, the runner now
+  compares the live cluster `system_identifier` + `current_database()` so
+  base==target is caught even via different endpoints (pooler vs. direct).
+- **Atomicity note** in the UI: schema DDL runs outside the data transaction
+  (not rolled back on a later failure; idempotent on re-run).
+
 ## v3.14.0 · 2026-05-24 · Database sync (base → target)
 
 One-directional sync to refresh a target (e.g. staging) from a base

@@ -56,6 +56,10 @@ export interface IndexMeta {
   def: string;
 }
 
+export interface TriggerMeta {
+  name: string;
+}
+
 export interface FkMeta {
   name: string;
   columns: string[];
@@ -79,6 +83,8 @@ export interface TableMeta {
   constraints: ConstraintMeta[];
   /** Non-constraint-backed indexes, for DDL generation. */
   indexes: IndexMeta[];
+  /** Non-internal (user) triggers — they fire during COPY, so a sync warns on them. */
+  triggers: TriggerMeta[];
   rlsEnabled: boolean;
   /** pg_class.reltuples estimate (−1 / 0 if never analyzed). */
   estimatedRows: number;
@@ -153,6 +159,10 @@ interface IndexRow {
   name: string;
   def: string;
 }
+interface TriggerRow {
+  oid: number;
+  name: string;
+}
 
 /**
  * Introspect every base table (relkind r/p) in the given schemas. Defaults
@@ -168,8 +178,17 @@ export async function introspectCatalog(
     return { schemas: [], tables: [], enums: [] };
   }
 
-  const [tableRows, columnRows, pkRows, fkRows, enumRows, defaultRows, constraintRows, indexRows] =
-    await Promise.all([
+  const [
+    tableRows,
+    columnRows,
+    pkRows,
+    fkRows,
+    enumRows,
+    defaultRows,
+    constraintRows,
+    indexRows,
+    triggerRows,
+  ] = await Promise.all([
     sql<TableRow[]>`
       SELECT c.oid::int AS oid,
              n.nspname AS schema,
@@ -283,6 +302,14 @@ export async function introspectCatalog(
         )
       ORDER BY i.indrelid, ic.relname
     `,
+    sql<TriggerRow[]>`
+      SELECT t.tgrelid::int AS oid, t.tgname AS name
+      FROM pg_trigger t
+      JOIN pg_class c ON c.oid = t.tgrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE NOT t.tgisinternal AND n.nspname = ANY(${targetSchemas})
+      ORDER BY t.tgrelid, t.tgname
+    `,
   ]);
 
   // default / generation expressions keyed by `${oid}:${column}`.
@@ -325,6 +352,13 @@ export async function introspectCatalog(
     indexesByOid.set(r.oid, list);
   }
 
+  const triggersByOid = new Map<number, TriggerMeta[]>();
+  for (const r of triggerRows) {
+    const list = triggersByOid.get(r.oid) ?? [];
+    list.push({ name: r.name });
+    triggersByOid.set(r.oid, list);
+  }
+
   const pkByOid = new Map<number, string[]>();
   for (const r of pkRows) {
     const list = pkByOid.get(r.oid) ?? [];
@@ -356,6 +390,7 @@ export async function introspectCatalog(
     foreignKeys: fkByOid.get(t.oid) ?? [],
     constraints: constraintsByOid.get(t.oid) ?? [],
     indexes: indexesByOid.get(t.oid) ?? [],
+    triggers: triggersByOid.get(t.oid) ?? [],
     rlsEnabled: t.rls_enabled,
     estimatedRows: Math.max(0, Number(t.est_rows) || 0),
   }));
