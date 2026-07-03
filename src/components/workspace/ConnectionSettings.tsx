@@ -20,6 +20,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { TeamMembers } from "@/components/team/TeamMembers";
 import { PostgresUrlSection } from "@/components/connections/PostgresUrlSection";
+import { ConnectionHealthCard } from "@/components/workspace/ConnectionHealthCard";
+import { AlertWebhookSection } from "@/components/workspace/AlertWebhookSection";
+import { AuditExportSection } from "@/components/workspace/AuditExportSection";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
@@ -115,6 +118,8 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
           </AlertDescription>
         </Alert>
       )}
+
+      <ConnectionHealthCard connectionId={connection.id} />
 
       {/* ── Identity ── */}
       <section className="surface space-y-4 rounded-md p-6">
@@ -255,6 +260,10 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
       </Dialog>
 
       <PostgresUrlSection connection={connection} />
+
+      <AlertWebhookSection connection={connection} />
+
+      <AuditExportSection connectionId={connection.id} />
 
       <section className="surface rounded-md p-6">
         <TeamMembers connectionId={connection.id} />

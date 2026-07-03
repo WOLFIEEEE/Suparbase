@@ -54,6 +54,19 @@ describe("redact", () => {
     );
   });
 
+  it("redacts postgres connection URLs (with and without credentials)", () => {
+    expect(
+      redact("could not connect to postgres://admin:hunter2@db.example.com:5432/prod"),
+    ).toBe("could not connect to [REDACTED_DB_URL]");
+    expect(redact("dsn is postgresql://db.internal/app")).toBe("dsn is [REDACTED_DB_URL]");
+  });
+
+  it("redacts other database URL schemes", () => {
+    expect(redact("mysql://root:pw@10.0.0.5/main failed")).toBe("[REDACTED_DB_URL] failed");
+    expect(redact("mongodb+srv://u:p@cluster0.mongodb.net/db")).toBe("[REDACTED_DB_URL]");
+    expect(redact("redis://:secret@cache:6379/0")).toBe("[REDACTED_DB_URL]");
+  });
+
   it("leaves short non-secret strings alone", () => {
     expect(redact("user=alice connection=abc-123")).toBe(
       "user=alice connection=abc-123",

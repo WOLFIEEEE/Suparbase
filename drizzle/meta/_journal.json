@@ -141,6 +141,20 @@
       "when": 1779572172906,
       "tag": "0019_groovy_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1783097946972,
+      "tag": "0020_empty_brother_voodoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1783099155798,
+      "tag": "0021_slimy_newton_destine",
+      "breakpoints": true
     }
   ]
 }

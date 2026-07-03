@@ -240,10 +240,10 @@ balancer:
 
 These are intentionally not blocking launch but worth knowing:
 
-- **`attachToSession()` race**: concurrent first-write-of-a-burst can
-  create two sessions instead of one. Bounded harm (UI shows two
-  sessions; undo still works on each). Needs a unique partial index
-  to fix properly.
+- **`attachToSession()` race**: ~~concurrent first-write-of-a-burst can
+  create two sessions instead of one~~ **fixed in v3.15.0** — the cold
+  path is serialized with a per-(user, conn, kind) transaction-scoped
+  advisory lock.
 - **DDL capture**: `agent_session` only tracks data writes, not
   schema changes. CREATE/ALTER/DROP through the AI agent aren't
   audited and aren't reversible from the Agents page.
@@ -253,10 +253,11 @@ These are intentionally not blocking launch but worth knowing:
   could in principle return a private IP at request time. Mitigated
   in practice by `webhook_url` being a per-user-stored value: the
   user is configuring the webhook, not the attacker.
-- **Indefinite finding count**: a busy Sentry scan creates one
-  `sentry_finding` per matching condition each run. Retention helps,
-  but a v3.2 follow-up will upsert findings by `(user, conn, kind,
-  schema, table)` instead of inserting duplicates.
+- **Indefinite finding count**: ~~a busy Sentry scan creates one
+  `sentry_finding` per matching condition each run~~ **fixed in
+  v3.15.0** — repeat scans refresh the existing non-resolved finding
+  for the same `(kind, schema, table, column)` instead of inserting
+  duplicates.
 - **No HTTP-level integration tests yet**: unit tests cover the
   fingerprinter, the SSRF blocklist, and the undo SQL builder.
   Route handlers are tested only by the migration smoke check + the
@@ -444,9 +445,12 @@ the happy path, but Sentry + PostHog + UptimeRobot are recommended.
   `httpOnly: true; secure: true; sameSite: lax` and exfiltration
   requires XSS, which is broadly prevented by Next's auto-escape
   + our CSP-friendly markup.
-- Password change does NOT terminate other active sessions. A
-  future hardening pass should invalidate every NextAuth session
-  for the user on password change.
+- Password change / reset revokes **every** session for the user
+  (v3.15.0, via `users.password_changed_at` + the `jwt` callback) —
+  including the one that made the change. Signing in again after a
+  password rotation is expected behaviour. On multi-instance
+  deployments other instances may honour a revoked session for up to
+  60s (the per-process cache TTL).
 - Data export is capped at 100k audit rows. Customers above that
   bracket need an offline dump from the operator.
 - The Dodo "Manage subscription" button calls

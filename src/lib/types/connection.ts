@@ -11,6 +11,8 @@ export interface ConnectionSummary {
   createdAt: string;
   lastUsedAt: string;
   hasPostgresUrl: boolean;
+  /** Webhook notified when a Sentry scan finds NEW critical findings. */
+  alertWebhookUrl: string | null;
   /** Caller's role on the connection. */
   myRole?: ConnectionRole;
 }

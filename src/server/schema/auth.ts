@@ -63,6 +63,13 @@ export const users = pgTable("users", {
   emailUndeliverableAt: timestamp("email_undeliverable_at", { withTimezone: true }),
   /** Free-text reason for the suppression (e.g. "hard_bounce", "spam_complaint"). */
   emailUndeliverableReason: text("email_undeliverable_reason"),
+  /**
+   * Bumped on every password change / reset. JWT sessions issued before
+   * this instant are rejected by the `jwt` callback, so rotating a
+   * password revokes every other signed-in session (stolen cookies
+   * included) instead of letting them ride out the JWT lifetime.
+   */
+  passwordChangedAt: timestamp("password_changed_at", { withTimezone: true }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
 });
 

@@ -67,16 +67,22 @@ export async function copyTable(
   const inboundQuery = targetTx.unsafe(copyIn);
   const writable = await inboundQuery.writable();
 
-  await pipeline(readable, writable);
+  try {
+    await pipeline(readable, writable);
+  } catch (e) {
+    // Consume the COPY-FROM promise so its rejection (usually the same
+    // failure) can't surface as an unhandled rejection; the pipeline error
+    // propagates and rolls the transaction back.
+    await (inboundQuery as unknown as Promise<unknown>).catch(() => undefined);
+    throw e;
+  }
 
   // Awaiting the COPY-FROM query after the stream finishes resolves with the
-  // command result; `.count` is the number of rows loaded. Fall back to the
-  // estimate if the driver doesn't surface it.
-  try {
-    const result = (await inboundQuery) as unknown as { count?: number };
-    if (typeof result?.count === "number") return result.count;
-  } catch {
-    /* stream already drained; ignore */
-  }
+  // command result; `.count` is the number of rows loaded. A rejection here
+  // means the COPY itself failed (constraint, bad data, aborted transaction)
+  // even though the stream drained — it MUST propagate so the transaction
+  // rolls back instead of being silently committed over an aborted state.
+  const result = (await inboundQuery) as unknown as { count?: number };
+  if (typeof result?.count === "number") return result.count;
   return plan.rowCap != null ? Math.min(plan.rowCap, plan.estimatedRows) : plan.estimatedRows;
 }

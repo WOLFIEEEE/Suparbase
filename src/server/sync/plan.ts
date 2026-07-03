@@ -150,7 +150,15 @@ export function buildSyncPlan(input: PlanInput): SyncPlan {
     const anonymize: AnonTransform[] = [];
     for (const [col, rule] of Object.entries(anonRules)) {
       const colMeta = t.columns.find((c) => c.name === col);
-      if (!colMeta) continue;
+      if (!colMeta) {
+        // A rule pointing at a column that no longer exists must block, not
+        // silently skip: the user configured this column to be anonymized,
+        // and copying without the rule could leak the data it was hiding.
+        blockingReasons.push(
+          `${t.qualified}.${col} has an anonymization rule but the column does not exist on the base. Remove or update the rule.`,
+        );
+        continue;
+      }
       const castType = colMeta.dataType;
       if (rule.strategy === "null" && colMeta.notNull) {
         blockingReasons.push(`${t.qualified}.${col} is NOT NULL but its anonymization is "null".`);
@@ -207,6 +215,19 @@ export function buildSyncPlan(input: PlanInput): SyncPlan {
     warnings.push(
       `These synced tables have triggers that will fire during the copy (they can't be disabled on Supabase): ${triggered.join(", ")}. Confirm they're safe on a bulk load, or drop them first.`,
     );
+  }
+
+  // A row cap silently truncates large tables; surface which ones so a
+  // forgotten test cap can't masquerade as a complete "succeeded" sync.
+  if (options.rowCap != null) {
+    const capped = tables
+      .filter((t) => t.estimatedRows > options.rowCap!)
+      .map((t) => t.qualified);
+    if (capped.length > 0) {
+      warnings.push(
+        `Row cap ${options.rowCap} is set: these tables will be truncated to the first ${options.rowCap} rows: ${capped.join(", ")}.`,
+      );
+    }
   }
 
   const excluded = base.tables

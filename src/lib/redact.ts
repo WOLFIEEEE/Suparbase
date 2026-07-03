@@ -5,6 +5,8 @@
  * user-facing error response.
  *
  * Patterns recognised:
+ *   - postgres:// / mysql:// / mongodb:// / redis:// / amqp:// URLs
+ *       connection strings with embedded credentials (sync errors).
  *   - JWT-shaped (three dot-separated base64url segments)
  *       Supabase / NextAuth tokens.
  *   - sk-or-<token>              OpenRouter keys.
@@ -24,6 +26,10 @@
  * generic catch-alls so the redacted token type is preserved in the
  * marker.
  */
+// Database / generic connection URLs with embedded credentials
+// (postgres://user:pass@host/db and friends). The whole URL goes: the
+// host + db name alone can identify a customer's production database.
+const DB_URL_LIKE = /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis(?:s)?|amqp(?:s)?):\/\/[^\s"'<>]+/gi;
 const JWT_LIKE = /\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g;
 const OPENROUTER_LIKE = /\bsk-or-[A-Za-z0-9_-]{16,}\b/g;
 const GENERIC_SK_LIKE = /\bsk-[A-Za-z0-9_-]{20,}\b/g;
@@ -44,6 +50,7 @@ const SYMMETRIC_KEY_HEX = /\b[a-f0-9]{64}\b/g;
 
 export function redact(text: string): string {
   return text
+    .replace(DB_URL_LIKE, "[REDACTED_DB_URL]")
     .replace(JWT_LIKE, "[REDACTED_KEY]")
     .replace(OPENROUTER_LIKE, "[REDACTED_KEY]")
     .replace(RESEND_LIKE, "[REDACTED_KEY]")

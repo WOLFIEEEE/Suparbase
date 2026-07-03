@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { compare as bcryptCompare, hash as bcryptHash } from "bcryptjs";
-import { auth } from "@/server/auth";
+import { auth, invalidatePasswordChangedCache } from "@/server/auth";
 import { db } from "@/server/db";
 import { users } from "@/server/schema";
 import { checkSignupRate } from "@/server/proxy/ratelimit";
@@ -96,8 +96,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const newHash = await bcryptHash(parsed.data.newPassword, BCRYPT_COST);
-    await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, userId));
-    log.info("password changed", { userId });
+    // passwordChangedAt revokes EVERY JWT session for this user — the
+    // jwt callback rejects tokens issued before it, so a stolen cookie
+    // dies here too. The user signs in again with the new password.
+    await db
+      .update(users)
+      .set({ passwordHash: newHash, passwordChangedAt: new Date() })
+      .where(eq(users.id, userId));
+    invalidatePasswordChangedCache(userId);
+    log.info("password changed (all sessions revoked)", { userId });
     return NextResponse.json({ ok: true });
   } catch (e) {
     log.error("change-password failed", { userId, err: (e as Error).message });

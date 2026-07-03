@@ -110,7 +110,7 @@ export async function consumeResetToken(
       );
     await tx
       .update(users)
-      .set({ passwordHash })
+      .set({ passwordHash, passwordChangedAt: new Date() })
       .where(eq(users.id, row.userId));
   });
 

@@ -63,6 +63,35 @@ describe("buildSyncPlan", () => {
     expect(plan.blockingReasons.join(" ")).toMatch(/text column/i);
   });
 
+  it("blocks when an anonymization rule points at a column missing on the base", () => {
+    const t = table("public", "users", [col("id", "uuid")], { primaryKey: ["id"] });
+    const cat = catalog([t]);
+    const plan = buildSyncPlan({
+      base: cat,
+      target: cat,
+      tableConfig: cfg({ "public.users": { action: "sync", anonymize: { ssn: { strategy: "null" } } } }),
+      options: DEFAULT_SYNC_OPTIONS,
+    });
+    expect(plan.blocking).toBe(true);
+    expect(plan.blockingReasons.join(" ")).toMatch(/does not exist on the base/i);
+  });
+
+  it("warns when a row cap will truncate large tables", () => {
+    const t = table("public", "orders", [col("id", "uuid")], {
+      primaryKey: ["id"],
+      estimatedRows: 5000,
+    });
+    const cat = catalog([t]);
+    const plan = buildSyncPlan({
+      base: cat,
+      target: cat,
+      tableConfig: cfg(),
+      options: { ...DEFAULT_SYNC_OPTIONS, rowCap: 100 },
+    });
+    expect(plan.warnings.join(" ")).toMatch(/row cap 100/i);
+    expect(plan.warnings.join(" ")).toMatch(/public\.orders/);
+  });
+
   it("warns about triggers on synced tables", () => {
     const t = table("public", "orders", [col("id", "uuid")], {
       primaryKey: ["id"],

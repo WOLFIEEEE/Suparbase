@@ -1,5 +1,5 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/server/db";
 import { decryptKey } from "@/server/crypto/vault";
 import { connections, type ConnectionRow } from "@/server/schema/connections";
@@ -13,6 +13,7 @@ import {
 } from "@/server/schema/sentry";
 import { executeSql } from "@/server/proxy/sql-playground";
 import { introspectConnection } from "@/server/schema-introspect";
+import { sendSentryAlert } from "./alert";
 
 /**
  * Sentry probe, the security watchdog.
@@ -235,7 +236,25 @@ export async function runSentryScan(
   }
 
   // Persist findings, dedup against open ones for the same (kind, schema, table).
-  await persistFindings(userId, conn.id, scanRow.id, findings);
+  const newFindings = await persistFindings(userId, conn.id, scanRow.id, findings);
+
+  // Alert webhook: only NEW criticals notify, so a re-scan of a known-bad
+  // table doesn't ping the channel every time. Fire-and-forget.
+  const newCritical = newFindings.filter((f) => f.severity === "critical");
+  if (newCritical.length > 0 && conn.alertWebhookUrl) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://suparbase.com";
+    void sendSentryAlert(
+      conn,
+      siteUrl,
+      newCritical.map((f) => ({
+        kind: f.kind,
+        severity: f.severity,
+        schemaName: f.schemaName,
+        tableName: f.tableName,
+        columnName: f.columnName,
+      })),
+    );
+  }
 
   const completedAt = new Date();
   await db
@@ -405,14 +424,61 @@ async function persistFindings(
   connectionId: string,
   scanId: string,
   found: CollectedFinding[],
-): Promise<void> {
-  // For now: insert each finding as a new row. A v3.0.x follow-up will
-  // de-dupe by (user, conn, kind, schema, table) so repeat scans don't
-  // create N rows for the same issue, but inserting fresh is correct
-  // for v3.0 (the UI groups by table) and keeps the schema simple.
-  if (found.length === 0) return;
+): Promise<CollectedFinding[]> {
+  // De-dupe by (kind, schema, table, column): a finding already open (or
+  // acknowledged / quarantined) for the same condition gets its lastSeenAt,
+  // severity, and details refreshed instead of a duplicate row. Resolved
+  // findings are left alone — a re-detection is a genuinely new finding.
+  // discoveredInScanId keeps pointing at the scan that first surfaced it.
+  // Returns the findings that were NEW this scan (the alert-worthy ones).
+  if (found.length === 0) return [];
+
+  const existing = await db
+    .select({
+      id: sentryFindings.id,
+      kind: sentryFindings.kind,
+      schemaName: sentryFindings.schemaName,
+      tableName: sentryFindings.tableName,
+      columnName: sentryFindings.columnName,
+    })
+    .from(sentryFindings)
+    .where(
+      and(
+        eq(sentryFindings.userId, userId),
+        eq(sentryFindings.connectionId, connectionId),
+        ne(sentryFindings.status, "resolved"),
+      ),
+    );
+
+  const keyOf = (
+    kind: string,
+    schemaName: string | null,
+    tableName: string | null,
+    columnName: string | null,
+  ) => `${kind}|${schemaName ?? ""}|${tableName ?? ""}|${columnName ?? ""}`;
+  const openByKey = new Map(
+    existing.map((r) => [keyOf(r.kind, r.schemaName, r.tableName, r.columnName), r.id]),
+  );
+
+  const now = new Date();
+  const toInsert: CollectedFinding[] = [];
+  for (const f of found) {
+    const priorId = openByKey.get(
+      keyOf(f.kind, f.schemaName ?? null, f.tableName ?? null, f.columnName ?? null),
+    );
+    if (priorId) {
+      await db
+        .update(sentryFindings)
+        .set({ lastSeenAt: now, severity: f.severity, details: f.details })
+        .where(eq(sentryFindings.id, priorId));
+    } else {
+      toInsert.push(f);
+    }
+  }
+
+  if (toInsert.length === 0) return [];
   await db.insert(sentryFindings).values(
-    found.map((f) => ({
+    toInsert.map((f) => ({
       userId,
       connectionId,
       discoveredInScanId: scanId,
@@ -424,6 +490,7 @@ async function persistFindings(
       details: f.details,
     })),
   );
+  return toInsert;
 }
 
 // ---------------------------------------------------------------------------

@@ -12,4 +12,5 @@ export * from "./sync";
 export * from "./billing";
 export * from "./admin";
 export * from "./password-reset";
+export * from "./sql-snippets";
 export * from "../views/schema";

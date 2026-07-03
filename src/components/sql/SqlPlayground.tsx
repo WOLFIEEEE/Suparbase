@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Bookmark,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -130,6 +131,7 @@ export function SqlPlayground({ connectionId }: { connectionId: string }) {
   const [error, setError] = useState<ServerError | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [snippetsOpen, setSnippetsOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -230,7 +232,22 @@ export function SqlPlayground({ connectionId }: { connectionId: string }) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setHistoryOpen((v) => !v)}
+              onClick={() => {
+                setSnippetsOpen((v) => !v);
+                setHistoryOpen(false);
+              }}
+              aria-expanded={snippetsOpen}
+            >
+              <Bookmark className="h-3 w-3" aria-hidden /> Snippets
+              <ChevronDown className={cn("h-3 w-3 transition-transform", snippetsOpen && "rotate-180")} aria-hidden />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setHistoryOpen((v) => !v);
+                setSnippetsOpen(false);
+              }}
               aria-expanded={historyOpen}
             >
               <History className="h-3 w-3" aria-hidden /> Recent
@@ -250,6 +267,18 @@ export function SqlPlayground({ connectionId }: { connectionId: string }) {
             )}
           </div>
         </div>
+
+        {snippetsOpen && (
+          <SnippetsPanel
+            connectionId={connectionId}
+            currentSql={sql}
+            onPick={(text) => {
+              setSql(text);
+              setSnippetsOpen(false);
+              textareaRef.current?.focus();
+            }}
+          />
+        )}
 
         {historyOpen && (
           <HistoryPanel
@@ -457,6 +486,131 @@ function HistoryPanel({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+interface Snippet {
+  id: string;
+  name: string;
+  sql: string;
+  updatedAt: string;
+}
+
+function SnippetsPanel({
+  connectionId,
+  currentSql,
+  onPick,
+}: {
+  connectionId: string;
+  currentSql: string;
+  onPick: (sql: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const queryKey = ["sql-snippets", connectionId];
+  const [name, setName] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery<{ snippets: Snippet[] }>({
+    queryKey,
+    queryFn: async () => {
+      const res = await fetch(`/api/connections/${encodeURIComponent(connectionId)}/sql-snippets`);
+      if (!res.ok) throw new Error("Failed to load snippets");
+      return res.json();
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/connections/${encodeURIComponent(connectionId)}/sql-snippets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), sql: currentSql }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(body?.message ?? "Could not save the snippet.");
+      }
+    },
+    onSuccess: () => {
+      setName("");
+      setSaveError(null);
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => setSaveError(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(
+        `/api/connections/${encodeURIComponent(connectionId)}/sql-snippets/${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+  });
+
+  const snippets = data?.snippets ?? [];
+
+  return (
+    <div className="border-b hairline">
+      <form
+        className="flex items-center gap-2 border-b hairline px-3 py-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!name.trim() || !currentSql.trim() || save.isPending) return;
+          save.mutate();
+        }}
+      >
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name this query…"
+          maxLength={80}
+          className="min-w-0 flex-1 rounded border hairline bg-bg-raised px-2 py-1 text-[11px] focus:outline-none"
+          aria-label="Snippet name"
+        />
+        <Button size="sm" variant="secondary" type="submit" disabled={!name.trim() || save.isPending}>
+          <Bookmark className="h-3 w-3" aria-hidden /> Save current SQL
+        </Button>
+      </form>
+      {saveError && (
+        <p className="border-b hairline bg-danger/10 px-3 py-1.5 text-[11px] text-danger">{saveError}</p>
+      )}
+      {isLoading ? (
+        <p className="px-3 py-3 text-[11px] text-fg-faint">Loading snippets…</p>
+      ) : snippets.length === 0 ? (
+        <p className="px-3 py-3 text-[11px] text-fg-faint">
+          No saved snippets yet. Name the query above and save it — snippets are per
+          connection and sync across your devices. Saving under an existing name
+          overwrites it.
+        </p>
+      ) : (
+        <ul className="max-h-48 overflow-y-auto">
+          {snippets.map((s) => (
+            <li key={s.id} className="flex items-center gap-1 px-1 hover:bg-bg-sunken">
+              <button
+                type="button"
+                onClick={() => onPick(s.sql)}
+                className="flex min-w-0 flex-1 items-baseline gap-2 px-2 py-1.5 text-left text-[11px] text-fg-muted hover:text-fg"
+              >
+                <span className="shrink-0 font-medium text-fg">{s.name}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-fg-faint">
+                  {s.sql.replace(/\s+/g, " ")}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => remove.mutate(s.id)}
+                aria-label={`Delete snippet ${s.name}`}
+                className="shrink-0 rounded p-1 text-fg-faint hover:text-danger"
+              >
+                <Trash2 className="h-3 w-3" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

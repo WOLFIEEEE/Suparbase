@@ -1,6 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { redact } from "@/lib/redact";
 import { getConnectionForUser } from "@/server/connections/repo";
-import { createRun, listDueProfiles, markScheduledRun, updateRun } from "@/server/sync/repo";
+import { verifyCronAuth } from "@/server/security/cron-auth";
+import {
+  createRun,
+  hasRecentRunningRun,
+  listDueProfiles,
+  markScheduledRun,
+  updateRun,
+} from "@/server/sync/repo";
 import { executeSyncRun } from "@/server/sync/runner";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +29,7 @@ export async function POST(req: NextRequest) {
       { status: 503 },
     );
   }
-  if (req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!verifyCronAuth(req.headers.get("authorization"), secret)) {
     return NextResponse.json(
       { category: "unauthorized", message: "Bad or missing Authorization." },
       { status: 401 },
@@ -32,6 +40,15 @@ export async function POST(req: NextRequest) {
   const results: Array<{ profileId: string; status: string; error?: string }> = [];
 
   for (const profile of due) {
+    // Skip while a sync against the same target is still running (a run can
+    // outlast the schedule interval). Without this the new run would only
+    // die noisily against the target advisory lock. The staleness cutoff in
+    // hasRecentRunningRun stops a crashed run from wedging the schedule.
+    if (await hasRecentRunningRun(profile.userId, profile.targetConnectionId)) {
+      results.push({ profileId: profile.id, status: "skipped", error: "a sync to this target is still running" });
+      continue;
+    }
+
     // Mark first so a persistently-failing profile retries on its interval,
     // not on every cron tick.
     await markScheduledRun(profile.id);
@@ -68,7 +85,8 @@ export async function POST(req: NextRequest) {
       });
       results.push({ profileId: profile.id, status: result.status, error: result.error });
     } catch (e) {
-      const message = (e as Error).message ?? "Sync failed.";
+      // Driver errors can embed the connection URL — never store it raw.
+      const message = redact((e as Error).message ?? "Sync failed.");
       await updateRun(profile.userId, run.id, {
         status: "failed",
         error: message,

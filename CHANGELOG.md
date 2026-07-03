@@ -3,6 +3,94 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.16.0 · 2026-07-03 · Onboarding funnel + workspace quality features
+
+Five additions focused on the new-user journey and day-two operations.
+All verified end-to-end in a running instance (signup → checklist →
+settings → SQL → scan).
+
+- **Getting-started checklist** (`/connections`): after the first
+  connection is added, a live 4-step checklist tracks real account state
+  — connection saved, Direct Postgres URL added, first Sentry scan run,
+  AI configured (optional) — with deep links into each surface. It
+  auto-hides once the core steps are done and is dismissible any time
+  (`user_settings.onboarding_dismissed_at`). Completes the signup funnel:
+  welcome page (0 connections) → checklist (1+) → done.
+- **Saved SQL snippets** (`/c/[id]/sql`): name and save queries per
+  connection (new `sql_snippet` table, synced across devices, upsert by
+  name, 100 per connection). Load or delete from the new Snippets panel
+  next to Recent.
+- **Connection health card** (`/c/[id]/settings`): on-demand probe of
+  PostgREST reachability with the stored key, Direct Postgres
+  connectivity + latency, and Sentry scan staleness / open criticals.
+  `GET /api/connections/[id]/health`, error strings redacted.
+- **Sentry alert webhook** (`/c/[id]/settings`, owner-only): a
+  Slack/Discord-compatible webhook pinged when a scan surfaces NEW
+  critical findings (re-scans of known issues stay quiet — powered by the
+  v3.15 findings de-dupe). SSRF-validated at save time AND fire time;
+  fire-and-forget so a dead webhook never fails a scan. New
+  `connections.alert_webhook_url` column.
+- **Audit log CSV export** (`/c/[id]/settings`):
+  `GET /api/v/[id]/audit/export` streams the most recent 10k audit
+  entries (with before/after row values) as RFC-4180 CSV, batched
+  server-side; bulk-rate-limited.
+
+Schema: 0021 adds `sql_snippet`, `connections.alert_webhook_url`,
+`user_settings.onboarding_dismissed_at` (all additive, no downtime).
+
+## v3.15.0 · 2026-07-03 · Production hardening (audit follow-up)
+
+Closes the remaining deferred caveats from PRODUCTION.md plus the gaps a
+fresh three-way audit (security / sync engine / operations) found in the
+post-v3.13 surface. No new features.
+
+**Security:**
+
+- **Password change / reset now revokes every session.** New
+  `users.password_changed_at` column (migration 0020); the NextAuth `jwt`
+  callback rejects tokens issued before it (60s-cached lookup, fail-open
+  on DB hiccups). A stolen session cookie dies the moment the owner
+  rotates their password, instead of riding out the JWT lifetime.
+- **Timing-safe cron auth.** `/api/cron/retention` and `/api/cron/sync`
+  now compare `Authorization` against `CRON_SECRET` with
+  `crypto.timingSafeEqual` over SHA-256 digests
+  (`src/server/security/cron-auth.ts`) instead of `!==`.
+- **Connection-string redaction.** `redact()` recognises
+  `postgres://`/`mysql://`/`mongodb://`/`redis://`/`amqp://` URLs
+  (`[REDACTED_DB_URL]`); sync run errors are redacted before being stored
+  on the run row or streamed to the browser, so a driver error can never
+  leak a database URL.
+
+**Sync engine correctness:**
+
+- **COPY failures propagate.** A COPY-FROM command that fails after the
+  stream drains was silently swallowed; over an aborted transaction the
+  final COMMIT silently becomes ROLLBACK and the run could report
+  "succeeded" with nothing written. The error now propagates and the run
+  fails loudly with the real cause.
+- **Anonymization rules block when their column is missing.** A rule
+  pointing at a column that no longer exists on the base used to be
+  silently skipped — a renamed PII column would sync raw. It now blocks
+  the plan until the rule is fixed.
+- **Row-cap visibility.** The plan warns which tables a `rowCap` will
+  truncate, so a forgotten test cap can't masquerade as a full sync.
+- **Scheduled-sync overlap guard.** The cron route skips a profile while
+  a non-dry run against the same target is still `running` (with a 2h
+  staleness cutoff so a crashed run can't wedge the schedule).
+
+**Operational (closes PRODUCTION.md §3 caveats):**
+
+- **Sentry findings de-dupe.** Repeat scans refresh `last_seen_at` /
+  severity / details on the existing non-resolved finding for the same
+  (kind, schema, table, column) instead of inserting a duplicate row per
+  scan. Resolved findings that re-appear become new findings.
+- **`attachToSession()` race fixed.** The cold path (first write of a
+  burst) is serialized with a per-(user, conn, kind) transaction-scoped
+  advisory lock, so concurrent first-writes can no longer split one burst
+  into two agent sessions.
+
+Schema: 0020 adds `users.password_changed_at` (additive, no downtime).
+
 ## v3.14.1 · 2026-05-24 · Database sync hardening
 
 Correctness follow-up to v3.14.0, before the feature is trusted on a live

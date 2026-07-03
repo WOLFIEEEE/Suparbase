@@ -36,6 +36,12 @@ export const connections = pgTable(
      * simulation; PostgREST remains the primary path for all CRUD.
      */
     encryptedPostgresUrl: bytea("encrypted_postgres_url"),
+    /**
+     * Optional webhook (Slack-compatible) notified when a Sentry scan
+     * surfaces NEW critical findings on this connection. Validated
+     * against the SSRF blocklist at save time and again at fire time.
+     */
+    alertWebhookUrl: text("alert_webhook_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }).defaultNow().notNull(),
   },

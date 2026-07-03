@@ -164,6 +164,33 @@ export async function listRuns(
     .limit(limit);
 }
 
+/**
+ * True when a non-dry run against this target is still `running` and young
+ * enough to plausibly be alive. Runs older than the cutoff are treated as
+ * crashed (a killed process can't flip its row to failed) so a stale row
+ * can't wedge the schedule forever.
+ */
+export async function hasRecentRunningRun(
+  userId: string,
+  targetConnectionId: string,
+  maxAgeHours = 2,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: syncRuns.id })
+    .from(syncRuns)
+    .where(
+      and(
+        eq(syncRuns.userId, userId),
+        eq(syncRuns.targetConnectionId, targetConnectionId),
+        eq(syncRuns.status, "running"),
+        eq(syncRuns.dryRun, false),
+        sql`${syncRuns.startedAt} > now() - make_interval(hours => ${maxAgeHours})`,
+      ),
+    )
+    .limit(1);
+  return !!row;
+}
+
 /** Scheduled profiles whose interval has elapsed since their last scheduled run. */
 export async function listDueProfiles(): Promise<SyncProfileRow[]> {
   return db

@@ -4,8 +4,10 @@ import { auth } from "@/server/auth";
 import { listConnections } from "@/server/connections/repo";
 import { getActivePlan } from "@/server/billing/repo";
 import { PLAN_LIMITS } from "@/server/billing/plans";
+import { getOnboardingState } from "@/server/onboarding";
 import { ConnectionList } from "@/components/connections/ConnectionList";
 import { ConnectionsOnboarding } from "@/components/connections/ConnectionsOnboarding";
+import { GettingStartedChecklist } from "@/components/connections/GettingStartedChecklist";
 import { PlanUsageBar } from "@/components/connections/PlanUsageBar";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +20,7 @@ export default async function ConnectionsPage() {
     listConnections(session.user.id),
     getActivePlan(session.user.id),
   ]);
+  const onboarding = await getOnboardingState(session.user.id, connections);
 
   const ownedCount = connections.filter((c) => c.myRole === "owner").length;
   const cap = active.limits.maxConnections;
@@ -59,6 +62,10 @@ export default async function ConnectionsPage() {
           </Link>
         </Button>
       </header>
+
+      {!onboarding.dismissed && !onboarding.coreDone && (
+        <GettingStartedChecklist state={onboarding} />
+      )}
 
       {!active.isPaid && (
         <PlanUsageBar

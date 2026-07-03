@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { runRetention } from "@/server/audit/retention";
 import { executeScheduledDeletions } from "@/server/auth/delete-account";
+import { verifyCronAuth } from "@/server/security/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,8 +36,7 @@ export async function POST(req: NextRequest) {
       { status: 503 },
     );
   }
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${secret}`) {
+  if (!verifyCronAuth(req.headers.get("authorization"), secret)) {
     return NextResponse.json(
       { category: "unauthorized", message: "Bad or missing Authorization." },
       { status: 401 },

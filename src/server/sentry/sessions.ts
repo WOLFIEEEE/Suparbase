@@ -152,52 +152,55 @@ export async function attachToSession(
     }
 
     // ── Cold path: hit the DB ──────────────────────────────────────
-    // Find the most recent open session for this (user, conn, kind).
-    const [existing] = await db
-      .select()
-      .from(agentSessions)
-      .where(
-        and(
-          eq(agentSessions.userId, input.userId),
-          eq(agentSessions.connectionId, input.connectionId),
-          eq(agentSessions.kind, fp.kind),
-          eq(agentSessions.status, "active"),
-          gt(agentSessions.lastSeenAt, cutoff),
-        ),
-      )
-      .orderBy(desc(agentSessions.lastSeenAt))
-      .limit(1);
+    // Serialized with a transaction-scoped advisory lock on the cache key:
+    // two concurrent first-writes of a burst would otherwise both miss the
+    // SELECT and both INSERT, splitting one burst into two sessions. The
+    // lock key is (user, conn, kind), so unrelated writes never queue.
+    const attached = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
 
-    if (existing) {
-      await bumpSession(existing, tableLabel);
-      setLru(key, {
-        sessionId: existing.id,
-        kind: existing.kind,
-        label: existing.label,
-        lastSeenAt: now,
-      });
-      return { id: existing.id, kind: existing.kind, label: existing.label };
+      // Find the most recent open session for this (user, conn, kind).
+      const [existing] = await tx
+        .select()
+        .from(agentSessions)
+        .where(
+          and(
+            eq(agentSessions.userId, input.userId),
+            eq(agentSessions.connectionId, input.connectionId),
+            eq(agentSessions.kind, fp.kind),
+            eq(agentSessions.status, "active"),
+            gt(agentSessions.lastSeenAt, cutoff),
+          ),
+        )
+        .orderBy(desc(agentSessions.lastSeenAt))
+        .limit(1);
+      if (existing) return { row: existing, isNew: false };
+
+      const [created] = await tx
+        .insert(agentSessions)
+        .values({
+          userId: input.userId,
+          connectionId: input.connectionId,
+          kind: fp.kind,
+          label: fp.label,
+          userAgentRaw: input.userAgent?.slice(0, 500) ?? null,
+          mutationCount: 1,
+          tablesTouched: [tableLabel],
+        })
+        .returning();
+      return { row: created, isNew: true };
+    });
+
+    if (!attached.isNew) {
+      await bumpSession(attached.row, tableLabel);
     }
-
-    const [created] = await db
-      .insert(agentSessions)
-      .values({
-        userId: input.userId,
-        connectionId: input.connectionId,
-        kind: fp.kind,
-        label: fp.label,
-        userAgentRaw: input.userAgent?.slice(0, 500) ?? null,
-        mutationCount: 1,
-        tablesTouched: [tableLabel],
-      })
-      .returning();
     setLru(key, {
-      sessionId: created.id,
-      kind: created.kind,
-      label: created.label,
+      sessionId: attached.row.id,
+      kind: attached.row.kind,
+      label: attached.row.label,
       lastSeenAt: now,
     });
-    return { id: created.id, kind: created.kind, label: created.label };
+    return { id: attached.row.id, kind: attached.row.kind, label: attached.row.label };
   } catch (e) {
     // Hot-path failure should never block the user-visible response,
     // but we do want telemetry on it - without this, a silent crash

@@ -29,6 +29,8 @@ export const userSettings = pgTable("user_settings", {
   lastPromptTokens: integer("last_prompt_tokens"),
   lastCompletionTokens: integer("last_completion_tokens"),
   lastTotalTokens: integer("last_total_tokens"),
+  /** When the user dismissed the getting-started checklist. Null = show it. */
+  onboardingDismissedAt: timestamp("onboarding_dismissed_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

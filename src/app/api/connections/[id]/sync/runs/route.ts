@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { redact } from "@/lib/redact";
 import { auth } from "@/server/auth";
 import { getConnectionAccess, getConnectionForUser, requireRole } from "@/server/connections/repo";
 import { checkAiRate } from "@/server/proxy/ratelimit";
@@ -137,7 +138,9 @@ export async function POST(req: NextRequest, ctx: Params) {
           error: result.error,
         });
       } catch (e) {
-        const message = (e as Error).message ?? "Sync failed.";
+        // Driver errors can embed the connection URL — redact before the
+        // message is stored on the run row or streamed to the browser.
+        const message = redact((e as Error).message ?? "Sync failed.");
         const stats: SyncRunStats = { tables: [], warnings: [] };
         await updateRun(userId, run.id, {
           status: "failed",

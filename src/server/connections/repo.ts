@@ -15,6 +15,8 @@ export interface ConnectionSummary {
   createdAt: string;
   lastUsedAt: string;
   hasPostgresUrl: boolean;
+  /** Webhook notified when a Sentry scan finds NEW critical findings. */
+  alertWebhookUrl: string | null;
   /** Caller's role on this connection: owner / editor / viewer. */
   myRole?: ConnectionRole;
 }
@@ -29,6 +31,7 @@ export function toSummary(row: ConnectionRow, myRole?: ConnectionRole): Connecti
     createdAt: row.createdAt.toISOString(),
     lastUsedAt: row.lastUsedAt.toISOString(),
     hasPostgresUrl: row.encryptedPostgresUrl !== null && row.encryptedPostgresUrl !== undefined,
+    alertWebhookUrl: row.alertWebhookUrl ?? null,
     myRole,
   };
 }
