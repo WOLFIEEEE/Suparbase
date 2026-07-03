@@ -1,28 +1,25 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ArrowRight, Activity, FileText, Mail, MoreHorizontal, ShieldCheck, Users } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { cn } from "@/lib/ui/cn";
 
 /**
  * v1.0 hero. Designed around the constitution's Principle II ("motion
  * serves comprehension"): every motion teaches something.
  *
- *  1. Eyebrow fades in.
+ *  1. Eyebrow fades in (a single live dot is the only continuous signal —
+ *     everything else is a one-shot entrance, kept minimal on purpose).
  *  2. Headline reveals word-by-word via a translate-from-below mask
- *     (proper clip-based reveal, not just opacity). The accent word
- *     ("Supabase") is followed by a terminal caret that blinks: says
- *     "this is software" without literal terminal chrome.
+ *     (proper clip-based reveal, not just opacity).
  *  3. Subtitle + CTAs fade up.
  *  4. Three product preview cards are "dealt" in from below with a
  *     slight rotation, then settle. Each card mirrors a real archetype
  *     from the product (Users / Content / Logs), so the user sees
- *     exactly what they'll get the moment they sign in.
- *  5. Live signals continue subtly: the users status pulses; the log
- *     timestamp ticks up; both honour prefers-reduced-motion.
+ *     exactly what they'll get the moment they sign in. The card
+ *     contents are static once settled — the entrance carries the motion.
  */
 export function LandingHero() {
   const root = useRef<HTMLDivElement>(null);
@@ -33,7 +30,6 @@ export function LandingHero() {
       const selectors = {
         eyebrow: "[data-anim='eyebrow']",
         words: "[data-anim='headline'] .word",
-        caret: "[data-anim='caret']",
         tagline: "[data-anim='tagline']",
         cta: "[data-anim='cta']",
         cards: "[data-anim='card']",
@@ -43,7 +39,6 @@ export function LandingHero() {
       // useLayoutEffect so this fires before the browser paints: no
       // flash of unstyled content.
       gsap.set(selectors.words, { yPercent: 115, opacity: 0 });
-      gsap.set(selectors.caret, { opacity: 0, scaleY: 0.6 });
       gsap.set(selectors.cards, { opacity: 0, y: 32, rotate: 0 });
 
       if (reduced) {
@@ -51,7 +46,6 @@ export function LandingHero() {
           [
             selectors.eyebrow,
             selectors.words,
-            selectors.caret,
             selectors.tagline,
             selectors.cta,
             selectors.cards,
@@ -75,7 +69,6 @@ export function LandingHero() {
           { yPercent: 0, opacity: 1, duration: 0.85, stagger: 0.04, ease: "power4.out" },
           "-=0.2",
         )
-        .to(selectors.caret, { opacity: 1, scaleY: 1, duration: 0.3 }, "-=0.3")
         .to(selectors.tagline, { opacity: 1, y: 0, duration: 0.55 }, "-=0.4")
         .to(selectors.cta, { opacity: 1, y: 0, duration: 0.5 }, "-=0.35")
         // Cards: dealt in from below with stagger + small rotation that settles.
@@ -105,8 +98,11 @@ export function LandingHero() {
   const line3Word = "project.";
 
   return (
-    <div ref={root} className="space-y-10">
-      {/* Eyebrow */}
+    <div ref={root} className="space-y-12">
+      {/* Text block: eyebrow → headline → subtitle → CTAs, tightly grouped
+          so the statement reads as one unit and the proof (cards) gets air. */}
+      <div className="space-y-6">
+        {/* Eyebrow */}
       <div
         data-anim="eyebrow"
         style={hidden}
@@ -134,13 +130,6 @@ export function LandingHero() {
           <span className="text-fg">
             <WordMask word={line3Word} />
           </span>
-          {/* Terminal caret: visual cue that this is software, not a brochure. */}
-          <span
-            data-anim="caret"
-            aria-hidden
-            className="ml-1 inline-block h-[0.85em] w-[0.12em] translate-y-[0.1em] animate-blink bg-accent align-baseline"
-            style={{ transformOrigin: "bottom" }}
-          />
         </span>
       </h1>
 
@@ -150,26 +139,27 @@ export function LandingHero() {
         style={hidden}
         className="max-w-2xl text-base text-fg-muted sm:text-lg"
       >
-        Sign in, save your Supabase project, and run a real admin dashboard.
-        Your API key is encrypted at rest and proxied: it never reaches the browser.
+        Save your Supabase project and run a real admin dashboard. Your API key
+        is encrypted at rest and proxied: it never reaches the browser.
       </p>
 
-      {/* CTAs */}
-      <div data-anim="cta" style={hidden} className="flex flex-wrap gap-3">
-        <Link
-          href="/signin"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90 focus-visible:scale-[1.02]"
-        >
-          Sign in <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
-        <a
-          href="https://supabase.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-11 items-center justify-center rounded-md border hairline px-5 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg"
-        >
-          Need a project? supabase.com →
-        </a>
+        {/* CTAs: one solid action + one quiet text link, not two buttons. */}
+        <div data-anim="cta" style={hidden} className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Link
+            href="/signin"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90 focus-visible:scale-[1.02]"
+          >
+            Sign in <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+          <a
+            href="https://supabase.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-fg-muted underline-offset-4 transition-colors hover:text-fg hover:underline"
+          >
+            Need a project? supabase.com →
+          </a>
+        </div>
       </div>
 
       {/* Product preview cards: exact mock of what users see in the admin. */}
@@ -251,11 +241,8 @@ function UsersRow() {
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium">Sarah Chen</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-accent">
-            <span className="relative inline-flex h-1 w-1">
-              <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-60" aria-hidden />
-              <span className="relative h-1 w-1 rounded-full bg-accent" aria-hidden />
-            </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-accent">
+            <span className="h-1 w-1 rounded-full bg-accent" aria-hidden />
             active
           </span>
         </div>
@@ -299,18 +286,6 @@ function ContentRow() {
 }
 
 function LogsRow() {
-  // Live-ish timestamp ticker: "12s" → "13s" → ... → "1m" → loops.
-  const [seconds, setSeconds] = useState(12);
-  const reduced = useReducedMotion();
-
-  useEffect(() => {
-    if (reduced) return;
-    const id = setInterval(() => {
-      setSeconds((s) => (s >= 59 ? 12 : s + 1));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [reduced]);
-
   return (
     <>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-sunken">
@@ -327,7 +302,7 @@ function LogsRow() {
         </div>
         <div className="flex items-center gap-3 truncate text-xs text-fg-muted">
           <span>by sarah</span>
-          <span className={cn("font-mono tabular-nums text-fg-faint")}>· {seconds}s ago</span>
+          <span className="font-mono tabular-nums text-fg-faint">· 12s ago</span>
         </div>
       </div>
       <MoreHorizontal className="h-4 w-4 text-fg-faint" aria-hidden />
