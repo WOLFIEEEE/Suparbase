@@ -3,6 +3,49 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.17.0 · 2026-07-04 · Six workspace features
+
+Six client-facing additions, each reusing existing plumbing (cron,
+webhook, email, the read-only SQL path) so they land native rather than
+bolted-on. Verified end-to-end against a running instance.
+
+- **Command palette upgrade** (`Cmd/Ctrl-K`): a full "Go to" list covering
+  every workspace destination (including the new tabs), plus **Pinned
+  tables**, **Recently viewed**, and **Run a snippet** groups. Selecting a
+  snippet opens the SQL playground with it preloaded.
+- **Pinned tables + recent records**: pin any table (button on the table
+  view) to float it in the palette; recently-viewed rows are recorded on
+  the row detail page and surfaced in the palette. New `pinned_table` +
+  `recent_record` tables, per-user, MRU-capped.
+- **Column insights**: a stats popover on every column in the Schema
+  browser — total / null% / distinct / min / max plus a top-values
+  distribution bar. Read-only aggregate queries via
+  `POST /api/v/[id]/column-stats`.
+- **Activity feed** (`/c/[id]/activity`): a connection-level timeline from
+  `audit_log`, newest first, filterable by verb, keyset-paginated, with the
+  agent-session label joined in so each write is attributable. Rows deep-link
+  to the record.
+- **Scheduled reports** (`/c/[id]/reports`): run a saved snippet on an
+  interval and deliver the result by email (HTML table via Resend) or
+  webhook (JSON POST). New `scheduled_report` table + `/api/cron/reports`
+  (Bearer `CRON_SECRET`).
+- **Data watches** (`/c/[id]/watches`): evaluate a SELECT on an interval and
+  alert a webhook when the match count **grows** (debounced, so a
+  persistently-true condition stays quiet). New `data_watch` table +
+  `/api/cron/watches`. SSRF-validated at save and fire time; falls back to
+  the connection's Sentry alert webhook.
+
+**Bug fix (pre-existing):** the SQL playground's `executeSql` set the
+statement timeout with a postgres.js tagged template, which parameterizes
+it — but Postgres `SET` rejects bind params (`syntax error at or near
+"$1"`), so **every** playground query was failing. Now interpolates the
+clamped-integer timeout via `unsafe()`, matching the sync engine. This
+repairs the playground and unblocks the new SQL-backed features.
+
+Schema: 0022 adds `scheduled_report`, `data_watch`, `pinned_table`,
+`recent_record` (all additive, no downtime). Two new cron routes to wire
+into your scheduler (see PRODUCTION.md).
+
 ## v3.16.0 · 2026-07-03 · Onboarding funnel + workspace quality features
 
 Five additions focused on the new-user journey and day-two operations.

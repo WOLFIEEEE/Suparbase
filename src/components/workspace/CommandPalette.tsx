@@ -5,21 +5,34 @@ import { signOut } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
+  ArrowLeftRight,
+  Bell,
+  Bookmark,
+  Bot,
+  CalendarClock,
+  Clock,
   Database,
   FileText,
+  FolderOpen,
   Home,
   Kanban,
   Loader2,
   LogOut,
   MessageSquare,
+  Pin,
   Plus,
   Search,
   Settings as SettingsIcon,
+  ShieldAlert,
+  ShieldCheck,
   ShoppingCart,
+  SquareCode,
   SunMoon,
   Sparkles,
   Table2,
+  UserCog,
   Users as UsersIcon,
+  Zap,
 } from "lucide-react";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { encodePkSegment } from "@/lib/table/pk";
@@ -57,6 +70,52 @@ async function fetchAiSettings(): Promise<AiSettingsSummary> {
   if (!res.ok) throw new AppError("server", "Failed to load AI settings.");
   return res.json();
 }
+
+interface PaletteSnippet {
+  id: string;
+  name: string;
+  sql: string;
+}
+interface RecentEntry {
+  tableName: string;
+  primaryKey: Record<string, unknown>;
+  label: string;
+}
+
+async function fetchSnippets(connectionId: string): Promise<PaletteSnippet[]> {
+  const res = await fetch(`/api/connections/${encodeURIComponent(connectionId)}/sql-snippets`);
+  if (!res.ok) return [];
+  return ((await res.json()) as { snippets: PaletteSnippet[] }).snippets ?? [];
+}
+async function fetchPins(connectionId: string): Promise<string[]> {
+  const res = await fetch(`/api/connections/${encodeURIComponent(connectionId)}/pins`);
+  if (!res.ok) return [];
+  return ((await res.json()) as { pins: string[] }).pins ?? [];
+}
+async function fetchRecents(connectionId: string): Promise<RecentEntry[]> {
+  const res = await fetch(`/api/connections/${encodeURIComponent(connectionId)}/recents`);
+  if (!res.ok) return [];
+  return ((await res.json()) as { recents: RecentEntry[] }).recents ?? [];
+}
+
+/** All workspace destinations, mirrored from the sidebar. */
+const DESTINATIONS: Array<{ sub: string; label: string; icon: typeof Home }> = [
+  { sub: "", label: "Dashboard", icon: Home },
+  { sub: "tables", label: "All tables", icon: Table2 },
+  { sub: "schema", label: "Schema", icon: Database },
+  { sub: "sql", label: "SQL playground", icon: SquareCode },
+  { sub: "storage", label: "Storage", icon: FolderOpen },
+  { sub: "auth-users", label: "Auth users", icon: UserCog },
+  { sub: "actions", label: "Actions", icon: Zap },
+  { sub: "activity", label: "Activity", icon: Activity },
+  { sub: "reports", label: "Reports", icon: CalendarClock },
+  { sub: "watches", label: "Watches", icon: Bell },
+  { sub: "agents", label: "Agents", icon: Bot },
+  { sub: "sync", label: "Sync", icon: ArrowLeftRight },
+  { sub: "sentry", label: "Sentry", icon: ShieldAlert },
+  { sub: "rls", label: "RLS", icon: ShieldCheck },
+  { sub: "settings", label: "Connection settings", icon: SettingsIcon },
+];
 
 interface SearchHit {
   table: string;
@@ -135,6 +194,24 @@ export function CommandPalette() {
     enabled: open,
     staleTime: 60_000,
   });
+  const { data: snippets } = useQuery({
+    queryKey: ["sql-snippets", connection.id],
+    queryFn: () => fetchSnippets(connection.id),
+    enabled: open,
+    staleTime: 30_000,
+  });
+  const { data: pins } = useQuery({
+    queryKey: ["pins", connection.id],
+    queryFn: () => fetchPins(connection.id),
+    enabled: open,
+    staleTime: 30_000,
+  });
+  const { data: recents } = useQuery({
+    queryKey: ["recents", connection.id],
+    queryFn: () => fetchRecents(connection.id),
+    enabled: open,
+    staleTime: 30_000,
+  });
 
   // Global row search: kicks in once the query is 2+ chars. Server scans
   // text/uuid/int columns of every table in parallel.
@@ -185,30 +262,77 @@ export function CommandPalette() {
           <CommandList>
             <CommandEmpty>No results.</CommandEmpty>
 
-            <CommandGroup heading="Pages">
-              <CommandItem
-                value={`dashboard ${connection.name}`}
-                onSelect={() => navigate(`/c/${connection.id}`)}
-              >
-                <Home className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
-                Dashboard
-                <span className="ml-auto text-[10px] text-fg-faint">{connection.name}</span>
-              </CommandItem>
-              <CommandItem
-                value="all tables"
-                onSelect={() => navigate(`/c/${connection.id}/tables`)}
-              >
-                <Table2 className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
-                All tables
-              </CommandItem>
-              <CommandItem
-                value="schema"
-                onSelect={() => navigate(`/c/${connection.id}/schema`)}
-              >
-                <Database className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
-                Schema
-              </CommandItem>
+            <CommandGroup heading="Go to">
+              {DESTINATIONS.map((d) => (
+                <CommandItem
+                  key={d.sub || "dashboard"}
+                  value={`go ${d.label} ${d.sub}`}
+                  onSelect={() => navigate(d.sub ? `/c/${connection.id}/${d.sub}` : `/c/${connection.id}`)}
+                >
+                  <d.icon className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
+                  {d.label}
+                </CommandItem>
+              ))}
             </CommandGroup>
+
+            {pins && pins.length > 0 && (
+              <CommandGroup heading="Pinned tables">
+                {pins.map((p) => {
+                  const tableName = p.includes(".") ? p.split(".").slice(1).join(".") : p;
+                  return (
+                    <CommandItem
+                      key={`pin-${p}`}
+                      value={`pinned ${p}`}
+                      onSelect={() => navigate(`/c/${connection.id}/tables/${encodeURIComponent(tableName)}`)}
+                    >
+                      <Pin className="mr-2 h-4 w-4 text-accent" aria-hidden />
+                      <span className="truncate font-mono text-xs">{p}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+
+            {recents && recents.length > 0 && (
+              <CommandGroup heading="Recently viewed">
+                {recents.slice(0, 8).map((r, i) => {
+                  const pkSeg = encodePkSegment(r.primaryKey);
+                  return (
+                    <CommandItem
+                      key={`recent-${i}-${pkSeg}`}
+                      value={`recent ${r.tableName} ${r.label} ${pkSeg}`}
+                      onSelect={() =>
+                        navigate(`/c/${connection.id}/tables/${encodeURIComponent(r.tableName)}/${pkSeg}`)
+                      }
+                    >
+                      <Clock className="mr-2 h-4 w-4 shrink-0 text-fg-faint" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">{r.label}</span>
+                      <span className="ml-2 shrink-0 font-mono text-[10px] text-fg-faint">{r.tableName}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+
+            {snippets && snippets.length > 0 && (
+              <CommandGroup heading="Run a snippet">
+                {snippets.map((s) => (
+                  <CommandItem
+                    key={`snippet-${s.id}`}
+                    value={`snippet ${s.name}`}
+                    onSelect={() =>
+                      navigate(`/c/${connection.id}/sql?snippet=${encodeURIComponent(s.id)}`)
+                    }
+                  >
+                    <Bookmark className="mr-2 h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate">{s.name}</span>
+                    <span className="ml-2 shrink-0 truncate font-mono text-[10px] text-fg-faint">
+                      {s.sql.replace(/\s+/g, " ").slice(0, 40)}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
 
             {searchActive && (
               <CommandGroup

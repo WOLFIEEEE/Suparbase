@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { PageHeader } from "@/components/workspace/PageHeader";
+import { ColumnInsights } from "@/components/workspace/ColumnInsights";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import {
   ARCHETYPE_HINT,
@@ -230,9 +231,9 @@ function TableRow({ table, connectionId }: { table: Table; connectionId: string 
           </span>
         </summary>
         <div className="space-y-4 p-4">
-          {idCols.length > 0 && <ColumnGroup label="Identifiers" cols={idCols} connectionId={connectionId} />}
-          {fieldCols.length > 0 && <ColumnGroup label="Fields" cols={fieldCols} connectionId={connectionId} />}
-          {metaCols.length > 0 && <ColumnGroup label="Metadata" cols={metaCols} connectionId={connectionId} />}
+          {idCols.length > 0 && <ColumnGroup label="Identifiers" cols={idCols} connectionId={connectionId} schema={table.schema} tableName={table.name} />}
+          {fieldCols.length > 0 && <ColumnGroup label="Fields" cols={fieldCols} connectionId={connectionId} schema={table.schema} tableName={table.name} />}
+          {metaCols.length > 0 && <ColumnGroup label="Metadata" cols={metaCols} connectionId={connectionId} schema={table.schema} tableName={table.name} />}
         </div>
       </details>
     </li>
@@ -243,24 +244,44 @@ function ColumnGroup({
   label,
   cols,
   connectionId,
+  schema,
+  tableName,
 }: {
   label: string;
   cols: Column[];
   connectionId: string;
+  schema: string;
+  tableName: string;
 }) {
   return (
     <div className="space-y-2">
       <h4 className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">{label}</h4>
       <ul className="space-y-1">
         {cols.map((c) => (
-          <ColumnLine key={c.name} col={c} connectionId={connectionId} />
+          <ColumnLine
+            key={c.name}
+            col={c}
+            connectionId={connectionId}
+            schema={schema}
+            tableName={tableName}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function ColumnLine({ col, connectionId }: { col: Column; connectionId: string }) {
+function ColumnLine({
+  col,
+  connectionId,
+  schema,
+  tableName,
+}: {
+  col: Column;
+  connectionId: string;
+  schema: string;
+  tableName: string;
+}) {
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
       <span
@@ -271,6 +292,12 @@ function ColumnLine({ col, connectionId }: { col: Column; connectionId: string }
       >
         {col.isPrimaryKey && <Key className="h-3 w-3" aria-hidden />}
         {col.name}
+        <ColumnInsights
+          connectionId={connectionId}
+          schema={schema}
+          table={tableName}
+          column={col.name}
+        />
       </span>
       <code className="rounded surface-sunken px-1.5 py-0.5 font-mono text-[10px] text-fg-muted">
         {col.pgType}

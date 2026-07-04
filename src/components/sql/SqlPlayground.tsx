@@ -139,6 +139,24 @@ export function SqlPlayground({ connectionId }: { connectionId: string }) {
     setHistory(loadHistory(connectionId));
   }, [connectionId]);
 
+  // Preload a snippet when arriving from the command palette
+  // (/c/[id]/sql?snippet=<id>). Runs once.
+  const preloadedRef = useRef(false);
+  useEffect(() => {
+    if (preloadedRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const snippetId = params.get("snippet");
+    if (!snippetId) return;
+    preloadedRef.current = true;
+    void fetch(`/api/connections/${encodeURIComponent(connectionId)}/sql-snippets`)
+      .then((r) => (r.ok ? r.json() : { snippets: [] }))
+      .then((d: { snippets: Array<{ id: string; sql: string }> }) => {
+        const found = d.snippets?.find((s) => s.id === snippetId);
+        if (found) setSql(found.sql);
+      })
+      .catch(() => undefined);
+  }, [connectionId]);
+
   const mutation = useMutation<SqlResult, ServerError, void>({
     mutationFn: () =>
       new Promise<SqlResult>((resolve, reject) => {

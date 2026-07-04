@@ -177,6 +177,22 @@ checks before going live.
       (90 / 30 / 60 / 90 days), pass a config to `runRetention()`
       via a custom cron route instead of using the default.
 
+### 2.3a Scheduled reports + data watches (v3.17)
+
+Both reuse the same `Authorization: Bearer $CRON_SECRET` contract. They
+share the retention secret; set `CRON_SECRET` and wire two more cron
+calls:
+
+- [ ] `POST /api/cron/reports` — runs due scheduled reports (delivers a
+      saved snippet's result by email or webhook). Hourly is a sensible
+      cadence; the per-report `intervalHours` gates actual runs. Email
+      delivery needs `RESEND_API_KEY` + `EMAIL_FROM`; without them the
+      run records `no_key` and nothing sends.
+- [ ] `POST /api/cron/watches` — evaluates due data watches and alerts a
+      webhook when the match count grows. Match the cron cadence to the
+      smallest watch `intervalMinutes` you expect to use (e.g. every
+      5 min). Both routes are fail-closed without `CRON_SECRET`.
+
 ### 2.4 Rate limits
 
 - [ ] Default limits live in `src/server/proxy/ratelimit.ts`.

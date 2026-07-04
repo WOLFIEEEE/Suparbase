@@ -36,6 +36,7 @@ import {
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { PageHeader, StatTile } from "@/components/workspace/PageHeader";
+import { PinTableButton } from "@/components/workspace/PinTableButton";
 import { PresetSwitcher } from "@/components/workspace/PresetSwitcher";
 import { PaginationBar } from "@/components/data/PaginationBar";
 import { SelectionProvider, useSelection } from "@/components/data/SelectionContext";
@@ -196,6 +197,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
           <span className="hidden sm:inline">Import</span>
         </Button>
       )}
+      <PinTableButton connectionId={connectionId} qualified={`${table.schema}.${table.name}`} />
       <Button
         variant="secondary"
         size="md"

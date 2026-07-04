@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowLeftRight, Bot, Database, FolderOpen, LayoutDashboard, Settings, ShieldAlert, ShieldCheck, Sparkles, SquareCode, Table2, UserCog, Zap } from "lucide-react";
+import { Activity, ArrowLeft, ArrowLeftRight, Bell, Bot, CalendarClock, Database, FolderOpen, LayoutDashboard, Settings, ShieldAlert, ShieldCheck, Sparkles, SquareCode, Table2, UserCog, Zap } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
 import { Wordmark } from "@/components/brand/Logo";
 import { SITE } from "@/lib/seo/site";
@@ -25,6 +25,9 @@ const items: NavItem[] = [
   { sub: "storage", label: "Storage", icon: FolderOpen },
   { sub: "auth-users", label: "Auth users", icon: UserCog },
   { sub: "actions", label: "Actions", icon: Zap },
+  { sub: "activity", label: "Activity", icon: Activity },
+  { sub: "reports", label: "Reports", icon: CalendarClock },
+  { sub: "watches", label: "Watches", icon: Bell },
   { sub: "agents", label: "Agents", icon: Bot },
   { sub: "sync", label: "Sync", icon: ArrowLeftRight },
   { sub: "sentry", label: "Sentry", icon: ShieldAlert },

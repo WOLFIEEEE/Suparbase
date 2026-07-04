@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -51,6 +51,28 @@ export function GenericDetail({ connectionId, table, schema, analysis, pkSegment
 
   const titleCol = analysis?.primary?.titleColumn ?? analysis?.titleColumn ?? table.labelColumn ?? null;
   const subtitleCol = analysis?.primary?.subtitleColumn ?? null;
+
+  // Record this row as recently-viewed (fire-and-forget, once per row load)
+  // so it shows up in the command palette's "Recently viewed" group.
+  const recordedRef = useRef<string>("");
+  useEffect(() => {
+    if (!pkValue || !row) return;
+    const key = `${table.name}:${pkSegment}`;
+    if (recordedRef.current === key) return;
+    recordedRef.current = key;
+    const labelSource = titleCol && row[titleCol] != null ? String(row[titleCol]) : null;
+    const label =
+      labelSource ||
+      Object.entries(pkValue)
+        .map(([k, v]) => `${k}=${String(v)}`)
+        .join(" ") ||
+      table.name;
+    void fetch(`/api/connections/${encodeURIComponent(connectionId)}/recents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tableName: table.name, primaryKey: pkValue, label }),
+    }).catch(() => undefined);
+  }, [connectionId, table.name, pkSegment, pkValue, row, titleCol]);
   const statusCol = analysis?.primary?.badgeColumn ?? analysis?.statusColumn ?? null;
 
   const heroCols = useMemo(

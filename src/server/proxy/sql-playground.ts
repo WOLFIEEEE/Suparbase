@@ -106,7 +106,10 @@ export async function executeSql(opts: SqlExecuteOptions): Promise<SqlExecuteRes
       try {
         await sql.begin(async (tx) => {
           await tx.unsafe("SET TRANSACTION READ ONLY");
-          await tx`SET LOCAL statement_timeout = ${timeoutMs}`;
+          // Interpolate, don't parameterize: Postgres SET rejects bind
+          // params ("syntax error at or near $1"). timeoutMs is a clamped
+          // integer, so interpolation is injection-safe (same as the sync engine).
+          await tx.unsafe(`SET LOCAL statement_timeout = ${Math.trunc(timeoutMs)}`);
           try {
             captured = await tx.unsafe(opts.sql, opts.params as never);
           } catch (e) {
@@ -122,7 +125,10 @@ export async function executeSql(opts: SqlExecuteOptions): Promise<SqlExecuteRes
     } else {
       try {
         await sql.begin(async (tx) => {
-          await tx`SET LOCAL statement_timeout = ${timeoutMs}`;
+          // Interpolate, don't parameterize: Postgres SET rejects bind
+          // params ("syntax error at or near $1"). timeoutMs is a clamped
+          // integer, so interpolation is injection-safe (same as the sync engine).
+          await tx.unsafe(`SET LOCAL statement_timeout = ${Math.trunc(timeoutMs)}`);
           captured = await tx.unsafe(opts.sql, opts.params as never);
         });
       } catch (e) {
