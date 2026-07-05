@@ -101,7 +101,7 @@ export function SecurityScannerTool() {
         </div>
         <p className="flex items-start gap-2 text-[11px] text-fg-faint">
           <Lock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
-          The anon key is public by design — it already ships in your app's client bundle. We use it in-flight
+          The anon key is public by design. It already ships in your app's client bundle. We use it in-flight
           and never store your URL, key, or results. Hosted <code className="font-mono">*.supabase.co</code> projects only.
         </p>
         <label className="flex items-center gap-2 text-sm">
@@ -146,7 +146,7 @@ function ScanReport({ result }: { result: ScanOk }) {
             )}
           </div>
           <p className="text-fg-muted">
-            Scanned <span className="font-mono text-fg">{result.host}</span> — {result.tablesScanned} of{" "}
+            Scanned <span className="font-mono text-fg">{result.host}</span>: {result.tablesScanned} of{" "}
             {result.tablesDiscovered} exposed tables. {result.anonReadableCount} readable by anyone,{" "}
             {criticals.length} exposing sensitive columns.
           </p>
@@ -156,7 +156,7 @@ function ScanReport({ result }: { result: ScanOk }) {
       {result.findings.length === 0 ? (
         <div className="flex items-center gap-2 rounded-md border border-accent/40 bg-accent/5 px-4 py-3 text-sm">
           <ShieldCheck className="h-4 w-4 text-accent" aria-hidden />
-          No anonymous-readable tables found. Nice — RLS is doing its job.
+          No anonymous-readable tables found. Nice work, RLS is doing its job.
         </div>
       ) : (
         <ul className="space-y-2">
@@ -182,14 +182,14 @@ function ScanReport({ result }: { result: ScanOk }) {
       )}
 
       <div className="rounded-md border border-accent/40 bg-accent/5 p-5">
-        <h3 className="font-display text-lg">Fix it — and keep it fixed</h3>
+        <h3 className="font-display text-lg">Fix it, and keep it fixed</h3>
         <p className="mt-1 text-sm text-fg-muted">
           This one-shot scan finds the exposure. A Suparbase account gives you one-click quarantine, continuous
-          re-scans, and a Slack alert the moment a new table gets exposed — plus a full admin workspace.
+          re-scans, and a Slack alert the moment a new table gets exposed, plus a full admin workspace.
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/signup">Get continuous monitoring — free</Link>
+            <Link href="/signup">Get continuous monitoring, free</Link>
           </Button>
           <Button asChild variant="secondary">
             <Link href="/agent-sentry">How Agent Sentry works</Link>

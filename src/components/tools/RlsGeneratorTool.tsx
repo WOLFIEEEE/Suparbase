@@ -157,8 +157,8 @@ export function RlsGeneratorTool() {
                 <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-fg-muted sm:grid-cols-4">
                   <Meta label="Command" value={explanation.command} />
                   <Meta label="Roles" value={explanation.roles.join(", ") || "public"} />
-                  <Meta label="USING" value={explanation.using ?? "—"} />
-                  <Meta label="WITH CHECK" value={explanation.withCheck ?? "—"} />
+                  <Meta label="USING" value={explanation.using ?? "none"} />
+                  <Meta label="WITH CHECK" value={explanation.withCheck ?? "none"} />
                 </dl>
               )}
             </div>

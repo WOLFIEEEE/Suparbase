@@ -2,7 +2,7 @@
  * Best-effort Postgres DDL parser for the free `/tools/schema-visualizer`
  * page. Parses `CREATE TABLE` statements (columns, PK, FK / REFERENCES) into
  * a small graph the ERD renderer can lay out. Pure + client-side: pasted
- * SQL never leaves the browser. Not a full SQL parser — tuned for pasted
+ * SQL never leaves the browser. Not a full SQL parser, just tuned for pasted
  * schemas and `pg_dump` output.
  */
 
@@ -137,7 +137,7 @@ export function parseDdl(sql: string): ParsedSchema {
 
     for (const c of columns) if (pkCols.has(c.name)) c.isPrimaryKey = true;
     if (columns.length === 0) {
-      warnings.push(`Table "${name}" parsed with no columns — check its DDL syntax.`);
+      warnings.push(`Table "${name}" parsed with no columns. Check its DDL syntax.`);
     }
     tables.push({ schema, name, columns });
   }

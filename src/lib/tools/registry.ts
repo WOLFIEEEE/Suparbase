@@ -32,7 +32,7 @@ export const TOOLS: ToolMeta[] = [
     slug: "rls-policy-generator",
     title: "RLS Policy Generator",
     short: "RLS Generator",
-    tagline: "Generate correct Row-Level-Security policies — and explain any policy in plain English.",
+    tagline: "Generate correct Row-Level-Security policies, and explain any policy in plain English.",
     description:
       "Free Supabase/Postgres RLS policy generator and explainer. Pick an access pattern to get copy-paste SQL, or paste a CREATE POLICY statement to understand what it actually allows. Runs in your browser.",
     icon: "ShieldCheck",
@@ -54,7 +54,7 @@ export const TOOLS: ToolMeta[] = [
     short: "Secret Scanner",
     tagline: "Catch leaked API keys, service-role tokens, and DB URLs in your code.",
     description:
-      "Free secret scanner. Paste code, .env files, or logs to find leaked Supabase service-role keys, API tokens, and database URLs — with severity and fix advice. Runs entirely in your browser.",
+      "Free secret scanner. Paste code, .env files, or logs to find leaked Supabase service-role keys, API tokens, and database URLs, with severity and fix advice. Runs entirely in your browser.",
     icon: "KeyRound",
     clientOnly: true,
   },

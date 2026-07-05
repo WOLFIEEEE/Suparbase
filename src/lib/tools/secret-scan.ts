@@ -6,7 +6,7 @@
  * pasted text never leaves the page.
  *
  * JWTs are decoded far enough to tell a Supabase `service_role` key (which
- * bypasses RLS — critical if leaked) from an `anon` key (public by design).
+ * bypasses RLS, critical if leaked) from an `anon` key (public by design).
  */
 
 export type Severity = "critical" | "high" | "medium" | "info";
@@ -91,7 +91,7 @@ const RULES: Rule[] = [
           label: "Supabase anon key (public by design)",
           severity: "info",
           advice:
-            "The anon key is meant to be public — it ships in your client bundle. It's only dangerous if your tables lack RLS. Run the Security Scanner to check.",
+            "The anon key is meant to be public. It ships in your client bundle. It's only dangerous if your tables lack RLS. Run the Security Scanner to check.",
         };
       }
       return null; // keep as generic jwt

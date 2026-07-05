@@ -103,7 +103,7 @@ export function SchemaVisualizerTool() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-fg-faint">
-              {usingExample ? "Showing an example — paste your own DDL above." : `${parsed.tables.length} tables · ${parsed.edges.length} relationships`}
+              {usingExample ? "Showing an example. Paste your own DDL above." : `${parsed.tables.length} tables · ${parsed.edges.length} relationships`}
             </span>
             <button
               type="button"

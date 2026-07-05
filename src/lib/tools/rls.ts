@@ -1,6 +1,6 @@
 /**
  * Deterministic Row-Level-Security policy generator + explainer for the
- * free `/tools/rls-policy-generator` page. No AI, no network — pure string
+ * free `/tools/rls-policy-generator` page. No AI, no network, pure string
  * work, so it runs in the browser and is fully unit-testable.
  */
 
@@ -73,7 +73,7 @@ export function generateRlsPolicies(input: RlsGenerateInput): string {
   const owner = (input.ownerColumn ?? "user_id").trim() || "user_id";
 
   const header = [
-    `-- RLS for ${schema}.${table} — pattern: ${PATTERN_META[input.pattern].label}`,
+    `-- RLS for ${schema}.${table} (pattern: ${PATTERN_META[input.pattern].label})`,
     `ALTER TABLE ${tbl} ENABLE ROW LEVEL SECURITY;`,
     "",
   ];
@@ -159,7 +159,7 @@ export interface RlsExplanation {
 
 /**
  * Parse a single `CREATE POLICY …` statement and describe it in plain
- * English. Best-effort regex parse — good enough for the pasted-policy
+ * English. Best-effort regex parse, good enough for the pasted-policy
  * explainer; not a full SQL parser.
  */
 export function explainPolicy(sql: string): RlsExplanation {
@@ -211,7 +211,7 @@ export function explainPolicy(sql: string): RlsExplanation {
     `Policy “${policyName}” lets ${roleText} ${cmdText}${condText} on ${table}.` +
     (withCheck ? ` New/updated rows must satisfy: ${withCheck}.` : "") +
     (using && /^\s*true\s*$/i.test(using) && (roles.includes("anon") || roles.includes("public"))
-      ? " ⚠️ This is fully public — anyone can read the whole table."
+      ? " Warning: this is fully public. Anyone can read the whole table."
       : "");
 
   return { ok: true, policyName, table, command, roles, using, withCheck, summary };

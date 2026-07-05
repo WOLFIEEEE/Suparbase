@@ -13,7 +13,7 @@ const SEVERITY_TONE: Record<Severity, "danger" | "warn" | "neutral" | "accent"> 
   info: "neutral",
 };
 
-const EXAMPLE = `# Paste code, .env, or logs — nothing leaves your browser
+const EXAMPLE = `# Paste code, .env, or logs. Nothing leaves your browser.
 SUPABASE_URL=https://abcd.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.sig
 DATABASE_URL=postgres://postgres:hunter2@db.abcd.supabase.co:5432/postgres`;
@@ -29,7 +29,7 @@ export function SecretScannerTool() {
         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
         <span>
           <strong className="text-fg">Runs entirely in your browser.</strong> Nothing you paste is sent
-          anywhere — no upload, no logging, no account.
+          anywhere. No upload, no logging, no account.
         </span>
       </div>
 
