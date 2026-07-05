@@ -5,6 +5,7 @@ import { listUseCases } from "@/lib/use-cases/registry";
 import { listCompare } from "@/lib/compare/registry";
 import { listGuides } from "@/lib/guides/registry";
 import { listLearn } from "@/lib/learn/registry";
+import { TOOLS } from "@/lib/tools/registry";
 
 // Resolve env at request time so the deployed sitemap can't bake in
 // a stale/localhost URL from build time.
@@ -14,6 +15,12 @@ const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: Me
   { path: "/", priority: 1.0, changeFrequency: "weekly" },
   { path: "/features", priority: 0.9, changeFrequency: "monthly" },
   { path: "/agent-sentry", priority: 0.92, changeFrequency: "monthly" },
+  { path: "/tools", priority: 0.85, changeFrequency: "monthly" },
+  ...TOOLS.map((t) => ({
+    path: `/tools/${t.slug}`,
+    priority: 0.82,
+    changeFrequency: "monthly" as const,
+  })),
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
   { path: "/docs", priority: 0.9, changeFrequency: "monthly" },
   { path: "/docs/api", priority: 0.7, changeFrequency: "monthly" },

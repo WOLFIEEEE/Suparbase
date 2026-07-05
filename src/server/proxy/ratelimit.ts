@@ -78,3 +78,12 @@ const CONTACT_WINDOW_MS = 60 * 60_000;
 export function checkContactRate(clientKey: string): RateLimitResult {
   return check("contact", clientKey, CONTACT_BUDGET, CONTACT_WINDOW_MS);
 }
+
+// Public, unauthenticated Security Scanner. Each scan fans out to many
+// outbound fetches, so keep the per-IP budget tight.
+const SCAN_BUDGET = 6;
+const SCAN_WINDOW_MS = 10 * 60_000; // 6 scans per 10 minutes per IP
+
+export function checkScanRate(clientKey: string): RateLimitResult {
+  return check("scan", clientKey, SCAN_BUDGET, SCAN_WINDOW_MS);
+}

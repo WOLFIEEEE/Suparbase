@@ -3,6 +3,40 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.18.0 · 2026-07-05 · Free public tools (acquisition hooks)
+
+Four free, no-login tools under `/tools/*` that deliver value in one paste
+and convert to sign-up. Three run entirely in the browser; one needs a
+stateless server route. Spec: [`specs/033-free-tools/`](specs/033-free-tools/).
+
+- **Supabase Security Scanner** (`/tools/supabase-security-scanner`): paste
+  a project URL + optional anon key → the Agent Sentry anon-probe reports
+  anon-readable tables, exposed PII, and a 0–100 score.
+  `POST /api/tools/security-scan` is **stateless** (never stores URL/key/
+  results), IP rate-limited (6 / 10 min), and SSRF-closed by a
+  `*.supabase.co` / `*.supabase.in` host allowlist. Reuses the probe logic
+  in a DB-free `scanProjectAnon()`.
+- **RLS Policy Generator + Explainer** (`/tools/rls-policy-generator`):
+  deterministic, in-browser. Pick an access pattern (owner-by-column,
+  public/authenticated read, authenticated read-write, admin-claim,
+  service-role-only) to get copy-paste SQL, or paste a `CREATE POLICY` to
+  get a plain-English explanation.
+- **Schema → ERD Visualizer** (`/tools/schema-visualizer`): paste DDL /
+  `pg_dump`, get an SVG entity-relationship diagram with FK edges. Parses
+  in-browser; download the SVG.
+- **Secret & Key Leak Scanner** (`/tools/secret-scanner`): paste code /
+  `.env` / logs → flags leaked secrets with severity and fix advice,
+  decoding JWTs to tell a critical `service_role` key from a public `anon`
+  key. Entirely in-browser.
+
+Wiring: `/tools` index, a "Free tools" section on the home page, header +
+footer nav, sitemap + per-page `WebApplication` JSON-LD. `/api/tools/*` is
+CSRF-exempt (unauthenticated + stateless, so CSRF is moot) which also keeps
+the tools working regardless of `AUTH_URL` vs visited-host config.
+
+Pure libs (`src/lib/tools/*`) are unit-tested (+19 tests, 197 total). No new
+dependencies; no persistence of anything scanned.
+
 ## v3.17.0 · 2026-07-04 · Six workspace features
 
 Six client-facing additions, each reusing existing plumbing (cron,

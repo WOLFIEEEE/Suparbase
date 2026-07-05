@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   Database,
   History,
+  KeyRound,
   Lock,
+  Network,
   Pencil,
   Search,
   ShieldAlert,
@@ -19,6 +21,9 @@ import { LandingHero } from "@/components/landing/LandingHero";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { CTABand, FeatureCard, SectionHeading } from "@/components/public/sections";
 import { SITE } from "@/lib/seo/site";
+import { TOOLS } from "@/lib/tools/registry";
+
+const TOOL_ICONS = { ShieldAlert, ShieldCheck, Network, KeyRound } as const;
 
 const STEPS = [
   {
@@ -175,6 +180,9 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Free tools, no-login acquisition hooks */}
+        <FreeToolsSection />
+
         {/* Security & operability section */}
         <section className="mx-auto w-full max-w-6xl px-6 py-16 md:py-24">
           <div className="surface rounded-lg p-6 sm:p-8">
@@ -221,6 +229,60 @@ export default async function HomePage() {
         secondary={{ href: "/features", label: "See features" }}
       />
     </PublicLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Free tools section, no-login utilities that double as acquisition hooks.
+// Sits after the feature grid: "here's what you get" → "try a piece of it
+// right now, no account". Three run entirely in the browser.
+// ---------------------------------------------------------------------------
+
+function FreeToolsSection() {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-6 py-16 md:py-24">
+      <SectionHeading
+        eyebrow="Free tools · no login"
+        title="Try a piece of it right now."
+        subtitle="Four no-account utilities for the things Supabase makes you sweat over — security, RLS, schema, and leaked keys. Three run entirely in your browser."
+      />
+      <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {TOOLS.map((t) => {
+          const Icon = TOOL_ICONS[t.icon];
+          return (
+            <li key={t.slug}>
+              <Link
+                href={`/tools/${t.slug}`}
+                className="group flex h-full flex-col gap-3 rounded-xl border hairline bg-bg-raised p-5 transition-colors hover:border-line-strong"
+              >
+                <div className="flex items-center justify-between">
+                  <Icon className="h-5 w-5 text-accent" aria-hidden />
+                  {t.clientOnly && (
+                    <span className="rounded-full border hairline px-2 py-0.5 text-[9px] uppercase tracking-wider text-fg-faint">
+                      in-browser
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display text-base leading-tight">{t.short}</h3>
+                <p className="flex-1 text-xs leading-relaxed text-fg-muted">{t.tagline}</p>
+                <span className="inline-flex items-center gap-1 text-xs text-accent">
+                  Open tool
+                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="mt-8 flex justify-center">
+        <Link
+          href="/tools"
+          className="inline-flex h-10 items-center gap-1.5 rounded-md border hairline px-4 text-sm text-fg-muted hover:border-line-strong hover:text-fg"
+        >
+          Browse all free tools <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </Link>
+      </div>
+    </section>
   );
 }
 

@@ -80,8 +80,15 @@ export async function middleware(req: NextRequest) {
   // ── CSRF gate ─────────────────────────────────────────────────
   if (UNSAFE_METHODS.has(req.method)) {
     // NextAuth handles its own CSRF for sign-in / sign-out via the
-    // built-in csrfToken endpoint. Don't second-guess it.
-    if (!path.startsWith("/api/auth/") && !path.startsWith("/api/webhooks/")) {
+    // built-in csrfToken endpoint. Don't second-guess it. Public /api/tools/*
+    // endpoints are unauthenticated and stateless (no cookie, no persistence),
+    // so CSRF is moot — and exempting them keeps the marketing-page tools
+    // working regardless of how AUTH_URL vs the visited host are configured.
+    if (
+      !path.startsWith("/api/auth/") &&
+      !path.startsWith("/api/webhooks/") &&
+      !path.startsWith("/api/tools/")
+    ) {
       const origin = req.headers.get("origin");
       if (origin) {
         let allowedHost: string;

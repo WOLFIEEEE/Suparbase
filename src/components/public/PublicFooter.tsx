@@ -36,6 +36,16 @@ const COLUMNS: Column[] = [
     ],
   },
   {
+    heading: "Free tools",
+    links: [
+      { label: "Security Scanner", href: "/tools/supabase-security-scanner" },
+      { label: "RLS Generator", href: "/tools/rls-policy-generator" },
+      { label: "Schema Visualizer", href: "/tools/schema-visualizer" },
+      { label: "Secret Scanner", href: "/tools/secret-scanner" },
+      { label: "All tools", href: "/tools" },
+    ],
+  },
+  {
     heading: "Company",
     links: [
       { label: "About", href: "/about" },

@@ -16,9 +16,9 @@ interface NavLinkDef {
 
 const NAV_LINKS: readonly NavLinkDef[] = [
   { href: "/features", label: "Features" },
+  { href: "/tools", label: "Free tools" },
   { href: "/use-cases", label: "Use cases" },
   { href: "/pricing", label: "Pricing", hideWhenSignedIn: true },
-  { href: "/blog", label: "Blog" },
   { href: "/docs", label: "Docs" },
 ];
 
