@@ -3,6 +3,15 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.19.2 · 2026-07-06 · Guided first-connection flow
+
+- **Step-by-step guide on `/connections/new`.** A new `ConnectionGuide`
+  sits beside the form with five numbered steps (open the dashboard, copy
+  the Project URL, copy the anon key, name and create, optional Direct
+  Postgres URL), each mapping to a field in the form, plus a direct link to
+  the Supabase API settings and an anon-vs-service_role note. Two-column on
+  desktop with the form sticky; stacks on mobile.
+
 ## v3.19.1 · 2026-07-06 · More generous Free tier
 
 - **Free tier now includes up to 3 Supabase connections** (was 1). A solo
