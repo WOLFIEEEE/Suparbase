@@ -34,7 +34,7 @@ describe("resolvePlan", () => {
     const r = resolvePlan(null);
     expect(r.plan).toBe("free");
     expect(r.isPaid).toBe(false);
-    expect(r.limits.maxConnections).toBe(1);
+    expect(r.limits.maxConnections).toBe(3);
     expect(r.limits.canInviteTeam).toBe(false);
   });
 
@@ -113,13 +113,13 @@ describe("resolvePlan", () => {
 });
 
 describe("requireFeature", () => {
-  it("Free tier rejects addConnection once 1 is in use", () => {
+  it("Free tier allows up to 3 connections, rejects the 4th", () => {
     const r = resolvePlan(null);
     expect(() =>
-      requireFeature(r, "addConnection", { currentConnectionCount: 0 }),
+      requireFeature(r, "addConnection", { currentConnectionCount: 2 }),
     ).not.toThrow();
     expect(() =>
-      requireFeature(r, "addConnection", { currentConnectionCount: 1 }),
+      requireFeature(r, "addConnection", { currentConnectionCount: 3 }),
     ).toThrow(PlanLimitError);
   });
 
@@ -143,7 +143,7 @@ describe("requireFeature", () => {
 
 describe("PLAN_LIMITS catalog", () => {
   it("Free has finite connection limit + no team", () => {
-    expect(PLAN_LIMITS.free.maxConnections).toBe(1);
+    expect(PLAN_LIMITS.free.maxConnections).toBe(3);
     expect(PLAN_LIMITS.free.canInviteTeam).toBe(false);
   });
   // null === unlimited (chosen over Number.POSITIVE_INFINITY so

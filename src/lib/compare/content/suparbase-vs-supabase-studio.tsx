@@ -38,7 +38,7 @@ export const meta = {
     { feature: "Continuous RLS drift probe + auto-quarantine", left: "Yes (Sentry v3.0)", right: "No (Security Advisors are weekly)" },
     { feature: "API key in browser?", left: "No, encrypted vault + server-side proxy", right: "Service role is in the dashboard session" },
     { feature: "Licensing", left: "Proprietary (hosted SaaS, free tier)", right: "Apache 2.0 (Studio source available)" },
-    { feature: "Hosted free tier", left: "Yes (one connection, no credit card)", right: "Yes (Supabase free plan)" },
+    { feature: "Hosted free tier", left: "Yes (3 connections, no credit card)", right: "Yes (Supabase free plan)" },
   ],
 } as const;
 

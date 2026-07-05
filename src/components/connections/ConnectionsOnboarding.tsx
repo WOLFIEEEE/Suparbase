@@ -66,7 +66,7 @@ export function ConnectionsOnboarding() {
 
       <div className="rounded-md border hairline bg-bg-raised/40 p-4 text-xs text-fg-muted">
         <p>
-          <strong className="text-fg">Free plan</strong>: 1 Supabase connection, solo
+          <strong className="text-fg">Free plan</strong>: up to 3 Supabase connections, solo
           workspace, full admin surface. No credit card, no time limit. Upgrade in{" "}
           <Link href="/settings/billing" className="text-accent hover:underline">
             Billing

@@ -63,7 +63,7 @@ function copyFor(input: BillingNotificationInput): Copy {
       return {
         subject: "Suparbase: your trial ends soon",
         heading: "Trial ending",
-        body: `Your Suparbase trial ends on ${ends}. Add a payment method to keep your subscription active. If you don't, your account will drop back to the Free plan and you'll keep one connection.`,
+        body: `Your Suparbase trial ends on ${ends}. Add a payment method to keep your subscription active. If you don't, your account will drop back to the Free plan, which includes up to 3 connections.`,
         ctaLabel: "Add payment method",
         ctaPath: "/settings/billing",
       };

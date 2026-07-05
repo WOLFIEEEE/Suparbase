@@ -3,6 +3,16 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.19.1 · 2026-07-06 · More generous Free tier
+
+- **Free tier now includes up to 3 Supabase connections** (was 1). A solo
+  developer can manage prod, staging, and a side project without paying.
+  Unlimited connections and the team workspace remain the paid upgrade.
+- Updated everywhere the number is stated: plan catalog, pricing page,
+  paywall card, connections onboarding, trial-ending email, and the
+  comparison page. The 402 paywall now fires on the 4th connection, and its
+  error message pluralizes correctly.
+
 ## v3.19.0 · 2026-07-05 · Type generator + tool SEO content
 
 - **New free tool: Postgres to TypeScript Type Generator**

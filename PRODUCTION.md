@@ -332,8 +332,8 @@ sandbox.
 
 ### Hard-limit enforcement (no Dodo required)
 
-- [ ] Create a fresh Free-tier user with 1 connection.
-- [ ] Try to add a 2nd connection → form shows the `PaywallCard` with
+- [ ] Create a fresh Free-tier user and add 3 connections.
+- [ ] Try to add a 4th connection → form shows the `PaywallCard` with
   "See plans" link.
 - [ ] Try to invite a teammate from the Members tab → server returns
   402 `plan_limit`; UI surfaces it.

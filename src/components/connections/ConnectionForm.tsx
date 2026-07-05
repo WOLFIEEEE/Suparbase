@@ -261,7 +261,7 @@ export function ConnectionForm() {
 
       {error && error.category === "plan_limit" ? (
         <PaywallCard
-          title="Free plan: 1 connection"
+          title="Free plan: 3 connections"
           message={error.message}
         />
       ) : error ? (

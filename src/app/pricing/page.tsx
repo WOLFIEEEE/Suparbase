@@ -39,7 +39,7 @@ const TIERS: Tier[] = [
       "For individuals running a single Supabase project. Same encrypted proxy, same admin surface, just capped.",
     cta: { label: "Create free account", href: "/signup" },
     features: [
-      { text: "1 Supabase connection" },
+      { text: "Up to 3 Supabase connections" },
       { text: "Solo workspace (1 user)" },
       { text: "AES-256-GCM credential vault" },
       { text: "Full admin surface (data grid, schema view, audit log)" },

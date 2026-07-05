@@ -36,10 +36,10 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   free: {
-    maxConnections: 1,
+    maxConnections: 3,
     canInviteTeam: false,
     label: "Free",
-    description: "1 Supabase connection, solo workspace.",
+    description: "Up to 3 Supabase connections, solo workspace.",
     monthlyPriceCents: 0,
     annualPriceCents: 0,
     trialDays: 0,
@@ -189,7 +189,7 @@ export function requireFeature(
       throw new PlanLimitError(
         feature,
         active.plan,
-        `The Free plan is limited to ${cap} connection. Upgrade to add more.`,
+        `The Free plan is limited to ${cap} connection${cap === 1 ? "" : "s"}. Upgrade to add more.`,
       );
     }
     return;
