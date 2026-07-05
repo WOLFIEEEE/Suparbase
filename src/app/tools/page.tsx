@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, KeyRound, Network, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowRight, Braces, KeyRound, Network, ShieldAlert, ShieldCheck } from "lucide-react";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { CTABand, PageHeader, PageShell } from "@/components/public/sections";
 import { ToolContent } from "@/components/tools/ToolContent";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl("/tools") },
 };
 
-const ICON = { ShieldAlert, ShieldCheck, Network, KeyRound } as const;
+const ICON = { ShieldAlert, ShieldCheck, Network, KeyRound, Braces } as const;
 
 export default function ToolsIndexPage() {
   return (

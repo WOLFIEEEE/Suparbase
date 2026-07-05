@@ -3,6 +3,31 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.19.0 · 2026-07-05 · Type generator + tool SEO content
+
+- **New free tool: Postgres to TypeScript Type Generator**
+  (`/tools/schema-to-typescript`). Paste Supabase or Postgres DDL and get
+  TypeScript interfaces or Zod schemas, with correct nullability (`| null`
+  / `.nullable()`), array handling (`text[]` to `string[]`), and sensible
+  fallbacks (`jsonb` to `unknown`). Reuses the DDL parser behind the ERD
+  visualizer, runs entirely in the browser, and is unit-tested.
+- **Parser fix (improves the ERD tool too):** `parseDdl` no longer captures
+  trailing modifier keywords into the column type, so it now records `text`
+  and `int` instead of `text not` and `int primary`. Multi-word types like
+  `double precision` and `timestamp with time zone` are captured whole. The
+  ERD diagram's type labels are correct as a result.
+- **Detailed SEO content on every tool page:** each of the five tools now
+  has a long-form, human-written body (what it does, how to use it, why it
+  matters) plus a visible FAQ that also emits FAQPage structured data. New
+  shared `ToolContent` component. The `/tools` index gets an overview and
+  its own FAQ.
+- **Copy pass:** removed every em-dash and en-dash from the tools surface,
+  reworded to commas, colons, and parentheses.
+
+The new tool auto-wires into the `/tools` index, the home-page tools
+section, the sitemap, and per-page `WebApplication` JSON-LD via the shared
+registry, plus a footer link. 205 tests passing (+8), build green.
+
 ## v3.18.0 · 2026-07-05 · Free public tools (acquisition hooks)
 
 Four free, no-login tools under `/tools/*` that deliver value in one paste

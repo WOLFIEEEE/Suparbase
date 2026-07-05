@@ -61,6 +61,35 @@ function splitTopLevel(body: string): string[] {
 
 const CONSTRAINT_KEYWORDS = /^(primary|foreign|unique|constraint|check|exclude)\b/i;
 
+// Multi-word Postgres types that must be captured whole, before the parser
+// stops at the first modifier keyword (NOT, PRIMARY, DEFAULT, REFERENCES, …).
+const MULTIWORD_TYPE =
+  /^(timestamp with time zone|timestamp without time zone|time with time zone|time without time zone|double precision|character varying|bit varying)/i;
+
+/**
+ * Pull the column type off the front of a definition. Handles a leading
+ * multi-word type, an optional precision like `numeric(10,2)`, and a
+ * trailing array marker, then stops, so modifiers such as `NOT NULL` or
+ * `PRIMARY KEY` never leak into the type string.
+ */
+function extractType(rest: string): string {
+  const s = rest.trim();
+  const mw = s.match(MULTIWORD_TYPE);
+  let type: string;
+  let consumed: number;
+  if (mw) {
+    type = mw[1]!;
+    consumed = mw[1]!.length;
+  } else {
+    const tm = s.match(/^("[^"]+"|[A-Za-z_][A-Za-z0-9_]*)(\s*\([^)]*\))?/);
+    if (!tm) return "unknown";
+    type = (tm[1]! + (tm[2] ? tm[2].replace(/\s+/g, "") : "")).replace(/"/g, "");
+    consumed = tm[0].length;
+  }
+  if (/^\s*\[\]/.test(s.slice(consumed))) type += "[]";
+  return type;
+}
+
 export function parseDdl(sql: string): ParsedSchema {
   const clean = stripComments(sql);
   const tables: ParsedTable[] = [];
@@ -114,8 +143,7 @@ export function parseDdl(sql: string): ParsedSchema {
       if (!colMatch) continue;
       const colName = unquote(colMatch[1]!);
       const rest = colMatch[2]!;
-      const typeMatch = rest.match(/^([a-zA-Z0-9_"]+(?:\s*\([^)]*\))?(?:\s*\[\])?(?:\s+[a-zA-Z]+)?)/);
-      const type = (typeMatch?.[1] ?? "unknown").trim();
+      const type = extractType(rest);
 
       const col: ParsedColumn = {
         name: colName,

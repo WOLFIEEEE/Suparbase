@@ -12,7 +12,7 @@ export interface ToolMeta {
   /** Meta description. */
   description: string;
   /** Lucide icon name (resolved where React is available). */
-  icon: "ShieldAlert" | "ShieldCheck" | "Network" | "KeyRound";
+  icon: "ShieldAlert" | "ShieldCheck" | "Network" | "KeyRound" | "Braces";
   /** True when the tool runs entirely in the browser. */
   clientOnly: boolean;
 }
@@ -46,6 +46,16 @@ export const TOOLS: ToolMeta[] = [
     description:
       "Free Postgres schema visualizer. Paste CREATE TABLE statements or a pg_dump and get an entity-relationship diagram with foreign-key links. Nothing leaves your browser.",
     icon: "Network",
+    clientOnly: true,
+  },
+  {
+    slug: "schema-to-typescript",
+    title: "Postgres to TypeScript Type Generator",
+    short: "Type Generator",
+    tagline: "Turn your Postgres schema into TypeScript interfaces or Zod schemas.",
+    description:
+      "Free Postgres to TypeScript type generator. Paste your Supabase or Postgres DDL and get typed interfaces or Zod schemas, with correct nullability and array handling. Runs in your browser.",
+    icon: "Braces",
     clientOnly: true,
   },
   {

@@ -62,6 +62,13 @@ FK links. Copy/download the SVG.
 
 - **Convert:** "browse and edit this data, not just diagram it → sign up."
 
+### 5. Postgres to TypeScript Type Generator — `/tools/schema-to-typescript`
+
+Paste SQL DDL, get TypeScript interfaces or Zod schemas. Client-side, reuses
+the ERD tool's `parseDdl`. Maps pg types to TS/Zod with correct nullability
+and array handling. Convert: "type the rows here, then edit them in a full
+workspace."
+
 ### 4. Secret / Key Leak Scanner — `/tools/secret-scanner`
 
 Paste code / `.env` / logs → **client-side** scan flags leaked secrets

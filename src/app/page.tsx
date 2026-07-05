@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowLeftRight,
   ArrowRight,
+  Braces,
   CheckCircle2,
   Database,
   History,
@@ -23,7 +24,7 @@ import { CTABand, FeatureCard, SectionHeading } from "@/components/public/sectio
 import { SITE } from "@/lib/seo/site";
 import { TOOLS } from "@/lib/tools/registry";
 
-const TOOL_ICONS = { ShieldAlert, ShieldCheck, Network, KeyRound } as const;
+const TOOL_ICONS = { ShieldAlert, ShieldCheck, Network, KeyRound, Braces } as const;
 
 const STEPS = [
   {

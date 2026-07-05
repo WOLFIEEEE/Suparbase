@@ -40,6 +40,7 @@ const COLUMNS: Column[] = [
     links: [
       { label: "Security Scanner", href: "/tools/supabase-security-scanner" },
       { label: "RLS Generator", href: "/tools/rls-policy-generator" },
+      { label: "Type Generator", href: "/tools/schema-to-typescript" },
       { label: "Schema Visualizer", href: "/tools/schema-visualizer" },
       { label: "Secret Scanner", href: "/tools/secret-scanner" },
       { label: "All tools", href: "/tools" },
