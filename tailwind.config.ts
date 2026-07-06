@@ -50,6 +50,12 @@ const config: Config = {
       borderRadius: {
         DEFAULT: "0.5rem",
       },
+      boxShadow: {
+        // Theme-aware elevation (values live in globals.css so they can
+        // differ between dark near-black and light paper).
+        raised: "var(--shadow-raised)",
+        overlay: "var(--shadow-overlay)",
+      },
       keyframes: {
         "pulse-soft": {
           "0%, 100%": { opacity: "1" },
@@ -59,10 +65,19 @@ const config: Config = {
           "0%, 49%": { opacity: "1" },
           "50%, 100%": { opacity: "0" },
         },
+        "shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
+        "reveal-up": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "blink": "blink 1s steps(1, end) infinite",
+        "shimmer": "shimmer 1.6s ease-in-out infinite",
+        "reveal-up": "reveal-up 420ms cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },

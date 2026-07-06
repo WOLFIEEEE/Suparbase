@@ -54,7 +54,7 @@ export function TableTile({ table }: TableTileProps) {
   return (
     <Link
       href={`/c/${connectionId}/tables/${encodeURIComponent(table.name)}`}
-      className="group block rounded border hairline bg-bg-raised p-4 transition-colors hover:border-line-strong hover:bg-bg-raised/80"
+      className="lift group block rounded-md surface p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">

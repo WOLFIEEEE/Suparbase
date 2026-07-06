@@ -28,6 +28,14 @@
     --danger-fg: 255 255 255;
     --warn: 255 198 88;
     --warn-fg: 10 10 11;
+    /* Elevation: on near-black a drop shadow alone reads as mud, so each
+       raised surface pairs a soft shadow with a 1px top inner highlight
+       (the light-catching edge you'd see on a physical panel). */
+    --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 0 0 rgb(255 255 255 / 0.03) inset;
+    --shadow-overlay: 0 12px 32px -8px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.04) inset;
+    /* Faint hairline grid printed on the workspace canvas. */
+    --grid-line: 255 255 255;
+    --grid-alpha: 0.022;
   }
 
   /* Explicit light theme (via cookie/toggle), wins regardless of OS preference. */
@@ -49,6 +57,11 @@
     --danger-fg: 255 255 255;
     --warn: 158 105 0;
     --warn-fg: 255 255 255;
+    /* On paper, elevation is a plain soft shadow — no inner highlight. */
+    --shadow-raised: 0 1px 2px rgb(17 17 19 / 0.06), 0 1px 3px rgb(17 17 19 / 0.04);
+    --shadow-overlay: 0 16px 40px -12px rgb(17 17 19 / 0.18), 0 0 0 1px rgb(17 17 19 / 0.05);
+    --grid-line: 17 17 19;
+    --grid-alpha: 0.025;
   }
 
   /* Fallback to OS preference only when no explicit cookie was set. */
@@ -69,6 +82,10 @@
       --danger-fg: 255 255 255;
       --warn: 158 105 0;
       --warn-fg: 255 255 255;
+      --shadow-raised: 0 1px 2px rgb(17 17 19 / 0.06), 0 1px 3px rgb(17 17 19 / 0.04);
+      --shadow-overlay: 0 16px 40px -12px rgb(17 17 19 / 0.18), 0 0 0 1px rgb(17 17 19 / 0.05);
+      --grid-line: 17 17 19;
+      --grid-alpha: 0.025;
     }
   }
 
@@ -121,9 +138,17 @@
 }
 
 @layer components {
+  /* Raised card. Now carries elevation systemically so every card across the
+     app lifts off the (textured, sunken) canvas instead of sitting flat. */
   .surface {
     background-color: rgb(var(--bg-raised));
     border: 1px solid rgb(var(--line));
+    box-shadow: var(--shadow-raised);
+  }
+  .surface-raised {
+    background-color: rgb(var(--bg-raised));
+    border: 1px solid rgb(var(--line));
+    box-shadow: var(--shadow-raised);
   }
   .surface-sunken {
     background-color: rgb(var(--bg-sunken));
@@ -134,5 +159,49 @@
   }
   .hairline-strong {
     border-color: rgb(var(--line-strong));
+  }
+
+  /* Elevation helpers usable on any element. */
+  .elevate-raised { box-shadow: var(--shadow-raised); }
+  .elevate-overlay { box-shadow: var(--shadow-overlay); }
+
+  /* Interactive lift: a card that rises a hair on hover. Motion is skipped
+     under prefers-reduced-motion via the global rule below. */
+  .lift {
+    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-overlay);
+    border-color: rgb(var(--line-strong));
+  }
+
+  /* Blueprint grid texture for the workspace canvas. Two hairlines crossed
+     at 32px; alpha is tuned per-theme so it stays a whisper. */
+  .grid-texture {
+    background-image:
+      linear-gradient(to right, rgb(var(--grid-line) / var(--grid-alpha)) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--grid-line) / var(--grid-alpha)) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Shimmer skeleton: a moving highlight sweep, richer than an opacity pulse. */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: rgb(var(--bg-raised));
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--fg) / 0.05),
+      transparent
+    );
+    animation: shimmer 1.6s ease-in-out infinite;
   }
 }

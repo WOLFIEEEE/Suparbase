@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { Lock, Server, ShieldCheck } from "lucide-react";
+import { Logo } from "@/components/brand/Logo";
 import { SITE } from "@/lib/seo/site";
 import { cn } from "@/lib/ui/cn";
 
@@ -42,17 +43,19 @@ export function AppFooter({ width = "narrow", className }: Props) {
         )}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-[11px] text-fg-faint">
-            <span
-              aria-hidden
-              className="relative inline-flex h-2 w-2"
-            >
-              <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-40" />
-              <span className="relative inline-block h-2 w-2 rounded-full bg-accent shadow-[0_0_8px_rgb(var(--accent))]" />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-fg-faint">
+            <span className="inline-flex items-center gap-1.5 font-medium text-fg-muted">
+              <Logo className="h-4 w-4" aria-hidden />
+              Suparbase
             </span>
-            <span className="text-fg-muted">Suparbase</span>
-            <span aria-hidden>·</span>
-            <span>encrypted at rest · server-side proxy</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5" aria-hidden />
+              Encrypted at rest
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Server className="h-3.5 w-3.5" aria-hidden />
+              Server-side proxy
+            </span>
           </div>
           <nav
             aria-label="App footer"
@@ -74,7 +77,7 @@ export function AppFooter({ width = "narrow", className }: Props) {
             © {new Date().getFullYear()} Suparbase · All rights reserved
           </span>
           <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
-            <Shield className="h-3 w-3 text-accent" aria-hidden />
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
             <span className="font-mono">v{SITE.version}</span>
           </span>
         </div>

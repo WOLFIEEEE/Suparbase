@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Database, Lock, ShieldCheck, Sparkles } from "lucide-react";
-import { Wordmark } from "@/components/brand/Logo";
+import { Database, Lock, Server, ShieldCheck, Sparkles } from "lucide-react";
+import { Logo, Wordmark } from "@/components/brand/Logo";
 import { AuthHeroArt } from "@/components/auth/AuthHeroArt";
 import { ThemeToggle } from "@/components/workspace/ThemeToggle";
 import { SITE } from "@/lib/seo/site";
@@ -53,7 +53,7 @@ export function AuthShell({ children, title, subtitle, eyebrow, footnote }: Auth
             <div className="space-y-2">
               {eyebrow && (
                 <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-fg-faint">
-                  <span className="inline-block h-1 w-1 rounded-full bg-accent" aria-hidden />
+                  <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />
                   {eyebrow}
                 </div>
               )}
@@ -83,14 +83,18 @@ function AuthFooter() {
   return (
     <footer className="border-t hairline bg-bg-raised/30 px-6 py-5 sm:px-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-[11px] text-fg-faint">
-          <span
-            aria-hidden
-            className="inline-block h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_8px_rgb(var(--accent))]"
-          />
-          <span>
-            <span className="text-fg-muted">Suparbase</span> ·
-            <span className="ml-1">encrypted credentials · server-side proxy</span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-fg-faint">
+          <span className="inline-flex items-center gap-1.5 font-medium text-fg-muted">
+            <Logo className="h-4 w-4" aria-hidden />
+            Suparbase
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5" aria-hidden />
+            Encrypted credentials
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Server className="h-3.5 w-3.5" aria-hidden />
+            Server-side proxy
           </span>
         </div>
         <nav

@@ -17,22 +17,50 @@ interface NavItem {
   getCount?: (schemaTables: number, schemaColumns: number) => number | null;
 }
 
-const items: NavItem[] = [
-  { sub: "", label: "Dashboard", icon: LayoutDashboard },
-  { sub: "tables", label: "Tables", icon: Table2, getCount: (t) => t },
-  { sub: "schema", label: "Schema", icon: Database, getCount: (_, c) => c },
-  { sub: "sql", label: "SQL", icon: SquareCode },
-  { sub: "storage", label: "Storage", icon: FolderOpen },
-  { sub: "auth-users", label: "Auth users", icon: UserCog },
-  { sub: "actions", label: "Actions", icon: Zap },
-  { sub: "activity", label: "Activity", icon: Activity },
-  { sub: "reports", label: "Reports", icon: CalendarClock },
-  { sub: "watches", label: "Watches", icon: Bell },
-  { sub: "agents", label: "Agents", icon: Bot },
-  { sub: "sync", label: "Sync", icon: ArrowLeftRight },
-  { sub: "sentry", label: "Sentry", icon: ShieldAlert },
-  { sub: "rls", label: "RLS", icon: ShieldCheck },
-  { sub: "settings", label: "Connection", icon: Settings },
+interface NavSection {
+  /** null heading = ungrouped top row (Dashboard sits above the labels). */
+  heading: string | null;
+  items: NavItem[];
+}
+
+// Grouped so the 15-item surface reads as five intents instead of one wall.
+const sections: NavSection[] = [
+  {
+    heading: null,
+    items: [{ sub: "", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    heading: "Data",
+    items: [
+      { sub: "tables", label: "Tables", icon: Table2, getCount: (t) => t },
+      { sub: "schema", label: "Schema", icon: Database, getCount: (_, c) => c },
+      { sub: "sql", label: "SQL", icon: SquareCode },
+      { sub: "storage", label: "Storage", icon: FolderOpen },
+      { sub: "auth-users", label: "Auth users", icon: UserCog },
+    ],
+  },
+  {
+    heading: "Automation",
+    items: [
+      { sub: "actions", label: "Actions", icon: Zap },
+      { sub: "reports", label: "Reports", icon: CalendarClock },
+      { sub: "watches", label: "Watches", icon: Bell },
+      { sub: "sync", label: "Sync", icon: ArrowLeftRight },
+    ],
+  },
+  {
+    heading: "Safety",
+    items: [
+      { sub: "agents", label: "Agents", icon: Bot },
+      { sub: "sentry", label: "Sentry", icon: ShieldAlert },
+      { sub: "rls", label: "RLS", icon: ShieldCheck },
+      { sub: "activity", label: "Activity", icon: Activity },
+    ],
+  },
+  {
+    heading: "Connection",
+    items: [{ sub: "settings", label: "Settings", icon: Settings }],
+  },
 ];
 
 async function fetchAiSettings(): Promise<AiSettingsSummary> {
@@ -86,42 +114,63 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
         <ArrowLeft className="h-3 w-3" aria-hidden />
         All connections
       </Link>
-      <nav className="flex-1 space-y-1 p-3" aria-label="Workspace">
-        {items.map((it) => {
-          const href = it.sub ? `${base}/${it.sub}` : base;
-          const isActive = it.sub ? pathname?.startsWith(href) : pathname === base;
-          const count = it.getCount ? it.getCount(tableCount ?? 0, columnCount ?? 0) : null;
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onNavigate}
-              className={cn(
-                "relative flex items-center gap-3 rounded px-3 py-2 text-sm transition-colors",
-                isActive
-                  ? "bg-accent/10 text-fg before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-accent before:content-['']"
-                  : "text-fg-muted hover:bg-bg-raised hover:text-fg",
-              )}
-              aria-current={isActive ? "page" : undefined}
-            >
-              <it.icon
-                className={cn("h-4 w-4", isActive ? "text-accent" : undefined)}
-                aria-hidden
-              />
-              <span className="flex-1">{it.label}</span>
-              {count != null && (
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0 text-[10px] tabular-nums",
-                    isActive ? "text-accent" : "text-fg-faint",
-                  )}
-                >
-                  {count.toLocaleString()}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Workspace">
+        {sections.map((section, si) => (
+          <div key={section.heading ?? "root"} className={cn(si > 0 && "mt-4")}>
+            {section.heading && (
+              <div className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-fg-faint">
+                {section.heading}
+              </div>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map((it) => {
+                const href = it.sub ? `${base}/${it.sub}` : base;
+                const isActive = it.sub ? pathname?.startsWith(href) : pathname === base;
+                const count = it.getCount ? it.getCount(tableCount ?? 0, columnCount ?? 0) : null;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-accent/10 text-fg before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-accent before:content-['']"
+                        : "text-fg-muted hover:bg-bg-raised hover:text-fg",
+                    )}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {/* Accent glow that pools behind the active item. */}
+                    {isActive && (
+                      <span
+                        className="pointer-events-none absolute inset-0 rounded-md bg-[radial-gradient(120px_40px_at_0%_50%,rgb(var(--accent)/0.14),transparent)]"
+                        aria-hidden
+                      />
+                    )}
+                    <it.icon
+                      className={cn(
+                        "relative h-4 w-4 shrink-0 transition-colors",
+                        isActive ? "text-accent" : "text-fg-faint group-hover:text-fg-muted",
+                      )}
+                      aria-hidden
+                    />
+                    <span className="relative flex-1">{it.label}</span>
+                    {count != null && (
+                      <span
+                        className={cn(
+                          "relative rounded-full px-1.5 py-0 text-[10px] tabular-nums",
+                          isActive ? "text-accent" : "text-fg-faint",
+                        )}
+                      >
+                        {count.toLocaleString()}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
       <div className="space-y-1 border-t hairline p-3">
         <Link
