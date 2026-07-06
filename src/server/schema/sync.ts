@@ -109,12 +109,15 @@ export type SyncRunPhase =
   | "truncate"
   | "data_copy"
   | "sequences"
+  | "verify"
   | "done";
 
 export interface SyncRunTableStat {
   table: string;
   rowsCopied: number;
   durationMs: number;
+  /** Actual `count(*)` on the target after load — should equal rowsCopied. */
+  verifiedRows?: number;
   skipped?: boolean;
   error?: string;
 }

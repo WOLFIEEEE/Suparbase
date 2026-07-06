@@ -153,6 +153,19 @@ export function computeSchemaDiff(
         summary.push({ kind: "create_index", detail: idx.name });
       }
     }
+
+    // Indexes on the target that base doesn't have. We don't drop them (an
+    // extra index is harmless and may be intentional on staging), but the spec
+    // is "objects we don't reconcile are surfaced, not silently ignored", so
+    // warn rather than leave the drift invisible.
+    const baseIdxDefs = new Set(baseTable.indexes.map((i) => i.def.trim()));
+    for (const idx of targetTable.indexes) {
+      if (!baseIdxDefs.has(idx.def.trim())) {
+        warnings.push(
+          `Index ${idx.name} exists on the target ${baseTable.qualified} but not on base; left in place.`,
+        );
+      }
+    }
   }
 
   // --- Extra target tables (present on target, absent from base) ----------

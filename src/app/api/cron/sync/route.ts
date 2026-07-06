@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { redact } from "@/lib/redact";
+import { getSiteUrl } from "@/lib/seo/site";
 import { getConnectionForUser } from "@/server/connections/repo";
 import { verifyCronAuth } from "@/server/security/cron-auth";
 import {
@@ -10,10 +11,13 @@ import {
   updateRun,
 } from "@/server/sync/repo";
 import { executeSyncRun } from "@/server/sync/runner";
+import { sendSyncAlert } from "@/server/sync/alert";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// Scheduled syncs run their full-replace load inline in this handler; a large
+// target can take many minutes. Advisory on long-lived Node (Coolify).
+export const maxDuration = 3600;
 
 /**
  * Runs every scheduled sync profile whose interval has elapsed. Triggered by
@@ -75,6 +79,13 @@ export async function POST(req: NextRequest) {
         tableConfig: profile.tableConfig,
         options: profile.options,
         dryRun: false,
+        // Mirror phase + stats onto the run row as it goes so a long scheduled
+        // run is observable in the history view instead of a frozen "running".
+        hooks: {
+          onPhase: (phase) => {
+            void updateRun(profile.userId, run.id, { phase }).catch(() => undefined);
+          },
+        },
       });
       await updateRun(profile.userId, run.id, {
         status: result.status,
@@ -82,6 +93,14 @@ export async function POST(req: NextRequest) {
         stats: result.stats,
         error: result.error ?? null,
         finishedAt: new Date(),
+      });
+      // A scheduled run has no one watching — alert the connection webhook when
+      // it needs attention (failed / partial / aborted).
+      void sendSyncAlert(target, getSiteUrl(), {
+        profileName: profile.name,
+        status: result.status,
+        stats: result.stats,
+        error: result.error,
       });
       results.push({ profileId: profile.id, status: result.status, error: result.error });
     } catch (e) {
@@ -91,6 +110,12 @@ export async function POST(req: NextRequest) {
         status: "failed",
         error: message,
         finishedAt: new Date(),
+      });
+      void sendSyncAlert(target, getSiteUrl(), {
+        profileName: profile.name,
+        status: "failed",
+        stats: { tables: [], warnings: [] },
+        error: message,
       });
       results.push({ profileId: profile.id, status: "failed", error: message });
     }

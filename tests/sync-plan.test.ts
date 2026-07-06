@@ -92,6 +92,54 @@ describe("buildSyncPlan", () => {
     expect(plan.warnings.join(" ")).toMatch(/public\.orders/);
   });
 
+  it("blocks a row cap that would break a foreign key (capped parent, synced child)", () => {
+    // users is a FK parent of orders; capping users below its row count means
+    // orders rows can reference un-sampled users → a deferred-FK failure.
+    const bigUsers = table("public", "users", [col("id", "uuid")], {
+      primaryKey: ["id"],
+      estimatedRows: 5000,
+    });
+    const cat = catalog([bigUsers, orders()]);
+    const plan = buildSyncPlan({
+      base: cat,
+      target: cat,
+      tableConfig: cfg(),
+      options: { ...DEFAULT_SYNC_OPTIONS, rowCap: 100 },
+    });
+    expect(plan.blocking).toBe(true);
+    expect(plan.blockingReasons.join(" ")).toMatch(/foreign key/i);
+    expect(plan.blockingReasons.join(" ")).toMatch(/public\.orders/);
+  });
+
+  it("allows a row cap when only a leaf child is capped (parent fits under the cap)", () => {
+    // users (parent) is small and copied in full; orders (child) is capped.
+    // A capped child is safe: its sampled rows still reference existing parents.
+    const smallUsers = table("public", "users", [col("id", "uuid")], {
+      primaryKey: ["id"],
+      estimatedRows: 50,
+    });
+    const bigOrders = table("public", "orders", [col("id", "uuid"), col("user_id", "uuid")], {
+      primaryKey: ["id"],
+      estimatedRows: 5000,
+      foreignKeys: [fk("orders_user_fk", ["user_id"], "users", ["id"])],
+    });
+    const cat = catalog([smallUsers, bigOrders]);
+    const plan = buildSyncPlan({
+      base: cat,
+      target: cat,
+      tableConfig: cfg(),
+      options: { ...DEFAULT_SYNC_OPTIONS, rowCap: 100 },
+    });
+    expect(plan.blocking).toBe(false);
+    expect(plan.warnings.join(" ")).toMatch(/public\.orders/);
+  });
+
+  it("carries the primary key onto each table plan for deterministic sampling", () => {
+    const cat = catalog([users(), orders()]);
+    const plan = buildSyncPlan({ base: cat, target: cat, tableConfig: cfg(), options: DEFAULT_SYNC_OPTIONS });
+    expect(plan.tables.find((t) => t.qualified === "public.orders")!.primaryKey).toEqual(["id"]);
+  });
+
   it("warns about triggers on synced tables", () => {
     const t = table("public", "orders", [col("id", "uuid")], {
       primaryKey: ["id"],

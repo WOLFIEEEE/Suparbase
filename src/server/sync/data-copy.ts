@@ -58,9 +58,18 @@ export async function copyTable(
 
   const colList = plan.columns.map(quoteIdent).join(", ");
   const ident = tableIdent(plan.schema, plan.name);
-  const limit = plan.rowCap != null && plan.rowCap >= 0 ? ` LIMIT ${Math.floor(plan.rowCap)}` : "";
+  const capped = plan.rowCap != null && plan.rowCap >= 0;
+  const limit = capped ? ` LIMIT ${Math.floor(plan.rowCap!)}` : "";
+  // Order a sampled COPY by primary key so the "first N rows" is deterministic
+  // and stable across runs, not whatever heap order the scan happens to yield.
+  // Unbounded copies stay unordered (ordering a full-table COPY only adds a
+  // needless sort).
+  const orderBy =
+    capped && plan.primaryKey.length > 0
+      ? ` ORDER BY ${plan.primaryKey.map(quoteIdent).join(", ")}`
+      : "";
 
-  const copyOut = `COPY (SELECT ${projection} FROM ${ident}${limit}) TO STDOUT`;
+  const copyOut = `COPY (SELECT ${projection} FROM ${ident}${orderBy}${limit}) TO STDOUT`;
   const copyIn = `COPY ${ident} (${colList}) FROM STDIN`;
 
   const readable = await baseSql.unsafe(copyOut).readable();

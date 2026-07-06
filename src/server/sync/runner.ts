@@ -35,6 +35,7 @@ export interface RunHooks {
   onPhase?(phase: SyncRunPhase, detail?: string): void;
   onTableStart?(qualified: string, estimatedRows: number): void;
   onTableDone?(qualified: string, rowsCopied: number, durationMs: number): void;
+  onTableVerified?(qualified: string, verifiedRows: number): void;
   onWarning?(message: string): void;
 }
 
@@ -111,13 +112,15 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
 
     try {
       await withTargetLock(targetSql, target.id, async () => {
-      // Schema apply (pre-copy): runs in autocommit BEFORE the data
+      // Additive schema apply (pre-copy): runs in autocommit BEFORE the data
       // transaction. Enum ADD VALUE can't be used in the same transaction it's
-      // created in, and CREATE TABLE/TYPE should persist regardless of the data
-      // load. All statements are idempotent (IF NOT EXISTS), so a re-run is safe.
-      if (options.applySchema && plan.schemaDiff.hasChanges) {
+      // created in, and CREATE TABLE/TYPE/ADD COLUMN should persist regardless
+      // of the data load. All statements are idempotent (IF NOT EXISTS), so a
+      // re-run is safe and leaving them behind on a failed run is harmless.
+      // DESTRUCTIVE DDL is deliberately NOT run here — see inside the tx below.
+      if (options.applySchema && plan.schemaDiff.preCopy.length > 0) {
         hooks?.onPhase?.("schema_apply");
-        for (const stmt of [...plan.schemaDiff.preCopy, ...plan.schemaDiff.destructive]) {
+        for (const stmt of plan.schemaDiff.preCopy) {
           await targetSql.unsafe(stmt);
         }
       }
@@ -127,6 +130,19 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
         // Defer deferrable FKs so within-set ordering edge cases (incl. some
         // self-references) are checked at COMMIT instead of per row.
         await tx.unsafe("SET CONSTRAINTS ALL DEFERRED");
+
+        // Destructive schema changes (DROP TABLE / DROP COLUMN) run INSIDE the
+        // data transaction so any later failure rolls them back — a drop is
+        // irreversible, so it must be atomic with the load rather than
+        // committed up front in autocommit. Runs before TRUNCATE because
+        // dropping a target-only table that FKs into a synced table has to
+        // happen before that synced table is truncated.
+        if (options.applySchema && plan.schemaDiff.destructive.length > 0) {
+          hooks?.onPhase?.("schema_apply");
+          for (const stmt of plan.schemaDiff.destructive) {
+            await tx.unsafe(stmt);
+          }
+        }
 
         // Truncate every synced table together so intra-set FKs don't block.
         if (plan.truncateOrder.length > 0) {
@@ -161,6 +177,35 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
           hooks?.onWarning?.(w);
         }
 
+        // Verify: count(*) each loaded table on the target and compare to what
+        // COPY reported loading. A mismatch means a trigger (which can't be
+        // disabled on Supabase's non-superuser role) mutated the row set during
+        // the load — the run is still atomic, but the target is NOT an exact
+        // mirror, so we surface it as a warning and downgrade to `partial`.
+        hooks?.onPhase?.("verify");
+        for (const stat of stats.tables) {
+          const tablePlan = planForTable(plan, stat.table);
+          if (!tablePlan) continue;
+          try {
+            const ident = tableIdent(tablePlan.schema, tablePlan.name);
+            const [{ n }] = await tx.unsafe<{ n: string }[]>(
+              `SELECT count(*)::text AS n FROM ${ident}`,
+            );
+            const verifiedRows = Number(n);
+            stat.verifiedRows = verifiedRows;
+            hooks?.onTableVerified?.(stat.table, verifiedRows);
+            if (verifiedRows !== stat.rowsCopied) {
+              const w = `Verification mismatch on ${stat.table}: loaded ${stat.rowsCopied} row(s) but the target now holds ${verifiedRows} (a trigger likely fired during the copy).`;
+              stats.warnings.push(w);
+              hooks?.onWarning?.(w);
+            }
+          } catch (e) {
+            const w = `Could not verify row count for ${stat.table}: ${(e as Error).message}`;
+            stats.warnings.push(w);
+            hooks?.onWarning?.(w);
+          }
+        }
+
         // Schema apply (post-copy): SET NOT NULL, ADD CONSTRAINT (unique/check/
         // fk), CREATE INDEX — inside the data transaction so the just-loaded
         // rows are validated against them atomically.
@@ -183,7 +228,12 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
     }
 
     hooks?.onPhase?.("done");
-    return { status: "succeeded", plan, stats };
+    // A verification mismatch means the load committed but the target isn't an
+    // exact mirror — report `partial` so a green "succeeded" can't hide it.
+    const hadMismatch = stats.tables.some(
+      (t) => t.verifiedRows != null && t.verifiedRows !== t.rowsCopied,
+    );
+    return { status: hadMismatch ? "partial" : "succeeded", plan, stats };
   } finally {
     await Promise.allSettled([baseSql.end({ timeout: 5 }), targetSql.end({ timeout: 5 })]);
   }

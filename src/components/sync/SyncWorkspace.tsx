@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowRight, Database, Loader2, Play, Plus, Save, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, ChevronRight, Database, Loader2, Play, Plus, Save, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
@@ -935,6 +935,7 @@ function RunProgress({ run, onAbort }: { run: RunState; onAbort?: () => void }) 
 }
 
 function RecentRuns({ runs, connById }: { runs: RunJson[]; connById: Map<string, ConnSummary> }) {
+  const [openId, setOpenId] = useState<string | null>(null);
   if (runs.length === 0) return null;
   return (
     <div className="mt-8 space-y-2">
@@ -942,23 +943,107 @@ function RecentRuns({ runs, connById }: { runs: RunJson[]; connById: Map<string,
       <ul className="divide-y divide-line/60 rounded border hairline">
         {runs.map((r) => {
           const rows = r.stats?.tables?.reduce((n, t) => n + (t.rowsCopied ?? 0), 0) ?? 0;
+          const isOpen = openId === r.id;
+          const durationMs =
+            r.finishedAt != null
+              ? new Date(r.finishedAt).getTime() - new Date(r.startedAt).getTime()
+              : null;
           return (
-            <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-2 text-xs">
-              <div className="flex items-center gap-2">
-                <RunBadge status={r.status} />
-                {r.dryRun && <Badge>dry</Badge>}
-                <span className="font-mono text-fg-muted">
-                  {connById.get(r.baseConnectionId)?.hostname ?? "base"}
-                </span>
-              </div>
-              <div className="flex items-center gap-4 text-fg-faint">
-                <span className="tabular-nums">{rows.toLocaleString()} rows</span>
-                <span>{new Date(r.startedAt).toLocaleString()}</span>
-              </div>
+            <li key={r.id} className="text-xs">
+              <button
+                type="button"
+                onClick={() => setOpenId(isOpen ? null : r.id)}
+                className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left transition-colors hover:bg-bg-sunken"
+                aria-expanded={isOpen}
+              >
+                <div className="flex items-center gap-2">
+                  <ChevronRight
+                    className={cn("h-3 w-3 shrink-0 text-fg-faint transition-transform", isOpen && "rotate-90")}
+                    aria-hidden
+                  />
+                  <RunBadge status={r.status} />
+                  {r.dryRun && <Badge>dry</Badge>}
+                  <span className="font-mono text-fg-muted">
+                    {connById.get(r.baseConnectionId)?.hostname ?? "base"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-fg-faint">
+                  <span className="tabular-nums">{rows.toLocaleString()} rows</span>
+                  <span>{new Date(r.startedAt).toLocaleString()}</span>
+                </div>
+              </button>
+              {isOpen && <RunDetail run={r} durationMs={durationMs} />}
             </li>
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+function RunDetail({ run, durationMs }: { run: RunJson; durationMs: number | null }) {
+  const tables = run.stats?.tables ?? [];
+  const warnings = run.stats?.warnings ?? [];
+  return (
+    <div className="space-y-3 border-t hairline bg-bg-sunken/40 px-4 py-3">
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-fg-faint">
+        <span>Phase: <span className="text-fg-muted">{run.phase ?? "—"}</span></span>
+        {durationMs != null && (
+          <span>Duration: <span className="tabular-nums text-fg-muted">{(durationMs / 1000).toFixed(1)}s</span></span>
+        )}
+        <span>Tables: <span className="tabular-nums text-fg-muted">{tables.length}</span></span>
+      </div>
+
+      {run.error && (
+        <p className="rounded border border-danger/40 bg-danger/10 px-2 py-1.5 font-mono text-[11px] text-danger">
+          {run.error}
+        </p>
+      )}
+
+      {tables.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead className="text-fg-faint">
+              <tr className="text-left">
+                <th className="py-1 pr-4 font-medium">Table</th>
+                <th className="py-1 pr-4 font-medium tabular-nums">Copied</th>
+                <th className="py-1 pr-4 font-medium tabular-nums">Verified</th>
+                <th className="py-1 font-medium tabular-nums">Time</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono text-fg-muted">
+              {tables.map((t) => {
+                const mismatch = t.verifiedRows != null && t.verifiedRows !== t.rowsCopied;
+                return (
+                  <tr key={t.table} className="border-t border-line/40">
+                    <td className="py-1 pr-4">{t.table}</td>
+                    <td className="py-1 pr-4 tabular-nums">{t.rowsCopied.toLocaleString()}</td>
+                    <td className={cn("py-1 pr-4 tabular-nums", mismatch && "text-warn")}>
+                      {t.verifiedRows != null ? t.verifiedRows.toLocaleString() : "—"}
+                    </td>
+                    <td className="py-1 tabular-nums">{(t.durationMs / 1000).toFixed(1)}s</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {warnings.length > 0 && (
+        <ul className="space-y-1">
+          {warnings.map((w, i) => (
+            <li key={i} className="flex gap-1.5 text-[11px] text-warn">
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+              <span className="text-fg-muted">{w}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {tables.length === 0 && warnings.length === 0 && !run.error && (
+        <p className="text-[11px] text-fg-faint">No per-table detail recorded for this run.</p>
+      )}
     </div>
   );
 }

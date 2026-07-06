@@ -65,20 +65,47 @@ interface PgTarget {
   database: string;
 }
 
+/**
+ * Normalize a host for comparison: lowercase and strip IPv6 brackets so
+ * `[::1]` and `::1` compare equal. (localhost vs 127.0.0.1 are intentionally
+ * NOT unified — they can be genuinely different endpoints; the live
+ * system_identifier check in assertDistinctLive catches same-cluster cases
+ * the string compare can't.)
+ */
+function normalizeHost(host: string): string {
+  return host.toLowerCase().replace(/^\[/, "").replace(/\]$/, "");
+}
+
 function parsePgTarget(connectionString: string): PgTarget {
   // postgres://user:pass@host:port/db?params
   const u = new URL(connectionString);
   return {
-    host: u.hostname.toLowerCase(),
+    host: normalizeHost(u.hostname),
     port: u.port || "5432",
     database: decodeURIComponent(u.pathname.replace(/^\//, "")).toLowerCase(),
   };
 }
 
 /**
+ * Canonical (host, port, database) triple as a single string, so URLs that
+ * differ only in credentials, query params (sslmode, pgbouncer, …), or a
+ * trailing slash still compare equal. Falls back to a lowercased raw string
+ * if the URL can't be parsed.
+ */
+function canonicalTarget(connectionString: string): string {
+  try {
+    const t = parsePgTarget(connectionString);
+    return `${t.host}:${t.port}/${t.database}`;
+  } catch {
+    return connectionString.trim().toLowerCase();
+  }
+}
+
+/**
  * Refuse to run when base and target resolve to the same physical database.
- * Compared on (host, port, database) after decrypting both URLs — and also
- * on exact URL equality as a belt-and-braces check.
+ * Compared on the canonical (host, port, database) triple after decrypting
+ * both URLs — this ignores credentials, query params, and trailing slashes
+ * that a raw string compare would treat as "different".
  */
 export function assertDistinctDatabases(base: ConnectionRow, target: ConnectionRow): void {
   if (base.id === target.id) {
@@ -89,12 +116,8 @@ export function assertDistinctDatabases(base: ConnectionRow, target: ConnectionR
   }
   const baseUrl = decryptKey(base.encryptedPostgresUrl);
   const targetUrl = decryptKey(target.encryptedPostgresUrl);
-  if (baseUrl === targetUrl) {
-    throw new SyncSafetyError("Base and target point at the same database.");
-  }
-  const b = parsePgTarget(baseUrl);
-  const t = parsePgTarget(targetUrl);
-  if (b.host === t.host && b.port === t.port && b.database === t.database) {
+  if (canonicalTarget(baseUrl) === canonicalTarget(targetUrl)) {
+    const t = parsePgTarget(targetUrl);
     throw new SyncSafetyError(
       `Base and target resolve to the same database (${t.host}:${t.port}/${t.database}). Refusing to sync.`,
     );

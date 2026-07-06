@@ -3,6 +3,39 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.19.3 · 2026-07-06 · Database sync hardening
+
+Correctness and safety pass over the database sync engine (spec 032),
+closing the gaps that stood between "typechecks" and "trust it against a
+real prod → staging refresh":
+
+- **Destructive schema DDL is now atomic with the load.** `DROP TABLE` /
+  `DROP COLUMN` previously committed in autocommit *before* the data
+  transaction, so a failed copy left the target with dropped structure but
+  stale data. They now run inside the same transaction and roll back with
+  everything else. Additive DDL (create table/column, enums) stays in the
+  idempotent pre-copy step.
+- **Row caps can no longer silently break foreign keys.** Capping a table
+  that is a FK parent of another synced table is now a blocking plan reason
+  (the child would reference un-sampled parent rows and fail at COMMIT) with
+  a clear message, instead of a cryptic constraint error mid-run. Sampled
+  copies are ordered by primary key so "first N rows" is deterministic.
+- **Post-copy verification.** Every loaded table is `count(*)`-checked
+  against what COPY reported; a mismatch (e.g. a trigger firing during the
+  load) is surfaced as a warning and downgrades the run to `partial` rather
+  than a green "succeeded".
+- **Runs survive a client disconnect.** An interactive run no longer aborts
+  its open transaction when the browser tab closes; it finishes and persists
+  its result. Per-table progress is written to the `sync_run` row live, so
+  the history view and a reconnecting client see real progress.
+- **Expandable run history.** Each recent run opens into a per-table detail
+  view (rows copied, verified count, duration, warnings, error).
+- **Scheduled-run alerts.** A scheduled sync that fails / completes partial /
+  aborts now fires the connection's alert webhook (same channel as Sentry).
+- **Stronger self-clobber check** (canonical host/port/db, ignoring
+  credentials and query params) and a **visible warning for target-only
+  indexes** that the diff doesn't reconcile.
+
 ## v3.19.2 · 2026-07-06 · Guided first-connection flow
 
 - **Step-by-step guide on `/connections/new`.** A new `ConnectionGuide`

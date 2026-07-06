@@ -37,6 +37,8 @@ export interface TablePlan {
   estimatedRows: number;
   /** Columns copied, in base order, excluding generated (stored) columns. */
   columns: string[];
+  /** Primary-key columns — used to make a row-capped sample deterministic. */
+  primaryKey: string[];
   transforms: FkTransform[];
   anonymize: AnonTransform[];
   existsInTarget: boolean;
@@ -196,6 +198,7 @@ export function buildSyncPlan(input: PlanInput): SyncPlan {
       action,
       estimatedRows: t.estimatedRows,
       columns: copyCols,
+      primaryKey: t.primaryKey,
       transforms: transformsByTable.get(t.qualified) ?? [],
       anonymize,
       existsInTarget: Boolean(targetTable),
@@ -220,12 +223,36 @@ export function buildSyncPlan(input: PlanInput): SyncPlan {
   // A row cap silently truncates large tables; surface which ones so a
   // forgotten test cap can't masquerade as a complete "succeeded" sync.
   if (options.rowCap != null) {
-    const capped = tables
-      .filter((t) => t.estimatedRows > options.rowCap!)
-      .map((t) => t.qualified);
-    if (capped.length > 0) {
+    const cap = options.rowCap;
+    const cappedSet = new Set(
+      tables.filter((t) => t.estimatedRows > cap).map((t) => t.qualified),
+    );
+    if (cappedSet.size > 0) {
       warnings.push(
-        `Row cap ${options.rowCap} is set: these tables will be truncated to the first ${options.rowCap} rows: ${capped.join(", ")}.`,
+        `Row cap ${cap} is set: these tables will be sampled to the first ${cap} rows: ${[...cappedSet].join(", ")}.`,
+      );
+    }
+
+    // Capping a table that is a FK parent of another SYNCED table breaks
+    // referential integrity: a child row can reference a parent row beyond the
+    // sample, and with FK checks deferred to COMMIT the whole run fails there
+    // with a cryptic constraint error. Detect it here and block with a clear
+    // reason instead. (A cap on a leaf table, or a table only referenced by
+    // excluded/skipped tables, is safe.)
+    const unsafeCaps: string[] = [];
+    for (const t of base.tables) {
+      if (actionFor(tableConfig, t.qualified) !== "sync") continue;
+      for (const fk of t.foreignKeys) {
+        const parent = `${fk.refSchema}.${fk.refTable}`;
+        if (parent === t.qualified) continue; // self-ref sampled together
+        if (cappedSet.has(parent)) {
+          unsafeCaps.push(`${t.qualified}.${fk.columns.join(",")} → ${parent}`);
+        }
+      }
+    }
+    if (unsafeCaps.length > 0) {
+      blockingReasons.push(
+        `Row cap ${cap} would break foreign keys: the parent table(s) are sampled but children still reference the un-sampled rows (${unsafeCaps.join("; ")}). Raise or clear the row cap, or exclude the child tables.`,
       );
     }
   }

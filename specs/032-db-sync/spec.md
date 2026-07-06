@@ -2,9 +2,22 @@
 
 > **Status:** Phases 1–3 implemented (`src/server/sync/*`, `/c/[id]/sync`,
 > `/api/connections/[id]/sync/*`, `/api/cron/sync`, migrations 0018/0019).
-> Verified by typecheck + production build; **not yet exercised against a
-> live prod/staging pair** — dry-run against real connections before trusting
-> a destructive run.
+> Verified by typecheck + production build + unit tests; **not yet exercised
+> against a live prod/staging pair** — dry-run against real connections before
+> trusting a destructive run.
+>
+> **Hardening pass (post-v3.19):** destructive DDL now runs *inside* the atomic
+> data transaction (a failed run no longer leaves dropped columns/tables
+> behind); a row cap that would break a foreign key is a blocking reason rather
+> than a cryptic COMMIT failure, and sampled copies are ordered by primary key;
+> self-clobber compares the canonical host/port/db (ignoring credentials and
+> query params); each loaded table is `count(*)`-verified against what COPY
+> reported and a mismatch downgrades the run to `partial`; per-table progress
+> is persisted to `sync_run` live (so a reconnecting client / the history view
+> sees real progress and a killed run leaves a trail); an interactive run
+> survives client disconnect instead of aborting mid-transaction; scheduled
+> failures/partials fire the connection alert webhook; the run-history list is
+> now an expandable per-table detail view.
 
 ## Why
 Every team running on Supabase eventually needs to **refresh staging

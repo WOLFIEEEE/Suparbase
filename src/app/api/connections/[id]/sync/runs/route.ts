@@ -11,7 +11,11 @@ import type { SyncRunStats } from "@/server/schema/sync";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// A full-replace sync of a large database can run for many minutes. Suparbase
+// deploys on long-lived Node (Coolify), where this is an advisory hint rather
+// than a hard serverless ceiling; raised well above the default so a big sync
+// isn't cut off mid-transaction.
+export const maxDuration = 3600;
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -92,10 +96,24 @@ export async function POST(req: NextRequest, ctx: Params) {
   const targetConn = access.conn;
   const encoder = new TextEncoder();
 
+  // `clientGone` flips when the browser disconnects (tab close, navigation).
+  // A real (non-dry) run must NOT die with the stream — it holds an open
+  // target transaction — so once the client is gone we stop enqueuing (which
+  // would throw and abort the run) and let the run finish and persist to the
+  // sync_run row, which the client can re-read on reconnect.
+  let clientGone = false;
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (event: string, data: unknown) => {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+        if (clientGone) return;
+        try {
+          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          // Controller already closed by a disconnect — swallow so the run
+          // continues to completion instead of unwinding the transaction.
+          clientGone = true;
+        }
       };
 
       const run = await createRun({
@@ -107,6 +125,16 @@ export async function POST(req: NextRequest, ctx: Params) {
       });
       send("run", { id: run.id, dryRun });
 
+      // Accumulate progress and mirror it onto the sync_run row as the run
+      // proceeds. Persistence is best-effort and fire-and-forget (the final
+      // updateRun is authoritative) — its purpose is so a reconnecting client
+      // or the run-history view can read real progress, and so a run killed
+      // mid-flight leaves a partial trail instead of a frozen "introspect".
+      const liveStats: SyncRunStats = { tables: [], warnings: [] };
+      const persist = (patch: Parameters<typeof updateRun>[2]) => {
+        void updateRun(userId, run.id, patch).catch(() => undefined);
+      };
+
       try {
         const result = await executeSyncRun({
           base,
@@ -116,11 +144,33 @@ export async function POST(req: NextRequest, ctx: Params) {
           dryRun,
           shouldAbort: async () => (await getRun(userId, run.id))?.status === "aborted",
           hooks: {
-            onPhase: (phase, detail) => send("phase", { phase, detail }),
+            onPhase: (phase, detail) => {
+              send("phase", { phase, detail });
+              if (!dryRun) persist({ phase });
+            },
             onTableStart: (table, estimatedRows) => send("table_start", { table, estimatedRows }),
-            onTableDone: (table, rowsCopied, durationMs) =>
-              send("table_done", { table, rowsCopied, durationMs }),
-            onWarning: (message) => send("warning", { message }),
+            onTableDone: (table, rowsCopied, durationMs) => {
+              send("table_done", { table, rowsCopied, durationMs });
+              if (!dryRun) {
+                liveStats.tables.push({ table, rowsCopied, durationMs });
+                persist({ phase: "data_copy", stats: liveStats });
+              }
+            },
+            onTableVerified: (table, verifiedRows) => {
+              send("table_verified", { table, verifiedRows });
+              if (!dryRun) {
+                const stat = liveStats.tables.find((t) => t.table === table);
+                if (stat) stat.verifiedRows = verifiedRows;
+                persist({ phase: "verify", stats: liveStats });
+              }
+            },
+            onWarning: (message) => {
+              send("warning", { message });
+              if (!dryRun) {
+                liveStats.warnings.push(message);
+                persist({ stats: liveStats });
+              }
+            },
           },
         });
 
@@ -151,8 +201,19 @@ export async function POST(req: NextRequest, ctx: Params) {
         send("error", { message });
       } finally {
         send("done", {});
-        controller.close();
+        if (!clientGone) {
+          try {
+            controller.close();
+          } catch {
+            // Already closed by a disconnect — nothing to do.
+          }
+        }
       }
+    },
+    cancel() {
+      // Browser disconnected. Don't touch the run — the start() body keeps
+      // executing to completion and persists the final status itself.
+      clientGone = true;
     },
   });
 
