@@ -165,7 +165,8 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  // Global hotkey: Cmd/Ctrl+K toggles the palette.
+  // Global hotkey: Cmd/Ctrl+K toggles the palette. The Topbar search button
+  // dispatches the same open via a custom "suparbase:command" event.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -173,8 +174,15 @@ export function CommandPalette() {
         setOpen((v) => !v);
       }
     }
+    function onOpen() {
+      setOpen(true);
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("suparbase:command", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("suparbase:command", onOpen);
+    };
   }, []);
 
   // Data is lazily fetched once the palette is opened. React-query will

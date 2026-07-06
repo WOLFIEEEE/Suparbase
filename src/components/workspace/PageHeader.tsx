@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
+import { useCountUp } from "@/hooks/useCountUp";
 
 export interface Crumb {
   label: string;
@@ -114,10 +115,19 @@ export function StatTile({
   hint?: React.ReactNode;
 }) {
   return (
-    <div className="surface rounded-md px-4 py-3">
+    <div className="lift surface rounded-md px-4 py-3">
       <div className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">{label}</div>
       <div className="mt-1 font-display text-2xl leading-none tabular-nums">{value}</div>
       {hint && <div className="mt-1 text-xs text-fg-muted">{hint}</div>}
     </div>
   );
+}
+
+/**
+ * Number that counts up from zero on mount. `locale`-formats to integer.
+ * Falls back to the target instantly under prefers-reduced-motion.
+ */
+export function CountUp({ value }: { value: number }) {
+  const current = useCountUp(value);
+  return <span>{Math.round(current).toLocaleString()}</span>;
 }

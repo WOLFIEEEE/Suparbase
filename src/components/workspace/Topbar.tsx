@@ -1,8 +1,8 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Menu, RefreshCw, LogOut, Loader2 } from "lucide-react";
+import { Menu, RefreshCw, LogOut, Loader2, Search, Database } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
@@ -104,15 +104,18 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
           </Button>
           <Link
             href={`/c/${connection.id}/settings`}
-            className="flex items-center gap-2 truncate text-xs hover:text-fg"
+            className="flex items-center gap-2 truncate text-xs text-fg-muted hover:text-fg"
             aria-label="Connection settings"
           >
-            <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
+            <Database className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
             <span className="truncate font-medium">{connection.name}</span>
             <span className="truncate font-mono text-fg-faint">· {connection.hostname}</span>
           </Link>
-          <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
+          <Badge tone={ROLE_TONE[connection.role]} className="hidden sm:inline-flex">
+            {ROLE_LABEL[connection.role]}
+          </Badge>
         </div>
+        <CommandSearch />
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Tooltip>
@@ -199,6 +202,52 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
           <SidebarNav connectionId={connection.id} onNavigate={() => setMobileNavOpen(false)} />
         </DialogContent>
       </Dialog>
+    </>
+  );
+}
+
+/**
+ * The workspace's "find anything" affordance. It looks like a search field but
+ * is a button — clicking (or ⌘K / Ctrl-K) opens the CommandPalette, which owns
+ * the actual search UI. Surfacing it here signals the tool is keyboard-first
+ * instead of hiding the palette behind an undiscoverable shortcut.
+ */
+function CommandSearch() {
+  const [isMac, setIsMac] = useState(true);
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent));
+  }, []);
+
+  const open = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("suparbase:command"));
+  }, []);
+
+  return (
+    <>
+      {/* Desktop: a real-looking search field. */}
+      <button
+        type="button"
+        onClick={open}
+        className="group mx-4 hidden h-9 max-w-md flex-1 items-center gap-2 rounded-md border hairline bg-bg-sunken px-3 text-sm text-fg-faint transition-colors hover:border-line-strong hover:text-fg-muted md:flex"
+        aria-label="Open command palette"
+      >
+        <Search className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span className="flex-1 text-left">Search tables, rows, actions…</span>
+        <kbd className="pointer-events-none inline-flex items-center gap-0.5 rounded border hairline bg-bg px-1.5 py-0.5 font-mono text-[10px] text-fg-faint">
+          {isMac ? "⌘" : "Ctrl"} K
+        </kbd>
+      </button>
+      {/* Mobile: icon-only. */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={open}
+        aria-label="Open command palette"
+      >
+        <Search className="h-4 w-4" aria-hidden />
+      </Button>
     </>
   );
 }

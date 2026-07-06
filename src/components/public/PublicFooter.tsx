@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Heart, Server, Shield } from "lucide-react";
+import { ArrowUpRight, CircleCheck, Heart, Server, Shield } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { SITE } from "@/lib/seo/site";
 
@@ -162,10 +162,7 @@ function StatusBar() {
     <div className="flex flex-wrap items-center justify-between gap-3 border-b hairline py-3 text-[10px] uppercase tracking-[0.18em] text-fg-faint">
       <div className="flex items-center gap-4">
         <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="relative inline-flex h-2 w-2">
-            <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-50" />
-            <span className="relative inline-block h-2 w-2 rounded-full bg-accent" />
-          </span>
+          <CircleCheck className="h-3.5 w-3.5 text-accent" aria-hidden />
           <span className="text-fg">System operational</span>
         </span>
         <span className="hidden font-mono text-fg-faint sm:inline">

@@ -3,11 +3,18 @@ import { useMemo } from "react";
 import Link from "next/link";
 import {
   Activity,
+  AlertTriangle,
+  Database,
   FileText,
   Layers,
+  LayoutDashboard,
+  Lock,
   Plus,
+  Server,
   Settings as SettingsIcon,
+  ShieldCheck,
   Sparkles,
+  Table2,
   Users as UsersIcon,
 } from "lucide-react";
 import { useRowCount, useSchema, useRecentAudit, type RecentAuditEntry } from "@/lib/api/hooks";
@@ -19,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { AnalysisBanner } from "@/components/workspace/AnalysisBanner";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
-import { PageHeader, StatTile } from "@/components/workspace/PageHeader";
+import { PageHeader, StatTile, CountUp } from "@/components/workspace/PageHeader";
 import { TableTile } from "@/components/data/TableTile";
 import { ActionRunner } from "@/components/actions/ActionRunner";
 import { DashboardWidgets } from "@/components/dashboards/DashboardWidgets";
@@ -33,6 +40,8 @@ import {
 } from "@/lib/presets/groupTables";
 import type { Table } from "@/lib/types/schema";
 import type { TableAnalysis, AiSettingsSummary } from "@/lib/types/analysis";
+import type { ConnectionSummary } from "@/lib/types/connection";
+import { cn } from "@/lib/ui/cn";
 
 async function fetchAiSettings(): Promise<AiSettingsSummary> {
   const res = await fetch("/api/settings/ai");
@@ -75,7 +84,7 @@ export function Dashboard() {
       <PageHeader
         eyebrow={
           <>
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
+            <LayoutDashboard className="h-3.5 w-3.5 text-accent" aria-hidden />
             dashboard
           </>
         }
@@ -92,6 +101,13 @@ export function Dashboard() {
           </span>
         }
         actions={<QuickActions connectionId={connection.id} users={groups.users[0] ?? null} hasAiKey={!!aiSettings?.hasKey} />}
+      />
+
+      <HealthRibbon
+        connection={connection}
+        tableCount={totalTables}
+        hasAiKey={!!aiSettings?.hasKey}
+        loading={isLoading}
       />
 
       <ActionRunner connectionId={connection.id} surface="global" />
@@ -158,6 +174,99 @@ export function Dashboard() {
           </aside>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// HealthRibbon — connection posture at a glance (a "mission control" status bar)
+// ---------------------------------------------------------------------------
+
+interface HealthItem {
+  label: string;
+  tone: "good" | "neutral" | "attention";
+  icon: typeof UsersIcon;
+  title: string;
+}
+
+const TONE_ICON: Record<HealthItem["tone"], string> = {
+  good: "text-accent",
+  neutral: "text-fg-faint",
+  attention: "text-warn",
+};
+
+function HealthRibbon({
+  connection,
+  tableCount,
+  hasAiKey,
+  loading,
+}: {
+  connection: ConnectionSummary;
+  tableCount: number;
+  hasAiKey: boolean;
+  loading: boolean;
+}) {
+  const items: HealthItem[] = [
+    {
+      label: "Encrypted at rest",
+      tone: "good",
+      icon: Lock,
+      title: "The stored Supabase key is AES-256-GCM encrypted before it touches disk.",
+    },
+    {
+      label: "Server-side proxy",
+      tone: "good",
+      icon: Server,
+      title: "Every request is proxied server-side; the key never reaches the browser.",
+    },
+    {
+      label: loading ? "…" : `${tableCount} ${tableCount === 1 ? "table" : "tables"}`,
+      tone: "neutral",
+      icon: Table2,
+      title: "Tables in the public schema.",
+    },
+    {
+      label: connection.hasPostgresUrl ? "Direct Postgres" : "No direct Postgres",
+      tone: connection.hasPostgresUrl ? "good" : "attention",
+      icon: connection.hasPostgresUrl ? Database : AlertTriangle,
+      title: connection.hasPostgresUrl
+        ? "Direct Postgres URL set — session undo, RLS tooling and sync are available."
+        : "Add a Direct Postgres URL in connection settings to unlock session undo, RLS tooling and sync.",
+    },
+    {
+      label: hasAiKey ? "AI assistance on" : "AI assistance off",
+      tone: hasAiKey ? "good" : "neutral",
+      icon: Sparkles,
+      title: hasAiKey
+        ? "OpenRouter key configured — table classification and AI write drafts are available."
+        : "Add an OpenRouter key in Settings → AI to enable AI assistance.",
+    },
+    {
+      label: connection.alertWebhookUrl ? "Sentry alerts" : "Sentry idle",
+      tone: connection.alertWebhookUrl ? "good" : "neutral",
+      icon: ShieldCheck,
+      title: connection.alertWebhookUrl
+        ? "A webhook fires when a Sentry scan finds new critical findings."
+        : "Set an alert webhook in connection settings to be notified of new critical findings.",
+    },
+  ];
+
+  return (
+    <div className="surface flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md px-4 py-3">
+      <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">
+        <Activity className="h-3.5 w-3.5 text-accent" aria-hidden />
+        Live
+      </span>
+      {items.map((it) => (
+        <span
+          key={it.label}
+          title={it.title}
+          className="inline-flex items-center gap-1.5 text-xs text-fg-muted"
+        >
+          <it.icon className={cn("h-3.5 w-3.5 shrink-0", TONE_ICON[it.tone])} aria-hidden />
+          {it.label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -238,11 +347,11 @@ function StripTile({ kind, table, fallbackCount, loading }: StripTileProps) {
   if (loading) {
     value = <Skeleton className="h-7 w-16" />;
   } else if (kind === "generic" || !table) {
-    value = fallbackCount.toLocaleString();
+    value = <CountUp value={fallbackCount} />;
   } else if (countLoading) {
     value = <Skeleton className="h-7 w-16" />;
   } else if (count?.count != null) {
-    value = count.count.toLocaleString();
+    value = <CountUp value={count.count} />;
   } else {
     value = ":";
   }
