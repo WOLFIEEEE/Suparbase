@@ -28,7 +28,7 @@ test.describe("Public surface smoke", () => {
   test("sign-in page exposes the form", async ({ page }) => {
     await page.goto("/signin");
     await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
+    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
     // "Forgot?" link is what unblocks locked-out users.
     await expect(page.getByRole("link", { name: /forgot/i })).toBeVisible();
   });

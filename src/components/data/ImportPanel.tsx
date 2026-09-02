@@ -24,10 +24,12 @@ import { IGNORE_COL, type ColumnMap, type ImportSummary, type PreviewRow, type R
 import { postImportChunk } from "@/lib/api/hooks";
 import { AppError } from "@/lib/errors";
 import type { Table } from "@/lib/types/schema";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const PREVIEW_ROWS = 20;
 const CHUNK_SIZE = 500;
+const ATOMIC_IMPORT_LIMIT = 5_000;
 
 interface Props {
   open: boolean;
@@ -39,6 +41,8 @@ interface Props {
 type Mode = "skip" | "abort";
 
 export function ImportPanel({ open, onClose, connectionId, table }: Props) {
+  const connection = useCurrentConnection();
+  const supportsAtomicImport = connection.hasPostgresUrl;
   const qc = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cancelRef = useRef(false);
@@ -47,7 +51,7 @@ export function ImportPanel({ open, onClose, connectionId, table }: Props) {
   const [rawRows, setRawRows] = useState<Array<Record<string, string>>>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<ColumnMap>({});
-  const [mode, setMode] = useState<Mode>("abort");
+  const [mode, setMode] = useState<Mode>(supportsAtomicImport ? "abort" : "skip");
   const [phase, setPhase] = useState<"idle" | "previewing" | "importing" | "done">("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -158,28 +162,47 @@ export function ImportPanel({ open, onClose, connectionId, table }: Props) {
     }
     if (buf.length > 0) chunks.push(buf);
 
-    let baseIdx = 0;
-    for (const chunk of chunks) {
-      if (cancelRef.current) break;
+    if (mode === "abort") {
+      const allRows = chunks.flat();
+      if (allRows.length > ATOMIC_IMPORT_LIMIT) {
+        setError(
+          `All-or-nothing imports are capped at ${ATOMIC_IMPORT_LIMIT.toLocaleString()} rows. Split this file or use “Skip bad rows”.`,
+        );
+        setPhase("previewing");
+        return;
+      }
       try {
-        const res = await postImportChunk(connectionId, table.name, chunk, mode);
-        imported += res.imported;
-        skipped += res.skipped;
-        for (const e of res.errors) {
-          errors.push({ ...e, index: baseIdx + e.index, line: baseIdx + e.index + 2 });
+        const res = await postImportChunk(connectionId, table.name, allRows, mode);
+        imported = res.imported;
+        skipped = res.skipped;
+        for (const item of res.errors) {
+          errors.push({ ...item, line: item.index + 2 });
         }
-        if (mode === "abort" && res.skipped > 0) {
-          // Server already rolled back this chunk's audits; remaining chunks
-          // don't fire.
-          break;
-        }
+        setProgress({ done: imported, total: rawRows.length });
       } catch (e) {
         const app = e instanceof AppError ? e : new AppError("client_bug", String((e as Error).message ?? e));
-        errors.push({ index: baseIdx, reason: app.message });
-        if (mode === "abort") break;
+        errors.push({ index: 0, line: 2, reason: app.message });
       }
-      baseIdx += chunk.length;
-      setProgress({ done: baseIdx, total: rawRows.length });
+    }
+
+    let baseIdx = 0;
+    if (mode === "skip") {
+      for (const chunk of chunks) {
+        if (cancelRef.current) break;
+        try {
+          const res = await postImportChunk(connectionId, table.name, chunk, mode);
+          imported += res.imported;
+          skipped += res.skipped;
+          for (const e of res.errors) {
+            errors.push({ ...e, index: baseIdx + e.index, line: baseIdx + e.index + 2 });
+          }
+        } catch (e) {
+          const app = e instanceof AppError ? e : new AppError("client_bug", String((e as Error).message ?? e));
+          errors.push({ index: baseIdx, reason: app.message });
+        }
+        baseIdx += chunk.length;
+        setProgress({ done: baseIdx, total: rawRows.length });
+      }
     }
 
     setSummary({ total: rawRows.length, imported, skipped, errors });
@@ -205,7 +228,8 @@ export function ImportPanel({ open, onClose, connectionId, table }: Props) {
           </div>
           <DialogDescription>
             Drag a CSV file in (max 50 MB), map source columns to target table
-            columns, then import in chunks of {CHUNK_SIZE}.
+            columns, then validate and import. Atomic mode uses one database
+            transaction; skip mode streams batches of {CHUNK_SIZE} rows.
           </DialogDescription>
         </DialogHeader>
 
@@ -307,6 +331,7 @@ export function ImportPanel({ open, onClose, connectionId, table }: Props) {
                     value="abort"
                     checked={mode === "abort"}
                     onChange={() => setMode("abort")}
+                    disabled={!supportsAtomicImport}
                     className="accent-accent"
                   />
                   Commit all-or-nothing
@@ -323,6 +348,11 @@ export function ImportPanel({ open, onClose, connectionId, table }: Props) {
                   Skip bad rows
                 </label>
               </div>
+              {!supportsAtomicImport && (
+                <p className="text-[11px] text-fg-faint">
+                  Add a Direct Postgres URL in connection settings to enable transactional imports.
+                </p>
+              )}
             </div>
           </div>
         )}

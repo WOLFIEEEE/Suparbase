@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { getConnectionForRole, toSummary } from "@/server/connections/repo";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { WatchesManager } from "@/components/workspace/WatchesManager";
 
@@ -14,9 +14,9 @@ export default async function WatchesPage({ params }: Props) {
   const session = await auth();
   if (!session?.user) notFound();
   const { id } = await params;
-  const row = await getConnectionForUser(session.user.id, id);
+  const row = await getConnectionForRole(session.user.id, id, "editor");
   if (!row) notFound();
-  const connection = toSummary(row);
+  const connection = toSummary(row, row.userId === session.user.id ? "owner" : "editor");
 
   return (
     <div className="space-y-6">
@@ -32,7 +32,7 @@ export default async function WatchesPage({ params }: Props) {
       <WatchesManager
         connectionId={connection.id}
         hasPostgresUrl={connection.hasPostgresUrl}
-        hasAlertWebhook={!!connection.alertWebhookUrl}
+        hasAlertWebhook={connection.hasAlertWebhook}
       />
     </div>
   );

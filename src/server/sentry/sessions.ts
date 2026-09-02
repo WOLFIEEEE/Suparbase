@@ -282,26 +282,19 @@ export function toSummary(row: AgentSessionRow): SessionSummary {
 }
 
 export async function listSessions(
-  userId: string,
   connectionId: string,
   limit = 50,
 ): Promise<SessionSummary[]> {
   const rows = await db
     .select()
     .from(agentSessions)
-    .where(
-      and(
-        eq(agentSessions.userId, userId),
-        eq(agentSessions.connectionId, connectionId),
-      ),
-    )
+    .where(eq(agentSessions.connectionId, connectionId))
     .orderBy(desc(agentSessions.lastSeenAt))
     .limit(limit);
   return rows.map(toSummary);
 }
 
 export async function getSession(
-  userId: string,
   connectionId: string,
   sessionId: string,
 ): Promise<SessionSummary | null> {
@@ -311,7 +304,6 @@ export async function getSession(
     .where(
       and(
         eq(agentSessions.id, sessionId),
-        eq(agentSessions.userId, userId),
         eq(agentSessions.connectionId, connectionId),
       ),
     )

@@ -1,5 +1,18 @@
-import { customType, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { customType, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth";
+
+/**
+ * Deployment tier the connection points at. Drives the coloured badge in
+ * the workspace chrome and the extra typed confirmation on destructive
+ * actions against `production`. Null = the owner hasn't labelled it.
+ */
+export type ConnectionEnvironment = "production" | "staging" | "development" | "other";
+export const CONNECTION_ENVIRONMENTS: readonly ConnectionEnvironment[] = [
+  "production",
+  "staging",
+  "development",
+  "other",
+];
 
 const bytea = customType<{ data: Uint8Array; default: false }>({
   dataType() {
@@ -42,6 +55,15 @@ export const connections = pgTable(
      * against the SSRF blocklist at save time and again at fire time.
      */
     alertWebhookUrl: text("alert_webhook_url"),
+    /** Owner-assigned deployment tier (v3.20). Null until labelled. */
+    environment: text("environment").$type<ConnectionEnvironment>(),
+    /**
+     * Scheduled Sentry scans (v3.20). Null/0 = off. When set, the
+     * /api/cron/sentry route re-scans the connection every N hours and
+     * fires the alert webhook + an in-app notification on new criticals.
+     */
+    sentryScanIntervalHours: integer("sentry_scan_interval_hours"),
+    sentryLastAutoScanAt: timestamp("sentry_last_auto_scan_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }).defaultNow().notNull(),
   },

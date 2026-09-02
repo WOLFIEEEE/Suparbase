@@ -5,6 +5,8 @@ import { createConnection, listConnections } from "@/server/connections/repo";
 import { countOwnedConnections, getActivePlan } from "@/server/billing/repo";
 import { PlanLimitError, requireFeature } from "@/server/billing/plans";
 import { redact } from "@/lib/redact";
+import { assertSafeOutboundUrl } from "@/server/security/egress";
+import { CONNECTION_ENVIRONMENTS, type ConnectionEnvironment } from "@/server/schema/connections";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,7 @@ const CreateConnectionSchema = z.object({
       (v) => !v || v.length === 0 || PG_URL_REGEX.test(v),
       "Postgres URL must start with postgres:// or postgresql://.",
     ),
+  environment: z.enum(CONNECTION_ENVIRONMENTS as [string, ...string[]]).nullable().optional(),
 });
 
 export async function GET() {
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
 
-  // Plan limits: Free tier is capped at 1 owned connection. The
+  // Plan limits: Free tier is capped at 3 owned connections. The
   // resolver treats lapsed paid rows as Free, so an expired
   // subscription doesn't keep multiple connections alive.
   try {
@@ -82,8 +85,23 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-  const { name, url, key, postgresUrl } = parsed.data;
+  const { name, url, key, postgresUrl, environment } = parsed.data;
   const parsedUrl = new URL(url);
+
+  if (postgresUrl) {
+    try {
+      await assertSafeOutboundUrl(
+        postgresUrl,
+        new Set(["postgres:", "postgresql:"]),
+        { allowCredentials: true },
+      );
+    } catch (e) {
+      return NextResponse.json(
+        { category: "validation", message: (e as Error).message, field: "postgresUrl" },
+        { status: 400 },
+      );
+    }
+  }
 
   // Verify the credentials actually work before storing.
   try {
@@ -124,6 +142,7 @@ export async function POST(req: NextRequest) {
       hostname: parsedUrl.hostname,
       key,
       postgresUrl: postgresUrl && postgresUrl.length > 0 ? postgresUrl : null,
+      environment: (environment as ConnectionEnvironment | null | undefined) ?? null,
     });
     return NextResponse.json(summary, { status: 201 });
   } catch (e) {

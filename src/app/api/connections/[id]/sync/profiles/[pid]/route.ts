@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionAccess, getConnectionForUser, requireRole } from "@/server/connections/repo";
+import { getConnectionAccess, getConnectionForRole, requireRole } from "@/server/connections/repo";
 import { deleteProfile, getProfile, updateProfile } from "@/server/sync/repo";
 import { updateProfileSchema } from "@/server/sync/validate";
 
@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, pid } = await ctx.params;
 
-  const access = await requireRole(session.user.id, id, "editor");
+  const access = await requireRole(session.user.id, id, "owner");
   if (!access) {
     return NextResponse.json(
       { category: "forbidden", message: "Editor or owner role required." },
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, ctx: Params) {
         { status: 400 },
       );
     }
-    const base = await getConnectionForUser(session.user.id, patch.baseConnectionId);
+    const base = await getConnectionForRole(session.user.id, patch.baseConnectionId, "viewer");
     if (!base) {
       return NextResponse.json(
         { category: "validation", message: "Base connection not found or not accessible." },
@@ -93,7 +93,7 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, pid } = await ctx.params;
 
-  const access = await requireRole(session.user.id, id, "editor");
+  const access = await requireRole(session.user.id, id, "owner");
   if (!access) {
     return NextResponse.json(
       { category: "forbidden", message: "Editor or owner role required." },

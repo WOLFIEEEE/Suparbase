@@ -22,6 +22,20 @@ export default defineConfig({
       if (type === "stderr") return false;
       return true;
     },
+    coverage: {
+      provider: "v8",
+      include: ["src/server/**/*.ts", "src/lib/**/*.ts"],
+      exclude: ["src/**/*.d.ts"],
+      reporter: ["text", "json-summary", "html"],
+      // This is a regression floor, not the destination. New work should
+      // raise it; CI prevents the currently exercised surface from shrinking.
+      thresholds: {
+        statements: 15,
+        branches: 11,
+        functions: 13,
+        lines: 15,
+      },
+    },
   },
   resolve: {
     // NOTE: more-specific aliases must come BEFORE the generic @/ catch-all,

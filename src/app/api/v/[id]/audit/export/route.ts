@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/schema";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { checkBulkRate } from "@/server/proxy/ratelimit";
 import { csvHeaderLine, csvLineFromValues } from "@/lib/csv/serialize";
 
@@ -40,7 +40,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
 
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
 
   // Bulk bucket: an export scans up to 10k rows, so it shares the limiter
@@ -53,7 +53,6 @@ export async function GET(_req: NextRequest, ctx: Params) {
     );
   }
 
-  const userId = session.user.id;
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -64,7 +63,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
           const rows = await db
             .select()
             .from(auditLog)
-            .where(and(eq(auditLog.userId, userId), eq(auditLog.connectionId, id)))
+            .where(eq(auditLog.connectionId, id))
             .orderBy(desc(auditLog.createdAt))
             .limit(Math.min(BATCH, EXPORT_MAX_ROWS - offset))
             .offset(offset);

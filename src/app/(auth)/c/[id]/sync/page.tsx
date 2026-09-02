@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { getConnectionForRole, toSummary } from "@/server/connections/repo";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { SyncWorkspace } from "@/components/sync/SyncWorkspace";
 
@@ -14,9 +14,9 @@ export default async function SyncPage({ params }: Props) {
   const session = await auth();
   if (!session?.user) notFound();
   const { id } = await params;
-  const row = await getConnectionForUser(session.user.id, id);
+  const row = await getConnectionForRole(session.user.id, id, "owner");
   if (!row) notFound();
-  const conn = toSummary(row);
+  const conn = toSummary(row, "owner");
 
   return (
     <div className="space-y-8">

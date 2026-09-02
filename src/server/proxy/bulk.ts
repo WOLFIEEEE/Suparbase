@@ -3,6 +3,7 @@ import { decryptKey } from "@/server/crypto/vault";
 import { auditWrite } from "@/server/audit/log";
 import type { ConnectionRow } from "@/server/schema/connections";
 import type { PrimaryKeyValue, Row } from "@/lib/types/schema";
+import { attachToSession } from "@/server/sentry/sessions";
 
 const CHUNK_SIZE = 500;
 const ALLOWED_VERBS = ["DELETE", "PATCH"] as const;
@@ -29,6 +30,7 @@ async function pgrestCall({
     apikey: key,
     Authorization: `Bearer ${key}`,
     "X-Client-Info": "suparbase-saas/0.7",
+    Prefer: "return=representation",
   });
   let init: RequestInit & { duplex?: "half" } = { method, headers };
   if (body !== undefined) {
@@ -83,6 +85,7 @@ export interface BulkDeleteArgs {
   primaryKey: string[];
   primaryKeys: PrimaryKeyValue[];
   returnSnapshots?: boolean;
+  userAgent?: string | null;
 }
 
 export interface BulkDeleteResult {
@@ -99,26 +102,9 @@ export async function bulkDelete(args: BulkDeleteArgs): Promise<BulkDeleteResult
   for (const chunk of chunkList(primaryKeys, CHUNK_SIZE)) {
     const filter = chunkToQuery(primaryKey, chunk);
 
-    // (a) snapshot SELECT for undo: direct GET (the pgrestCall helper only
-    //     handles DELETE/PATCH per its Verb literal).
-    if (returnSnapshots) {
-      const sel = new URLSearchParams(filter);
-      sel.set("select", "*");
-      const key = decryptKey(connection.encryptedKey);
-      const selUrl = `${connection.url}/rest/v1/${encodeURIComponent(tableName)}?${sel.toString()}`;
-      const selResp = await fetch(selUrl, {
-        method: "GET",
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          "X-Client-Info": "suparbase-saas/0.7",
-        },
-      });
-      if (selResp.ok) {
-        const rows = (await selResp.json()) as Row[];
-        snapshots.push(...rows);
-      }
-    }
+    // (a) snapshot SELECT for undo. If this fails we stop before deleting;
+    // a destructive bulk operation without a before-state is not acceptable.
+    const chunkSnapshots = await selectRows(connection, tableName, filter);
 
     // (b) DELETE itself
     const delResp = await pgrestCall({
@@ -136,19 +122,36 @@ export async function bulkDelete(args: BulkDeleteArgs): Promise<BulkDeleteResult
         partial: { deleted, snapshots },
       });
     }
-    deleted += chunk.length;
+    const deletedRows = await responseRows(delResp);
+    deleted += deletedRows.length;
+    if (returnSnapshots) snapshots.push(...deletedRows);
+    const agentSession = deletedRows.length > 0
+      ? await attachToSession({
+          userId,
+          connectionId: connection.id,
+          userAgent: args.userAgent ?? null,
+          schemaName: "public",
+          tableName,
+        })
+      : null;
 
-    // (c) audit fan-out: one row per affected PK
+    // (c) audit fan-out: one row per row actually deleted.
     await Promise.all(
-      chunk.map((pk) =>
+      deletedRows.map((row) =>
         auditWrite({
           userId,
           connectionId: connection.id,
           schemaName: "public",
           tableName,
-          primaryKey: pk,
+          primaryKey: pickPrimaryKey(primaryKey, row),
           verb: "delete",
           httpStatus: 200,
+          beforeRow:
+            chunkSnapshots.find(
+              (candidate) => stableKey(pickPrimaryKey(primaryKey, candidate)) === stableKey(pickPrimaryKey(primaryKey, row)),
+            ) ?? row,
+          afterRow: null,
+          sessionId: agentSession?.id ?? null,
         }),
       ),
     );
@@ -168,6 +171,7 @@ export interface BulkUpdateArgs {
   primaryKey: string[];
   primaryKeys: PrimaryKeyValue[];
   patch: Record<string, unknown>;
+  userAgent?: string | null;
 }
 
 export interface BulkUpdateResult {
@@ -180,6 +184,7 @@ export async function bulkUpdate(args: BulkUpdateArgs): Promise<BulkUpdateResult
 
   for (const chunk of chunkList(primaryKeys, CHUNK_SIZE)) {
     const filter = chunkToQuery(primaryKey, chunk);
+    const beforeRows = await selectRows(connection, tableName, filter);
     const resp = await pgrestCall({
       connection,
       tableName,
@@ -194,11 +199,25 @@ export async function bulkUpdate(args: BulkUpdateArgs): Promise<BulkUpdateResult
         partial: { updated },
       });
     }
-    updated += chunk.length;
+    const afterRows = await responseRows(resp);
+    updated += afterRows.length;
+    const beforeByKey = new Map(
+      beforeRows.map((row) => [stableKey(pickPrimaryKey(primaryKey, row)), row]),
+    );
+    const agentSession = afterRows.length > 0
+      ? await attachToSession({
+          userId,
+          connectionId: connection.id,
+          userAgent: args.userAgent ?? null,
+          schemaName: "public",
+          tableName,
+        })
+      : null;
 
     await Promise.all(
-      chunk.map((pk) =>
-        auditWrite({
+      afterRows.map((row) => {
+        const pk = pickPrimaryKey(primaryKey, row);
+        return auditWrite({
           userId,
           connectionId: connection.id,
           schemaName: "public",
@@ -206,10 +225,58 @@ export async function bulkUpdate(args: BulkUpdateArgs): Promise<BulkUpdateResult
           primaryKey: pk,
           verb: "update",
           httpStatus: 200,
-        }),
-      ),
+          beforeRow: beforeByKey.get(stableKey(pk)) ?? null,
+          afterRow: row,
+          sessionId: agentSession?.id ?? null,
+        });
+      }),
     );
   }
 
   return { updated };
+}
+
+async function selectRows(
+  connection: ConnectionRow,
+  tableName: string,
+  filter: URLSearchParams,
+): Promise<Row[]> {
+  const query = new URLSearchParams(filter);
+  query.set("select", "*");
+  const key = decryptKey(connection.encryptedKey);
+  const response = await fetch(
+    `${connection.url}/rest/v1/${encodeURIComponent(tableName)}?${query.toString()}`,
+    {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "X-Client-Info": "suparbase-saas/0.7",
+      },
+    },
+  );
+  if (!response.ok) {
+    throw Object.assign(new Error("Could not capture rows before the bulk operation."), {
+      status: response.status,
+    });
+  }
+  return (await response.json()) as Row[];
+}
+
+async function responseRows(response: Response): Promise<Row[]> {
+  try {
+    const value = await response.json() as unknown;
+    return Array.isArray(value)
+      ? value.filter((row): row is Row => !!row && typeof row === "object" && !Array.isArray(row))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function pickPrimaryKey(columns: string[], row: Row): PrimaryKeyValue {
+  return Object.fromEntries(columns.map((column) => [column, row[column]]));
+}
+
+function stableKey(value: PrimaryKeyValue): string {
+  return JSON.stringify(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)));
 }

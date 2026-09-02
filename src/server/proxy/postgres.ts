@@ -2,6 +2,7 @@ import "server-only";
 import postgres from "postgres";
 import type { ConnectionRow } from "@/server/schema/connections";
 import { decryptKey } from "@/server/crypto/vault";
+import { assertSafePostgresConnectionString } from "@/server/security/egress";
 
 export class NoPostgresUrlError extends Error {
   constructor() {
@@ -34,9 +35,9 @@ interface QueryOptions {
   timeoutMs?: number;
 }
 
-function openPostgres(conn: ConnectionRow): ReturnType<typeof postgres> {
+async function openPostgres(conn: ConnectionRow): Promise<ReturnType<typeof postgres>> {
   if (!conn.encryptedPostgresUrl) throw new NoPostgresUrlError();
-  const url = decryptKey(conn.encryptedPostgresUrl);
+  const url = await assertSafePostgresConnectionString(decryptKey(conn.encryptedPostgresUrl));
   return postgres(url, {
     max: 1,
     idle_timeout: 5,
@@ -63,7 +64,7 @@ export async function withRlsSimulation<T>(
   if (!ROLE_ALLOWLIST.has(role)) {
     throw new PgQueryError(`Refusing to simulate role "${role}".`);
   }
-  const sql = openPostgres(conn);
+  const sql = await openPostgres(conn);
   let captured: T | undefined;
   let capturedErr: unknown;
   try {
@@ -128,7 +129,7 @@ export interface PgPolicy {
  * pg_catalog. Used by the policy browser.
  */
 export async function listPolicies(conn: ConnectionRow): Promise<PgPolicy[]> {
-  const sql = openPostgres(conn);
+  const sql = await openPostgres(conn);
   try {
     const rows = await sql<PgPolicy[]>`
       SELECT
@@ -157,7 +158,7 @@ export interface RlsStatusEntry {
 }
 
 export async function listRlsStatus(conn: ConnectionRow): Promise<RlsStatusEntry[]> {
-  const sql = openPostgres(conn);
+  const sql = await openPostgres(conn);
   try {
     const rows = await sql<RlsStatusEntry[]>`
       SELECT

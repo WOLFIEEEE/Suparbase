@@ -1,7 +1,11 @@
 import "server-only";
 import { and, desc, eq, lt } from "drizzle-orm";
 import { db } from "@/server/db";
-import { connections, type ConnectionRow } from "@/server/schema/connections";
+import {
+  connections,
+  type ConnectionEnvironment,
+  type ConnectionRow,
+} from "@/server/schema/connections";
 import { connectionMembers, type ConnectionRole } from "@/server/schema/team";
 import { encryptKey } from "@/server/crypto/vault";
 import { decodeJwtRole, type KeyRole } from "./jwt";
@@ -17,11 +21,18 @@ export interface ConnectionSummary {
   hasPostgresUrl: boolean;
   /** Webhook notified when a Sentry scan finds NEW critical findings. */
   alertWebhookUrl: string | null;
+  hasAlertWebhook: boolean;
   /** Caller's role on this connection: owner / editor / viewer. */
   myRole?: ConnectionRole;
+  /** Owner-assigned deployment tier; null until labelled. */
+  environment: ConnectionEnvironment | null;
+  /** Scheduled Sentry scan cadence in hours; null = off. */
+  sentryScanIntervalHours: number | null;
+  sentryLastAutoScanAt: string | null;
 }
 
 export function toSummary(row: ConnectionRow, myRole?: ConnectionRole): ConnectionSummary {
+  const effectiveRole = myRole ?? "owner";
   return {
     id: row.id,
     name: row.name,
@@ -31,9 +42,51 @@ export function toSummary(row: ConnectionRow, myRole?: ConnectionRole): Connecti
     createdAt: row.createdAt.toISOString(),
     lastUsedAt: row.lastUsedAt.toISOString(),
     hasPostgresUrl: row.encryptedPostgresUrl !== null && row.encryptedPostgresUrl !== undefined,
-    alertWebhookUrl: row.alertWebhookUrl ?? null,
-    myRole,
+    // Webhook URLs commonly embed bearer tokens in their path. Only the
+    // owner settings surface receives the plaintext value.
+    alertWebhookUrl: effectiveRole === "owner" ? row.alertWebhookUrl ?? null : null,
+    hasAlertWebhook: !!row.alertWebhookUrl,
+    myRole: effectiveRole,
+    environment: row.environment ?? null,
+    sentryScanIntervalHours: row.sentryScanIntervalHours ?? null,
+    sentryLastAutoScanAt: row.sentryLastAutoScanAt?.toISOString() ?? null,
   };
+}
+
+export interface ConnectionMetaPatch {
+  name?: string;
+  environment?: ConnectionEnvironment | null;
+  sentryScanIntervalHours?: number | null;
+}
+
+/**
+ * Owner-only metadata update (name, environment label, scheduled Sentry
+ * cadence). Returns null when the row isn't owned by `userId`.
+ */
+export async function updateConnectionMeta(
+  userId: string,
+  id: string,
+  patch: ConnectionMetaPatch,
+): Promise<ConnectionSummary | null> {
+  const set: Partial<typeof connections.$inferInsert> = {};
+  if (patch.name !== undefined) set.name = patch.name;
+  if (patch.environment !== undefined) set.environment = patch.environment;
+  if (patch.sentryScanIntervalHours !== undefined) {
+    set.sentryScanIntervalHours = patch.sentryScanIntervalHours;
+    // Restart the schedule from "now" so a newly enabled cadence doesn't
+    // fire immediately off a stale timestamp.
+    set.sentryLastAutoScanAt = patch.sentryScanIntervalHours ? new Date() : null;
+  }
+  if (Object.keys(set).length === 0) {
+    const access = await getConnectionAccess(userId, id);
+    return access && access.role === "owner" ? toSummary(access.conn, "owner") : null;
+  }
+  const [row] = await db
+    .update(connections)
+    .set(set)
+    .where(and(eq(connections.id, id), eq(connections.userId, userId)))
+    .returning();
+  return row ? toSummary(row, "owner") : null;
 }
 
 /**
@@ -103,8 +156,9 @@ export async function getConnectionAccess(
 }
 
 /**
- * Backwards-compatible accessor used by every protected route. Returns
- * the connection if the caller is the owner OR any member of it.
+ * Backwards-compatible accessor retained for scheduled jobs. Interactive
+ * routes should use getConnectionAccess or getConnectionForRole so their
+ * permission requirement stays explicit.
  */
 export async function getConnectionForUser(userId: string, id: string): Promise<ConnectionRow | null> {
   const access = await getConnectionAccess(userId, id);
@@ -112,6 +166,11 @@ export async function getConnectionForUser(userId: string, id: string): Promise<
 }
 
 const ROLE_RANK: Record<ConnectionRole, number> = { viewer: 0, editor: 1, owner: 2 };
+
+/** True when `role` is allowed to perform an operation requiring `minimum`. */
+export function roleAtLeast(role: ConnectionRole, minimum: ConnectionRole): boolean {
+  return ROLE_RANK[role] >= ROLE_RANK[minimum];
+}
 
 /** Asserts the caller has at least the given role; otherwise returns null. */
 export async function requireRole(
@@ -121,8 +180,21 @@ export async function requireRole(
 ): Promise<{ conn: ConnectionRow; role: ConnectionRole } | null> {
   const access = await getConnectionAccess(userId, id);
   if (!access) return null;
-  if (ROLE_RANK[access.role] < ROLE_RANK[minRole]) return null;
+  if (!roleAtLeast(access.role, minRole)) return null;
   return access;
+}
+
+/**
+ * Route-friendly role accessor. It preserves the old connection-row return
+ * shape while making the minimum permission explicit at every call site.
+ */
+export async function getConnectionForRole(
+  userId: string,
+  id: string,
+  minimum: ConnectionRole,
+): Promise<ConnectionRow | null> {
+  const access = await requireRole(userId, id, minimum);
+  return access?.conn ?? null;
 }
 
 interface CreateInput {
@@ -133,6 +205,7 @@ interface CreateInput {
   key: string;
   /** Optional direct Postgres URL, unlocks RLS debugger, SQL playground, sessions inspector. */
   postgresUrl?: string | null;
+  environment?: ConnectionEnvironment | null;
 }
 
 export async function createConnection(input: CreateInput): Promise<ConnectionSummary> {
@@ -152,18 +225,10 @@ export async function createConnection(input: CreateInput): Promise<ConnectionSu
       role,
       encryptedPostgresUrl,
       encryptedKey,
+      environment: input.environment ?? null,
     })
     .returning();
   return toSummary(row!);
-}
-
-export async function renameConnection(userId: string, id: string, name: string): Promise<ConnectionSummary | null> {
-  const [row] = await db
-    .update(connections)
-    .set({ name })
-    .where(and(eq(connections.id, id), eq(connections.userId, userId)))
-    .returning();
-  return row ? toSummary(row) : null;
 }
 
 export async function deleteConnection(userId: string, id: string): Promise<boolean> {

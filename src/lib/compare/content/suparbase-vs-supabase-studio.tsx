@@ -18,7 +18,7 @@ export const meta = {
     { context: "RLS policy simulation against your real schema", winner: "Suparbase" },
   ],
   matrix: [
-    { feature: "Hosting", left: "Self-host (Coolify / Docker) or hosted", right: "Bundled with every Supabase project" },
+    { feature: "Hosting", left: "Hosted SaaS; dedicated single-tenant deployment by agreement", right: "Bundled with every Supabase project" },
     { feature: "Project management (create, billing, regions)", left: "Out of scope", right: "Native" },
     { feature: "Table editor", left: "Yes (PostgREST proxy)", right: "Yes" },
     { feature: "SQL editor", left: "Yes, read-only by default, statement timeout, audit log", right: "Yes" },

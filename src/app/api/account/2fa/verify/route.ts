@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(MFA_COOKIE_NAME, signMfaCookie(userId), {
+  cookieStore.set(MFA_COOKIE_NAME, signMfaCookie(userId, session.user.authAt ?? 0), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

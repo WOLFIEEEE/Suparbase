@@ -180,6 +180,7 @@ async function parse<T>(res: Response): Promise<T> {
 
 export function StorageBrowser({ connection }: { connection: ConnectionSummary }) {
   const connectionId = connection.id;
+  const canEdit = connection.myRole !== "viewer";
   const qc = useQueryClient();
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -213,7 +214,7 @@ export function StorageBrowser({ connection }: { connection: ConnectionSummary }
         isLoading={bucketsQuery.isLoading}
         selected={selectedBucket}
         onSelect={setSelectedBucket}
-        onNew={() => setCreateOpen(true)}
+        onNew={canEdit ? () => setCreateOpen(true) : undefined}
         onRefresh={() => bucketsQuery.refetch()}
       />
       <div className="min-w-0">
@@ -226,10 +227,11 @@ export function StorageBrowser({ connection }: { connection: ConnectionSummary }
             }
           />
         ) : !bucketsQuery.isLoading && bucketsQuery.data?.length === 0 ? (
-          <EmptyBuckets onNew={() => setCreateOpen(true)} />
+          <EmptyBuckets onNew={canEdit ? () => setCreateOpen(true) : undefined} />
         ) : selectedBucket ? (
           <ObjectBrowser
             connection={connection}
+            canEdit={canEdit}
             bucket={bucketsQuery.data?.find((b) => b.name === selectedBucket) ?? null}
             onDeleteBucket={() => {
               setSelectedBucket(null);
@@ -240,12 +242,14 @@ export function StorageBrowser({ connection }: { connection: ConnectionSummary }
           <p className="text-sm text-fg-muted">Pick a bucket to browse.</p>
         )}
       </div>
-      <CreateBucketDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={(v) => createMut.mutate(v)}
-        pending={createMut.isPending}
-      />
+      {canEdit && (
+        <CreateBucketDialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(v) => createMut.mutate(v)}
+          pending={createMut.isPending}
+        />
+      )}
     </div>
   );
 }
@@ -266,7 +270,7 @@ function BucketList({
   isLoading: boolean;
   selected: string | null;
   onSelect: (name: string) => void;
-  onNew: () => void;
+  onNew?: () => void;
   onRefresh: () => void;
 }) {
   return (
@@ -282,9 +286,11 @@ function BucketList({
           >
             <RefreshCw className="h-3 w-3" aria-hidden />
           </button>
-          <Button size="sm" variant="ghost" onClick={onNew}>
-            <Plus className="h-3 w-3" aria-hidden /> New
-          </Button>
+          {onNew && (
+            <Button size="sm" variant="ghost" onClick={onNew}>
+              <Plus className="h-3 w-3" aria-hidden /> New
+            </Button>
+          )}
         </div>
       </header>
       {isLoading ? (
@@ -329,7 +335,7 @@ function BucketList({
   );
 }
 
-function EmptyBuckets({ onNew }: { onNew: () => void }) {
+function EmptyBuckets({ onNew }: { onNew?: () => void }) {
   return (
     <div className="surface rounded-md px-6 py-12 text-center">
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-bg-sunken">
@@ -340,9 +346,11 @@ function EmptyBuckets({ onNew }: { onNew: () => void }) {
         Create your first storage bucket. Buckets are containers for files and can be
         public (anyone with the URL can read) or private (signed URLs only).
       </p>
-      <Button onClick={onNew} className="mt-4">
-        <Plus className="h-3.5 w-3.5" aria-hidden /> New bucket
-      </Button>
+      {onNew && (
+        <Button onClick={onNew} className="mt-4">
+          <Plus className="h-3.5 w-3.5" aria-hidden /> New bucket
+        </Button>
+      )}
     </div>
   );
 }
@@ -355,9 +363,10 @@ interface ObjectBrowserProps {
   connection: ConnectionSummary;
   bucket: Bucket | null;
   onDeleteBucket: () => void;
+  canEdit: boolean;
 }
 
-function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProps) {
+function ObjectBrowser({ connection, bucket, onDeleteBucket, canEdit }: ObjectBrowserProps) {
   const connectionId = connection.id;
   const qc = useQueryClient();
   const [prefix, setPrefix] = useState("");
@@ -426,7 +435,7 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
 
   const onDrop: React.DragEventHandler = (e) => {
     e.preventDefault();
-    if (e.dataTransfer?.files?.length) {
+    if (canEdit && e.dataTransfer?.files?.length) {
       uploadMut.mutate(Array.from(e.dataTransfer.files));
     }
   };
@@ -436,7 +445,7 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
   return (
     <section
       className="surface rounded-md p-4"
-      onDragOver={(e) => e.preventDefault()}
+      onDragOver={(e) => canEdit && e.preventDefault()}
       onDrop={onDrop}
     >
       <header className="space-y-3 border-b hairline pb-3">
@@ -469,23 +478,27 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
                 aria-hidden
               />
             </Button>
-            <Button size="sm" variant="secondary" onClick={onUploadClick} disabled={uploadMut.isPending}>
-              {uploadMut.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-              ) : (
-                <Upload className="h-3 w-3" aria-hidden />
-              )}
-              Upload
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => confirmDeleteBucket.ask(() => deleteBucketMut.mutate(true))}
-              disabled={deleteBucketMut.isPending}
-              aria-label="Delete bucket"
-            >
-              <Trash2 className="h-3 w-3 text-danger" aria-hidden />
-            </Button>
+            {canEdit && (
+              <>
+                <Button size="sm" variant="secondary" onClick={onUploadClick} disabled={uploadMut.isPending}>
+                  {uploadMut.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                  ) : (
+                    <Upload className="h-3 w-3" aria-hidden />
+                  )}
+                  Upload
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => confirmDeleteBucket.ask(() => deleteBucketMut.mutate(true))}
+                  disabled={deleteBucketMut.isPending}
+                  aria-label="Delete bucket"
+                >
+                  <Trash2 className="h-3 w-3 text-danger" aria-hidden />
+                </Button>
+              </>
+            )}
           </div>
           <input
             ref={fileInputRef}
@@ -525,7 +538,10 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
           ))}
         </div>
       ) : listQuery.data && listQuery.data.objects.length === 0 ? (
-        <EmptyFolder onUpload={onUploadClick} pending={uploadMut.isPending} />
+        <EmptyFolder
+          onUpload={canEdit ? onUploadClick : undefined}
+          pending={uploadMut.isPending}
+        />
       ) : (
         <ObjectTable
           connection={connection}
@@ -543,12 +559,13 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
             setPrefix(prefix ? `${prefix}/${name}` : name);
             resetState();
           }}
+          allowSelection={canEdit}
         />
       )}
 
       <footer className="mt-4 flex items-center justify-between gap-2 text-xs text-fg-muted">
         <div className="flex items-center gap-2">
-          {selected.size > 0 && (
+          {canEdit && selected.size > 0 && (
             <>
               <span className="text-fg">{selected.size} selected</span>
               <Button
@@ -624,19 +641,23 @@ function ObjectBrowser({ connection, bucket, onDeleteBucket }: ObjectBrowserProp
   );
 }
 
-function EmptyFolder({ onUpload, pending }: { onUpload: () => void; pending: boolean }) {
+function EmptyFolder({ onUpload, pending }: { onUpload?: () => void; pending: boolean }) {
   return (
     <div className="rounded-md border border-dashed hairline px-6 py-12 text-center text-sm text-fg-muted">
       <FolderOpen className="mx-auto h-5 w-5 text-fg-faint" aria-hidden />
-      <p className="mt-2">Nothing in this folder yet: drag a file here, or use Upload.</p>
-      <Button onClick={onUpload} variant="secondary" size="sm" className="mt-3" disabled={pending}>
-        {pending ? (
-          <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-        ) : (
-          <Upload className="h-3 w-3" aria-hidden />
-        )}
-        Upload a file
-      </Button>
+      <p className="mt-2">
+        {onUpload ? "Nothing in this folder yet: drag a file here, or use Upload." : "Nothing in this folder yet."}
+      </p>
+      {onUpload && (
+        <Button onClick={onUpload} variant="secondary" size="sm" className="mt-3" disabled={pending}>
+          {pending ? (
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+          ) : (
+            <Upload className="h-3 w-3" aria-hidden />
+          )}
+          Upload a file
+        </Button>
+      )}
     </div>
   );
 }
@@ -685,6 +706,7 @@ interface ObjectTableProps {
   selected: Set<string>;
   onToggle: (name: string) => void;
   onOpenFolder: (name: string) => void;
+  allowSelection: boolean;
 }
 
 function ObjectTable({
@@ -695,6 +717,7 @@ function ObjectTable({
   selected,
   onToggle,
   onOpenFolder,
+  allowSelection,
 }: ObjectTableProps) {
   return (
     <ul className="divide-y hairline pt-2">
@@ -702,7 +725,7 @@ function ObjectTable({
         const fullPath = prefix ? `${prefix}/${o.name}` : o.name;
         return (
           <li key={o.name} className="flex items-center gap-3 px-2 py-2 text-sm">
-            {!o.isFolder ? (
+            {!o.isFolder && allowSelection ? (
               <input
                 type="checkbox"
                 className="h-3.5 w-3.5 cursor-pointer accent-accent"

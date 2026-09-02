@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, isGithubEnabled } from "@/server/auth";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SignUpForm } from "@/components/auth/SignUpForm";
+
+export const metadata: Metadata = {
+  title: "Create account · Suparbase",
+  robots: { index: false, follow: false },
+};
 
 interface SignUpPageProps {
   searchParams: Promise<{ next?: string }>;

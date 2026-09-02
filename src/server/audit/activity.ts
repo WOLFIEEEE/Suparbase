@@ -32,12 +32,11 @@ export interface ActivityFilter {
  * Keyset-paginated on createdAt for stable "load more".
  */
 export async function fetchActivity(
-  userId: string,
   connectionId: string,
   filter: ActivityFilter = {},
 ): Promise<ActivityEntry[]> {
   const limit = Math.min(Math.max(Math.trunc(filter.limit ?? 50) || 50, 1), 200);
-  const conds = [eq(auditLog.userId, userId), eq(auditLog.connectionId, connectionId)];
+  const conds = [eq(auditLog.connectionId, connectionId)];
   if (filter.verb) conds.push(eq(auditLog.verb, filter.verb));
   if (filter.table) conds.push(eq(auditLog.tableName, filter.table));
   if (filter.before) {

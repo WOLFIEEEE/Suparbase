@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { redact } from "@/lib/redact";
 import { auth } from "@/server/auth";
-import { getConnectionAccess, getConnectionForUser, requireRole } from "@/server/connections/repo";
+import { getConnectionAccess, getConnectionForRole, requireRole } from "@/server/connections/repo";
 import { checkAiRate } from "@/server/proxy/ratelimit";
 import { createRun, getProfile, getRun, listRuns, updateRun } from "@/server/sync/repo";
 import { startRunSchema } from "@/server/sync/validate";
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
 
-  const access = await requireRole(session.user.id, id, "editor");
+  const access = await requireRole(session.user.id, id, "owner");
   if (!access) {
     return NextResponse.json(
       { category: "forbidden", message: "Editor or owner role required to run a sync." },
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     );
   }
 
-  const base = await getConnectionForUser(session.user.id, profile.baseConnectionId);
+  const base = await getConnectionForRole(session.user.id, profile.baseConnectionId, "viewer");
   if (!base) {
     return NextResponse.json(
       { category: "validation", message: "Base connection not found or not accessible." },

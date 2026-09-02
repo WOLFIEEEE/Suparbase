@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { bulkUpdate } from "@/server/proxy/bulk";
 import { checkBulkRate } from "@/server/proxy/ratelimit";
 import { introspectConnection } from "@/server/schema-introspect";
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
 
   const { id, name } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "editor");
   if (!conn) {
     return NextResponse.json(
       { category: "not_found", message: "Connection not found." },
@@ -117,6 +117,7 @@ export async function POST(req: NextRequest, ctx: Params) {
       primaryKey: primaryKeyCols,
       primaryKeys,
       patch,
+      userAgent: req.headers.get("user-agent"),
     });
     return NextResponse.json({ updated: result.updated }, { status: 200, headers: HEADERS });
   } catch (e) {

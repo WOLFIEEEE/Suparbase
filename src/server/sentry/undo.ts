@@ -44,7 +44,6 @@ export interface AuditRowMinimal {
 }
 
 export async function undoSession(
-  userId: string,
   conn: ConnectionRow,
   sessionId: string,
 ): Promise<UndoResult> {
@@ -54,7 +53,7 @@ export async function undoSession(
       "Session undo needs the Direct Postgres URL, set it on connection settings.",
     );
   }
-  const session = await getSession(userId, conn.id, sessionId);
+  const session = await getSession(conn.id, sessionId);
   if (!session) throw new AppError("not_found", "Session not found.");
   if (session.status === "undone") {
     throw new AppError("validation", "This session has already been undone.");
@@ -73,7 +72,6 @@ export async function undoSession(
     .from(auditLog)
     .where(
       and(
-        eq(auditLog.userId, userId),
         eq(auditLog.connectionId, conn.id),
         eq(auditLog.sessionId, sessionId),
       ),

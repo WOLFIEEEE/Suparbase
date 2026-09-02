@@ -41,7 +41,7 @@ export async function PATCH(req: NextRequest, ctx: Params) {
     );
   }
   try {
-    const f = await setFindingStatus(session.user.id, id, findingId, parsed.data.status);
+    const f = await setFindingStatus(id, findingId, parsed.data.status);
     if (!f) return NextResponse.json({ category: "not_found" }, { status: 404 });
     return NextResponse.json(f);
   } catch (e) {

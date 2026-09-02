@@ -192,6 +192,11 @@ calls:
       webhook when the match count grows. Match the cron cadence to the
       smallest watch `intervalMinutes` you expect to use (e.g. every
       5 min). Both routes are fail-closed without `CRON_SECRET`.
+- [ ] `POST /api/cron/sentry` (v3.20) — re-runs the Sentry probe on every
+      connection whose owner picked a cadence in connection settings
+      (6h / 12h / daily / 3 days / weekly). Hourly is plenty; the
+      per-connection interval gates actual scans. New criticals hit the
+      alert webhook and the in-app inbox exactly like a manual scan.
 
 ### 2.4 Rate limits
 

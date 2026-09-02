@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { getConnectionAccess, toSummary } from "@/server/connections/repo";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { SqlPlayground } from "@/components/sql/SqlPlayground";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,9 @@ export default async function SqlPage({ params }: Props) {
   const session = await auth();
   if (!session?.user) notFound();
   const { id } = await params;
-  const row = await getConnectionForUser(session.user.id, id);
-  if (!row) notFound();
-  const connection = toSummary(row);
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access) notFound();
+  const connection = toSummary(access.conn, access.role);
 
   if (!connection.hasPostgresUrl) {
     return (
@@ -44,9 +44,11 @@ export default async function SqlPage({ params }: Props) {
             stores your PostgREST key, and only the RLS and SQL pages ever read
             it.
           </p>
-          <Button asChild>
-            <Link href={`/c/${connection.id}/rls`}>Configure Postgres URL →</Link>
-          </Button>
+          {access.role === "owner" && (
+            <Button asChild>
+              <Link href={`/c/${connection.id}/rls`}>Configure Postgres URL →</Link>
+            </Button>
+          )}
         </section>
       </div>
     );
@@ -67,7 +69,7 @@ export default async function SqlPage({ params }: Props) {
           </span>
         }
       />
-      <SqlPlayground connectionId={connection.id} />
+      <SqlPlayground connectionId={connection.id} canWrite={access.role !== "viewer"} />
     </div>
   );
 }

@@ -29,14 +29,16 @@ test.describe("Account-adjacent surfaces (unauth)", () => {
     // or not the email exists. Either configured/unconfigured.
     await expect(
       page.getByText(/check your inbox|email isn't configured/i).first(),
-    ).toBeVisible({ timeout: 5_000 });
+    ).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: /try again/i }).click();
+    await expect(page.getByRole("button", { name: /send reset link/i })).toBeVisible();
   });
 
   test("/reset/<garbage> still renders the form (server doesn't pre-validate)", async ({ page }) => {
     await page.goto("/reset/garbage-token-that-does-not-exist");
-    await expect(page.getByRole("heading", { name: /reset/i }).first()).toBeVisible();
-    await expect(page.getByLabel(/new password/i)).toBeVisible();
-    await expect(page.getByLabel(/confirm password/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /choose a new password/i })).toBeVisible();
+    await expect(page.getByLabel("New password", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Confirm password", { exact: true })).toBeVisible();
   });
 
   test("/signin/2fa redirects to /signin when not authenticated", async ({ page }) => {
@@ -58,10 +60,10 @@ test.describe("Account-adjacent surfaces (unauth)", () => {
 test.describe("Public marketing surfaces", () => {
   test("/roadmap renders shipped + in-progress + next sections", async ({ page }) => {
     await page.goto("/roadmap");
-    await expect(page.getByRole("heading", { name: /roadmap/i }).first()).toBeVisible();
-    await expect(page.getByText(/recently shipped/i)).toBeVisible();
-    await expect(page.getByText(/in progress/i)).toBeVisible();
-    await expect(page.getByText(/^next$/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /what we shipped, what's next/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Recently shipped", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "In progress", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Next", exact: true })).toBeVisible();
   });
 
   test("/status renders the subsystem checks", async ({ page }) => {

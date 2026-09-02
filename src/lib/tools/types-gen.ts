@@ -1,4 +1,4 @@
-import { parseDdl, type ParsedColumn } from "./ddl";
+import { parseDdl, type ParsedColumn, type ParsedTable } from "./ddl";
 
 /**
  * Turn Postgres DDL into TypeScript interfaces or Zod schemas for the free
@@ -99,20 +99,32 @@ function zodProperty(col: ParsedColumn): string {
 
 export function generateTypes(input: GenerateTypesInput): GenerateTypesResult {
   const parsed = parseDdl(input.ddl);
-  const tables = parsed.tables.filter((t) => t.columns.length > 0);
+  return generateTypesFromTables(parsed.tables, input.target, parsed.warnings);
+}
+
+/**
+ * Same generator, fed with already-parsed tables. The workspace Schema page
+ * uses this with the live introspected schema (via `schemaToParsed`).
+ */
+export function generateTypesFromTables(
+  allTables: ParsedTable[],
+  target: TypeTarget,
+  warnings: string[] = [],
+): GenerateTypesResult {
+  const tables = allTables.filter((t) => t.columns.length > 0);
 
   if (tables.length === 0) {
-    return { code: "", tableCount: 0, warnings: parsed.warnings };
+    return { code: "", tableCount: 0, warnings };
   }
 
-  if (input.target === "zod") {
+  if (target === "zod") {
     const blocks = tables.map((t) => {
       const name = pascalCase(t.name);
       const lines = t.columns.map(zodProperty).join("\n");
       return `export const ${name.charAt(0).toLowerCase() + name.slice(1)}Schema = z.object({\n${lines}\n});\nexport type ${name} = z.infer<typeof ${name.charAt(0).toLowerCase() + name.slice(1)}Schema>;`;
     });
     const code = `import { z } from "zod";\n\n${blocks.join("\n\n")}\n`;
-    return { code, tableCount: tables.length, warnings: parsed.warnings };
+    return { code, tableCount: tables.length, warnings };
   }
 
   const blocks = tables.map((t) => {
@@ -121,5 +133,5 @@ export function generateTypes(input: GenerateTypesInput): GenerateTypesResult {
     return `export interface ${name} {\n${lines}\n}`;
   });
   const code = `${blocks.join("\n\n")}\n`;
-  return { code, tableCount: tables.length, warnings: parsed.warnings };
+  return { code, tableCount: tables.length, warnings };
 }

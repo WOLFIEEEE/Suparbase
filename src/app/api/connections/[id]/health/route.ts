@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { checkConnectionHealth } from "@/server/connections/health";
 import { checkReadRate } from "@/server/proxy/ratelimit";
 
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
 
   const limit = checkReadRate(session.user.id);
@@ -31,6 +31,6 @@ export async function GET(_req: NextRequest, ctx: Params) {
     );
   }
 
-  const health = await checkConnectionHealth(session.user.id, conn);
+  const health = await checkConnectionHealth(conn);
   return NextResponse.json(health);
 }

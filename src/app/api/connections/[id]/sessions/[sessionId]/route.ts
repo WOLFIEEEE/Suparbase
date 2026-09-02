@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
   const conn = access.conn;
 
-  const s = await getSession(session.user.id, id, sessionId);
+  const s = await getSession(id, sessionId);
   if (!s) return NextResponse.json({ category: "not_found" }, { status: 404 });
 
   const writes = await db
@@ -38,7 +38,6 @@ export async function GET(_req: NextRequest, ctx: Params) {
     .from(auditLog)
     .where(
       and(
-        eq(auditLog.userId, session.user.id),
         eq(auditLog.connectionId, id),
         eq(auditLog.sessionId, sessionId),
       ),

@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { Activity, FileSearch, LayoutDashboard, Mail, ShieldCheck, Users } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { getAdminSession } from "@/server/admin/guard";
 import { AppHeader } from "@/components/workspace/AppHeader";
 import { AppFooter } from "@/components/workspace/AppFooter";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 /**
- * /admin shell. Renders only for emails in SUPARBASE_ADMIN_EMAILS;
+ * /admin shell. Renders only for MFA-enrolled emails in SUPARBASE_ADMIN_EMAILS;
  * everything else 404s - we don't acknowledge that an admin surface
  * exists.
  */
@@ -18,40 +18,23 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen flex-col bg-bg text-fg">
       <AppHeader />
       <main id="main" className="flex-1">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 px-6 py-10 md:grid-cols-[14rem_1fr]">
-          <aside className="md:sticky md:top-20 md:self-start">
-            <div className="mb-4 flex items-center gap-2 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs">
+        <div className="mx-auto grid w-full max-w-[100rem] grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-8">
+          <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
+            <div className="mb-3 flex min-h-10 items-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 py-2 text-xs">
               <ShieldCheck className="h-3.5 w-3.5 text-accent" aria-hidden />
-              <span className="text-accent">Admin · {admin.email}</span>
+              <span className="min-w-0 truncate text-accent" title={admin.email}>
+                Operator · {admin.email}
+              </span>
             </div>
-            <nav aria-label="Admin sections">
-              <ul className="space-y-1">
-                <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" />
-                <NavItem href="/admin/users" icon={Users} label="Users" />
-                <NavItem href="/admin/audit" icon={FileSearch} label="Audit search" />
-                <NavItem href="/admin/billing" icon={Activity} label="Webhook events" />
-                <NavItem href="/admin/email" icon={Mail} label="Email" />
-              </ul>
-            </nav>
+            <AdminNav />
+            <p className="mt-4 hidden border-t hairline px-3 pt-4 text-[11px] leading-5 text-fg-faint lg:block">
+              Customer data is visible here for support and incident response. Use the minimum access needed.
+            </p>
           </aside>
-          <div className="min-w-0">{children}</div>
+          <div className="min-w-0 pb-4">{children}</div>
         </div>
       </main>
       <AppFooter width="bare" />
     </div>
-  );
-}
-
-function NavItem({ href, icon: Icon, label }: { href: string; icon: typeof Users; label: string }) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
-      >
-        <Icon className="h-3.5 w-3.5 text-fg-faint" aria-hidden />
-        {label}
-      </Link>
-    </li>
   );
 }

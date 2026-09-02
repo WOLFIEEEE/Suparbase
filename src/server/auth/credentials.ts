@@ -31,7 +31,7 @@ export const credentialsProvider = Credentials({
       .limit(1);
     const row = rows[0];
     const valid = await verifyPassword(password, row?.passwordHash ?? null);
-    if (!row || !valid) return null;
+    if (!row || !valid || !row.emailVerified) return null;
 
     // If the account is scheduled for deletion AND the grace period
     // has already elapsed, refuse sign-in. The retention cron will

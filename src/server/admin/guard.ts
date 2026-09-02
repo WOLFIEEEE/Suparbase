@@ -32,10 +32,9 @@ export interface AdminSession {
 }
 
 /**
- * Returns the authenticated admin session, or null when the caller
- * isn't on the allowlist (or isn't signed in at all). Routes/pages
- * should treat null the same as "not authenticated" - typically
- * `notFound()` (don't acknowledge the surface).
+ * Returns an authenticated, MFA-enrolled admin session. The allowlist is
+ * necessary but not sufficient: privileged operators must also enable TOTP,
+ * while middleware verifies the current login's second-factor cookie.
  */
 export async function getAdminSession(): Promise<AdminSession | null> {
   // Dynamic import so test files that exercise the pure CSV-parsing
@@ -47,6 +46,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   const userId = session?.user?.id ?? null;
   if (!userId || !email || !session) return null;
   if (!isAdminEmail(email)) return null;
+  if (session.user.requires2FA !== true) return null;
   return {
     userId,
     email,

@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { ColumnInsights } from "@/components/workspace/ColumnInsights";
+import { SchemaTabs } from "@/components/workspace/SchemaTabs";
 import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import {
   ARCHETYPE_HINT,
@@ -101,6 +102,7 @@ export function SchemaView() {
               : ":"}
           </span>
         }
+        tabs={<SchemaTabs connectionId={connectionId} active="columns" />}
       />
 
       <div className="relative max-w-md">

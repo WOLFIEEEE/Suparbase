@@ -9,7 +9,7 @@ export const meta = {
     "Solo founders shipping side projects use Suparbase as the admin they would have built. Zero ops, encrypted credentials, AI-assisted writes.",
   audience: "Indie hackers and solo founders",
   bullets: [
-    "Five minutes to first connection, free forever to self-host",
+    "Five minutes to first connection on the free hosted tier",
     "AI chat for the SQL you don't want to write",
     "Inline cell editing on the row detail page",
     "Audit log so you can answer support tickets accurately",
@@ -102,7 +102,7 @@ export function Page() {
 
       <CTABand
         title="Skip the admin build."
-        body="Free if you self-host. Hosted's free for 14 days, no credit card."
+        body="Start free for solo work. The Hosted team plan includes a seven-day trial."
         primary={{ href: "/signup", label: "Start free" }}
         secondary={{ href: "/pricing", label: "See pricing" }}
       />

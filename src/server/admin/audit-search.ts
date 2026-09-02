@@ -33,6 +33,8 @@ export interface AuditSearchParams {
   until?: Date;
   /** Defaults to 200; capped at 1000. */
   limit?: number;
+  /** Pagination offset; defaults to 0. */
+  offset?: number;
 }
 
 export interface AuditSearchRow extends AuditRow {
@@ -42,6 +44,7 @@ export interface AuditSearchRow extends AuditRow {
 
 export async function searchAuditLog(params: AuditSearchParams): Promise<AuditSearchRow[]> {
   const limit = Math.min(params.limit ?? 200, 1000);
+  const offset = Math.max(params.offset ?? 0, 0);
   const conditions = [];
   if (params.userId) conditions.push(eq(auditLog.userId, params.userId));
   if (params.connectionId) conditions.push(eq(auditLog.connectionId, params.connectionId));
@@ -76,7 +79,8 @@ export async function searchAuditLog(params: AuditSearchParams): Promise<AuditSe
     .leftJoin(connections, eq(connections.id, auditLog.connectionId))
     .where(where as ReturnType<typeof and>)
     .orderBy(desc(auditLog.createdAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   return rows;
 }

@@ -3,6 +3,8 @@ import type { ConnectionRow } from "@/server/schema/connections";
 import { decryptKey } from "@/server/crypto/vault";
 import { auditWrite } from "@/server/audit/log";
 import { checkWriteRate } from "@/server/proxy/ratelimit";
+import { introspectConnection } from "@/server/schema-introspect";
+import { attachToSession } from "@/server/sentry/sessions";
 
 const ALLOWED_OPS = new Set(["eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "is", "in"]);
 
@@ -65,6 +67,7 @@ interface Args {
   userId: string;
   conn: ConnectionRow;
   proposal: ExecuteProposal;
+  userAgent?: string | null;
 }
 
 /**
@@ -73,7 +76,7 @@ interface Args {
  * directly with the decrypted key, and record an audit_log row with the same
  * before/after snapshot used by the row-history panel.
  */
-export async function executeProposal({ userId, conn, proposal }: Args): Promise<ExecuteResult> {
+export async function executeProposal({ userId, conn, proposal, userAgent }: Args): Promise<ExecuteResult> {
   const limit = checkWriteRate(userId);
   if (!limit.allowed) {
     throw new ProposalExecutionError("rate_limited", "Too many writes: try again shortly.", 429);
@@ -92,6 +95,11 @@ export async function executeProposal({ userId, conn, proposal }: Args): Promise
     Prefer: "return=representation",
     "X-Client-Info": "suparbase-ai-execute/1.2",
   };
+  const schema = await introspectConnection(conn);
+  const table = schema.tables.find((candidate) => candidate.name === proposal.table);
+  if (!table || table.kind !== "table") {
+    throw new ProposalExecutionError("validation", "Proposal target is not a writable table.");
+  }
 
   if (proposal.kind === "proposed_insert") {
     if (!proposal.values || typeof proposal.values !== "object") {
@@ -103,7 +111,14 @@ export async function executeProposal({ userId, conn, proposal }: Args): Promise
       headers: baseHeaders,
       body: JSON.stringify(proposal.values),
     });
-    return finishWrite(res, "insert", { userId, conn, table: proposal.table });
+    return finishWrite(res, "insert", {
+      userId,
+      conn,
+      table: proposal.table,
+      primaryKey: table.primaryKey,
+      beforeRows: [],
+      userAgent,
+    });
   }
 
   if (proposal.kind === "proposed_update") {
@@ -115,12 +130,20 @@ export async function executeProposal({ userId, conn, proposal }: Args): Promise
       throw new ProposalExecutionError("validation", "Updates require at least one filter.");
     }
     const url = `${conn.url}/rest/v1/${encodeURIComponent(proposal.table)}?${filterParams.toString()}`;
+    const beforeRows = await selectBeforeRows(url, baseHeaders);
     const res = await fetch(url, {
       method: "PATCH",
       headers: baseHeaders,
       body: JSON.stringify(proposal.patch),
     });
-    return finishWrite(res, "update", { userId, conn, table: proposal.table });
+    return finishWrite(res, "update", {
+      userId,
+      conn,
+      table: proposal.table,
+      primaryKey: table.primaryKey,
+      beforeRows,
+      userAgent,
+    });
   }
 
   if (proposal.kind === "proposed_delete") {
@@ -129,11 +152,19 @@ export async function executeProposal({ userId, conn, proposal }: Args): Promise
       throw new ProposalExecutionError("validation", "Deletes require at least one filter.");
     }
     const url = `${conn.url}/rest/v1/${encodeURIComponent(proposal.table)}?${filterParams.toString()}`;
+    const beforeRows = await selectBeforeRows(url, baseHeaders);
     const res = await fetch(url, {
       method: "DELETE",
       headers: baseHeaders,
     });
-    return finishWrite(res, "delete", { userId, conn, table: proposal.table });
+    return finishWrite(res, "delete", {
+      userId,
+      conn,
+      table: proposal.table,
+      primaryKey: table.primaryKey,
+      beforeRows,
+      userAgent,
+    });
   }
 
   throw new ProposalExecutionError("validation", `Unknown proposal kind: ${proposal.kind}.`);
@@ -142,7 +173,14 @@ export async function executeProposal({ userId, conn, proposal }: Args): Promise
 async function finishWrite(
   res: Response,
   verb: "insert" | "update" | "delete",
-  meta: { userId: string; conn: ConnectionRow; table: string },
+  meta: {
+    userId: string;
+    conn: ConnectionRow;
+    table: string;
+    primaryKey: string[];
+    beforeRows: Array<Record<string, unknown>>;
+    userAgent?: string | null;
+  },
 ): Promise<ExecuteResult> {
   if (!res.ok) {
     let detail = "";
@@ -162,26 +200,82 @@ async function finishWrite(
   }
   const applied = Array.isArray(rows) ? rows.length : 0;
 
-  void (async () => {
-    try {
-      for (const r of rows.slice(0, 10)) {
-        const row = (r as Record<string, unknown>) ?? null;
-        await auditWrite({
-          userId: meta.userId,
-          connectionId: meta.conn.id,
-          schemaName: "public",
-          tableName: meta.table,
-          primaryKey: row,
-          verb,
-          httpStatus: res.status,
-          beforeRow: verb === "delete" ? row : null,
-          afterRow: verb !== "delete" ? row : null,
-        });
-      }
-    } catch {
-      /* audit failure should never break the response */
-    }
-  })();
+  const session = await attachToSession({
+    userId: meta.userId,
+    connectionId: meta.conn.id,
+    userAgent: meta.userAgent ?? null,
+    schemaName: "public",
+    tableName: meta.table,
+  });
+  const resultRows = rows.filter(
+    (row): row is Record<string, unknown> => !!row && typeof row === "object" && !Array.isArray(row),
+  );
+  const beforeByKey = new Map(
+    meta.beforeRows.map((row) => [stableKey(pickPrimaryKey(row, meta.primaryKey)), row]),
+  );
+  await Promise.all(
+    resultRows.map((row) => {
+      const primaryKey = pickPrimaryKey(row, meta.primaryKey);
+      const beforeRow = verb === "insert"
+        ? null
+        : beforeByKey.get(stableKey(primaryKey)) ?? (verb === "delete" ? row : null);
+      return auditWrite({
+        userId: meta.userId,
+        connectionId: meta.conn.id,
+        schemaName: "public",
+        tableName: meta.table,
+        primaryKey,
+        verb,
+        httpStatus: res.status,
+        beforeRow,
+        afterRow: verb === "delete" ? null : row,
+        sessionId: session?.id ?? null,
+      });
+    }),
+  );
 
   return { ok: true, applied, rows };
+}
+
+async function selectBeforeRows(
+  url: string,
+  headers: Record<string, string>,
+): Promise<Array<Record<string, unknown>>> {
+  const snapshotUrl = new URL(url);
+  snapshotUrl.searchParams.set("select", "*");
+  snapshotUrl.searchParams.set("limit", "501");
+  const response = await fetch(snapshotUrl, { headers });
+  if (!response.ok) {
+    throw new ProposalExecutionError(
+      "server",
+      "Write stopped because its before-state could not be captured.",
+      502,
+    );
+  }
+  const value = await response.json() as unknown;
+  const rows = Array.isArray(value)
+    ? value.filter(
+        (row): row is Record<string, unknown> => !!row && typeof row === "object" && !Array.isArray(row),
+      )
+    : [];
+  if (rows.length > 500) {
+    throw new ProposalExecutionError(
+      "validation",
+      "AI proposals may affect at most 500 rows. Narrow the filters and try again.",
+    );
+  }
+  return rows;
+}
+
+function pickPrimaryKey(
+  row: Record<string, unknown>,
+  columns: string[],
+): Record<string, unknown> | null {
+  if (columns.length === 0) return null;
+  return Object.fromEntries(columns.map((column) => [column, row[column]]));
+}
+
+function stableKey(value: Record<string, unknown> | null): string {
+  if (!value) return "";
+  return JSON.stringify(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)));
 }

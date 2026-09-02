@@ -36,7 +36,7 @@ export async function POST(_req: NextRequest, ctx: Params) {
     );
   }
   try {
-    const result = await undoSession(session.user.id, access.conn, sessionId);
+    const result = await undoSession(access.conn, sessionId);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof AppError) {

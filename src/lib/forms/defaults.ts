@@ -37,6 +37,21 @@ export function defaultsForEdit(table: Table, row: Row): Record<string, unknown>
   return out;
 }
 
+/**
+ * Initial values for "Duplicate row": the source row's values, minus the
+ * primary key and generated columns so the database assigns fresh ones.
+ */
+export function defaultsForDuplicate(table: Table, source: Row): Record<string, unknown> {
+  const base = defaultsForCreate(table);
+  const fromRow = defaultsForEdit(table, source);
+  const pk = new Set(table.primaryKey);
+  for (const col of table.columns) {
+    if (col.isGenerated || pk.has(col.name)) continue;
+    if (col.name in fromRow) base[col.name] = fromRow[col.name];
+  }
+  return base;
+}
+
 function nullableInitial(col: Column): unknown {
   switch (col.category) {
     case "boolean":

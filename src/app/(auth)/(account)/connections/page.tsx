@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Download, Plus, Upload } from "lucide-react";
 import { auth } from "@/server/auth";
 import { listConnections } from "@/server/connections/repo";
 import { getActivePlan } from "@/server/billing/repo";
@@ -52,15 +52,29 @@ export default async function ConnectionsPage() {
             Saved Supabase projects. Click one to open its admin workspace.
           </p>
         </div>
-        <Button asChild disabled={atLimit}>
-          <Link
-            href={atLimit ? "/settings/billing" : "/connections/new"}
-            aria-label={atLimit ? "Upgrade to add another connection" : "New connection"}
-          >
-            <Plus className="h-3.5 w-3.5" aria-hidden />
-            {atLimit ? "Upgrade to add" : "New connection"}
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="secondary" size="sm">
+            <a href="/api/connections/export" download aria-label="Export connections as JSON">
+              <Download className="h-3.5 w-3.5" aria-hidden />
+              Export
+            </a>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <Link href="/connections/import">
+              <Upload className="h-3.5 w-3.5" aria-hidden />
+              Import
+            </Link>
+          </Button>
+          <Button asChild disabled={atLimit}>
+            <Link
+              href={atLimit ? "/settings/billing" : "/connections/new"}
+              aria-label={atLimit ? "Upgrade to add another connection" : "New connection"}
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              {atLimit ? "Upgrade to add" : "New connection"}
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {!onboarding.dismissed && !onboarding.coreDone && (

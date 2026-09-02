@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Changelog · Suparbase",
   description:
     "Every Suparbase release since v0.1. Each version corresponds to a spec-kit feature directory and a git tag.",
+  alternates: { canonical: "/changelog" },
 };
 
 interface ParsedRelease {

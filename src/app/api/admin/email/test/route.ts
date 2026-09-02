@@ -7,6 +7,7 @@ import {
   sendEmail,
 } from "@/server/email/resend";
 import { getSiteUrl } from "@/lib/seo/site";
+import { checkAdminEmailRate } from "@/server/proxy/ratelimit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,6 +43,17 @@ export async function POST(req: NextRequest) {
   if (!admin) {
     // Don't acknowledge the admin surface to non-admins.
     return NextResponse.json({ category: "not_found" }, { status: 404 });
+  }
+  const limit = checkAdminEmailRate(admin.userId);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: "rate_limited",
+        error: "Too many diagnostic sends. Try again shortly.",
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
   }
 
   let body: unknown = {};

@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   const { id } = await ctx.params;
   const access = await getConnectionAccess(session.user.id, id);
   if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
-  const sessions = await listSessions(session.user.id, id);
+  const sessions = await listSessions(id);
   return NextResponse.json({
     sessions,
     canUndo: !!access.conn.encryptedPostgresUrl,

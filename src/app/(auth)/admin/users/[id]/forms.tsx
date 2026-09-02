@@ -2,7 +2,12 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { grantPlanAction, resetSubscriptionAction } from "./actions";
+import {
+  clearEmailSuppressionAction,
+  grantPlanAction,
+  resetSubscriptionAction,
+  revokeSessionsAction,
+} from "./actions";
 
 // Auto-clear inline status messages so stale "Plan granted" copy
 // doesn't linger next to the button when an admin returns later.
@@ -18,7 +23,12 @@ interface GrantProps {
   targetUserId: string;
 }
 
-export function GrantPlanForm({ targetUserId }: GrantProps) {
+export function GrantPlanForm({
+  targetUserId,
+  currentPlan = "hosted",
+  currentExpiry,
+  currentNote,
+}: GrantProps & { currentPlan?: string; currentExpiry?: Date | null; currentNote?: string | null }) {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [tone, setTone] = useState<"ok" | "err" | null>(null);
@@ -45,8 +55,8 @@ export function GrantPlanForm({ targetUserId }: GrantProps) {
         <Field label="Plan">
           <select
             name="plan"
-            defaultValue="hosted"
-            className="h-9 w-full rounded-md border hairline bg-bg px-2 text-sm"
+            defaultValue={currentPlan === "team" ? "team" : "hosted"}
+            className="h-10 w-full rounded-md border hairline bg-bg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
           >
             <option value="hosted">Hosted</option>
             <option value="team">Team</option>
@@ -56,7 +66,9 @@ export function GrantPlanForm({ targetUserId }: GrantProps) {
           <input
             name="expiresAt"
             type="date"
-            className="h-9 w-full rounded-md border hairline bg-bg px-2 text-sm"
+            min={new Date().toISOString().slice(0, 10)}
+            defaultValue={currentExpiry ? new Date(currentExpiry).toISOString().slice(0, 10) : undefined}
+            className="h-10 w-full rounded-md border hairline bg-bg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
           />
         </Field>
       </div>
@@ -64,20 +76,22 @@ export function GrantPlanForm({ targetUserId }: GrantProps) {
         <input
           name="note"
           type="text"
+          defaultValue={currentNote ?? ""}
+          maxLength={500}
           placeholder="e.g. design partner - comp through 2026-12-31"
-          className="h-9 w-full rounded-md border hairline bg-bg px-2 text-sm"
+          className="h-10 w-full rounded-md border hairline bg-bg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
         />
       </Field>
-      <div className="flex items-center justify-between">
+      <div className="flex min-h-10 flex-wrap items-center justify-between gap-3">
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-9 items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02] hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-10 cursor-pointer items-center rounded-md bg-accent px-4 text-sm font-medium text-accent-fg transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "Saving…" : "Grant plan"}
         </button>
         {message && (
-          <span className={tone === "ok" ? "text-xs text-accent" : "text-xs text-danger"}>
+          <span role="status" aria-live="polite" className={tone === "ok" ? "text-xs text-accent" : "text-xs text-danger"}>
             {message}
           </span>
         )}
@@ -113,13 +127,13 @@ export function ResetSubscriptionForm({ targetUserId }: GrantProps) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border hairline bg-bg-raised p-4">
+    <div className="flex flex-col justify-between gap-3 rounded-lg border hairline bg-bg-raised p-4 sm:flex-row sm:items-center">
       <span className="text-xs text-fg-muted">
         Set plan to Free and clear all Dodo identifiers.
       </span>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {message && (
-          <span className={tone === "ok" ? "text-xs text-accent" : "text-xs text-danger"}>
+          <span role="status" aria-live="polite" className={tone === "ok" ? "text-xs text-accent" : "text-xs text-danger"}>
             {message}
           </span>
         )}
@@ -127,7 +141,7 @@ export function ResetSubscriptionForm({ targetUserId }: GrantProps) {
           type="button"
           onClick={() => setConfirmOpen(true)}
           disabled={pending}
-          className="inline-flex h-9 items-center rounded-md border border-danger/40 px-3 text-sm text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-danger/40 px-3 text-sm text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/70 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "…" : "Reset"}
         </button>
@@ -149,6 +163,69 @@ export function ResetSubscriptionForm({ targetUserId }: GrantProps) {
         requireText="RESET"
         onConfirm={runReset}
       />
+    </div>
+  );
+}
+
+export function SupportSecurityActions({
+  targetUserId,
+  emailSuppressed,
+  isSelf,
+}: GrantProps & { emailSuppressed: boolean; isSelf: boolean }) {
+  const [pending, startTransition] = useTransition();
+  const [dialog, setDialog] = useState<"email" | "sessions" | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [tone, setTone] = useState<"ok" | "err">("ok");
+  useAutoClear(message, setMessage);
+
+  function run(action: "email" | "sessions") {
+    return new Promise<void>((resolve, reject) => {
+      startTransition(async () => {
+        const fd = new FormData();
+        fd.set("targetUserId", targetUserId);
+        const result = action === "email"
+          ? await clearEmailSuppressionAction(fd)
+          : await revokeSessionsAction(fd);
+        if (result.ok) {
+          setMessage(action === "email" ? "Email suppression cleared." : "All sessions revoked.");
+          setTone("ok");
+          resolve();
+        } else {
+          setMessage(result.message ?? "Action failed.");
+          setTone("err");
+          reject(new Error(result.message ?? "Action failed."));
+        }
+      });
+    });
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border hairline bg-bg-raised p-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setDialog("email")}
+          disabled={pending || !emailSuppressed}
+          className="inline-flex min-h-10 cursor-pointer items-center rounded-md border hairline px-3 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          Clear email suppression
+        </button>
+        <button
+          type="button"
+          onClick={() => setDialog("sessions")}
+          disabled={pending || isSelf}
+          title={isSelf ? "Use account settings to revoke your own sessions." : undefined}
+          className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-danger/40 px-3 text-sm text-danger transition-colors hover:bg-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/70 disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          Revoke all sessions
+        </button>
+      </div>
+      <p className="text-[11px] leading-5 text-fg-faint">
+        Clearing suppression permits future transactional sends. Session revocation invalidates every JWT issued before this action within the cache window.
+      </p>
+      {message && <p role="status" aria-live="polite" className={tone === "ok" ? "text-xs text-accent" : "text-xs text-danger"}>{message}</p>}
+      <ConfirmDialog open={dialog === "email"} onOpenChange={(open) => setDialog(open ? "email" : null)} title="Clear email suppression?" description="Only continue after the customer confirms the address is valid. A new hard bounce or complaint will suppress it again." confirmLabel="Clear suppression" onConfirm={() => run("email")} />
+      <ConfirmDialog open={dialog === "sessions"} onOpenChange={(open) => setDialog(open ? "sessions" : null)} title="Revoke every session?" description="The customer will be signed out on their next authenticated request and must sign in again. Use this for suspected account compromise." confirmLabel="Revoke sessions" tone="danger" requireText="REVOKE" onConfirm={() => run("sessions")} />
     </div>
   );
 }

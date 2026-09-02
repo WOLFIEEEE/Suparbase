@@ -10,7 +10,7 @@ import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { AppError } from "@/lib/errors";
 import { useInsertRow, useUpdateRow } from "@/lib/api/hooks";
 import type { Row, Schema, Table } from "@/lib/types/schema";
-import { defaultsForCreate, defaultsForEdit } from "@/lib/forms/defaults";
+import { defaultsForCreate, defaultsForDuplicate, defaultsForEdit } from "@/lib/forms/defaults";
 import { pickField } from "@/lib/forms/fields";
 import { extractPk, encodePkSegment } from "@/lib/table/pk";
 import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
@@ -60,7 +60,11 @@ export function RowForm({ table, schema, mode, initialRow, onCancel, onSaved }: 
   const groups = useMemo(() => groupColumns(table, mode), [table, mode]);
 
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    mode === "edit" && initialRow ? defaultsForEdit(table, initialRow) : defaultsForCreate(table),
+    mode === "edit" && initialRow
+      ? defaultsForEdit(table, initialRow)
+      : initialRow
+        ? defaultsForDuplicate(table, initialRow)
+        : defaultsForCreate(table),
   );
   const [fieldError, setFieldError] = useState<{ column: string; message: string } | null>(null);
   const [formError, setFormError] = useState<AppError | null>(null);

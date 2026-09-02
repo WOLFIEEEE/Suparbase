@@ -10,6 +10,7 @@ import {
   type CustomActionRow,
 } from "@/server/schema/custom-actions";
 import { AppError } from "@/lib/errors";
+import { decryptKey, encryptKey } from "@/server/crypto/vault";
 
 const NAME_RX = /^[a-z][a-z0-9_-]{0,39}$/;
 const LABEL_MIN = 1;
@@ -56,10 +57,46 @@ export function toSummary(row: CustomActionRow): ActionSummary {
     sqlTemplate: row.sqlTemplate,
     webhookUrl: row.webhookUrl,
     webhookMethod: row.webhookMethod,
-    webhookHeaders: row.webhookHeaders,
+    webhookHeaders: readWebhookHeaders(row),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function readWebhookHeaders(row: CustomActionRow): Record<string, string> | null {
+  if (row.webhookHeadersEncrypted) {
+    try {
+      const parsed = JSON.parse(decryptKey(row.webhookHeadersEncrypted)) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, string>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return row.webhookHeaders ?? null;
+}
+
+function encryptedHeaders(headers: Record<string, string> | null | undefined): Uint8Array | null {
+  return headers && Object.keys(headers).length > 0
+    ? encryptKey(JSON.stringify(headers))
+    : null;
+}
+
+async function migrateLegacyHeaders(rows: CustomActionRow[]): Promise<void> {
+  await Promise.all(
+    rows
+      .filter((row) => row.webhookHeaders && !row.webhookHeadersEncrypted)
+      .map((row) =>
+        db
+          .update(customActions)
+          .set({
+            webhookHeadersEncrypted: encryptedHeaders(row.webhookHeaders),
+            webhookHeaders: null,
+          })
+          .where(eq(customActions.id, row.id)),
+      ),
+  );
 }
 
 export interface ActionInput {
@@ -198,16 +235,15 @@ function validate(input: ActionInput): void {
 }
 
 export async function listActionsForConnection(
-  userId: string,
+  _userId: string,
   connectionId: string,
 ): Promise<ActionSummary[]> {
   const rows = await db
     .select()
     .from(customActions)
-    .where(
-      and(eq(customActions.userId, userId), eq(customActions.connectionId, connectionId)),
-    )
+    .where(eq(customActions.connectionId, connectionId))
     .orderBy(asc(customActions.createdAt));
+  await migrateLegacyHeaders(rows);
   return rows.map(toSummary);
 }
 
@@ -226,7 +262,7 @@ export async function listActionsForTable(
 }
 
 export async function getAction(
-  userId: string,
+  _userId: string,
   connectionId: string,
   actionId: string,
 ): Promise<ActionSummary | null> {
@@ -236,11 +272,11 @@ export async function getAction(
     .where(
       and(
         eq(customActions.id, actionId),
-        eq(customActions.userId, userId),
         eq(customActions.connectionId, connectionId),
       ),
     )
     .limit(1);
+  if (row) await migrateLegacyHeaders([row]);
   return row ? toSummary(row) : null;
 }
 
@@ -278,7 +314,8 @@ export async function createAction(
       readOnly: input.readOnly ?? false,
       webhookUrl: input.webhookUrl ?? null,
       webhookMethod: input.webhookMethod ?? null,
-      webhookHeaders: input.webhookHeaders ?? null,
+      webhookHeaders: null,
+      webhookHeadersEncrypted: encryptedHeaders(input.webhookHeaders),
       params: input.params ?? [],
       danger: input.danger ?? false,
     })
@@ -287,7 +324,7 @@ export async function createAction(
 }
 
 export async function updateAction(
-  userId: string,
+  _userId: string,
   connectionId: string,
   actionId: string,
   input: ActionInput,
@@ -307,7 +344,8 @@ export async function updateAction(
       readOnly: input.readOnly ?? false,
       webhookUrl: input.webhookUrl ?? null,
       webhookMethod: input.webhookMethod ?? null,
-      webhookHeaders: input.webhookHeaders ?? null,
+      webhookHeaders: null,
+      webhookHeadersEncrypted: encryptedHeaders(input.webhookHeaders),
       params: input.params ?? [],
       danger: input.danger ?? false,
       updatedAt: new Date(),
@@ -315,7 +353,6 @@ export async function updateAction(
     .where(
       and(
         eq(customActions.id, actionId),
-        eq(customActions.userId, userId),
         eq(customActions.connectionId, connectionId),
       ),
     )
@@ -324,7 +361,7 @@ export async function updateAction(
 }
 
 export async function deleteAction(
-  userId: string,
+  _userId: string,
   connectionId: string,
   actionId: string,
 ): Promise<boolean> {
@@ -333,7 +370,6 @@ export async function deleteAction(
     .where(
       and(
         eq(customActions.id, actionId),
-        eq(customActions.userId, userId),
         eq(customActions.connectionId, connectionId),
       ),
     )

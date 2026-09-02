@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/schema/audit";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, ctx: Params) {
     return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   }
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) {
     return NextResponse.json({ category: "not_found", message: "Connection not found." }, { status: 404 });
   }

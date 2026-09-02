@@ -1,10 +1,14 @@
 import "server-only";
 import { decryptKey } from "@/server/crypto/vault";
+import { assertSafePostgresConnectionString } from "@/server/security/egress";
 import { auditWrite } from "@/server/audit/log";
+import postgres from "postgres";
+import { attachToSession } from "@/server/sentry/sessions";
 import type { ConnectionRow } from "@/server/schema/connections";
 import type { Row, Table } from "@/lib/types/schema";
 
 const PER_CHUNK_LIMIT = 500;
+export const ATOMIC_IMPORT_LIMIT = 5_000;
 
 export interface ImportChunkArgs {
   userId: string;
@@ -12,6 +16,7 @@ export interface ImportChunkArgs {
   table: Table;
   rows: Record<string, unknown>[];
   onError: "skip" | "abort";
+  userAgent?: string | null;
 }
 
 export interface ImportRowError {
@@ -106,7 +111,7 @@ export async function importChunk(args: ImportChunkArgs): Promise<ImportChunkRes
   const result: ImportChunkResult = { imported: 0, skipped: 0, errors: [] };
   // Audit rows we'll commit only after the whole chunk succeeds (abort mode)
   // or as-we-go (skip mode). We keep the commit list for both flows.
-  const pendingAudits: Array<{ pk: Record<string, unknown> | null }> = [];
+  const pendingAudits: Array<{ pk: Record<string, unknown> | null; row: Row }> = [];
 
   for (let i = 0; i < args.rows.length; i++) {
     const raw = args.rows[i]!;
@@ -125,13 +130,22 @@ export async function importChunk(args: ImportChunkArgs): Promise<ImportChunkRes
     }
     result.imported += 1;
     const pk = pickPrimaryKey(args.table, outcome.row);
-    pendingAudits.push({ pk });
+    pendingAudits.push({ pk, row: outcome.row });
   }
 
+  const agentSession = pendingAudits.length > 0
+    ? await attachToSession({
+        userId: args.userId,
+        connectionId: args.connection.id,
+        userAgent: args.userAgent ?? null,
+        schemaName: args.table.schema,
+        tableName: args.table.name,
+      })
+    : null;
   // Commit audit rows (best-effort, non-blocking shape: we await but
   // failures don't reject the request).
   await Promise.all(
-    pendingAudits.map(({ pk }) =>
+    pendingAudits.map(({ pk, row }) =>
       auditWrite({
         userId: args.userId,
         connectionId: args.connection.id,
@@ -140,6 +154,9 @@ export async function importChunk(args: ImportChunkArgs): Promise<ImportChunkRes
         primaryKey: pk,
         verb: "insert",
         httpStatus: 201,
+        beforeRow: null,
+        afterRow: row,
+        sessionId: agentSession?.id ?? null,
       }),
     ),
   );
@@ -155,4 +172,97 @@ function pickPrimaryKey(table: Table, row: Row): Record<string, unknown> | null 
     pk[col] = row[col];
   }
   return pk;
+}
+
+/**
+ * Insert the complete import inside one Direct Postgres transaction. Rows are
+ * grouped by their concrete column set so omitted/defaulted fields retain
+ * their normal PostgreSQL semantics. Any failure rolls back every group.
+ */
+export async function importRowsAtomic(
+  args: Omit<ImportChunkArgs, "onError">,
+): Promise<ImportChunkResult> {
+  if (args.rows.length < 1 || args.rows.length > ATOMIC_IMPORT_LIMIT) {
+    throw new Error(`rows must be 1..${ATOMIC_IMPORT_LIMIT} entries for an atomic import`);
+  }
+  if (!args.connection.encryptedPostgresUrl) {
+    throw new Error("A Direct Postgres URL is required for an all-or-nothing import.");
+  }
+
+  const normalized = args.rows.map((row) => coerceForWrite(args.table, row));
+  const groups = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of normalized) {
+    const columns = Object.keys(row).sort();
+    if (columns.length === 0) throw new Error("An import row has no writable columns.");
+    const key = columns.join("\u0000");
+    const group = groups.get(key) ?? [];
+    group.push(row);
+    groups.set(key, group);
+  }
+
+  const url = await assertSafePostgresConnectionString(
+    decryptKey(args.connection.encryptedPostgresUrl),
+  );
+  const client = postgres(url, {
+    max: 1,
+    idle_timeout: 5,
+    connect_timeout: 10,
+    prepare: false,
+  });
+  const inserted: Row[] = [];
+  try {
+    await client.begin(async (tx) => {
+      await tx.unsafe("SET LOCAL statement_timeout = 60000");
+      for (const [key, rows] of groups) {
+        const columns = key.split("\u0000");
+        for (let offset = 0; offset < rows.length; offset += PER_CHUNK_LIMIT) {
+          const chunk = rows.slice(offset, offset + PER_CHUNK_LIMIT);
+          const params: unknown[] = [];
+          const tuples = chunk.map((row) => {
+            const placeholders = columns.map((column) => {
+              params.push(row[column]);
+              return `$${params.length}`;
+            });
+            return `(${placeholders.join(", ")})`;
+          });
+          const statement = `INSERT INTO ${quoteIdent(args.table.schema)}.${quoteIdent(args.table.name)} (${columns.map(quoteIdent).join(", ")}) VALUES ${tuples.join(", ")} RETURNING *`;
+          const result = await tx.unsafe(statement, params as never[]);
+          inserted.push(...(result as unknown as Row[]));
+        }
+      }
+    });
+  } finally {
+    await client.end({ timeout: 5 });
+  }
+
+  const agentSession = inserted.length > 0
+    ? await attachToSession({
+        userId: args.userId,
+        connectionId: args.connection.id,
+        userAgent: args.userAgent ?? null,
+        schemaName: args.table.schema,
+        tableName: args.table.name,
+      })
+    : null;
+  await Promise.all(
+    inserted.map((row) =>
+      auditWrite({
+        userId: args.userId,
+        connectionId: args.connection.id,
+        schemaName: args.table.schema,
+        tableName: args.table.name,
+        primaryKey: pickPrimaryKey(args.table, row),
+        verb: "insert",
+        httpStatus: 201,
+        beforeRow: null,
+        afterRow: row,
+        sessionId: agentSession?.id ?? null,
+      }),
+    ),
+  );
+  return { imported: inserted.length, skipped: 0, errors: [] };
+}
+
+function quoteIdent(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
 }

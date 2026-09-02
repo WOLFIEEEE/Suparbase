@@ -94,6 +94,32 @@ describe("fingerprintRequest", () => {
     expect(fingerprintRequest("continue-dev/0.9.250").kind).toBe("continue_dev");
     expect(fingerprintRequest("continue/0.9.250").kind).toBe("continue_dev");
   });
+
+  it("identifies the v3.20 agent runtimes", () => {
+    expect(fingerprintRequest("Windsurf/1.9.4 (darwin)")).toEqual({ kind: "windsurf", label: "Windsurf 1.9.4" });
+    expect(fingerprintRequest("codex-cli/0.12.0").kind).toBe("codex");
+    expect(fingerprintRequest("OpenAI-Codex agent").kind).toBe("codex");
+    expect(fingerprintRequest("GitHub-Copilot/1.0 coding-agent")).toEqual({ kind: "copilot", label: "GitHub Copilot 1.0" });
+    expect(fingerprintRequest("copilot-cli/0.3").kind).toBe("copilot");
+    expect(fingerprintRequest("gemini-cli/0.4.1").kind).toBe("gemini_cli");
+    expect(fingerprintRequest("Devin/2.1 (cognition)").kind).toBe("devin");
+    expect(fingerprintRequest("bolt.new runtime").kind).toBe("bolt");
+    expect(fingerprintRequest("Zed/0.170.3").label).toBe("Zed 0.170.3");
+    expect(fingerprintRequest("sourcegraph-amp/0.2").kind).toBe("amp");
+    expect(fingerprintRequest("Kiro-CLI/1.0").kind).toBe("kiro");
+    expect(fingerprintRequest("opencode/0.5.2").label).toBe("OpenCode 0.5.2");
+    expect(fingerprintRequest("Trae/1.3.0").kind).toBe("trae");
+    expect(fingerprintRequest("JetBrains-Junie/2025.1").label).toBe("JetBrains Junie 2025.1");
+  });
+
+  it("does not bucket the bare words zed / trae without a version", () => {
+    expect(fingerprintRequest("zed-networking/1.0").kind).toBe("unknown");
+    expect(fingerprintRequest("Trae").kind).toBe("unknown");
+  });
+
+  it("still prefers Claude Code over the generic codex pattern", () => {
+    expect(fingerprintRequest("claude-code/2.0.0").kind).toBe("claude_code");
+  });
 });
 
 describe("isAiAgent", () => {
@@ -108,6 +134,9 @@ describe("isAiAgent", () => {
     expect(isAiAgent("aider")).toBe(true);
     expect(isAiAgent("cline")).toBe(true);
     expect(isAiAgent("continue_dev")).toBe(true);
+    expect(isAiAgent("windsurf")).toBe(true);
+    expect(isAiAgent("codex")).toBe(true);
+    expect(isAiAgent("junie")).toBe(true);
     expect(isAiAgent("ai_unknown")).toBe(true);
   });
 

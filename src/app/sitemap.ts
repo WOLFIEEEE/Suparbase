@@ -41,12 +41,10 @@ const STATIC_ROUTES: Array<{ path: string; priority: number; changeFrequency: Me
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
   const base = getSiteUrl();
 
   const staticEntries = STATIC_ROUTES.map((r) => ({
     url: `${base}${r.path}`,
-    lastModified: now,
     changeFrequency: r.changeFrequency,
     priority: r.priority,
   }));
@@ -60,28 +58,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const useCaseEntries = listUseCases().map((u) => ({
     url: `${base}/use-cases/${u.slug}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
   const compareEntries = listCompare().map((c) => ({
     url: `${base}/compare/${c.slug}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.75,
   }));
 
   const guideEntries = listGuides().map((g) => ({
     url: `${base}/guides/${g.slug}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.78,
   }));
 
   const learnEntries = listLearn().map((e) => ({
     url: `${base}/learn/${e.slug}`,
-    lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.55,
   }));

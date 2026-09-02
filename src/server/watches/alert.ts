@@ -2,6 +2,7 @@ import "server-only";
 import { redact } from "@/lib/redact";
 import { log } from "@/server/log";
 import { validateWebhookUrl } from "@/server/actions/repo";
+import { hardenedFetch } from "@/server/security/egress";
 import type { ConnectionRow } from "@/server/schema/connections";
 import type { DataWatchRow } from "@/server/schema/data-watches";
 
@@ -36,7 +37,7 @@ export async function sendWatchAlert(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(url, {
+    const res = await hardenedFetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -79,6 +79,16 @@ export function checkContactRate(clientKey: string): RateLimitResult {
   return check("contact", clientKey, CONTACT_BUDGET, CONTACT_WINDOW_MS);
 }
 
+// Real transactional send from the operator diagnostic. Keep this far below
+// the generic authenticated write budget so a compromised admin session
+// cannot turn the panel into a mail relay.
+const ADMIN_EMAIL_BUDGET = 3;
+const ADMIN_EMAIL_WINDOW_MS = 10 * 60_000;
+
+export function checkAdminEmailRate(userId: string): RateLimitResult {
+  return check("admin-email", userId, ADMIN_EMAIL_BUDGET, ADMIN_EMAIL_WINDOW_MS);
+}
+
 // Public, unauthenticated Security Scanner. Each scan fans out to many
 // outbound fetches, so keep the per-IP budget tight.
 const SCAN_BUDGET = 6;

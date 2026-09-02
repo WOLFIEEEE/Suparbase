@@ -76,24 +76,19 @@ function validate(input: WidgetInput): void {
 }
 
 export async function listWidgets(
-  userId: string,
+  _userId: string,
   connectionId: string,
 ): Promise<WidgetSummary[]> {
   const rows = await db
     .select()
     .from(dashboardWidgets)
-    .where(
-      and(
-        eq(dashboardWidgets.userId, userId),
-        eq(dashboardWidgets.connectionId, connectionId),
-      ),
-    )
+    .where(eq(dashboardWidgets.connectionId, connectionId))
     .orderBy(asc(dashboardWidgets.position), asc(dashboardWidgets.createdAt));
   return rows.map(toSummary);
 }
 
 export async function getWidget(
-  userId: string,
+  _userId: string,
   connectionId: string,
   widgetId: string,
 ): Promise<WidgetSummary | null> {
@@ -103,7 +98,6 @@ export async function getWidget(
     .where(
       and(
         eq(dashboardWidgets.id, widgetId),
-        eq(dashboardWidgets.userId, userId),
         eq(dashboardWidgets.connectionId, connectionId),
       ),
     )
@@ -147,7 +141,7 @@ export async function createWidget(
 }
 
 export async function updateWidget(
-  userId: string,
+  _userId: string,
   connectionId: string,
   widgetId: string,
   input: WidgetInput,
@@ -169,7 +163,6 @@ export async function updateWidget(
     .where(
       and(
         eq(dashboardWidgets.id, widgetId),
-        eq(dashboardWidgets.userId, userId),
         eq(dashboardWidgets.connectionId, connectionId),
       ),
     )
@@ -178,7 +171,7 @@ export async function updateWidget(
 }
 
 export async function deleteWidget(
-  userId: string,
+  _userId: string,
   connectionId: string,
   widgetId: string,
 ): Promise<boolean> {
@@ -187,7 +180,6 @@ export async function deleteWidget(
     .where(
       and(
         eq(dashboardWidgets.id, widgetId),
-        eq(dashboardWidgets.userId, userId),
         eq(dashboardWidgets.connectionId, connectionId),
       ),
     )

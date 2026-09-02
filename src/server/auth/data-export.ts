@@ -1,30 +1,41 @@
 import "server-only";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, or } from "drizzle-orm";
 import { db } from "@/server/db";
 import {
   agentSessions,
+  adminActions,
   auditLog,
+  billingEvents,
   connections,
   connectionMembers,
+  connectionInvitations,
   customActions,
+  dataWatches,
   dashboardWidgets,
+  pinnedTables,
+  recentRecords,
   savedViews,
+  scheduledReports,
+  schemaAnalysis,
+  sentryFindings,
+  sentryScans,
+  sqlSnippets,
   subscriptions,
+  syncProfiles,
+  syncRuns,
   userSettings,
   users,
 } from "@/server/schema";
+import { decryptKey } from "@/server/crypto/vault";
 
 /**
  * GDPR Art. 15 / Art. 20 data export. Returns a single JSON document
  * containing every row that ties back to this user, with:
  *
  *   - Plaintext metadata (name, plan, dates) - included.
- *   - Encrypted blobs (Supabase API keys, Postgres URLs, TOTP secret,
- *     OpenRouter key) - INCLUDED AS BASE64 of the ciphertext.
- *     We deliberately don't decrypt: the export is for the user's
- *     records, and exporting their own credentials in plaintext to
- *     a downloadable JSON is a worse outcome than them not having
- *     them. They can paste the keys back from their original source.
+ *   - Credentials, encrypted blobs, invitation tokens, webhook header
+ *     values, and raw payment webhook payloads - excluded. A portable
+ *     account export must not become a credential dump.
  *   - Audit log rows - included with primary keys + before/after
  *     snapshots. This is the customer's data; they're entitled to it.
  *
@@ -55,9 +66,21 @@ export interface UserExport {
   customActions: unknown[];
   agentSessions: unknown[];
   auditLog: unknown[];
+  invitations: unknown[];
+  schemaAnalyses: unknown[];
+  sentryScans: unknown[];
+  sentryFindings: unknown[];
+  syncProfiles: unknown[];
+  syncRuns: unknown[];
+  sqlSnippets: unknown[];
+  scheduledReports: unknown[];
+  dataWatches: unknown[];
+  pinnedTables: unknown[];
+  recentRecords: unknown[];
+  billingEvents: unknown[];
+  adminActions: unknown[];
   notes: {
-    encryption:
-      "Encrypted columns (Supabase keys, Postgres URL, TOTP secret) are excluded from this export. Keep them in your original credential store; the encrypted form here would be useless outside this deployment.";
+    encryption: string;
     auditLimit: string;
   };
 }
@@ -88,7 +111,17 @@ export async function buildUserExport(userId: string): Promise<UserExport> {
     .where(eq(subscriptions.userId, userId))
     .limit(1);
   const [settings] = await db
-    .select()
+    .select({
+      userId: userSettings.userId,
+      defaultModel: userSettings.defaultModel,
+      lastAnalysisModel: userSettings.lastAnalysisModel,
+      lastAnalysisAt: userSettings.lastAnalysisAt,
+      lastPromptTokens: userSettings.lastPromptTokens,
+      lastCompletionTokens: userSettings.lastCompletionTokens,
+      lastTotalTokens: userSettings.lastTotalTokens,
+      onboardingDismissedAt: userSettings.onboardingDismissedAt,
+      updatedAt: userSettings.updatedAt,
+    })
     .from(userSettings)
     .where(eq(userSettings.userId, userId))
     .limit(1);
@@ -118,7 +151,7 @@ export async function buildUserExport(userId: string): Promise<UserExport> {
     .select()
     .from(dashboardWidgets)
     .where(eq(dashboardWidgets.userId, userId));
-  const actionRows = await db
+  const actionRowsRaw = await db
     .select()
     .from(customActions)
     .where(eq(customActions.userId, userId));
@@ -126,6 +159,65 @@ export async function buildUserExport(userId: string): Promise<UserExport> {
     .select()
     .from(agentSessions)
     .where(eq(agentSessions.userId, userId));
+
+  const actionRows = actionRowsRaw.map((row) => {
+    let headerNames: string[] = [];
+    try {
+      const headers = row.webhookHeadersEncrypted
+        ? JSON.parse(decryptKey(row.webhookHeadersEncrypted)) as Record<string, string>
+        : row.webhookHeaders ?? {};
+      headerNames = Object.keys(headers);
+    } catch {
+      headerNames = [];
+    }
+    const { webhookHeaders: _legacy, webhookHeadersEncrypted: _encrypted, ...safe } = row;
+    void _legacy;
+    void _encrypted;
+    return { ...safe, webhookHeaderNames: headerNames };
+  });
+
+  const [
+    invitationRows,
+    analysisRows,
+    scanRows,
+    findingRows,
+    syncProfileRows,
+    syncRunRows,
+    snippetRows,
+    reportRows,
+    watchRows,
+    pinRows,
+    recentRows,
+    billingRows,
+    adminRows,
+  ] = await Promise.all([
+    db.select().from(connectionInvitations).where(
+      or(
+        eq(connectionInvitations.invitedBy, userId),
+        eq(connectionInvitations.email, user.email ?? ""),
+      ),
+    ),
+    db.select().from(schemaAnalysis).where(eq(schemaAnalysis.userId, userId)),
+    db.select().from(sentryScans).where(eq(sentryScans.userId, userId)),
+    db.select().from(sentryFindings).where(eq(sentryFindings.userId, userId)),
+    db.select().from(syncProfiles).where(eq(syncProfiles.userId, userId)),
+    db.select().from(syncRuns).where(eq(syncRuns.userId, userId)),
+    db.select().from(sqlSnippets).where(eq(sqlSnippets.userId, userId)),
+    db.select().from(scheduledReports).where(eq(scheduledReports.userId, userId)),
+    db.select().from(dataWatches).where(eq(dataWatches.userId, userId)),
+    db.select().from(pinnedTables).where(eq(pinnedTables.userId, userId)),
+    db.select().from(recentRecords).where(eq(recentRecords.userId, userId)),
+    db.select({
+      id: billingEvents.id,
+      eventType: billingEvents.eventType,
+      dodoSubscriptionId: billingEvents.dodoSubscriptionId,
+      receivedAt: billingEvents.receivedAt,
+      appliedAt: billingEvents.appliedAt,
+    }).from(billingEvents).where(eq(billingEvents.userId, userId)),
+    db.select().from(adminActions).where(
+      or(eq(adminActions.adminUserId, userId), eq(adminActions.targetUserId, userId)),
+    ),
+  ]);
 
   // Audit log - most recent first, capped. We strip the encrypted
   // primary key column data only if it looks like it contains a JWT-
@@ -158,9 +250,25 @@ export async function buildUserExport(userId: string): Promise<UserExport> {
     customActions: actionRows,
     agentSessions: sessionRows,
     auditLog: auditRows,
+    invitations: invitationRows.map(({ token: _token, ...row }) => {
+      void _token;
+      return row;
+    }),
+    schemaAnalyses: analysisRows,
+    sentryScans: scanRows,
+    sentryFindings: findingRows,
+    syncProfiles: syncProfileRows,
+    syncRuns: syncRunRows,
+    sqlSnippets: snippetRows,
+    scheduledReports: reportRows,
+    dataWatches: watchRows,
+    pinnedTables: pinRows,
+    recentRecords: recentRows,
+    billingEvents: billingRows,
+    adminActions: adminRows,
     notes: {
       encryption:
-        "Encrypted columns (Supabase keys, Postgres URL, TOTP secret) are excluded from this export. Keep them in your original credential store; the encrypted form here would be useless outside this deployment.",
+        "Encrypted columns and secret values (Supabase keys, Postgres URLs, TOTP secrets, OpenRouter keys, webhook header values, invitation tokens, and raw billing webhook payloads) are excluded. Keep credentials in their original secret store.",
       auditLimit: `Audit log capped at ${AUDIT_LIMIT.toLocaleString()} rows (most recent first). Email contact@suparbase.com for a larger offline dump.`,
     },
   };

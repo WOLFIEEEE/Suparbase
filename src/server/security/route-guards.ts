@@ -49,11 +49,7 @@ export function limitOr429(
  *
  * GET / HEAD requests are not protected (they don't write); same-origin
  * fetches from the SPA pass because the browser sets Origin to the same
- * host. Non-browser clients (curl, server-to-server) without an Origin
- * header are also allowed through - they're already auth'd via the
- * NextAuth session cookie, which carries the actual identity proof, and
- * a curl user explicitly intending to call the API is not the CSRF
- * threat model.
+ * origin. Authenticated cookie writes without Origin fail closed.
  *
  * Returns null when the request is OK, or a 403 response.
  */
@@ -62,7 +58,14 @@ const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 export function csrfOr403(req: NextRequest): NextResponse | null {
   if (!UNSAFE_METHODS.has(req.method)) return null;
   const origin = req.headers.get("origin");
-  if (!origin) return null; // see docstring - server-to-server / curl are OK
+  if (!origin) {
+    return req.headers.has("cookie")
+      ? NextResponse.json(
+          { category: "forbidden", message: "Origin header is required for authenticated writes." },
+          { status: 403 },
+        )
+      : null;
+  }
   let allowedHost: string;
   try {
     // Prefer the explicit canonical URL the deployment was configured
@@ -71,20 +74,26 @@ export function csrfOr403(req: NextRequest): NextResponse | null {
       process.env.NEXT_PUBLIC_SITE_URL ??
       process.env.AUTH_URL ??
       `https://${req.headers.get("host") ?? ""}`;
-    allowedHost = new URL(siteUrl).host.toLowerCase();
+    allowedHost = new URL(siteUrl).origin.toLowerCase();
   } catch {
-    return null; // misconfigured env, fail-open rather than break the app
+    return NextResponse.json(
+      { category: "server", message: "Canonical site URL is not configured correctly." },
+      { status: 500 },
+    );
   }
   let originHost: string;
   try {
-    originHost = new URL(origin).host.toLowerCase();
+    originHost = new URL(origin).origin.toLowerCase();
   } catch {
     return NextResponse.json(
       { category: "forbidden", message: "Invalid Origin header." },
       { status: 403 },
     );
   }
-  if (originHost === allowedHost) return null;
+  const devRequestOrigin = process.env.NODE_ENV !== "production"
+    ? req.nextUrl.origin.toLowerCase()
+    : null;
+  if (originHost === allowedHost || originHost === devRequestOrigin) return null;
   return NextResponse.json(
     { category: "forbidden", message: "Cross-site request rejected." },
     { status: 403 },

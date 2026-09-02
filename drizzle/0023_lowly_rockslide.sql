@@ -1,0 +1,1 @@
+ALTER TABLE "custom_action" ADD COLUMN "webhook_headers_encrypted" "bytea";

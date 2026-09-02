@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { getConnectionAccess, toSummary } from "@/server/connections/repo";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { StorageBrowser } from "@/components/storage/StorageBrowser";
 
@@ -14,9 +14,9 @@ export default async function StoragePage({ params }: Props) {
   const session = await auth();
   if (!session?.user) notFound();
   const { id } = await params;
-  const row = await getConnectionForUser(session.user.id, id);
-  if (!row) notFound();
-  const connection = toSummary(row);
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access) notFound();
+  const connection = toSummary(access.conn, access.role);
 
   return (
     <div className="space-y-6">

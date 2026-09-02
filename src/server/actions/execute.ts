@@ -4,6 +4,7 @@ import { executeSql, SqlExecutionError, type SqlExecuteResult } from "@/server/p
 import type { ActionParam } from "@/server/schema/custom-actions";
 import type { ActionSummary } from "./repo";
 import { AppError } from "@/lib/errors";
+import { hardenedFetch } from "@/server/security/egress";
 
 const STATEMENT_TIMEOUT_MS = 10_000;
 const WEBHOOK_TIMEOUT_MS = 15_000;
@@ -135,7 +136,7 @@ export async function runAction(input: ActionExecuteInput): Promise<ActionExecut
     const timer = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
     const start = Date.now();
     try {
-      const res = await fetch(action.webhookUrl, {
+      const res = await hardenedFetch(action.webhookUrl, {
         method,
         signal: controller.signal,
         headers: {

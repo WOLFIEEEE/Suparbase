@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "Contact · Suparbase",
   description:
     "Send a message to the Suparbase team. General questions, sales for the Team plan, support, security disclosures, and press inquiries.",
+  alternates: { canonical: "/contact" },
 };
 
 interface SearchParams {

@@ -56,7 +56,6 @@ if (isGithubEnabled()) {
     GitHub({
       clientId: process.env.AUTH_GITHUB_ID,
       clientSecret: process.env.AUTH_GITHUB_SECRET,
-      allowDangerousEmailAccountLinking: true,
     }),
   );
 }
@@ -78,14 +77,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
-        token.id = (user as { id?: string }).id ?? token.id;
+        const userId = (user as { id?: string }).id ?? token.id;
+        token.id = userId;
         token.email = user.email ?? token.email;
         token.name = user.name ?? token.name;
         token.picture = user.image ?? token.picture;
         // Surface the 2FA requirement on the JWT so middleware can
         // gate without an extra DB round-trip. We look it up once at
         // signin time; subsequent refreshes reuse the cached flag.
-        token.requires2FA = user.totpEnabled === true;
+        // Credentials sign-in already carries the flag, but OAuth adapter
+        // user objects are not guaranteed to include custom columns. Read the
+        // authoritative value so GitHub sign-in cannot bypass an existing
+        // TOTP requirement.
+        let requires2FA = user.totpEnabled === true;
+        if (userId) {
+          const [security] = await db
+            .select({ enabledAt: users.totpEnabledAt })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+          requires2FA = security?.enabledAt != null;
+        }
+        token.requires2FA = requires2FA;
         // Issue-time stamp for session revocation: tokens older than
         // users.password_changed_at are rejected below.
         token.authAt = Date.now();
@@ -104,6 +117,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session: ({ session, token }) => {
       if (session.user && token.id) {
         session.user.id = token.id;
+        session.user.authAt = token.authAt;
+        session.user.requires2FA = token.requires2FA === true;
       }
       return session;
     },
@@ -118,6 +133,10 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      /** Epoch milliseconds when the primary credential was verified. */
+      authAt?: number;
+      /** Whether this account has TOTP enabled. */
+      requires2FA?: boolean;
     };
   }
   // The authorize() callback returns this shape; the jwt callback

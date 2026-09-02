@@ -12,6 +12,7 @@ import {
 } from "@/server/sync/repo";
 import { executeSyncRun } from "@/server/sync/runner";
 import { sendSyncAlert } from "@/server/sync/alert";
+import { notifyConnection } from "@/server/notifications/repo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -102,6 +103,14 @@ export async function POST(req: NextRequest) {
         stats: result.stats,
         error: result.error,
       });
+      if (result.status === "failed" || result.status === "partial" || result.status === "aborted") {
+        void notifyConnection(target.id, {
+          kind: "sync_failed",
+          title: `Scheduled sync "${profile.name}" ${result.status}`,
+          body: result.error ?? null,
+          href: `/c/${target.id}/sync`,
+        });
+      }
       results.push({ profileId: profile.id, status: result.status, error: result.error });
     } catch (e) {
       // Driver errors can embed the connection URL — never store it raw.
@@ -116,6 +125,12 @@ export async function POST(req: NextRequest) {
         status: "failed",
         stats: { tables: [], warnings: [] },
         error: message,
+      });
+      void notifyConnection(target.id, {
+        kind: "sync_failed",
+        title: `Scheduled sync "${profile.name}" failed`,
+        body: message,
+        href: `/c/${target.id}/sync`,
       });
       results.push({ profileId: profile.id, status: "failed", error: message });
     }

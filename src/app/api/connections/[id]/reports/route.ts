@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { sqlSnippets } from "@/server/schema";
-import { getConnectionAccess } from "@/server/connections/repo";
+import { getConnectionAccess, roleAtLeast } from "@/server/connections/repo";
 import { createReport, listReports } from "@/server/reports/repo";
 import { validateWebhookUrl } from "@/server/actions/repo";
 import { AppError } from "@/lib/errors";
@@ -42,6 +42,9 @@ export async function POST(req: NextRequest, ctx: Params) {
   const { id } = await ctx.params;
   const access = await getConnectionAccess(session.user.id, id);
   if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  if (!roleAtLeast(access.role, "editor")) {
+    return NextResponse.json({ category: "forbidden", message: "Editor access is required." }, { status: 403 });
+  }
 
   const parsed = CreateSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

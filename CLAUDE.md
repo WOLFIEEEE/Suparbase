@@ -1,14 +1,11 @@
-<!-- SPECKIT START -->
-**Current**: v3.1.0 on `main` (tagged `v3.1.0`). Agent Sentry's
-safety-net half. Every authenticated write through the proxy is
-fingerprinted from its User-Agent and bucketed into an
-`agent_session` row (Cursor / Claude Code / Replit Agent / Lovable
-/ v0 / Vercel AI SDK / Suparbase's own OpenRouter, with `ai_unknown`
-/ `browser` / `cli` fallbacks). Each session links to every
-audit_log row it produced. One-click "Undo session" replays the
-audit log in reverse inside one transaction. New `/c/[id]/agents`
-page. Requires the Direct Postgres URL for undo. v3.0 base = the
-RLS-drift watchdog. DDL capture deferred to v3.1.x.
+**Current**: v3.20.0 on `main`. Workspace power features: environment
+labels with a production guard, scheduled Sentry scans
+(`/api/cron/sentry`), schema snapshots + drift diff, live ERD + type
+generation, a `pg_stat` Performance page with advisor, row-history
+restore, duplicate / copy-as-SQL row actions, team notes on tables and
+rows, an in-app notification inbox, personal API tokens + read-only
+`/api/public/v1`, `g`-chord keyboard shortcuts, bulk connection
+import / export, and 12 more agent fingerprints. Migration `0025`.
 
 Read for stack, structure, constraints, and budgets before editing:
 
@@ -47,4 +44,6 @@ Spec-kit features (chronological):
 - [specs/030-agent-sentry/](specs/030-agent-sentry/) · v3.0, Agent Sentry security watchdog (anon-probe + pg_policies inspector + one-click quarantine)
 - [specs/031-agent-sessions/](specs/031-agent-sessions/) · v3.1, agent session attribution + one-click session undo (PocketOS-class safety net)
 - [specs/032-db-sync/](specs/032-db-sync/) · v3.14, database sync (base→target full-replace; read-only base; schema+data; exclude-users + FK resolution; AI advisor; anonymization; scheduled refreshes). Requires Direct Postgres URL on both connections.
+- [specs/033-free-tools/](specs/033-free-tools/) · v3.18, five free public tools under `/tools/*`
+- [specs/034-workspace-power-features/](specs/034-workspace-power-features/) · v3.20, environment guard, scheduled Sentry, schema snapshots/ERD/types, performance advisor, notes, notifications, public API tokens, shortcuts, import/export
 <!-- SPECKIT END -->

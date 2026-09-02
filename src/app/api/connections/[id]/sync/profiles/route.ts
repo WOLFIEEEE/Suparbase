@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionAccess, getConnectionForUser, requireRole } from "@/server/connections/repo";
+import { getConnectionAccess, getConnectionForRole, requireRole } from "@/server/connections/repo";
 import { createProfile, listProfiles } from "@/server/sync/repo";
 import { createProfileSchema } from "@/server/sync/validate";
 
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
 
-  const access = await requireRole(session.user.id, id, "editor");
+  const access = await requireRole(session.user.id, id, "owner");
   if (!access) {
     return NextResponse.json(
       { category: "forbidden", message: "Editor or owner role required." },
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest, ctx: Params) {
       { status: 400 },
     );
   }
-  const base = await getConnectionForUser(session.user.id, body.baseConnectionId);
+  const base = await getConnectionForRole(session.user.id, body.baseConnectionId, "viewer");
   if (!base) {
     return NextResponse.json(
       { category: "validation", message: "Base connection not found or not accessible." },

@@ -25,6 +25,18 @@ export type AgentKind =
   | "aider"
   | "cline"
   | "continue_dev"
+  | "windsurf"
+  | "codex"
+  | "copilot"
+  | "gemini_cli"
+  | "devin"
+  | "bolt"
+  | "zed"
+  | "amp"
+  | "kiro"
+  | "opencode"
+  | "trae"
+  | "junie"
   | "ai_unknown"
   | "browser"
   | "cli"
@@ -81,6 +93,10 @@ export const agentSessions = pgTable(
       t.connectionId,
       t.kind,
       t.status,
+      t.lastSeenAt.desc(),
+    ),
+    workspaceRecent: index("agent_session_workspace_recent_idx").on(
+      t.connectionId,
       t.lastSeenAt.desc(),
     ),
   }),

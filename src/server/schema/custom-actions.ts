@@ -1,6 +1,23 @@
-import { boolean, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, customType, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { connections } from "./connections";
+
+const bytea = customType<{ data: Uint8Array; default: false }>({
+  dataType() {
+    return "bytea";
+  },
+  fromDriver(value): Uint8Array {
+    if (value instanceof Uint8Array) return value;
+    if (Buffer.isBuffer(value)) return new Uint8Array(value);
+    if (typeof value === "string" && value.startsWith("\\x")) {
+      return new Uint8Array(Buffer.from(value.slice(2), "hex"));
+    }
+    throw new Error("Unexpected bytea value shape from driver");
+  },
+  toDriver(value: Uint8Array): Buffer {
+    return Buffer.from(value);
+  },
+});
 
 export type ActionScope = "global" | "table" | "row";
 export type ActionKind = "sql" | "webhook";
@@ -41,7 +58,9 @@ export const customActions = pgTable(
 
     webhookUrl: text("webhook_url"),
     webhookMethod: text("webhook_method").$type<ActionWebhookMethod>(),
+    /** Legacy plaintext column, retained only for lazy migration. */
     webhookHeaders: jsonb("webhook_headers").$type<Record<string, string>>(),
+    webhookHeadersEncrypted: bytea("webhook_headers_encrypted"),
 
     params: jsonb("params").$type<ActionParam[]>().default([]).notNull(),
     danger: boolean("danger").default(false).notNull(),

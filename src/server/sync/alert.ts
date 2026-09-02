@@ -2,6 +2,7 @@ import "server-only";
 import { redact } from "@/lib/redact";
 import { log } from "@/server/log";
 import { validateWebhookUrl } from "@/server/actions/repo";
+import { hardenedFetch } from "@/server/security/egress";
 import type { ConnectionRow } from "@/server/schema/connections";
 import type { SyncRunStatus, SyncRunStats } from "@/server/schema/sync";
 
@@ -68,7 +69,7 @@ export async function sendSyncAlert(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ALERT_TIMEOUT_MS);
   try {
-    const res = await fetch(url, {
+    const res = await hardenedFetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -42,6 +42,7 @@ import { cn } from "@/lib/ui/cn";
 interface Props {
   connectionId: string;
   userId: string;
+  canManage?: boolean;
 }
 
 interface AuthUser {
@@ -90,7 +91,7 @@ async function parse<T>(res: Response): Promise<T> {
   return json as unknown as T;
 }
 
-export function UserDetail({ connectionId, userId }: Props) {
+export function UserDetail({ connectionId, userId, canManage = true }: Props) {
   const qc = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -257,19 +258,21 @@ export function UserDetail({ connectionId, userId }: Props) {
               ) : null}
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            {user.email && (
-              <Button variant="secondary" size="sm" onClick={sendRecovery}>
-                <Mail className="h-3.5 w-3.5" aria-hidden /> Send recovery
+          {canManage && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {user.email && (
+                <Button variant="secondary" size="sm" onClick={sendRecovery}>
+                  <Mail className="h-3.5 w-3.5" aria-hidden /> Send recovery
+                </Button>
+              )}
+              <Button variant="secondary" size="sm" onClick={revokeAll}>
+                <Ban className="h-3.5 w-3.5" aria-hidden /> Revoke sessions
               </Button>
-            )}
-            <Button variant="secondary" size="sm" onClick={revokeAll}>
-              <Ban className="h-3.5 w-3.5" aria-hidden /> Revoke sessions
-            </Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete user
-            </Button>
-          </div>
+              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete user
+              </Button>
+            </div>
+          )}
         </div>
         <div className="relative grid grid-cols-2 gap-x-4 gap-y-1.5 border-t hairline px-6 py-3 text-[11px] sm:grid-cols-4">
           <Kv label="Created" value={fmtAbs(user.createdAt)} />
@@ -332,15 +335,17 @@ export function UserDetail({ connectionId, userId }: Props) {
                     )}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => revokeOne(s.id)}
-                  aria-label="Revoke session"
-                >
-                  <X className="h-3 w-3" aria-hidden />
-                  Revoke
-                </Button>
+                {canManage && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => revokeOne(s.id)}
+                    aria-label="Revoke session"
+                  >
+                    <X className="h-3 w-3" aria-hidden />
+                    Revoke
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

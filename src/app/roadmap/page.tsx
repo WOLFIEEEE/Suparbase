@@ -7,6 +7,7 @@ import { PageHeader, PageShell } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "Roadmap · Suparbase",
   description: "What we just shipped, what we're working on, and what's queued.",
+  alternates: { canonical: "/roadmap" },
 };
 
 type Status = "shipped" | "in_progress" | "next";
@@ -63,6 +64,36 @@ const ITEMS: Item[] = [
     body: "Every AI-agent write is fingerprinted and bucketed into a session. One-click undo replays the audit log in reverse inside a single transaction.",
     ref: { href: "/agent-sentry", label: "Feature page" },
   },
+  {
+    status: "shipped",
+    title: "Public API + personal tokens",
+    body: "Read-only tokens for /api/public/v1: list connections, pull the live schema or audit activity, read Sentry findings, run a SELECT. Revocable, expiring, rate-limited per token.",
+    ref: { href: "/docs/api", label: "API reference" },
+  },
+  {
+    status: "shipped",
+    title: "Connection import / export",
+    body: "Bulk-paste projects from JSON or CSV with a validated preview; export a secret-free manifest to move between accounts.",
+    ref: { href: "/changelog", label: "v3.20.0" },
+  },
+  {
+    status: "shipped",
+    title: "Production guard + scheduled Sentry",
+    body: "Label a connection production / staging / development. Production adds typed confirmations to destructive actions. Sentry can re-scan on a cadence and notify in-app.",
+    ref: { href: "/changelog", label: "v3.20.0" },
+  },
+  {
+    status: "shipped",
+    title: "Schema snapshots, ERD, and types",
+    body: "Automatic drift snapshots with a diff view, a live entity-relationship diagram, and TypeScript / Zod types generated from the real schema.",
+    ref: { href: "/changelog", label: "v3.20.0" },
+  },
+  {
+    status: "shipped",
+    title: "Performance advisor",
+    body: "pg_stat-backed page: table sizes, scan patterns, bloat, unused indexes, slowest statements, and conservative suggestions with copy-paste SQL.",
+    ref: { href: "/changelog", label: "v3.20.0" },
+  },
 
   // In progress
   {
@@ -73,7 +104,7 @@ const ITEMS: Item[] = [
   {
     status: "in_progress",
     title: "End-to-end Playwright suite",
-    body: "9 smoke specs in place; signed-in flows + payment-flow specs are next.",
+    body: "24 public and auth-adjacent browser checks now run in CI. Seeded signed-in dashboard workflows and sandbox payment flows are next.",
   },
   {
     status: "in_progress",
@@ -89,23 +120,23 @@ const ITEMS: Item[] = [
   },
   {
     status: "next",
-    title: "Connection import / export",
-    body: "Bulk-paste multiple Supabase projects from a CSV / JSON; export them again with the encrypted blobs intact for migration.",
-  },
-  {
-    status: "next",
     title: "SOC 2 Type I",
     body: "Pursuing certification through Drata. Readiness assessment complete; remediation in progress.",
   },
   {
     status: "next",
-    title: "Public API",
-    body: "Documented REST surface for the bits operators actually want to script (audit search, plan grants, connection CRUD).",
+    title: "Write scope for API tokens",
+    body: "Opt-in write tokens (row upserts, snippet runs in write mode) with the same audit + agent-session attribution as the UI.",
   },
   {
     status: "next",
     title: "More AI-write archetypes",
-    body: "Sentry currently fingerprints 9 agent kinds (Cursor, Claude Code, Replit, Lovable, v0, Vercel AI SDK, OpenRouter, ai-unknown, browser, CLI). Add: Aider, Cline, Continue.dev, Devin.",
+    body: "Sentry now fingerprints 25 agent kinds, including Cursor, Claude Code, Codex, Copilot, Windsurf, Gemini CLI, Devin, Bolt, Zed, Amp, Kiro, OpenCode, Trae, and Junie. Keep expanding as new runtimes appear.",
+  },
+  {
+    status: "next",
+    title: "Column masking for viewers",
+    body: "Per-column PII masks applied in the proxy for the viewer role, so support staff can browse without seeing raw emails or addresses.",
   },
 ];
 

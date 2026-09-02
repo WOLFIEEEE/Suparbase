@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { createView, listViewsForTable } from "@/server/views/repo";
 import { checkReadRate, checkWriteRate } from "@/server/proxy/ratelimit";
 import { AppError } from "@/lib/errors";
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       { status: 400, headers: HEADERS },
     );
   }
-  const conn = await getConnectionForUser(session.user.id, connectionId);
+  const conn = await getConnectionForRole(session.user.id, connectionId, "viewer");
   if (!conn) {
     return NextResponse.json(
       { category: "not_found", message: "Connection not found." },
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       { status: 400, headers: HEADERS },
     );
   }
-  const conn = await getConnectionForUser(session.user.id, connectionId);
+  const conn = await getConnectionForRole(session.user.id, connectionId, "viewer");
   if (!conn) {
     return NextResponse.json(
       { category: "not_found", message: "Connection not found." },

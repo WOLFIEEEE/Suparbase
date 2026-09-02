@@ -1,8 +1,10 @@
 import "server-only";
 import { randomBytes } from "crypto";
-import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/server/db";
 import { users } from "@/server/schema/auth";
+import { connections } from "@/server/schema/connections";
+import { notifyUsers } from "@/server/notifications/repo";
 import {
   connectionInvitations,
   connectionMembers,
@@ -134,6 +136,27 @@ export async function createInvitation(
       expiresAt,
     })
     .returning();
+  // If the invitee already has an account, drop the invite into their
+  // in-app inbox too (email delivery is optional and may be unconfigured).
+  const [invitee] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`lower(${users.email}) = ${normalised}`)
+    .limit(1);
+  if (invitee) {
+    const [conn] = await db
+      .select({ name: connections.name })
+      .from(connections)
+      .where(eq(connections.id, connectionId))
+      .limit(1);
+    void notifyUsers([invitee.id], {
+      kind: "invitation",
+      title: `You've been invited to ${conn?.name ?? "a connection"} as ${role}`,
+      body: "Open the invitation to accept it.",
+      href: `/invitations/${token}`,
+      connectionId,
+    });
+  }
   return inviteToSummary(row);
 }
 
@@ -241,7 +264,6 @@ export async function resolveInvitation(token: string): Promise<ResolvedInvitati
 export async function acceptInvitation(
   token: string,
   acceptingUserId: string,
-  acceptingEmail: string | null,
 ): Promise<{ connectionId: string; role: MemberRole }> {
   const [inv] = await db
     .select()
@@ -253,9 +275,20 @@ export async function acceptInvitation(
   if (inv.expiresAt < new Date()) {
     throw new AppError("validation", "This invitation has expired.");
   }
+  const [acceptingUser] = await db
+    .select({ email: users.email, emailVerified: users.emailVerified })
+    .from(users)
+    .where(eq(users.id, acceptingUserId))
+    .limit(1);
+  if (!acceptingUser?.emailVerified) {
+    throw new AppError(
+      "unauthorized",
+      "Verify your email address before accepting a workspace invitation.",
+    );
+  }
   if (
-    !acceptingEmail ||
-    acceptingEmail.toLowerCase() !== inv.email.toLowerCase()
+    !acceptingUser.email ||
+    acceptingUser.email.toLowerCase() !== inv.email.toLowerCase()
   ) {
     throw new AppError(
       "unauthorized",

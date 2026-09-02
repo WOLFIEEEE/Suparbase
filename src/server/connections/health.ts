@@ -6,6 +6,7 @@ import { db } from "@/server/db";
 import { decryptKey } from "@/server/crypto/vault";
 import { sentryFindings, sentryScans } from "@/server/schema";
 import type { ConnectionRow } from "@/server/schema/connections";
+import { assertSafePostgresConnectionString } from "@/server/security/egress";
 
 /**
  * On-demand health probe for one connection: is the PostgREST endpoint
@@ -59,7 +60,8 @@ async function checkPostgres(conn: ConnectionRow): Promise<ConnectionHealth["pos
     return { configured: false, ok: null, latencyMs: null, error: null };
   }
   const t0 = Date.now();
-  const sql = postgres(decryptKey(conn.encryptedPostgresUrl), {
+  const url = await assertSafePostgresConnectionString(decryptKey(conn.encryptedPostgresUrl));
+  const sql = postgres(url, {
     max: 1,
     connect_timeout: 5,
     idle_timeout: 2,
@@ -82,13 +84,12 @@ async function checkPostgres(conn: ConnectionRow): Promise<ConnectionHealth["pos
 }
 
 async function checkSentry(
-  userId: string,
   connectionId: string,
 ): Promise<ConnectionHealth["sentry"]> {
   const [scan] = await db
     .select({ startedAt: sentryScans.startedAt })
     .from(sentryScans)
-    .where(and(eq(sentryScans.userId, userId), eq(sentryScans.connectionId, connectionId)))
+    .where(eq(sentryScans.connectionId, connectionId))
     .orderBy(desc(sentryScans.startedAt))
     .limit(1);
   const [critical] = await db
@@ -96,7 +97,6 @@ async function checkSentry(
     .from(sentryFindings)
     .where(
       and(
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, connectionId),
         eq(sentryFindings.severity, "critical"),
         eq(sentryFindings.status, "open"),
@@ -108,14 +108,11 @@ async function checkSentry(
   };
 }
 
-export async function checkConnectionHealth(
-  userId: string,
-  conn: ConnectionRow,
-): Promise<ConnectionHealth> {
+export async function checkConnectionHealth(conn: ConnectionRow): Promise<ConnectionHealth> {
   const [rest, pg, sentry] = await Promise.all([
     checkRest(conn),
     checkPostgres(conn),
-    checkSentry(userId, conn.id),
+    checkSentry(conn.id),
   ]);
   return { rest, postgres: pg, sentry, checkedAt: new Date().toISOString() };
 }

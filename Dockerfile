@@ -70,6 +70,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Bundled migrator + the SQL migrations it applies.
 COPY --from=builder --chown=nextjs:nodejs /app/dist/migrator.mjs ./dist/migrator.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/dist/rotate-encryption-key.mjs ./dist/rotate-encryption-key.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 
 # Entrypoint script (POSIX sh, busybox-compatible).

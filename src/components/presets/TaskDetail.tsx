@@ -22,12 +22,15 @@ import { PageHeader } from "@/components/workspace/PageHeader";
 import { RowForm } from "@/components/row/RowForm";
 import { EditableField } from "@/components/row/EditableField";
 import { RowHistoryPanel } from "@/components/row/RowHistoryPanel";
+import { RowMoreMenu } from "@/components/row/RowMoreMenu";
+import { NotesPanel } from "@/components/workspace/NotesPanel";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { StatusPill } from "./shared/StatusPill";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 import { cn } from "@/lib/ui/cn";
 import type { Column, Schema, Table } from "@/lib/types/schema";
 import type { TableAnalysis } from "@/lib/types/analysis";
@@ -92,6 +95,7 @@ interface Props {
 }
 
 export function TaskDetail({ connectionId, table, schema, analysis, pkSegment }: Props) {
+  const workspaceCanEdit = useCurrentConnection().myRole !== "viewer";
   const router = useRouter();
   const sp = useSearchParams();
   const editMode = sp.get("edit") === "1";
@@ -222,7 +226,7 @@ export function TaskDetail({ connectionId, table, schema, analysis, pkSegment }:
     }
   }
 
-  const canEdit = table.kind === "table" && pkValue !== null;
+  const canEdit = workspaceCanEdit && table.kind === "table" && pkValue !== null;
 
   const idSet = new Set(table.primaryKey);
   const remaining = table.columns.filter((c) => !heroCols.has(c.name) && !hidden.has(c.name));
@@ -252,14 +256,25 @@ export function TaskDetail({ connectionId, table, schema, analysis, pkSegment }:
           )
         }
         actions={
-          canEdit && !editMode ? (
+          !editMode ? (
             <>
+              <RowMoreMenu
+                connectionId={connectionId}
+                table={table}
+                row={row}
+                pkSegment={pkSegment}
+                canEdit={canEdit}
+              />
+              {canEdit && (
+                <>
               <Button variant="secondary" onClick={() => toggleEdit(true)}>
                 <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
               </Button>
               <Button variant="danger" onClick={() => setConfirmDelete(true)}>
                 <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete
               </Button>
+                </>
+              )}
             </>
           ) : null
         }
@@ -409,6 +424,7 @@ export function TaskDetail({ connectionId, table, schema, analysis, pkSegment }:
                 <p className="leading-relaxed">{analysis.notes}</p>
               </section>
             )}
+            <NotesPanel connectionId={connectionId} tableName={table.name} primaryKey={pkValue} />
             <RowHistoryPanel connectionId={connectionId} table={table} pk={pkValue} />
             </aside>
         </div>

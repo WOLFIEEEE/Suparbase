@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionAccess, roleAtLeast } from "@/server/connections/repo";
 import { executeSql, SqlExecutionError } from "@/server/proxy/sql-playground";
 import { NoPostgresUrlError } from "@/server/proxy/postgres";
 import { checkReadRate, checkWriteRate } from "@/server/proxy/ratelimit";
 import { auditWrite } from "@/server/audit/log";
+import { attachToSession } from "@/server/sentry/sessions";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,10 +27,11 @@ export async function POST(req: NextRequest, ctx: Params) {
     return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   }
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) {
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access) {
     return NextResponse.json({ category: "not_found", message: "Connection not found." }, { status: 404 });
   }
+  const conn = access.conn;
 
   let body: z.infer<typeof BodySchema>;
   try {
@@ -38,6 +40,12 @@ export async function POST(req: NextRequest, ctx: Params) {
     return NextResponse.json(
       { category: "validation", message: (e as Error).message ?? "Bad request body." },
       { status: 400 },
+    );
+  }
+  if (!body.readOnly && !roleAtLeast(access.role, "editor")) {
+    return NextResponse.json(
+      { category: "forbidden", message: "Editor access is required to execute write SQL." },
+      { status: 403 },
     );
   }
 
@@ -63,7 +71,14 @@ export async function POST(req: NextRequest, ctx: Params) {
       // Record a single audit_log entry for the write so the row history
       // panel and recent-activity feed both pick it up. We store the
       // SQL itself as `afterRow.sql` for forensic purposes.
-      void auditWrite({
+      const agentSession = await attachToSession({
+        userId: session.user.id,
+        connectionId: id,
+        userAgent: req.headers.get("user-agent"),
+        schemaName: "public",
+        tableName: "(sql)",
+      });
+      await auditWrite({
         userId: session.user.id,
         connectionId: id,
         schemaName: "public",
@@ -77,6 +92,7 @@ export async function POST(req: NextRequest, ctx: Params) {
           command: result.command,
           rowCount: result.rowCount,
         },
+        sessionId: agentSession?.id ?? null,
       });
     }
     return NextResponse.json(result);

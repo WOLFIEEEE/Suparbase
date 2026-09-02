@@ -22,6 +22,8 @@ import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 import { SidebarNav } from "./Sidebar";
 import { ThemeToggle } from "./ThemeToggle";
+import { EnvironmentBadge } from "@/components/connections/EnvironmentBadge";
+import { NotificationsBell } from "./NotificationsBell";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
 import type { Schema } from "@/lib/types/schema";
 
@@ -38,6 +40,12 @@ const ROLE_LABEL: Record<KeyRole, string> = {
   service_role: "service-role",
   unknown: "unknown",
 };
+
+const ACCESS_LABEL = {
+  owner: "Owner",
+  editor: "Editor",
+  viewer: "Viewer",
+} as const;
 
 export function Topbar({ connection }: { connection: ConnectionSummary }) {
   const { data: session } = useSession();
@@ -90,7 +98,7 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b hairline bg-bg/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-bg/70 sm:px-6">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b hairline bg-bg/90 px-3 shadow-[0_1px_0_rgb(var(--line)/0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-bg/75 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"
@@ -103,20 +111,33 @@ export function Topbar({ connection }: { connection: ConnectionSummary }) {
             <Menu className="h-4 w-4" aria-hidden />
           </Button>
           <Link
-            href={`/c/${connection.id}/settings`}
+            href={connection.myRole === "owner" ? `/c/${connection.id}/settings` : `/c/${connection.id}`}
             className="flex items-center gap-2 truncate text-xs text-fg-muted hover:text-fg"
-            aria-label="Connection settings"
+            aria-label={connection.myRole === "owner" ? "Connection settings" : "Connection dashboard"}
           >
             <Database className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
             <span className="truncate font-medium">{connection.name}</span>
-            <span className="truncate font-mono text-fg-faint">· {connection.hostname}</span>
+            <span className="hidden truncate font-mono text-fg-faint sm:inline">· {connection.hostname}</span>
           </Link>
-          <Badge tone={ROLE_TONE[connection.role]} className="hidden sm:inline-flex">
+          <EnvironmentBadge environment={connection.environment} />
+          <Badge
+            tone="neutral"
+            className="hidden capitalize lg:inline-flex"
+            title="Your workspace access level"
+          >
+            {ACCESS_LABEL[connection.myRole ?? "owner"]}
+          </Badge>
+          <Badge
+            tone={ROLE_TONE[connection.role]}
+            className="hidden xl:inline-flex"
+            title="Supabase API key role"
+          >
             {ROLE_LABEL[connection.role]}
           </Badge>
         </div>
         <CommandSearch />
         <div className="flex items-center gap-2">
+          <NotificationsBell />
           <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>

@@ -9,6 +9,8 @@ import { sendEmail } from "@/server/email/resend";
 import { renderQueryDigestEmail } from "@/server/email/templates/query-digest";
 import { validateWebhookUrl } from "@/server/actions/repo";
 import { log } from "@/server/log";
+import { hardenedFetch } from "@/server/security/egress";
+import { notifyUsers } from "@/server/notifications/repo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -91,7 +93,7 @@ export async function POST(req: NextRequest) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 5_000);
         try {
-          const res = await fetch(report.target, {
+          const res = await hardenedFetch(report.target, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -114,6 +116,13 @@ export async function POST(req: NextRequest) {
       const message = redact((e as Error).message ?? "Report failed.");
       log.warn("scheduled report failed", { reportId: report.id, err: message });
       await markReportRun(report.id, "failed", message);
+      void notifyUsers([report.userId], {
+        kind: "report_failed",
+        title: `Scheduled report "${report.name}" failed`,
+        body: message,
+        href: `/c/${report.connectionId}/reports`,
+        connectionId: report.connectionId,
+      });
       results.push({ reportId: report.id, status: "failed", error: message });
     }
   }

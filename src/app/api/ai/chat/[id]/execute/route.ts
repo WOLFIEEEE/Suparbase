@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import {
   executeProposal,
   ProposalExecutionError,
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   }
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "editor");
   if (!conn) {
     return NextResponse.json({ category: "not_found", message: "Connection not found." }, { status: 404 });
   }
@@ -62,7 +62,12 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
 
   try {
-    const result = await executeProposal({ userId: session.user.id, conn, proposal });
+    const result = await executeProposal({
+      userId: session.user.id,
+      conn,
+      proposal,
+      userAgent: req.headers.get("user-agent"),
+    });
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ProposalExecutionError) {

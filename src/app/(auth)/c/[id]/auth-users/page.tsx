@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { getConnectionAccess, toSummary } from "@/server/connections/repo";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { AuthUsers } from "@/components/auth-users/AuthUsers";
 
@@ -14,9 +14,9 @@ export default async function AuthUsersPage({ params }: Props) {
   const session = await auth();
   if (!session?.user) notFound();
   const { id } = await params;
-  const row = await getConnectionForUser(session.user.id, id);
-  if (!row) notFound();
-  const connection = toSummary(row);
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access) notFound();
+  const connection = toSummary(access.conn, access.role);
 
   return (
     <div className="space-y-6">
@@ -28,8 +28,8 @@ export default async function AuthUsersPage({ params }: Props) {
         title="Auth users"
         subtitle={
           <span className="text-xs text-fg-muted">
-            Invite, recover, ban, or delete users via Supabase&apos;s admin API.
-            Needs a service_role key on this connection.
+            Browse Supabase Auth users. Owner access and a service-role key are
+            required for invitations, recovery, bans, and deletion.
           </span>
         }
       />

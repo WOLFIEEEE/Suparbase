@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
+import { isProduction } from "@/lib/ui/environment";
 
 interface Props {
   open: boolean;
@@ -30,6 +32,7 @@ interface Props {
 export function BulkDeleteDialog({ open, tableName, count, onCancel, onConfirm, pending }: Props) {
   const [typed, setTyped] = useState("");
   const matches = typed === tableName;
+  const guarded = isProduction(useCurrentConnection().environment);
 
   return (
     <Dialog
@@ -52,6 +55,11 @@ export function BulkDeleteDialog({ open, tableName, count, onCancel, onConfirm, 
             {count === 1 ? "row" : "rows"} from{" "}
             <code className="font-mono text-fg">{tableName}</code>. You'll have
             5 seconds to undo.
+            {guarded && (
+              <span className="mt-2 block text-danger">
+                This connection is labelled <strong>production</strong>. Double-check the selection.
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">

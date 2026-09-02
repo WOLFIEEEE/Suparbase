@@ -19,13 +19,14 @@ interface Props {
   visibleColumns?: string[];
   /** Hidden columns the parent's analysis identified: exposed via the export menu toggle. */
   hiddenColumns?: string[];
+  canEdit?: boolean;
 }
 
 /**
  * Sticky bottom toolbar that appears whenever at least one row is selected.
  * Shows the count, Clear, Delete, Update column, and Export selected.
  */
-export function BulkBar({ connectionId, table, visibleColumns, hiddenColumns }: Props) {
+export function BulkBar({ connectionId, table, visibleColumns, hiddenColumns, canEdit = true }: Props) {
   const { selected, clear } = useSelection();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
@@ -114,7 +115,7 @@ export function BulkBar({ connectionId, table, visibleColumns, hiddenColumns }: 
           <span className="text-fg-muted">selected</span>
         </span>
         <span className="h-4 w-px bg-line" aria-hidden />
-        {!isView && (
+        {canEdit && !isView && (
           <Button
             type="button"
             variant="ghost"
@@ -126,7 +127,7 @@ export function BulkBar({ connectionId, table, visibleColumns, hiddenColumns }: 
             Update column
           </Button>
         )}
-        {!isView && (
+        {canEdit && !isView && (
           <Button
             type="button"
             variant="ghost"
@@ -159,23 +160,26 @@ export function BulkBar({ connectionId, table, visibleColumns, hiddenColumns }: 
         </Button>
       </div>
 
-      <BulkDeleteDialog
-        open={confirmDelete}
-        tableName={table.name}
-        count={count}
-        onCancel={() => setConfirmDelete(false)}
-        onConfirm={runDelete}
-        pending={bulkDelete.isPending}
-      />
-
-      <BulkUpdatePanel
-        open={openUpdate}
-        table={table}
-        count={count}
-        onCancel={() => setOpenUpdate(false)}
-        onConfirm={runUpdate}
-        pending={bulkUpdate.isPending}
-      />
+      {canEdit && (
+        <>
+          <BulkDeleteDialog
+            open={confirmDelete}
+            tableName={table.name}
+            count={count}
+            onCancel={() => setConfirmDelete(false)}
+            onConfirm={runDelete}
+            pending={bulkDelete.isPending}
+          />
+          <BulkUpdatePanel
+            open={openUpdate}
+            table={table}
+            count={count}
+            onCancel={() => setOpenUpdate(false)}
+            onConfirm={runUpdate}
+            pending={bulkUpdate.isPending}
+          />
+        </>
+      )}
     </>
   );
 }

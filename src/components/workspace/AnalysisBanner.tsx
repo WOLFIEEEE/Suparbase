@@ -17,7 +17,7 @@ async function fetchAiSettings(): Promise<AiSettingsSummary> {
   return res.json();
 }
 
-export function AnalysisBanner() {
+export function AnalysisBanner({ canAnalyze = true }: { canAnalyze?: boolean }) {
   const connectionId = useCurrentConnectionId();
   const { data: settings } = useQuery({
     queryKey: ["settings", "ai"],
@@ -35,7 +35,7 @@ export function AnalysisBanner() {
     return null;
   }
 
-  if (!hasKey) {
+  if (!hasKey && canAnalyze) {
     return (
       <div className="flex flex-wrap items-center gap-3 rounded border hairline bg-bg-raised p-4 text-sm">
         <Sparkles className="h-4 w-4 shrink-0 text-accent" aria-hidden />
@@ -48,6 +48,8 @@ export function AnalysisBanner() {
       </div>
     );
   }
+
+  if (!canAnalyze) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded border hairline bg-bg-raised p-4 text-sm">

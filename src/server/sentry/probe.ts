@@ -14,6 +14,7 @@ import {
 import { executeSql } from "@/server/proxy/sql-playground";
 import { introspectConnection } from "@/server/schema-introspect";
 import { sendSentryAlert } from "./alert";
+import { notifyConnection } from "@/server/notifications/repo";
 
 /**
  * Sentry probe, the security watchdog.
@@ -241,6 +242,18 @@ export async function runSentryScan(
   // Alert webhook: only NEW criticals notify, so a re-scan of a known-bad
   // table doesn't ping the channel every time. Fire-and-forget.
   const newCritical = newFindings.filter((f) => f.severity === "critical");
+  if (newCritical.length > 0) {
+    // In-app inbox for everyone on the connection, webhook or not.
+    void notifyConnection(conn.id, {
+      kind: "sentry_critical",
+      title: `${newCritical.length} new critical finding${newCritical.length === 1 ? "" : "s"} on ${conn.name}`,
+      body: newCritical
+        .slice(0, 5)
+        .map((f) => `${f.kind} on ${f.schemaName ?? "?"}.${f.tableName ?? "?"}`)
+        .join(" · "),
+      href: `/c/${conn.id}/sentry`,
+    });
+  }
   if (newCritical.length > 0 && conn.alertWebhookUrl) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://suparbase.com";
     void sendSentryAlert(
@@ -444,7 +457,6 @@ async function persistFindings(
     .from(sentryFindings)
     .where(
       and(
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, connectionId),
         ne(sentryFindings.status, "resolved"),
       ),

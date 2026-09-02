@@ -21,10 +21,12 @@ const buttonVariants = cva(
         outline: "border hairline bg-transparent text-fg hover:border-line-strong",
       },
       size: {
-        sm: "h-8 px-3 text-xs",
+        // Coarse/mobile layouts get a larger touch target; desktop retains
+        // the compact density expected from an admin tool.
+        sm: "h-10 px-3 text-xs sm:h-8",
         md: "h-10 px-4 text-sm",
         lg: "h-12 px-6 text-base",
-        icon: "h-9 w-9",
+        icon: "h-10 w-10 sm:h-9 sm:w-9",
       },
     },
     defaultVariants: { variant: "primary", size: "md" },

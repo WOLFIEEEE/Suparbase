@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { readThemeCookie } from "@/lib/theme/cookie";
+import { SITE } from "@/lib/seo/site";
 import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
     default: "Suparbase: managed admin for any Supabase",
-    template: "%s · Suparbase",
+    // Existing route titles already include the product name. Keeping the
+    // template neutral prevents "... · Suparbase · Suparbase" at runtime.
+    template: "%s",
   },
   description:
     "Sign in, save your Supabase projects, and run a real admin dashboard. Your keys stay on the server: never in the browser.",
-  metadataBase: new URL(process.env.AUTH_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(SITE.url),
   openGraph: {
     title: "Suparbase",
     description: "Managed admin for any Supabase project. Auth, encryption, audit, done.",
+    siteName: SITE.name,
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Suparbase",
+    description: "Managed admin for any Supabase project. Auth, encryption, audit, done.",
   },
 };
 

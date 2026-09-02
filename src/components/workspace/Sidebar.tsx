@@ -2,19 +2,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, ArrowLeft, ArrowLeftRight, Bell, Bot, CalendarClock, Database, FolderOpen, LayoutDashboard, Settings, ShieldAlert, ShieldCheck, Sparkles, SquareCode, Table2, UserCog, Zap } from "lucide-react";
+import { Activity, ArrowLeft, ArrowLeftRight, Bell, Bot, CalendarClock, Database, FolderOpen, Gauge, LayoutDashboard, Settings, ShieldAlert, ShieldCheck, Sparkles, SquareCode, Table2, UserCog, Zap } from "lucide-react";
 import { useSchema } from "@/lib/api/hooks";
 import { Wordmark } from "@/components/brand/Logo";
 import { SITE } from "@/lib/seo/site";
 import type { AiSettingsSummary } from "@/lib/types/analysis";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
+import type { ConnectionRole } from "@/lib/types/connection";
 
 interface NavItem {
   sub: string;
   label: string;
   icon: typeof LayoutDashboard;
   getCount?: (schemaTables: number, schemaColumns: number) => number | null;
+  minRole?: ConnectionRole;
 }
 
 interface NavSection {
@@ -37,15 +40,16 @@ const sections: NavSection[] = [
       { sub: "sql", label: "SQL", icon: SquareCode },
       { sub: "storage", label: "Storage", icon: FolderOpen },
       { sub: "auth-users", label: "Auth users", icon: UserCog },
+      { sub: "performance", label: "Performance", icon: Gauge },
     ],
   },
   {
     heading: "Automation",
     items: [
       { sub: "actions", label: "Actions", icon: Zap },
-      { sub: "reports", label: "Reports", icon: CalendarClock },
-      { sub: "watches", label: "Watches", icon: Bell },
-      { sub: "sync", label: "Sync", icon: ArrowLeftRight },
+      { sub: "reports", label: "Reports", icon: CalendarClock, minRole: "editor" },
+      { sub: "watches", label: "Watches", icon: Bell, minRole: "editor" },
+      { sub: "sync", label: "Sync", icon: ArrowLeftRight, minRole: "owner" },
     ],
   },
   {
@@ -59,7 +63,7 @@ const sections: NavSection[] = [
   },
   {
     heading: "Connection",
-    items: [{ sub: "settings", label: "Settings", icon: Settings }],
+    items: [{ sub: "settings", label: "Settings", icon: Settings, minRole: "owner" }],
   },
 ];
 
@@ -78,7 +82,9 @@ interface SidebarProps {
 
 export function SidebarNav({ connectionId, onNavigate, className, showBrand = true }: SidebarProps) {
   const pathname = usePathname();
+  const connection = useCurrentConnection();
   const base = `/c/${connectionId}`;
+  const roleRank: Record<ConnectionRole, number> = { viewer: 0, editor: 1, owner: 2 };
 
   const { data: schema } = useSchema(connectionId);
   const { data: aiSettings } = useQuery({
@@ -93,7 +99,7 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
     : null;
 
   return (
-    <div className={cn("flex h-full w-60 flex-col border-r hairline bg-bg", className)}>
+    <div className={cn("flex h-full w-64 flex-col border-r hairline bg-bg/95", className)}>
       {showBrand && (
         <div className="flex h-14 items-center border-b hairline px-5">
           <Link
@@ -109,13 +115,18 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
       <Link
         href="/connections"
         onClick={onNavigate}
-        className="mx-3 mt-3 inline-flex items-center gap-2 rounded px-2 py-1.5 text-[11px] text-fg-faint hover:bg-bg-raised hover:text-fg"
+        className="mx-3 mt-3 inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-xs text-fg-faint transition-colors hover:bg-bg-raised hover:text-fg"
       >
         <ArrowLeft className="h-3 w-3" aria-hidden />
         All connections
       </Link>
       <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Workspace">
-        {sections.map((section, si) => (
+        {sections.map((section, si) => {
+          const visibleItems = section.items.filter(
+            (item) => !item.minRole || roleRank[connection.myRole ?? "owner"] >= roleRank[item.minRole],
+          );
+          if (visibleItems.length === 0) return null;
+          return (
           <div key={section.heading ?? "root"} className={cn(si > 0 && "mt-4")}>
             {section.heading && (
               <div className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-fg-faint">
@@ -123,7 +134,7 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
               </div>
             )}
             <div className="space-y-0.5">
-              {section.items.map((it) => {
+              {visibleItems.map((it) => {
                 const href = it.sub ? `${base}/${it.sub}` : base;
                 const isActive = it.sub ? pathname?.startsWith(href) : pathname === base;
                 const count = it.getCount ? it.getCount(tableCount ?? 0, columnCount ?? 0) : null;
@@ -133,7 +144,7 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
                     href={href}
                     onClick={onNavigate}
                     className={cn(
-                      "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      "group relative flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                       isActive
                         ? "bg-accent/10 text-fg before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-accent before:content-['']"
                         : "text-fg-muted hover:bg-bg-raised hover:text-fg",
@@ -170,13 +181,14 @@ export function SidebarNav({ connectionId, onNavigate, className, showBrand = tr
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </nav>
       <div className="space-y-1 border-t hairline p-3">
         <Link
           href="/settings/ai"
           onClick={onNavigate}
-          className="flex items-start gap-3 rounded px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
+          className="flex min-h-11 items-start gap-3 rounded-md px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-bg-raised hover:text-fg"
         >
           <Sparkles className="mt-0.5 h-4 w-4 text-accent" aria-hidden />
           <div className="min-w-0 flex-1 leading-tight">

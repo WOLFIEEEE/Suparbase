@@ -51,6 +51,7 @@ async function fetchAiSettings(): Promise<AiSettingsSummary> {
 
 export function Dashboard() {
   const connection = useCurrentConnection();
+  const canEdit = connection.myRole !== "viewer";
   const { data: schema, isLoading, error } = useSchema(connection.id);
   const { data: cachedAnalysis } = useAnalysis(connection.id);
   const { data: aiSettings } = useQuery({
@@ -100,7 +101,14 @@ export function Dashboard() {
             )}
           </span>
         }
-        actions={<QuickActions connectionId={connection.id} users={groups.users[0] ?? null} hasAiKey={!!aiSettings?.hasKey} />}
+        actions={
+          <QuickActions
+            connectionId={connection.id}
+            users={groups.users[0] ?? null}
+            hasAiKey={!!aiSettings?.hasKey}
+            canEdit={canEdit}
+          />
+        }
       />
 
       <HealthRibbon
@@ -110,11 +118,11 @@ export function Dashboard() {
         loading={isLoading}
       />
 
-      <ActionRunner connectionId={connection.id} surface="global" />
+      {canEdit && <ActionRunner connectionId={connection.id} surface="global" />}
 
-      <DashboardWidgets connectionId={connection.id} />
+      <DashboardWidgets connectionId={connection.id} canEdit={canEdit} />
 
-      <AnalysisBanner />
+      <AnalysisBanner canAnalyze={canEdit} />
 
       <StatStrip groups={groups} analyses={analyses} connectionId={connection.id} loading={isLoading} />
 
@@ -231,7 +239,9 @@ function HealthRibbon({
       icon: connection.hasPostgresUrl ? Database : AlertTriangle,
       title: connection.hasPostgresUrl
         ? "Direct Postgres URL set — session undo, RLS tooling and sync are available."
-        : "Add a Direct Postgres URL in connection settings to unlock session undo, RLS tooling and sync.",
+        : connection.myRole === "owner"
+          ? "Add a Direct Postgres URL in connection settings to unlock session undo, RLS tooling and sync."
+          : "A workspace owner can add Direct Postgres access for RLS tooling and session undo.",
     },
     {
       label: hasAiKey ? "AI assistance on" : "AI assistance off",
@@ -242,12 +252,14 @@ function HealthRibbon({
         : "Add an OpenRouter key in Settings → AI to enable AI assistance.",
     },
     {
-      label: connection.alertWebhookUrl ? "Sentry alerts" : "Sentry idle",
-      tone: connection.alertWebhookUrl ? "good" : "neutral",
+      label: connection.hasAlertWebhook ? "Sentry alerts" : "Sentry idle",
+      tone: connection.hasAlertWebhook ? "good" : "neutral",
       icon: ShieldCheck,
-      title: connection.alertWebhookUrl
+      title: connection.hasAlertWebhook
         ? "A webhook fires when a Sentry scan finds new critical findings."
-        : "Set an alert webhook in connection settings to be notified of new critical findings.",
+        : connection.myRole === "owner"
+          ? "Set an alert webhook in connection settings to be notified of new critical findings."
+          : "A workspace owner can configure alerts for new critical findings.",
     },
   ];
 
@@ -495,17 +507,20 @@ function QuickActions({
   connectionId,
   users,
   hasAiKey,
+  canEdit,
 }: {
   connectionId: string;
   users: Table | null;
   hasAiKey: boolean;
+  canEdit: boolean;
 }) {
+  const isOwner = useCurrentConnection().myRole === "owner";
   return (
     <>
-      {users && users.kind === "table" && users.primaryKey.length > 0 && (
+      {canEdit && users && users.kind === "table" && users.primaryKey.length > 0 && (
         <Button asChild>
           <Link href={`/c/${connectionId}/tables/${encodeURIComponent(users.name)}/new`}>
-            <Plus className="h-3.5 w-3.5" aria-hidden /> Invite user
+            <Plus className="h-3.5 w-3.5" aria-hidden /> Add user
           </Link>
         </Button>
       )}
@@ -516,11 +531,13 @@ function QuickActions({
           </Link>
         </Button>
       )}
-      <Button asChild variant="ghost">
-        <Link href={`/c/${connectionId}/settings`}>
-          <SettingsIcon className="h-3.5 w-3.5" aria-hidden /> Settings
-        </Link>
-      </Button>
+      {isOwner && (
+        <Button asChild variant="ghost">
+          <Link href={`/c/${connectionId}/settings`}>
+            <SettingsIcon className="h-3.5 w-3.5" aria-hidden /> Settings
+          </Link>
+        </Button>
+      )}
     </>
   );
 }

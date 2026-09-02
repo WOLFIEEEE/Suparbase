@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   title: "Pricing · Suparbase",
   description:
     "Suparbase has a free hosted tier for individuals and paid plans for teams. Same encryption, same proxy, same features.",
+  alternates: { canonical: "/pricing" },
 };
 
 interface Tier {
@@ -36,7 +37,7 @@ const TIERS: Tier[] = [
     price: "$0",
     cadence: "forever",
     blurb:
-      "For individuals running a single Supabase project. Same encrypted proxy, same admin surface, just capped.",
+      "For individuals running a few Supabase projects. Same encrypted proxy, same admin surface, just capped.",
     cta: { label: "Create free account", href: "/signup" },
     features: [
       { text: "Up to 3 Supabase connections" },
@@ -66,7 +67,7 @@ const TIERS: Tier[] = [
       { text: "Agent Sentry continuous scans" },
       { text: "Email support, 1 business day" },
     ],
-    note: "Free 14-day trial. No credit card.",
+    note: "7-day trial. Payment details are collected securely by Dodo Payments.",
   },
   {
     name: "Team",
@@ -88,7 +89,7 @@ const TIERS: Tier[] = [
 const FAQ = [
   {
     q: "Is the Free tier really free forever?",
-    a: "Yes. One connection, one user, no time limit, no credit card. Upgrade to Hosted when you need a team or unlimited projects.",
+    a: "Yes. Up to three connections, one user, no time limit, and no credit card. Upgrade to Hosted when you need a team or unlimited projects.",
   },
   {
     q: "Will my Supabase keys ever touch a browser?",
@@ -96,7 +97,7 @@ const FAQ = [
   },
   {
     q: "What happens to my data if I cancel?",
-    a: "You can export everything (connections, audit log, saved views) as JSON from your account page. We hard-delete your row 30 days after cancellation.",
+    a: "Cancelling billing does not delete your account. You keep access through the paid period and then return to Free limits. Export or separately schedule account deletion from account settings at any time.",
   },
   {
     q: "Why per-seat pricing for Hosted?",
@@ -108,7 +109,7 @@ const FAQ = [
   },
   {
     q: "Can I upgrade or downgrade later?",
-    a: "Anytime. Prorated within the month, no contracts on Hosted.",
+    a: "Anytime. Plan and payment-method changes are managed securely in the Dodo customer portal. Cancellation takes effect under the billing terms shown there; there are no long-term Hosted contracts.",
   },
 ] as const;
 
@@ -188,7 +189,7 @@ export default async function PricingPage() {
       </section>
 
       <CTABand
-        title="Free for one project. 14-day Hosted trial for teams."
+        title="Free for solo work. A 7-day Hosted trial for teams."
         body="Either way, you're five minutes from your first connection."
         primary={{ href: "/signup", label: "Start free" }}
         secondary={{ href: "/docs", label: "Read the docs" }}

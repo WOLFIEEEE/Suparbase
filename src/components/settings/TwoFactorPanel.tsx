@@ -32,15 +32,14 @@ type SetupState =
  *
  *   - Disabled: "Enable" button. Click → GET /setup → show QR + code
  *     entry → POST /enable → show recovery codes (once) + download.
- *   - Enabled: status badge + "Disable" button gated behind the
- *     current password (so a hijacked session can't weaken auth).
- *   - OAuth-only: when there's no password hash, disable warns the
- *     user to email support.
+ *   - Enabled: status badge + "Disable" button gated by the current
+ *     password or a recent OAuth sign-in.
  */
 export function TwoFactorPanel({ email, enabled, enabledAt, remainingRecoveryCodes, hasPassword }: Props) {
   const router = useRouter();
   const [setup, setSetup] = useState<SetupState>({ kind: "idle" });
   const [code, setCode] = useState("");
+  const [enablePassword, setEnablePassword] = useState("");
   const [disablePassword, setDisablePassword] = useState("");
   const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
 
@@ -72,7 +71,7 @@ export function TwoFactorPanel({ email, enabled, enabledAt, remainingRecoveryCod
       const res = await fetch("/api/account/2fa/enable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ secret: setup.secret, code }),
+        body: JSON.stringify({ secret: setup.secret, code, password: enablePassword || undefined }),
       });
       const data = (await res.json()) as { recoveryCodes?: string[]; message?: string };
       if (!res.ok || !data.recoveryCodes) {
@@ -115,7 +114,7 @@ export function TwoFactorPanel({ email, enabled, enabledAt, remainingRecoveryCod
           const res = await fetch("/api/account/2fa/disable", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password: disablePassword }),
+            body: JSON.stringify({ password: disablePassword || undefined }),
           });
           const data = (await res.json()) as { message?: string };
           if (!res.ok) {
@@ -172,6 +171,9 @@ export function TwoFactorPanel({ email, enabled, enabledAt, remainingRecoveryCod
           secret={setup.kind === "ready" ? setup.secret : ""}
           code={code}
           setCode={setCode}
+          password={enablePassword}
+          setPassword={setEnablePassword}
+          hasPassword={hasPassword}
           saving={setup.kind === "saving"}
           onConfirm={confirmEnable}
           onCancel={() => setSetup({ kind: "idle" })}
@@ -199,7 +201,7 @@ export function TwoFactorPanel({ email, enabled, enabledAt, remainingRecoveryCod
         open={disableConfirmOpen}
         onOpenChange={setDisableConfirmOpen}
         title="Disable two-factor authentication?"
-        description="Removes the TOTP secret and all unused recovery codes. Your account will be protected by password only."
+        description="Removes the TOTP secret and all unused recovery codes. Your account will return to its primary sign-in method only."
         confirmLabel="Disable 2FA"
         tone="danger"
         onConfirm={runDisable}
@@ -237,6 +239,9 @@ function SetupPanel({
   secret,
   code,
   setCode,
+  password,
+  setPassword,
+  hasPassword,
   saving,
   onConfirm,
   onCancel,
@@ -246,6 +251,9 @@ function SetupPanel({
   secret: string;
   code: string;
   setCode: (s: string) => void;
+  password: string;
+  setPassword: (s: string) => void;
+  hasPassword: boolean;
   saving: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -305,10 +313,33 @@ function SetupPanel({
             />
           </div>
         </li>
+        {hasPassword && (
+          <li>
+            <strong className="text-fg">4. Confirm your current password.</strong>
+            <p className="mt-1 text-xs text-fg-muted">
+              This prevents a stolen browser session from enrolling a new authenticator.
+            </p>
+            <div className="mt-2 max-w-xs space-y-1.5">
+              <Label htmlFor="enable-password" className="text-[11px] uppercase tracking-[0.16em] text-fg-faint">
+                Current password
+              </Label>
+              <Input
+                id="enable-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </li>
+        )}
       </ol>
 
       <div className="flex gap-2">
-        <Button onClick={onConfirm} disabled={saving || code.trim().length !== 6}>
+        <Button
+          onClick={onConfirm}
+          disabled={saving || code.trim().length !== 6 || (hasPassword && password.length < 8)}
+        >
           {saving ? "Enabling…" : "Verify and enable"}
         </Button>
         <Button variant="ghost" onClick={onCancel} disabled={saving}>
@@ -416,15 +447,16 @@ function EnabledPanel({
       <section className="space-y-3 rounded-lg border border-danger/40 bg-danger/5 p-5">
         <h2 className="font-display text-base text-danger">Disable 2FA</h2>
         {!hasPassword ? (
-          <p className="text-xs text-fg-muted">
-            This account signs in via OAuth, so password-based disable
-            isn&apos;t available here. Reach out via{" "}
-            <Link href="/contact?topic=support" className="text-accent hover:underline">
-              our contact form
-            </Link>{" "}
-            to disable 2FA - we&apos;ll re-verify your identity through other
-            means.
-          </p>
+          <>
+            <p className="text-xs text-fg-muted">
+              OAuth accounts can disable 2FA for 10 minutes after a fresh
+              GitHub sign-in. If this action is rejected, sign out, sign back
+              in, and return here.
+            </p>
+            <Button variant="danger" onClick={openConfirm}>
+              Disable 2FA
+            </Button>
+          </>
         ) : (
           <>
             <p className="text-xs text-fg-muted">

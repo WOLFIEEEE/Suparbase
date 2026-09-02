@@ -2,7 +2,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { schemaAnalysis } from "@/server/schema/schema-analysis";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { introspectConnection } from "@/server/schema-introspect";
 import { fingerprintSchema } from "./fingerprint";
 import { runAnalysis, OpenRouterError } from "./openrouter";
@@ -21,7 +21,7 @@ export async function loadCachedAnalysis(
   userId: string,
   connectionId: string,
 ): Promise<LoadResult> {
-  const conn = await getConnectionForUser(userId, connectionId);
+  const conn = await getConnectionForRole(userId, connectionId, "viewer");
   if (!conn) return { state: "not_cached" };
   const schema = await introspectConnection(conn);
   const fp = fingerprintSchema(schema);
@@ -51,7 +51,7 @@ export async function runOrLoadAnalysis(
   connectionId: string,
   options: { force?: boolean } = {},
 ): Promise<SchemaAnalysisResult> {
-  const conn = await getConnectionForUser(userId, connectionId);
+  const conn = await getConnectionForRole(userId, connectionId, "editor");
   if (!conn) throw new Error("Connection not found");
 
   const schema = await introspectConnection(conn);

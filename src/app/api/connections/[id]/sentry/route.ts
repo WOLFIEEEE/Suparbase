@@ -17,8 +17,8 @@ export async function GET(_req: NextRequest, ctx: Params) {
   if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
 
   const [findings, scans] = await Promise.all([
-    listFindings(session.user.id, id),
-    listRecentScans(session.user.id, id),
+    listFindings(id),
+    listRecentScans(id),
   ]);
   return NextResponse.json({
     findings,

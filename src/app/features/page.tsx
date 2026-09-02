@@ -4,6 +4,8 @@ import {
   Database,
   FileText,
   FolderOpen,
+  Gauge,
+  GitCompareArrows,
   History,
   KeyRound,
   Pencil,
@@ -13,6 +15,7 @@ import {
   Sparkles,
   SquareCode,
   Table2,
+  Tag,
   Undo2,
   UserCog,
   Users,
@@ -30,6 +33,7 @@ export const metadata: Metadata = {
   title: "Features · Suparbase",
   description:
     "An authenticated admin workspace for any Supabase project: encrypted credentials, AI-assisted writes, row history, RLS debugger, SQL playground, and more.",
+  alternates: { canonical: "/features" },
 };
 
 const PRIMARY_FEATURES = [
@@ -86,6 +90,30 @@ const PRIMARY_FEATURES = [
 ] as const;
 
 const SECONDARY_FEATURES = [
+  {
+    icon: Gauge,
+    title: "Performance advisor",
+    body:
+      "Table sizes, seq-vs-index scans, dead-tuple bloat, unused indexes, and pg_stat_statements top queries from one read-only pass, with conservative suggestions and copy-paste SQL.",
+  },
+  {
+    icon: GitCompareArrows,
+    title: "Schema snapshots + drift diff",
+    body:
+      "A snapshot is stored automatically whenever the schema changes between visits. Diff any two, or a snapshot against the live database; a live ERD and TypeScript / Zod types sit on the same page.",
+  },
+  {
+    icon: Tag,
+    title: "Environment labels + production guard",
+    body:
+      "Tag connections production / staging / development. Production paints a red badge everywhere and adds a typed confirmation to row deletes, bulk deletes, and SQL write mode.",
+  },
+  {
+    icon: KeyRound,
+    title: "Public API + personal tokens",
+    body:
+      "Read-only sbp_ tokens for /api/public/v1: connections, live schema, audit activity, Sentry findings, and read-only SQL from scripts and CI. Expiring, revocable, rate-limited per token.",
+  },
   {
     icon: Table2,
     title: "Seven archetype admins",
@@ -250,7 +278,7 @@ export default async function FeaturesPage() {
 
       <CTABand
         title="Drop in your Supabase key and ship."
-        body="Five minutes to set up. Free to self-host. No credit card on the hosted plan."
+        body="Five minutes to set up. Start free, or try the Hosted team plan for seven days."
         primary={{ href: "/signup", label: "Get started" }}
         secondary={{ href: "/pricing", label: "See pricing" }}
       />

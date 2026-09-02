@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import { getActivePlan } from "@/server/billing/repo";
 import { PastDueBanner } from "@/components/billing/PastDueBanner";
+
+export const metadata: Metadata = {
+  title: "Dashboard · Suparbase",
+  robots: { index: false, follow: false, nocache: true },
+};
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

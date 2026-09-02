@@ -13,11 +13,14 @@ import { RowForm } from "@/components/row/RowForm";
 import { DeleteRowDialog } from "@/components/row/DeleteRowDialog";
 import { EditableField } from "@/components/row/EditableField";
 import { RowHistoryPanel } from "@/components/row/RowHistoryPanel";
+import { RowMoreMenu } from "@/components/row/RowMoreMenu";
+import { NotesPanel } from "@/components/workspace/NotesPanel";
 import { StatusPill } from "./shared/StatusPill";
 import { ActionRunner } from "@/components/actions/ActionRunner";
 import { useDeleteRow, useInsertRow, useRow } from "@/lib/api/hooks";
 import { decodePkSegment } from "@/lib/table/pk";
 import { AppError } from "@/lib/errors";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 import type { Column, Schema, Table } from "@/lib/types/schema";
 import type { TableAnalysis } from "@/lib/types/analysis";
 
@@ -39,6 +42,7 @@ interface Props {
  * - Linked-records sidebar from incoming FKs.
  */
 export function GenericDetail({ connectionId, table, schema, analysis, pkSegment }: Props) {
+  const workspaceCanEdit = useCurrentConnection().myRole !== "viewer";
   const router = useRouter();
   const sp = useSearchParams();
   const editMode = sp.get("edit") === "1";
@@ -173,7 +177,7 @@ export function GenericDetail({ connectionId, table, schema, analysis, pkSegment
     }
   }
 
-  const canEdit = table.kind === "table" && pkValue !== null;
+  const canEdit = workspaceCanEdit && table.kind === "table" && pkValue !== null;
 
   // Identity sections (deduped against the hero columns + hidden columns).
   const idSet = new Set(table.primaryKey);
@@ -199,8 +203,17 @@ export function GenericDetail({ connectionId, table, schema, analysis, pkSegment
           ) : null
         }
         actions={
-          canEdit && !editMode ? (
+          !editMode ? (
             <>
+              <RowMoreMenu
+                connectionId={connectionId}
+                table={table}
+                row={row}
+                pkSegment={pkSegment}
+                canEdit={canEdit}
+              />
+              {canEdit && (
+                <>
               <ActionRunner
                 connectionId={connectionId}
                 surface="row"
@@ -216,6 +229,8 @@ export function GenericDetail({ connectionId, table, schema, analysis, pkSegment
               <Button variant="danger" onClick={() => setConfirmDelete(true)}>
                 <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete
               </Button>
+                </>
+              )}
             </>
           ) : null
         }
@@ -336,6 +351,7 @@ export function GenericDetail({ connectionId, table, schema, analysis, pkSegment
                 <p className="leading-relaxed">{analysis.notes}</p>
               </section>
             )}
+            <NotesPanel connectionId={connectionId} tableName={table.name} primaryKey={pkValue} />
             <RowHistoryPanel connectionId={connectionId} table={table} pk={pkValue} />
             </aside>
         </div>

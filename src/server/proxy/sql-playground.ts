@@ -3,6 +3,7 @@ import postgres from "postgres";
 import type { ConnectionRow } from "@/server/schema/connections";
 import { decryptKey } from "@/server/crypto/vault";
 import { NoPostgresUrlError } from "@/server/proxy/postgres";
+import { assertSafePostgresConnectionString } from "@/server/security/egress";
 
 const MAX_TIMEOUT_MS = 60_000;
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -77,7 +78,9 @@ export async function executeSql(opts: SqlExecuteOptions): Promise<SqlExecuteRes
     throw new SqlExecutionError("validation", "SQL is empty.");
   }
 
-  const url = decryptKey(opts.conn.encryptedPostgresUrl);
+  const url = await assertSafePostgresConnectionString(
+    decryptKey(opts.conn.encryptedPostgresUrl),
+  );
   const timeoutMs = clamp(
     opts.statementTimeoutMs ?? DEFAULT_TIMEOUT_MS,
     100,

@@ -8,6 +8,7 @@ import { formatCellValue } from "@/lib/table/cellFormat";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
 import type { Column, PrimaryKeyValue, Table } from "@/lib/types/schema";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 
 interface Props {
   col: Column;
@@ -25,9 +26,11 @@ const NEVER_INLINE_EDIT = new Set(["json"] as const);
  * primary key, no-PK tables, JSON columns, FKs).
  */
 export function EditableField({ col, value, connectionId, table, pk }: Props) {
+  const connection = useCurrentConnection();
   const formatted = formatCellValue(col, value);
 
   const readOnly =
+    connection.myRole === "viewer" ||
     table.kind === "view" ||
     pk === null ||
     col.isPrimaryKey ||

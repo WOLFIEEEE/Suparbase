@@ -73,7 +73,7 @@
       --bg-sunken: 244 244 240;
       --fg: 17 17 19;
       --fg-muted: 78 78 84;
-      --fg-faint: 130 130 134;
+      --fg-faint: 102 102 107;
       --line: 222 222 218;
       --line-strong: 192 192 188;
       --accent: 74 110 23;
@@ -159,6 +159,14 @@
   }
   .hairline-strong {
     border-color: rgb(var(--line-strong));
+  }
+
+  /* Compact, consistent controls for dense operator filters. */
+  .field-label {
+    @apply block text-[10px] font-semibold uppercase tracking-[0.16em] text-fg-faint;
+  }
+  .admin-input {
+    @apply h-10 w-full rounded-md border hairline bg-bg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70;
   }
 
   /* Elevation helpers usable on any element. */

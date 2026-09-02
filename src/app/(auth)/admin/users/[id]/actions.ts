@@ -4,12 +4,19 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getAdminSession } from "@/server/admin/guard";
-import { recordAdminAction } from "@/server/admin/repo";
+import {
+  clearUserEmailSuppression,
+  getUserDetail,
+  recordAdminAction,
+  revokeUserSessions,
+} from "@/server/admin/repo";
 import {
   getSubscription,
   upsertSubscription,
 } from "@/server/billing/repo";
 import { log } from "@/server/log";
+import { invalidatePasswordChangedCache } from "@/server/auth";
+import { parseGrantExpiry } from "@/server/admin/validation";
 
 /**
  * Server actions for the admin user-detail page. Each writes an
@@ -42,13 +49,12 @@ export async function grantPlanAction(formData: FormData): Promise<{ ok: boolean
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  // `<input type="date">` returns YYYY-MM-DD. Push to 23:59:59 UTC of
-  // that day so a grant "through Dec 31" actually entitles the user
-  // for the whole of Dec 31 (rather than expiring at the start of it).
-  const expiresAt =
-    parsed.data.expiresAt && parsed.data.expiresAt.length > 0
-      ? endOfDayUtc(parsed.data.expiresAt)
-      : null;
+  const expiry = parseGrantExpiry(parsed.data.expiresAt);
+  if (!expiry.ok) return expiry;
+  const expiresAt = expiry.value;
+
+  const target = await getUserDetail(parsed.data.targetUserId);
+  if (!target) return { ok: false, message: "User no longer exists." };
 
   await recordAdminAction({
     adminUserId: admin.userId,
@@ -76,15 +82,9 @@ export async function grantPlanAction(formData: FormData): Promise<{ ok: boolean
   }
   revalidatePath(`/admin/users/${parsed.data.targetUserId}`);
   revalidatePath("/admin/users");
+  revalidatePath("/admin");
+  revalidatePath("/admin/actions");
   return { ok: true };
-}
-
-function endOfDayUtc(ymd: string): Date {
-  // Accept YYYY-MM-DD; reject anything else (defensive. Zod already
-  // checked it's a non-empty string but didn't enforce shape).
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
-  if (!m) return new Date(Number.NaN);
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 23, 59, 59, 999));
 }
 
 const ResetSchema = z.object({ targetUserId: z.string().uuid() });
@@ -130,5 +130,71 @@ export async function resetSubscriptionAction(formData: FormData): Promise<{ ok:
   }
   revalidatePath(`/admin/users/${parsed.data.targetUserId}`);
   revalidatePath("/admin/users");
+  revalidatePath("/admin");
+  revalidatePath("/admin/actions");
   return { ok: true };
+}
+
+export async function clearEmailSuppressionAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const admin = await getAdminSession();
+  if (!admin) notFound();
+  const parsed = ResetSchema.safeParse({ targetUserId: formData.get("targetUserId") });
+  if (!parsed.success) return { ok: false, message: "Invalid input." };
+  const target = await getUserDetail(parsed.data.targetUserId);
+  if (!target) return { ok: false, message: "User no longer exists." };
+  if (!target.emailUndeliverableAt) return { ok: false, message: "Email is not suppressed." };
+
+  await recordAdminAction({
+    adminUserId: admin.userId,
+    action: "clear_email_suppression",
+    targetUserId: target.id,
+    details: {
+      previousReason: target.emailUndeliverableReason,
+      suppressedAt: target.emailUndeliverableAt.toISOString(),
+    },
+  });
+  try {
+    await clearUserEmailSuppression(target.id);
+  } catch (error) {
+    log.error("admin clear_email_suppression failed", { err: (error as Error).message });
+    return { ok: false, message: "Failed to clear email suppression." };
+  }
+  revalidateAdminUser(target.id);
+  return { ok: true };
+}
+
+export async function revokeSessionsAction(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const admin = await getAdminSession();
+  if (!admin) notFound();
+  const parsed = ResetSchema.safeParse({ targetUserId: formData.get("targetUserId") });
+  if (!parsed.success) return { ok: false, message: "Invalid input." };
+  if (parsed.data.targetUserId === admin.userId) {
+    return { ok: false, message: "Revoke your own sessions from account settings." };
+  }
+  const target = await getUserDetail(parsed.data.targetUserId);
+  if (!target) return { ok: false, message: "User no longer exists." };
+
+  await recordAdminAction({
+    adminUserId: admin.userId,
+    action: "revoke_sessions",
+    targetUserId: target.id,
+    details: { reason: "operator_security_action" },
+  });
+  try {
+    await revokeUserSessions(target.id);
+    invalidatePasswordChangedCache(target.id);
+  } catch (error) {
+    log.error("admin revoke_sessions failed", { err: (error as Error).message });
+    return { ok: false, message: "Failed to revoke sessions." };
+  }
+  revalidateAdminUser(target.id);
+  return { ok: true };
+}
+
+function revalidateAdminUser(userId: string): void {
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/users");
+  revalidatePath("/admin");
+  revalidatePath("/admin/actions");
+  revalidatePath("/admin/operations");
 }

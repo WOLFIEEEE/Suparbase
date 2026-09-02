@@ -1044,6 +1044,9 @@ function ToolStrip({
               <div className="ml-4 font-mono text-fg-muted">
                 {s.status === "running" ? "…" : `→ ${summarizeResult(s.result)}`}
               </div>
+              {s.status === "done" && s.tool === "query_rows" && (
+                <LocalRowsPreview result={s.result} />
+              )}
             </li>
           ))}
           {phase === "tool_running" && pending && runningCount === 0 && (
@@ -1096,6 +1099,53 @@ function summarizeResult(result: unknown): string {
   if (Array.isArray(r.groups))
     return `${(r.groups as unknown[]).length} group${(r.groups as unknown[]).length === 1 ? "" : "s"}`;
   return "ok";
+}
+
+function LocalRowsPreview({ result }: { result: unknown }) {
+  if (!result || typeof result !== "object") return null;
+  const rows = (result as { rows?: unknown }).rows;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const records = rows.filter(
+    (row): row is Record<string, unknown> => !!row && typeof row === "object" && !Array.isArray(row),
+  );
+  if (records.length === 0) return null;
+  const columns = Array.from(new Set(records.flatMap((row) => Object.keys(row)))).slice(0, 6);
+  return (
+    <div className="ml-4 mt-2 max-w-full overflow-x-auto rounded border hairline bg-bg-raised">
+      <table className="min-w-full text-left font-mono text-[10px]">
+        <caption className="sr-only">Rows fetched locally from the selected table</caption>
+        <thead className="border-b hairline bg-bg-sunken text-fg-faint">
+          <tr>
+            {columns.map((column) => (
+              <th key={column} scope="col" className="whitespace-nowrap px-2 py-1.5 font-medium">
+                {column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {records.slice(0, 5).map((row, index) => (
+            <tr key={index} className="border-b hairline last:border-0">
+              {columns.map((column) => (
+                <td key={column} className="max-w-40 truncate px-2 py-1.5 text-fg-muted">
+                  {previewValue(row[column])}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="border-t hairline px-2 py-1.5 font-sans text-[10px] text-fg-faint">
+        Local preview · raw values were not sent back to the language model.
+      </p>
+    </div>
+  );
+}
+
+function previewValue(value: unknown): string {
+  if (value == null) return "null";
+  const rendered = typeof value === "object" ? JSON.stringify(value) : String(value);
+  return rendered.length > 80 ? `${rendered.slice(0, 79)}…` : rendered;
 }
 
 // ---------------------------------------------------------------------------

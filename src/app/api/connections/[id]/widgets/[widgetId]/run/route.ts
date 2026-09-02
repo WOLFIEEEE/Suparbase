@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { getWidget } from "@/server/dashboards/repo";
 import { executeSql, SqlExecutionError } from "@/server/proxy/sql-playground";
 import { checkAiRate } from "@/server/proxy/ratelimit";
@@ -19,7 +19,7 @@ export async function POST(_req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, widgetId } = await ctx.params;
 
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
 
   const widget = await getWidget(session.user.id, id, widgetId);

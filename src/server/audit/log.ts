@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/server/db";
 import { auditLog } from "@/server/schema/audit";
+import { log } from "@/server/log";
 
 export interface AuditInput {
   userId: string;
@@ -17,11 +18,11 @@ export interface AuditInput {
 }
 
 /**
- * Fire-and-forget audit write. We do not await this when called from the proxy
- * so a slow audit insert never delays the user-visible response. The caller
- * may still `await` if it wants a guarantee for tests.
+ * Persists an audit entry and reports whether it succeeded. Mutation paths
+ * await this result so a persistence failure is observable and logged before
+ * the response completes.
  */
-export async function auditWrite(input: AuditInput): Promise<void> {
+export async function auditWrite(input: AuditInput): Promise<boolean> {
   try {
     await db.insert(auditLog).values({
       userId: input.userId,
@@ -35,7 +36,14 @@ export async function auditWrite(input: AuditInput): Promise<void> {
       afterRow: input.afterRow ?? null,
       sessionId: input.sessionId ?? null,
     });
-  } catch {
-    // never let an audit failure surface to the user
+    return true;
+  } catch (error) {
+    log.error("audit row persistence failed", {
+      connectionId: input.connectionId,
+      tableName: input.tableName,
+      verb: input.verb,
+      err: error,
+    });
+    return false;
   }
 }

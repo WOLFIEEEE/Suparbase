@@ -6,6 +6,7 @@ import { Database, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { Wordmark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/workspace/ThemeToggle";
+import { NotificationsBell } from "@/components/workspace/NotificationsBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,6 +61,7 @@ export function AppHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          {session?.user && <NotificationsBell />}
           <ThemeToggle />
           {session?.user && (
             <DropdownMenu>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, toSummary } from "@/server/connections/repo";
+import { getConnectionAccess, roleAtLeast, toSummary } from "@/server/connections/repo";
 import { PageHeader } from "@/components/workspace/PageHeader";
 import { DashboardEditor } from "@/components/dashboards/DashboardEditor";
 
@@ -14,9 +14,9 @@ export default async function DashboardEditPage({ params }: Props) {
   const session = await auth();
   if (!session?.user) notFound();
   const { id } = await params;
-  const row = await getConnectionForUser(session.user.id, id);
-  if (!row) notFound();
-  const connection = toSummary(row);
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access || !roleAtLeast(access.role, "editor")) notFound();
+  const connection = toSummary(access.conn, access.role);
 
   return (
     <div className="space-y-6">

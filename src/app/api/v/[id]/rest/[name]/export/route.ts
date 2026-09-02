@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { introspectConnection } from "@/server/schema-introspect";
 import { checkReadRate } from "@/server/proxy/ratelimit";
 import {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, ctx: Params) {
   if (!session?.user) return jsonError(401, "unauthorized", "Not signed in.");
 
   const { id, name } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) return jsonError(404, "not_found", "Connection not found.");
 
   const rate = checkReadRate(session.user.id);

@@ -55,6 +55,7 @@ import { ActionRunner } from "./ActionRunner";
 
 interface ManagerProps {
   connectionId: string;
+  canEdit?: boolean;
 }
 
 async function fetchActions(connectionId: string): Promise<ActionSummary[]> {
@@ -64,7 +65,7 @@ async function fetchActions(connectionId: string): Promise<ActionSummary[]> {
   return j.actions;
 }
 
-export function ActionsManager({ connectionId }: ManagerProps) {
+export function ActionsManager({ connectionId, canEdit = true }: ManagerProps) {
   const qc = useQueryClient();
   const { data: actions = [], isLoading } = useQuery({
     queryKey: ["actions", connectionId],
@@ -104,10 +105,12 @@ export function ActionsManager({ connectionId }: ManagerProps) {
           Buttons that run business logic on this connection, SQL templates or
           webhooks, surfaced on tables and rows.
         </p>
-        <Button size="sm" onClick={() => setEditing("new")}>
-          <Plus className="h-3 w-3" aria-hidden />
-          New action
-        </Button>
+        {canEdit && (
+          <Button size="sm" onClick={() => setEditing("new")}>
+            <Plus className="h-3 w-3" aria-hidden />
+            New action
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -115,7 +118,7 @@ export function ActionsManager({ connectionId }: ManagerProps) {
           Loading actions…
         </div>
       ) : actions.length === 0 ? (
-        <EmptyState onNew={() => setEditing("new")} />
+        <EmptyState onNew={canEdit ? () => setEditing("new") : undefined} />
       ) : (
         <div className="space-y-6">
           {grouped.map(({ scope, items }) => (
@@ -126,6 +129,7 @@ export function ActionsManager({ connectionId }: ManagerProps) {
               onEdit={(a) => setEditing(a)}
               onDelete={onDelete}
               onRun={(a) => setRunningInline(a)}
+              canEdit={canEdit}
             />
           ))}
         </div>
@@ -199,12 +203,14 @@ function ScopeSection({
   onEdit,
   onDelete,
   onRun,
+  canEdit,
 }: {
   scope: ActionScope;
   items: ActionSummary[];
   onEdit: (a: ActionSummary) => void;
   onDelete: (a: ActionSummary) => void;
   onRun: (a: ActionSummary) => void;
+  canEdit: boolean;
 }) {
   const title =
     scope === "global"
@@ -256,18 +262,20 @@ function ScopeSection({
                 {a.description && <span className="line-clamp-1">{a.description}</span>}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <Button size="sm" variant="secondary" onClick={() => onRun(a)}>
-                <Play className="h-3 w-3" aria-hidden />
-                Run
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => onEdit(a)} aria-label="Edit">
-                <Pencil className="h-3.5 w-3.5" aria-hidden />
-              </Button>
-              <Button size="icon" variant="ghost" onClick={() => onDelete(a)} aria-label="Delete">
-                <Trash2 className="h-3.5 w-3.5" aria-hidden />
-              </Button>
-            </div>
+            {canEdit && (
+              <div className="flex shrink-0 items-center gap-1">
+                <Button size="sm" variant="secondary" onClick={() => onRun(a)}>
+                  <Play className="h-3 w-3" aria-hidden />
+                  Run
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => onEdit(a)} aria-label="Edit">
+                  <Pencil className="h-3.5 w-3.5" aria-hidden />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => onDelete(a)} aria-label="Delete">
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                </Button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -275,7 +283,7 @@ function ScopeSection({
   );
 }
 
-function EmptyState({ onNew }: { onNew: () => void }) {
+function EmptyState({ onNew }: { onNew?: () => void }) {
   return (
     <div className="rounded-md border hairline bg-bg-raised px-6 py-10 text-center">
       <div className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-accent/10">
@@ -287,10 +295,12 @@ function EmptyState({ onNew }: { onNew: () => void }) {
         &quot;Refund&quot;, &quot;Approve&quot;, &quot;Resend invite&quot;, etc.
         It&apos;ll appear on the table or row page you scope it to.
       </p>
-      <Button className="mt-4" size="sm" onClick={onNew}>
-        <Plus className="h-3 w-3" aria-hidden />
-        Create the first action
-      </Button>
+      {onNew && (
+        <Button className="mt-4" size="sm" onClick={onNew}>
+          <Plus className="h-3 w-3" aria-hidden />
+          Create the first action
+        </Button>
+      )}
     </div>
   );
 }
@@ -869,4 +879,3 @@ function ParamsEditor({
     </div>
   );
 }
-

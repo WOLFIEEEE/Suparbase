@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { findRelatedTables } from "@/server/impersonation/repo";
 import { AppError } from "@/lib/errors";
 
@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, uid } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
   try {
     const tables = await findRelatedTables(conn, uid);

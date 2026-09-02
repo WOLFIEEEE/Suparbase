@@ -3,6 +3,90 @@
 All notable changes between Suparbase versions. Each version corresponds
 to a Spec-Kit feature directory under [`specs/`](specs/) and a git tag.
 
+## v3.20.0 · 2026-09-02 · Workspace power features
+
+Thirteen additions across safety, schema tooling, operations, and
+scripting. Spec:
+[`specs/034-workspace-power-features/`](specs/034-workspace-power-features/).
+
+**Safety**
+
+- **Environment labels + production guard.** Tag a connection
+  `production` / `staging` / `development` / `other` (settings or the
+  create form). The label shows as a badge in the topbar, connection
+  cards, and settings. Production adds a typed table-name confirmation to
+  single-row deletes, a warning to bulk deletes, and a typed
+  `PRODUCTION` confirmation before SQL write mode.
+- **Scheduled Sentry scans.** Owners pick a cadence (6h / 12h / daily /
+  3 days / weekly); a new `POST /api/cron/sentry` route (Bearer
+  `CRON_SECRET`) re-runs the probe unattended. New criticals fire the
+  alert webhook and the in-app inbox exactly like a manual scan.
+- **12 more agent fingerprints**: Windsurf, Codex, GitHub Copilot, Gemini
+  CLI, Devin, Bolt, Zed, Amp, Kiro, OpenCode, Trae, JetBrains Junie.
+- **In-app notifications.** A bell in both headers with an unread badge.
+  Raised by new Sentry criticals, data-watch alerts, failed scheduled
+  reports, failed / partial / aborted scheduled syncs, team invitations to
+  existing users, scheduled-scan failures, and schema changes. Read state
+  is per user; inbox pruned to the newest 200.
+
+**Schema tooling** (new tabs on `/c/[id]/schema`)
+
+- **ERD**: a live entity-relationship diagram of the connection, with SVG
+  download. Reuses the free tool's renderer (now a shared `ErdDiagram`).
+- **Types**: TypeScript interfaces or Zod schemas generated in-browser from
+  the live schema, copy or download.
+- **History**: schema snapshots. One is stored automatically whenever the
+  fingerprint changes between introspections (kept to 50 per connection),
+  or on demand with "Snapshot now". Compare any two, or a snapshot
+  against the live database, with added / removed / altered tables and
+  columns. A change also posts a `schema_changed` notification.
+
+**Performance** (`/c/[id]/performance`, needs the Direct Postgres URL)
+
+- Database size, cache-hit ratio, connection usage, per-table size /
+  estimated rows / seq-vs-index scans / dead-tuple ratio / last analyze,
+  unused indexes, installed extensions, and the slowest statements when
+  `pg_stat_statements` is readable. One read-only transaction, no row data.
+- A conservative **advisor** (`computeSuggestions`, unit-tested) flags
+  seq-scan-heavy large tables, bloat, unused indexes, stale statistics,
+  low cache hit, and connection pressure, each with copy-paste SQL.
+
+**Rows**
+
+- **Restore a previous version** from the row history panel: any older
+  snapshot writes back through the normal proxy (PK + generated columns
+  excluded), so the restore is itself audited and reversible.
+- **More menu** on every row detail page: Duplicate (opens the new-row
+  form prefilled), Copy as JSON, Copy as SQL INSERT, Copy link, Copy
+  primary key.
+- **Notes**: team-visible annotations on any row (right rail) or table
+  (collapsible strip above the grid). Authors delete their own; owners
+  delete any. New `workspace_note` table.
+
+**Scripting + setup**
+
+- **Personal API tokens** (`/settings/api-tokens`) and a read-only
+  **public API v1** under `/api/public/v1`: `me`, `connections`,
+  `connections/:id/{schema,activity,sentry/findings}` and a read-only
+  `sql` endpoint. Tokens are `sbp_…`, shown once, SHA-256 at rest,
+  optionally expiring, revocable, rate-limited per token. Documented on
+  `/docs/api`.
+- **Connection import / export.** `/connections/import` accepts a JSON
+  array or CSV (`name,url,key,postgresUrl,environment`), validates every
+  row locally, then creates them one by one through the existing
+  endpoint (plan caps and credential probes apply). Export returns a
+  secret-free JSON manifest.
+- **Keyboard shortcuts.** `?` opens a cheat sheet; `g` then a letter jumps
+  to Dashboard / Tables / Schema / SQL / Storage / Auth users /
+  Performance / Activity / Sentry / RLS / Watches / Settings.
+
+**Schema:** migration `0025` adds `connections.environment`,
+`connections.sentry_scan_interval_hours`,
+`connections.sentry_last_auto_scan_at`, and the `schema_snapshot`,
+`workspace_note`, `notification`, `api_token` tables (all additive, no
+downtime). New cron route to wire: `/api/cron/sentry` (see
+PRODUCTION.md). 282 unit tests passing (+39).
+
 ## v3.19.3 · 2026-07-06 · Database sync hardening
 
 Correctness and safety pass over the database sync engine (spec 032),

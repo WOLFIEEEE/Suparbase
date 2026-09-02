@@ -60,7 +60,7 @@ export const TOOL_DEFINITIONS = [
     function: {
       name: "query_rows",
       description:
-        "Read rows from a table via PostgREST. Read-only. Returns at most 50 rows. Prefer narrow `columns` and `filters` over fetching everything. Use `count_rows` for aggregate counts.",
+        "Fetch rows read-only for a local preview in the user's browser. Raw values are deliberately NOT returned to the model; the tool result only confirms how many rows were displayed. Use count_rows or aggregate when you need values you can reason about.",
       parameters: {
         type: "object",
         required: ["table_name"],
@@ -603,14 +603,16 @@ async function queryRows(
       table: table.name,
       returned: rows.length,
       estimatedTotal: res.totalCount,
-      rows,
+      note: "Rows were displayed locally and were not sent to the language model.",
     }),
     display: {
       table: table.name,
       returned: rows.length,
+      estimatedTotal: res.totalCount,
       filters: args.filters ?? [],
       columns: args.columns ?? null,
       limit,
+      rows,
     },
   };
 }
@@ -713,7 +715,14 @@ async function proposeUpdate(
       preview,
       totalCount,
     };
-    return { payload: JSON.stringify(proposal), display: proposal };
+    return {
+      payload: JSON.stringify({
+        ...proposal,
+        preview: undefined,
+        previewDisplayedLocally: true,
+      }),
+      display: proposal,
+    };
   } catch (e) {
     return error((e as Error).message ?? "Could not preview update.");
   }
@@ -763,7 +772,14 @@ async function proposeDelete(
       preview,
       totalCount,
     };
-    return { payload: JSON.stringify(proposal), display: proposal };
+    return {
+      payload: JSON.stringify({
+        ...proposal,
+        preview: undefined,
+        previewDisplayedLocally: true,
+      }),
+      display: proposal,
+    };
   } catch (e) {
     return error((e as Error).message ?? "Could not preview delete.");
   }
@@ -886,7 +902,10 @@ async function listIndexes(
   // Import inline to keep the cold path lazy.
   const { default: postgres } = await import("postgres");
   const { decryptKey } = await import("@/server/crypto/vault");
-  const url = decryptKey(ctx.conn.encryptedPostgresUrl);
+  const { assertSafePostgresConnectionString } = await import("@/server/security/egress");
+  const url = await assertSafePostgresConnectionString(
+    decryptKey(ctx.conn.encryptedPostgresUrl),
+  );
   const sql = postgres(url, { max: 1, idle_timeout: 5, connect_timeout: 8, prepare: false });
   try {
     const rows = await sql<
@@ -950,7 +969,6 @@ async function auditSummary(
   const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
   const conditions = [
-    eq(auditLog.userId, ctx.userId),
     eq(auditLog.connectionId, ctx.conn.id),
     gte(auditLog.createdAt, since),
   ];

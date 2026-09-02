@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { validateWebhookUrl } from "@/server/actions/repo";
 
 /**
- * SSRF blocklist for custom-action webhook URLs. Every entry below
+ * Fast, syntax-level SSRF blocklist for custom-action webhook URLs. The
+ * execution boundary performs a second DNS-aware check immediately before
+ * each request and redirect. Every entry below
  * corresponds to a real attack vector or a known internal endpoint
  * we don't want exposed to an action invocation:
  *
@@ -50,8 +52,8 @@ const ALLOWED = [
   "https://api.example.com/webhook",
   "https://hooks.slack.com/services/T0/B0/abc",
   "https://api.stripe.com/v1/refunds",
-  // Public CGN range - annoying, but technically not in any private block.
-  // We don't try to defend against carrier-grade NAT.
+  // The lightweight validator permits syntactically public-looking values;
+  // the DNS-aware egress guard rejects documentation/reserved ranges later.
   "https://203.0.113.5/",
   // 172.32+ is public.
   "http://172.32.0.1/",

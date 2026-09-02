@@ -42,6 +42,18 @@ project URL + API key, and you get:
   delete, service-role warnings.
 - **Audit log of every write**: keyed to user, connection, table, PK,
   verb, status. Indefinite retention in v1.
+- **Environment labels**: tag a connection production / staging /
+  development. Production paints a red badge everywhere and adds a typed
+  confirmation to row deletes, bulk deletes, and SQL write mode.
+- **Schema tools**: live ERD, TypeScript / Zod type generation, and a
+  snapshot history that diffs "what changed since Tuesday" automatically.
+- **Performance page**: table sizes, seq-vs-index scans, bloat, unused
+  indexes, `pg_stat_statements` top queries, plus a conservative advisor.
+- **Notes, notifications, shortcuts**: team-visible notes on tables and
+  rows, an in-app inbox for Sentry / watch / sync / report events, and
+  `g`-chord keyboard navigation.
+- **Public API**: personal read-only tokens for `/api/public/v1` (list
+  connections, pull the schema or activity, run a SELECT from CI).
 
 ## AI assistance (optional)
 
@@ -97,8 +109,28 @@ This is the core promise:
 - Writes are **rate-limited** per user (60/minute default), tracked
   in an audit log, and recorded with the affected table/PK.
 - The credential vault supports **versioned ciphertext** so you can
-  rotate the encryption key without downtime: see
-  `src/server/crypto/vault.ts`.
+  rotate the encryption key without downtime. The transactional rotation
+  command covers Supabase keys, Direct Postgres URLs, OpenRouter keys, TOTP
+  secrets, and encrypted webhook headers.
+
+### Rotate the credential-vault key
+
+Back up the database and both keys first. Set the new key as the primary key
+and the previous key as `SUPARBASE_ENCRYPTION_KEY_OLD`, then validate and run:
+
+```bash
+export SUPARBASE_ENCRYPTION_KEY="$(openssl rand -base64 32)"
+export SUPARBASE_ENCRYPTION_KEY_OLD="<previous primary key>"
+pnpm rotate:encryption-key -- --dry-run
+pnpm rotate:encryption-key
+```
+
+The command takes a database advisory lock and updates every encrypted value
+inside one transaction. It is safe to rerun: values already encrypted by the
+new key are skipped. For the production image, run the bundled equivalent
+inside the app container: `node dist/rotate-encryption-key.mjs`. Once every
+app instance uses the new key and a final dry run reports zero values to
+rotate, remove `SUPARBASE_ENCRYPTION_KEY_OLD`.
 
 ## Deploy on Coolify (recommended)
 
@@ -108,7 +140,7 @@ The compose file declares two services:
 - **`db`**: `supabase/postgres:15.1.1.78` (Postgres + the extensions
   Supabase ships).
 - **`app`**: this Next.js app, built as a standalone Node 20 image.
-  Runs Drizzle migrations at startup, then `next start`.
+  Runs Drizzle migrations at startup, then the standalone Next.js server.
 
 ### In Coolify (zero env vars required)
 

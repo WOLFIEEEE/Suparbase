@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Docs · Suparbase",
   description:
     "Quickstart, security model, connections, AI assistant, RLS debugger, SQL playground, audit log. Everything you need to operate Suparbase.",
+  alternates: { canonical: "/docs" },
 };
 
 interface TocEntry {

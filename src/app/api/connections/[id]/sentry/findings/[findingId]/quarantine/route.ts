@@ -39,7 +39,7 @@ export async function POST(_req: NextRequest, ctx: Params) {
   const rate = rateLimitOr429(session.user.id);
   if (rate) return rate;
   try {
-    await quarantineFinding(session.user.id, access.conn, findingId);
+    await quarantineFinding(access.conn, findingId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof AppError) {
@@ -76,7 +76,7 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
   const rate = rateLimitOr429(session.user.id);
   if (rate) return rate;
   try {
-    await dismissQuarantine(session.user.id, access.conn, findingId);
+    await dismissQuarantine(access.conn, findingId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof AppError) {

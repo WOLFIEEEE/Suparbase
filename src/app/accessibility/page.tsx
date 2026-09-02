@@ -8,9 +8,10 @@ export const metadata: Metadata = {
   title: "Accessibility · Suparbase",
   description:
     "Suparbase's accessibility statement: target standard, what we ship today, known gaps, and how to report issues.",
+  alternates: { canonical: "/accessibility" },
 };
 
-const LAST_UPDATED = "2026-05-17"; // v3.10.0 - contrast, target-size, scope, contact-form fixes
+const LAST_UPDATED = "2026-07-16"; // contrast, responsive targets, scope, and auth-flow review
 
 /**
  * Plain-English accessibility statement. Companion document to the

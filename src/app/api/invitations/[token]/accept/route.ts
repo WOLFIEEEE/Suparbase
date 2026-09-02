@@ -19,7 +19,7 @@ export async function POST(_req: NextRequest, ctx: Params) {
   }
   const { token } = await ctx.params;
   try {
-    const result = await acceptInvitation(token, session.user.id, session.user.email ?? null);
+    const result = await acceptInvitation(token, session.user.id);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof AppError) {

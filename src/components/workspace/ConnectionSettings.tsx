@@ -23,6 +23,9 @@ import { PostgresUrlSection } from "@/components/connections/PostgresUrlSection"
 import { ConnectionHealthCard } from "@/components/workspace/ConnectionHealthCard";
 import { AlertWebhookSection } from "@/components/workspace/AlertWebhookSection";
 import { AuditExportSection } from "@/components/workspace/AuditExportSection";
+import { EnvironmentSection } from "@/components/workspace/EnvironmentSection";
+import { SentryScheduleSection } from "@/components/workspace/SentryScheduleSection";
+import { EnvironmentBadge } from "@/components/connections/EnvironmentBadge";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
@@ -129,7 +132,10 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
         </header>
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <div className="font-medium">{connection.name}</div>
+            <div className="flex items-center gap-2 font-medium">
+              {connection.name}
+              <EnvironmentBadge environment={connection.environment} />
+            </div>
             <div className="font-mono text-[11px] text-fg-faint">
               {connection.hostname}
             </div>
@@ -146,6 +152,8 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
           </Button>
         </div>
       </section>
+
+      <EnvironmentSection connection={connection} />
 
       {/* ── Security ── */}
       <section className="surface space-y-4 rounded-md p-6">
@@ -262,6 +270,8 @@ export function ConnectionSettings({ connection }: { connection: ConnectionSumma
       <PostgresUrlSection connection={connection} />
 
       <AlertWebhookSection connection={connection} />
+
+      <SentryScheduleSection connection={connection} />
 
       <AuditExportSection connectionId={connection.id} />
 

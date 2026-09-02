@@ -36,7 +36,6 @@ function qualifiedIdent(schemaName: string, tableName: string): string {
 }
 
 export async function quarantineFinding(
-  userId: string,
   conn: ConnectionRow,
   findingId: string,
 ): Promise<void> {
@@ -50,7 +49,6 @@ export async function quarantineFinding(
     .where(
       and(
         eq(sentryFindings.id, findingId),
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, conn.id),
       ),
     )
@@ -95,7 +93,6 @@ export async function quarantineFinding(
 }
 
 export async function dismissQuarantine(
-  userId: string,
   conn: ConnectionRow,
   findingId: string,
 ): Promise<void> {
@@ -108,7 +105,6 @@ export async function dismissQuarantine(
     .where(
       and(
         eq(sentryFindings.id, findingId),
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, conn.id),
       ),
     )

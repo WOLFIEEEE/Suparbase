@@ -46,10 +46,10 @@ export default async function ApiDocsPage() {
             </ol>
             <p>
               The session cookie is <code>httpOnly</code>, so it cannot be
-              accessed from page JavaScript - that&apos;s by design. There is no
-              long-lived API token yet; if you have a use case that needs one,
-              send us a note via{" "}
-              <Link href="/contact">our contact form</Link>.
+              accessed from page JavaScript - that&apos;s by design. For scripts
+              and CI, mint a <strong>personal API token</strong> instead (see
+              the public API section below): it authenticates with a plain
+              <code> Authorization: Bearer</code> header and needs no cookie.
             </p>
 
             <h2>CSRF</h2>
@@ -193,6 +193,94 @@ export default async function ApiDocsPage() {
               <code>Authorization: Bearer {`<CRON_SECRET>`}</code>. Returns the
               row counts pruned per table. Designed for cron-job.org / Coolify
               cron / GitHub Actions - not for in-app calls.
+            </p>
+
+            <h2>Public API v1 (personal API tokens)</h2>
+            <p>
+              Create a token under{" "}
+              <Link href="/settings/api-tokens">/settings/api-tokens</Link>. The
+              plaintext (<code>sbp_…</code>) is shown once; only a SHA-256 is
+              stored. Tokens are <strong>read-only</strong>, carry exactly the
+              access of the user who minted them (every connection they own or
+              are a member of), can expire, and can be revoked at any time.
+              Rate limit: 240 requests / minute per token. Every route lives
+              under <code>/api/public/v1</code> and answers JSON.
+            </p>
+            <pre>
+              <code>{`curl -H "Authorization: Bearer sbp_…" https://suparbase.com/api/public/v1/connections`}</code>
+            </pre>
+
+            <h3>
+              <code>GET /api/public/v1/me</code>
+            </h3>
+            <p>
+              The token&apos;s owner: <code>{`{ user: { id, email, name }, tokenId, scope: "read" }`}</code>.
+            </p>
+
+            <h3>
+              <code>GET /api/public/v1/connections</code>
+            </h3>
+            <p>
+              Every connection the owner can access:{" "}
+              <code>{`{ connections: [{ id, name, hostname, url, keyRole, environment, myRole, hasPostgresUrl, createdAt, lastUsedAt }] }`}</code>.
+              No secrets, ever.
+            </p>
+
+            <h3>
+              <code>GET /api/public/v1/connections/:id/schema</code>
+            </h3>
+            <p>
+              Live introspected schema in the compact snapshot shape:{" "}
+              <code>{`{ hostname, introspectedAt, tables: [{ schema, name, kind, primaryKey, columns: [{ name, pgType, nullable, defaultValue, fk? }] }] }`}</code>.
+            </p>
+
+            <h3>
+              <code>GET /api/public/v1/connections/:id/activity</code>
+            </h3>
+            <p>
+              Audit timeline, newest first. Query params{" "}
+              <code>verb=insert|update|delete</code>, <code>table</code>,{" "}
+              <code>limit</code> (max 200) and <code>before</code> (ISO
+              timestamp) for keyset pagination; the response carries{" "}
+              <code>nextBefore</code> to feed back in.
+            </p>
+
+            <h3>
+              <code>GET /api/public/v1/connections/:id/sentry/findings</code>
+            </h3>
+            <p>
+              Agent Sentry findings (all statuses) plus the most recent scans:{" "}
+              <code>{`{ findings, scans }`}</code>.
+            </p>
+
+            <h3>
+              <code>POST /api/public/v1/connections/:id/sql</code>
+            </h3>
+            <p>
+              Body <code>{`{ sql: string, statementTimeoutMs?: number }`}</code>. Runs
+              inside <code>SET TRANSACTION READ ONLY</code> and always rolls
+              back, so a token can never write. Needs the connection&apos;s
+              Direct Postgres URL. Returns{" "}
+              <code>{`{ columns, rows, rowCount, truncated, elapsedMs }`}</code>
+              (capped at 1,000 rows).
+            </p>
+
+            <h3>Errors</h3>
+            <p>
+              <code>401</code> missing / unknown / revoked / expired token,{" "}
+              <code>404</code> connection not visible to the owner,{" "}
+              <code>429</code> with <code>Retry-After</code> when the per-token
+              budget is exhausted. Every error body is{" "}
+              <code>{`{ category, message }`}</code>.
+            </p>
+
+            <h3>
+              <code>POST /api/cron/{`{reports,watches,sentry,sync}`}</code>
+            </h3>
+            <p>
+              Operator cron routes, same <code>Bearer {`<CRON_SECRET>`}</code>{" "}
+              contract as retention. <code>sentry</code> (v3.20) re-scans every
+              connection whose owner enabled a scheduled cadence.
             </p>
 
             <h2>What's NOT public yet</h2>

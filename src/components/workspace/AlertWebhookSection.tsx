@@ -15,7 +15,7 @@ import type { ConnectionSummary } from "@/lib/types/connection";
  * that accepts a JSON POST.
  */
 export function AlertWebhookSection({ connection }: { connection: ConnectionSummary }) {
-  const isOwner = connection.myRole === undefined || connection.myRole === "owner";
+  const isOwner = connection.myRole === "owner";
   const [url, setUrl] = useState(connection.alertWebhookUrl ?? "");
 
   const save = useMutation({

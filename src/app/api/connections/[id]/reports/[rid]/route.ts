@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionAccess } from "@/server/connections/repo";
+import { getConnectionAccess, roleAtLeast } from "@/server/connections/repo";
 import { deleteReport, setReportEnabled } from "@/server/reports/repo";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,9 @@ export async function PATCH(req: NextRequest, ctx: Params) {
   const { id, rid } = await ctx.params;
   const access = await getConnectionAccess(session.user.id, id);
   if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  if (!roleAtLeast(access.role, "editor")) {
+    return NextResponse.json({ category: "forbidden", message: "Editor access is required." }, { status: 403 });
+  }
 
   const parsed = PatchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -35,6 +38,9 @@ export async function DELETE(_req: NextRequest, ctx: Params) {
   const { id, rid } = await ctx.params;
   const access = await getConnectionAccess(session.user.id, id);
   if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  if (!roleAtLeast(access.role, "editor")) {
+    return NextResponse.json({ category: "forbidden", message: "Editor access is required." }, { status: 403 });
+  }
   const ok = await deleteReport(session.user.id, rid);
   if (!ok) return NextResponse.json({ category: "not_found" }, { status: 404 });
   return NextResponse.json({ ok: true });

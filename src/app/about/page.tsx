@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "About · Suparbase",
   description:
     "Suparbase is a single-author project built with a spec-kit workflow. Every feature lives in a markdown spec; every release maps to a git tag.",
+  alternates: { canonical: "/about" },
 };
 
 const STACK = [

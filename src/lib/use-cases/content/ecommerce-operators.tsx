@@ -119,7 +119,7 @@ export function Page() {
 
       <CTABand
         title="Operate your shop without the admin tax."
-        body="Five minutes to set up. Hosted starts free for 14 days; self-host is free forever."
+        body="Five minutes to set up. Start free for solo work or try the Hosted team plan for seven days."
         primary={{ href: "/signup", label: "Start free" }}
         secondary={{ href: "/pricing", label: "See pricing" }}
       />

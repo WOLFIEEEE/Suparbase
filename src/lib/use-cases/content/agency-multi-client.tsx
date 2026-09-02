@@ -74,7 +74,7 @@ export function Page() {
             <Need
               icon={KeyRound}
               title="Per-project credential isolation"
-              body="Each connection has its own encrypted key. A teammate who shouldn't see Client X never sees that connection. Self-host gives you full RBAC; hosted ships per-org access in Q3."
+              body="Each connection has its own encrypted key and owner, editor, and viewer access. A teammate who shouldn't see Client X is never added to that workspace."
             />
             <Need
               icon={History}
@@ -136,7 +136,7 @@ export function Page() {
           <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
             <Win
               title="Audit log retention"
-              body="Hosted plan keeps your audit log for 90 days. Self-host: forever. Compliance answers stop being a 'I'll check our notes' email."
+              body="Hosted keeps audit history for 90 days; Team agreements can set a custom retention policy. Compliance answers stop being an 'I'll check our notes' email."
             />
             <Win
               title="Read-only client seats"

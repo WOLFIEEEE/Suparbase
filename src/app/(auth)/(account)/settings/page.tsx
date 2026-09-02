@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CreditCard, Sparkles, UserCog } from "lucide-react";
+import { ArrowRight, CreditCard, KeyRound, Sparkles, UserCog } from "lucide-react";
 
 const ITEMS = [
   {
@@ -13,6 +13,12 @@ const ITEMS = [
     icon: CreditCard,
     title: "Billing & plan",
     body: "Your current plan, upgrade options, and recent billing events.",
+  },
+  {
+    href: "/settings/api-tokens",
+    icon: KeyRound,
+    title: "API tokens",
+    body: "Personal tokens for the read-only public API: list connections, pull activity, run SELECTs from scripts and CI.",
   },
   {
     href: "/settings/account",

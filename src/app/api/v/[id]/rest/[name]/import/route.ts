@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
-import { importChunk } from "@/server/proxy/import";
+import { getConnectionForRole } from "@/server/connections/repo";
+import { ATOMIC_IMPORT_LIMIT, importChunk, importRowsAtomic } from "@/server/proxy/import";
 import { checkBulkRate } from "@/server/proxy/ratelimit";
 import { introspectConnection } from "@/server/schema-introspect";
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
 
   const { id, name } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "editor");
   if (!conn) {
     return NextResponse.json(
       { category: "not_found", message: "Connection not found." },
@@ -56,13 +56,14 @@ export async function POST(req: NextRequest, ctx: Params) {
   }
 
   const rows = Array.isArray(body.rows) ? (body.rows as Record<string, unknown>[]) : null;
-  if (!rows || rows.length < 1 || rows.length > 500) {
+  const onError: "skip" | "abort" = body.onError === "skip" ? "skip" : "abort";
+  const maxRows = onError === "abort" ? ATOMIC_IMPORT_LIMIT : 500;
+  if (!rows || rows.length < 1 || rows.length > maxRows) {
     return NextResponse.json(
-      { category: "constraint", message: "rows must be an array of 1–500 entries." },
+      { category: "constraint", message: `rows must be an array of 1–${maxRows} entries.` },
       { status: 400, headers: HEADERS },
     );
   }
-  const onError: "skip" | "abort" = body.onError === "skip" ? "skip" : "abort";
 
   const tableName = decodeURIComponent(name);
   // Introspect for column metadata (so coerceForWrite has type info).
@@ -81,13 +82,22 @@ export async function POST(req: NextRequest, ctx: Params) {
         { status: 400, headers: HEADERS },
       );
     }
-    const result = await importChunk({
-      userId: session.user.id,
-      connection: conn,
-      table,
-      rows,
-      onError,
-    });
+    const result = onError === "abort"
+      ? await importRowsAtomic({
+          userId: session.user.id,
+          connection: conn,
+          table,
+          rows,
+          userAgent: req.headers.get("user-agent"),
+        })
+      : await importChunk({
+          userId: session.user.id,
+          connection: conn,
+          table,
+          rows,
+          onError,
+          userAgent: req.headers.get("user-agent"),
+        });
     return NextResponse.json(result, { status: 200, headers: HEADERS });
   } catch (e) {
     return NextResponse.json(

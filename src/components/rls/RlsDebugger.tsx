@@ -119,6 +119,19 @@ export function RlsDebugger({ connection }: Props) {
   const [hasUrl, setHasUrl] = useState(connection.hasPostgresUrl);
 
   if (!hasUrl) {
+    if (connection.myRole !== "owner") {
+      return (
+        <section className="surface rounded-md p-6">
+          <h2 className="flex items-center gap-2 font-display text-lg">
+            <ShieldAlert className="h-4 w-4 text-warn" aria-hidden /> Direct Postgres access is not configured
+          </h2>
+          <p className="mt-2 max-w-prose text-xs text-fg-muted">
+            An owner needs to add the connection&apos;s Direct Postgres URL before
+            workspace members can inspect policies or run rollback-only simulations.
+          </p>
+        </section>
+      );
+    }
     return (
       <PostgresUrlSetup
         connectionId={connection.id}
@@ -169,8 +182,8 @@ function PostgresUrlSetup({
             PostgREST hides the policy catalog from anon/authenticated keys, so the
             debugger talks to Postgres directly. Paste your project&apos;s direct
             connection string below. We encrypt it with the same vault key that
-            stores your service_role key. It&apos;s used <em>only</em> for the RLS
-            page: nothing else in Suparbase reads it.
+            stores your service_role key. Approved workspace tools such as RLS,
+            session undo, reports, and sync can use it when you invoke them.
           </p>
         </div>
         <a
@@ -245,16 +258,18 @@ function RlsBody({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[11px] text-fg-faint">
-          Direct Postgres URL configured · used only on this page.
+          Direct Postgres URL configured · shared by approved database tools in this workspace.
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => clearUrl.mutate()}
-          disabled={clearUrl.isPending}
-        >
-          <X className="h-3 w-3" aria-hidden /> Clear stored URL
-        </Button>
+        {connection.myRole === "owner" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => clearUrl.mutate()}
+            disabled={clearUrl.isPending}
+          >
+            <X className="h-3 w-3" aria-hidden /> Clear stored URL
+          </Button>
+        )}
       </div>
 
       {error ? (

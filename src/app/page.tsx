@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -20,6 +21,16 @@ import {
 } from "lucide-react";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { PublicLayout } from "@/components/public/PublicLayout";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Suparbase: managed admin for any Supabase",
+    description: "Managed admin for any Supabase project. Auth, encryption, audit, done.",
+    url: "/",
+    type: "website",
+  },
+};
 import { CTABand, FeatureCard, SectionHeading } from "@/components/public/sections";
 import { SITE } from "@/lib/seo/site";
 import { TOOLS } from "@/lib/tools/registry";

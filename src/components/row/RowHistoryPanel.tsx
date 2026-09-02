@@ -1,12 +1,16 @@
 "use client";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, History, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ChevronDown, ChevronRight, History, Loader2, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useUpdateRow } from "@/lib/api/hooks";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
 import { cn } from "@/lib/ui/cn";
-import type { PrimaryKeyValue, Table } from "@/lib/types/schema";
+import type { PrimaryKeyValue, Row, Table } from "@/lib/types/schema";
 
 interface HistoryEntry {
   id: string;
@@ -53,19 +57,59 @@ const VERB_LABEL: Record<HistoryEntry["verb"], string> = {
 };
 
 /**
+ * Values from a snapshot that can be written back: known columns only,
+ * minus the primary key and generated columns. Returns null when the
+ * snapshot carries nothing restorable.
+ */
+function restorablePatch(table: Table, snapshot: Row): Row | null {
+  const pk = new Set(table.primaryKey);
+  const patch: Row = {};
+  for (const col of table.columns) {
+    if (pk.has(col.name) || col.isGenerated) continue;
+    if (!(col.name in snapshot)) continue;
+    patch[col.name] = snapshot[col.name];
+  }
+  return Object.keys(patch).length > 0 ? patch : null;
+}
+
+/**
  * Chronological audit-log feed for a single row, with a column-level diff
  * computed by comparing each entry's `afterRow` against the previous entry's
- * snapshot (or `beforeRow` on a delete). Lives in the right rail of detail
- * pages.
+ * snapshot (or `beforeRow` on a delete). Older snapshots can be written
+ * back with "Restore this version". Lives in the right rail of detail pages.
  */
 export function RowHistoryPanel({ connectionId, table, pk }: Props) {
   const enabled = pk !== null;
+  const qc = useQueryClient();
+  const queryKey = ["rowHistory", connectionId, table.schema, table.name, pk];
   const { data, isLoading, error } = useQuery<HistoryEntry[]>({
-    queryKey: ["rowHistory", connectionId, table.schema, table.name, pk],
+    queryKey,
     queryFn: () => fetchRowHistory(connectionId, table.name, pk!),
     enabled,
     staleTime: 15_000,
   });
+  const canRestore =
+    useCurrentConnection().myRole !== "viewer" && table.kind === "table" && pk !== null;
+  const update = useUpdateRow(connectionId, table);
+  const [pendingRestore, setPendingRestore] = useState<HistoryEntry | null>(null);
+
+  async function performRestore() {
+    if (!pendingRestore || !pk) return;
+    const patch = restorablePatch(table, pendingRestore.afterRow ?? {});
+    if (!patch) {
+      toast.info("Nothing restorable in that version.");
+      return;
+    }
+    try {
+      await update.mutateAsync({ pk, patch });
+      toast.success(`Restored the version from ${relativeFromNow(pendingRestore.createdAt) ?? "earlier"}`);
+      void qc.invalidateQueries({ queryKey });
+    } catch (e) {
+      const app = e instanceof AppError ? e : new AppError("client_bug", String((e as Error).message ?? e));
+      toast.error(`Restore failed: ${app.message}`);
+      throw e;
+    }
+  }
 
   return (
     <section className="surface rounded-md p-5">
@@ -93,10 +137,32 @@ export function RowHistoryPanel({ connectionId, table, pk }: Props) {
               key={entry.id}
               entry={entry}
               previousAfter={data[i + 1]?.afterRow ?? data[i + 1]?.beforeRow ?? null}
+              onRestore={
+                // The newest entry IS the current state; older snapshots
+                // with an afterRow can be written back.
+                canRestore && i > 0 && entry.afterRow && restorablePatch(table, entry.afterRow)
+                  ? () => setPendingRestore(entry)
+                  : undefined
+              }
             />
           ))}
         </ol>
       )}
+      <ConfirmDialog
+        open={pendingRestore !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingRestore(null);
+        }}
+        title="Restore this version?"
+        description={
+          pendingRestore
+            ? `Every editable column will be set back to its value from ${relativeFromNow(pendingRestore.createdAt) ?? "that point"}. The change is written through the normal proxy, so it shows up in history and can itself be restored.`
+            : undefined
+        }
+        confirmLabel="Restore"
+        icon={false}
+        onConfirm={performRestore}
+      />
     </section>
   );
 }
@@ -104,9 +170,10 @@ export function RowHistoryPanel({ connectionId, table, pk }: Props) {
 interface HistoryItemProps {
   entry: HistoryEntry;
   previousAfter: Record<string, unknown> | null;
+  onRestore?: () => void;
 }
 
-function HistoryItem({ entry, previousAfter }: HistoryItemProps) {
+function HistoryItem({ entry, previousAfter, onRestore }: HistoryItemProps) {
   const [open, setOpen] = useState(false);
   const rel = relativeFromNow(entry.createdAt);
   const diff = computeDiff(entry, previousAfter);
@@ -152,6 +219,15 @@ function HistoryItem({ entry, previousAfter }: HistoryItemProps) {
       </button>
       {open && diff.length > 0 && (
         <div className="space-y-1 border-t hairline px-2.5 py-2 text-[11px]">
+          {onRestore && (
+            <button
+              type="button"
+              onClick={onRestore}
+              className="mb-1 inline-flex items-center gap-1 rounded border hairline px-2 py-0.5 text-[10px] text-fg-muted hover:border-line-strong hover:text-fg"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden /> Restore this version
+            </button>
+          )}
           {diff.map((d) => (
             <div key={d.column} className="flex items-baseline gap-1 font-mono">
               <span className="text-fg-muted">{d.column}</span>

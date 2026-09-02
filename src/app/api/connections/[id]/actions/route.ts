@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, requireRole } from "@/server/connections/repo";
+import { getConnectionAccess, requireRole, roleAtLeast } from "@/server/connections/repo";
 import { createAction, listActionsForConnection } from "@/server/actions/repo";
 import { AppError } from "@/lib/errors";
 import { limitOr429 } from "@/server/security/route-guards";
@@ -43,10 +43,34 @@ export async function GET(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
-  if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const access = await getConnectionAccess(session.user.id, id);
+  if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
   const actions = await listActionsForConnection(session.user.id, id);
-  return NextResponse.json({ actions });
+  return NextResponse.json({
+    actions: roleAtLeast(access.role, "editor") ? actions : actions.map(redactActionDefinition),
+  });
+}
+
+function redactActionDefinition<T extends {
+  sqlTemplate: string | null;
+  webhookUrl: string | null;
+  webhookHeaders: Record<string, string> | null;
+}>(action: T): T {
+  return {
+    ...action,
+    sqlTemplate: null,
+    webhookUrl: redactWebhookUrl(action.webhookUrl),
+    webhookHeaders: null,
+  };
+}
+
+function redactWebhookUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    return `${new URL(raw).origin}/…`;
+  } catch {
+    return "configured";
+  }
 }
 
 export async function POST(req: NextRequest, ctx: Params) {

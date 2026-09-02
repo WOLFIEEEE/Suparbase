@@ -48,6 +48,10 @@ export const sentryScans = pgTable(
   },
   (t) => ({
     perConnIdx: index("sentry_scan_per_conn_idx").on(t.userId, t.connectionId, t.startedAt),
+    workspaceRecent: index("sentry_scan_workspace_recent_idx").on(
+      t.connectionId,
+      t.startedAt.desc(),
+    ),
   }),
 );
 
@@ -97,6 +101,11 @@ export const sentryFindings = pgTable(
       t.connectionId,
       t.schemaName,
       t.tableName,
+    ),
+    workspaceRecent: index("sentry_finding_workspace_recent_idx").on(
+      t.connectionId,
+      t.status,
+      t.lastSeenAt.desc(),
     ),
   }),
 );

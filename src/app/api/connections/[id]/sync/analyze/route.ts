@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionAccess, getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole, requireRole } from "@/server/connections/repo";
 import { getProfile } from "@/server/sync/repo";
 import { checkAiRate } from "@/server/proxy/ratelimit";
 import { getUserSettings, readOpenrouterKey } from "@/server/settings/repo";
@@ -34,8 +34,8 @@ export async function POST(req: NextRequest, ctx: Params) {
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
 
-  const access = await getConnectionAccess(session.user.id, id);
-  if (!access) return NextResponse.json({ category: "not_found" }, { status: 404 });
+  const access = await requireRole(session.user.id, id, "owner");
+  if (!access) return NextResponse.json({ category: "forbidden" }, { status: 403 });
 
   const parsed = analyzeSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, ctx: Params) {
     }
     baseConnectionId = profile.baseConnectionId;
   }
-  const base = await getConnectionForUser(session.user.id, baseConnectionId!);
+  const base = await getConnectionForRole(session.user.id, baseConnectionId!, "viewer");
   if (!base) {
     return NextResponse.json(
       { category: "validation", message: "Base connection not found or not accessible." },
@@ -81,8 +81,8 @@ export async function POST(req: NextRequest, ctx: Params) {
     );
   }
 
-  const baseSql = openBaseClient(base);
-  const targetSql = openBaseClient(access.conn);
+  const baseSql = await openBaseClient(base);
+  const targetSql = await openBaseClient(access.conn);
   try {
     const [baseCatalog, targetCatalog] = await Promise.all([
       introspectCatalog(baseSql),

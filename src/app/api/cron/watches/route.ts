@@ -5,6 +5,7 @@ import { verifyCronAuth } from "@/server/security/cron-auth";
 import { executeSql } from "@/server/proxy/sql-playground";
 import { listDueWatches, recordWatchCheck } from "@/server/watches/repo";
 import { sendWatchAlert } from "@/server/watches/alert";
+import { notifyConnection } from "@/server/notifications/repo";
 import { log } from "@/server/log";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,12 @@ export async function POST(req: NextRequest) {
       let alerted = false;
       if (grew) {
         alerted = await sendWatchAlert(watch, conn, siteUrl, matchCount, watch.lastMatchCount);
+        void notifyConnection(conn.id, {
+          kind: "watch_alert",
+          title: `Watch "${watch.name}": ${matchCount} match${matchCount === 1 ? "" : "es"} (was ${watch.lastMatchCount})`,
+          body: alerted ? "Webhook delivered." : "Webhook not delivered; see the watch for details.",
+          href: `/c/${conn.id}/watches`,
+        });
       }
       await recordWatchCheck(watch.id, matchCount, alerted, null);
       results.push({ watchId: watch.id, status: alerted ? "alerted" : "ok", matches: matchCount });

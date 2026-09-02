@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createHmac } from "node:crypto";
 import { TOTP } from "otpauth";
 import { signMfaCookie, verifyMfaCookie } from "@/server/auth/totp";
 
@@ -21,8 +22,8 @@ afterEach(() => {
 
 describe("MFA cookie sign/verify", () => {
   it("a fresh cookie verifies for the same user", () => {
-    const cookie = signMfaCookie("user-1");
-    expect(verifyMfaCookie(cookie, "user-1")).toBe(true);
+    const cookie = signMfaCookie("user-1", 1234);
+    expect(verifyMfaCookie(cookie, "user-1", 1234)).toBe(true);
   });
 
   it("rejects a cookie issued for a different user", () => {
@@ -30,30 +31,33 @@ describe("MFA cookie sign/verify", () => {
     expect(verifyMfaCookie(cookie, "user-2")).toBe(false);
   });
 
+  it("binds verification to the primary-authentication timestamp", () => {
+    const cookie = signMfaCookie("user-1", 1234);
+    expect(verifyMfaCookie(cookie, "user-1", 1235)).toBe(false);
+  });
+
   it("rejects a tampered cookie (signature mismatch)", () => {
     const cookie = signMfaCookie("user-1");
     // Flip the last char of the signature.
     const parts = cookie.split(".");
-    const lastChar = parts[2]!.slice(-1);
-    parts[2] = parts[2]!.slice(0, -1) + (lastChar === "a" ? "b" : "a");
+    const lastChar = parts[3]!.slice(-1);
+    parts[3] = parts[3]!.slice(0, -1) + (lastChar === "a" ? "b" : "a");
     const tampered = parts.join(".");
     expect(verifyMfaCookie(tampered, "user-1")).toBe(false);
   });
 
   it("rejects an expired cookie", () => {
-    // Hand-craft an expired-timestamp cookie. Easier than mocking Date.
-    process.env.AUTH_SECRET = "test-secret";
-    // Use the helper to get the *signing* logic right, then rewrite
-    // the timestamp to be in the past and re-sign manually.
-    // For simplicity here we just verify that a 0-timestamp doesn't
-    // verify even with a freshly-signed payload (because timestamp <= now).
-    const cookie = "user-1.0.fakesignature";
-    expect(verifyMfaCookie(cookie, "user-1")).toBe(false);
+    const payload = `user-1.42.${Date.now() - 1}`;
+    const signature = createHmac("sha256", process.env.AUTH_SECRET!)
+      .update(payload)
+      .digest("base64url");
+    const cookie = `${payload}.${signature}`;
+    expect(verifyMfaCookie(cookie, "user-1", 42)).toBe(false);
   });
 
   it("rejects a malformed cookie shape", () => {
     expect(verifyMfaCookie("notenoughparts", "user-1")).toBe(false);
-    expect(verifyMfaCookie("too.many.parts.here", "user-1")).toBe(false);
+    expect(verifyMfaCookie("too.many.parts.here.again", "user-1")).toBe(false);
     expect(verifyMfaCookie(undefined, "user-1")).toBe(false);
     expect(verifyMfaCookie("", "user-1")).toBe(false);
   });
@@ -71,7 +75,8 @@ describe("MFA cookie sign/verify", () => {
     const cookie = signMfaCookie("user-1");
     const parts = cookie.split(".");
     // Replace the entire signature with the same length of zeros.
-    const fake = `${parts[0]}.${parts[1]}.${"A".repeat(parts[2]!.length)}`;
+    parts[3] = "A".repeat(parts[3]!.length);
+    const fake = parts.join(".");
     expect(verifyMfaCookie(fake, "user-1")).toBe(false);
   });
 });

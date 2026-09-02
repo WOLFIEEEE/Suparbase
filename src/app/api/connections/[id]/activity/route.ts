@@ -38,6 +38,6 @@ export async function GET(req: NextRequest, ctx: Params) {
   const before = url.searchParams.get("before") || undefined;
   const limit = Number(url.searchParams.get("limit")) || 50;
 
-  const entries = await fetchActivity(session.user.id, id, { verb, table, before, limit });
+  const entries = await fetchActivity(id, { verb, table, before, limit });
   return NextResponse.json({ entries });
 }

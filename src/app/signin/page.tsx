@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, isGithubEnabled } from "@/server/auth";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SignInForm } from "@/components/auth/SignInForm";
+
+export const metadata: Metadata = {
+  title: "Sign in · Suparbase",
+  robots: { index: false, follow: false },
+};
 
 interface SignInPageProps {
   searchParams: Promise<{ next?: string; error?: string; reset?: string }>;

@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useConfirm } from "@/lib/ui/use-confirm";
 import { cn } from "@/lib/ui/cn";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
+import { isProduction } from "@/lib/ui/environment";
 
 interface SqlColumn {
   name: string;
@@ -123,7 +125,13 @@ function saveHistory(connectionId: string, entries: HistoryEntry[]): void {
 // Component
 // ---------------------------------------------------------------------------
 
-export function SqlPlayground({ connectionId }: { connectionId: string }) {
+export function SqlPlayground({
+  connectionId,
+  canWrite = true,
+}: {
+  connectionId: string;
+  canWrite?: boolean;
+}) {
   const [sql, setSql] = useState(STARTER);
   const [readOnly, setReadOnly] = useState(true);
   const [timeoutMs, setTimeoutMs] = useState(5_000);
@@ -241,7 +249,7 @@ export function SqlPlayground({ connectionId }: { connectionId: string }) {
 
       <section className="surface rounded-md">
         <div className="flex flex-wrap items-center gap-2 border-b hairline px-3 py-2">
-          <ModeToggle readOnly={readOnly} onChange={setReadOnly} />
+          <ModeToggle readOnly={readOnly} onChange={setReadOnly} canWrite={canWrite} />
           <TimeoutSelect value={timeoutMs} onChange={setTimeoutMs} />
           <div className="ml-auto flex items-center gap-1">
             <Button size="sm" variant="ghost" onClick={runExplain} disabled={mutation.isPending}>
@@ -383,11 +391,14 @@ function SafetyBanner({ readOnly }: { readOnly: boolean }) {
 function ModeToggle({
   readOnly,
   onChange,
+  canWrite,
 }: {
   readOnly: boolean;
   onChange: (next: boolean) => void;
+  canWrite: boolean;
 }) {
   const confirmWrite = useConfirm();
+  const guarded = isProduction(useCurrentConnection().environment);
   return (
     <>
       <div className="inline-flex items-center rounded border hairline text-[11px]">
@@ -404,9 +415,15 @@ function ModeToggle({
         <button
           type="button"
           onClick={() => confirmWrite.ask(() => onChange(false))}
+          disabled={!canWrite}
+          title={canWrite ? "Enable SQL writes" : "Editor access is required for SQL writes"}
           className={cn(
             "inline-flex items-center gap-1 border-l hairline px-2 py-1",
-            !readOnly ? "bg-danger/10 text-danger" : "text-fg-muted hover:bg-bg-sunken",
+            !canWrite
+              ? "cursor-not-allowed text-fg-faint opacity-60"
+              : !readOnly
+                ? "bg-danger/10 text-danger"
+                : "text-fg-muted hover:bg-bg-sunken",
           )}
         >
           <Unlock className="h-3 w-3" aria-hidden /> Write
@@ -414,10 +431,15 @@ function ModeToggle({
       </div>
       <ConfirmDialog
         {...confirmWrite.dialogProps}
-        title="Turn on write mode?"
-        description="Any SQL you run can INSERT, UPDATE, DELETE, or DROP. Make sure you know what your query does before you press Run."
+        title={guarded ? "Turn on write mode against PRODUCTION?" : "Turn on write mode?"}
+        description={
+          guarded
+            ? "This connection is labelled production. Any SQL you run can INSERT, UPDATE, DELETE, or DROP real data. Type PRODUCTION to continue."
+            : "Any SQL you run can INSERT, UPDATE, DELETE, or DROP. Make sure you know what your query does before you press Run."
+        }
         confirmLabel="I understand - enable writes"
         tone="danger"
+        requireText={guarded ? "PRODUCTION" : undefined}
       />
     </>
   );
@@ -806,4 +828,3 @@ function ErrorPanel({ error }: { error: ServerError }) {
     </section>
   );
 }
-

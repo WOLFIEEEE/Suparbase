@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { relativeFromNow } from "@/lib/ui/time";
 import { AppError } from "@/lib/errors";
+import { EnvironmentBadge } from "@/components/connections/EnvironmentBadge";
 import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
 
 interface Props {
@@ -154,6 +155,7 @@ function ConnectionCard({ connection }: { connection: ConnectionSummary }) {
             {connection.myRole && connection.myRole !== "owner" && (
               <Badge>{connection.myRole}</Badge>
             )}
+            <EnvironmentBadge environment={connection.environment} />
             <Badge tone={ROLE_TONE[connection.role]}>{ROLE_LABEL[connection.role]}</Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

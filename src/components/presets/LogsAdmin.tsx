@@ -27,6 +27,7 @@ import { cn } from "@/lib/ui/cn";
 import { encodePkSegment } from "@/lib/table/pk";
 import { relativeFromNow } from "@/lib/ui/time";
 import type { PresetProps } from "./types";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 
 const TIMESTAMP_PATTERNS = ["created_at", "inserted_at", "occurred_at", "happened_at", "ts", "logged_at"];
 const EVENT_PATTERNS = ["event", "event_type", "action", "verb", "operation", "kind", "type"];
@@ -107,6 +108,7 @@ export default function LogsAdmin(props: PresetProps) {
 }
 
 function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
+  const canEdit = useCurrentConnection().myRole !== "viewer";
   const router = useRouter();
   const sp = useSearchParams();
   const qc = useQueryClient();
@@ -419,6 +421,7 @@ function LogsAdminBody({ connectionId, table, analysis }: PresetProps) {
         table={table}
         visibleColumns={visibleCols}
         hiddenColumns={analysis?.hiddenColumns ?? []}
+        canEdit={canEdit}
       />
     </div>
   );

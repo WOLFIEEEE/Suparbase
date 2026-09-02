@@ -34,6 +34,7 @@ import { cn } from "@/lib/ui/cn";
 import { encodePkSegment } from "@/lib/table/pk";
 import { relativeFromNow } from "@/lib/ui/time";
 import type { PresetProps } from "./types";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 
 const TITLE_PATTERNS = ["title", "headline", "name", "subject"];
 const SLUG_PATTERNS = ["slug", "permalink", "handle"];
@@ -70,6 +71,7 @@ export default function ContentAdmin(props: PresetProps) {
 }
 
 function ContentAdminBody({ connectionId, table, analysis }: PresetProps) {
+  const canEdit = useCurrentConnection().myRole !== "viewer";
   const router = useRouter();
   const sp = useSearchParams();
   const qc = useQueryClient();
@@ -152,7 +154,7 @@ function ContentAdminBody({ connectionId, table, analysis }: PresetProps) {
         visibleColumns={visibleCols}
         hiddenColumns={analysis?.hiddenColumns ?? []}
       />
-      {table.kind === "table" && table.primaryKey.length > 0 && (
+      {canEdit && table.kind === "table" && table.primaryKey.length > 0 && (
         <Button variant="secondary" size="md" onClick={() => setOpenImport(true)}>
           <Upload className="h-3.5 w-3.5" aria-hidden />
           <span className="hidden sm:inline">Import</span>
@@ -170,7 +172,7 @@ function ContentAdminBody({ connectionId, table, analysis }: PresetProps) {
         <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} aria-hidden />
         <span className="hidden sm:inline">Refresh</span>
       </Button>
-      {table.kind === "table" && table.primaryKey.length > 0 && (
+      {canEdit && table.kind === "table" && table.primaryKey.length > 0 && (
         <Button asChild>
           <Link href={`${tableHref}/new`}>
             <Plus className="h-3.5 w-3.5" aria-hidden />
@@ -358,14 +360,17 @@ function ContentAdminBody({ connectionId, table, analysis }: PresetProps) {
         table={table}
         visibleColumns={visibleCols}
         hiddenColumns={analysis?.hiddenColumns ?? []}
+        canEdit={canEdit}
       />
 
-      <ImportPanel
-        open={openImport}
-        onClose={() => setOpenImport(false)}
-        connectionId={connectionId}
-        table={table}
-      />
+      {canEdit && (
+        <ImportPanel
+          open={openImport}
+          onClose={() => setOpenImport(false)}
+          connectionId={connectionId}
+          table={table}
+        />
+      )}
     </div>
   );
 }

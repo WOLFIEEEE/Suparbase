@@ -12,6 +12,7 @@ import { PageHeader, PageShell } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "Status · Suparbase",
   description: "Real-time status of every Suparbase subsystem on this deployment.",
+  alternates: { canonical: "/status" },
 };
 
 export const dynamic = "force-dynamic";

@@ -7,9 +7,10 @@ export const metadata: Metadata = {
   title: "Privacy · Suparbase",
   description:
     "What data Suparbase collects, what it does with it, and how to delete it.",
+  alternates: { canonical: "/privacy" },
 };
 
-const LAST_UPDATED = "2026-05-14";
+const LAST_UPDATED = "2026-07-16";
 
 export default async function PrivacyPage() {
   return (
@@ -40,7 +41,8 @@ export default async function PrivacyPage() {
               <li>
                 <strong>Connections</strong>: the Supabase URL, hostname, role (derived from the JWT), and an
                 AES-256-GCM ciphertext blob of the API key. Optionally a second ciphertext blob holding a direct
-                Postgres connection string (used only by the RLS debugger and SQL playground).
+                Postgres connection string used by explicitly-invoked database tools such as the RLS debugger, SQL
+                playground, session undo, reports, watches, health checks, and database sync.
               </li>
               <li>
                 <strong>Audit log</strong>: per-write rows containing user id, connection id, schema name, table name,
@@ -49,34 +51,37 @@ export default async function PrivacyPage() {
               </li>
               <li>
                 <strong>AI usage</strong>: when you bring an OpenRouter key, we store an encrypted copy and the
-                last-run token usage (prompt / completion / total). We do not retain conversation transcripts on the
-                server; chat history lives in your browser memory only.
+                last-run token usage (prompt / completion / total). We do not retain conversation transcripts in the
+                Suparbase database. Up to 50 conversations per connection are stored in your browser&apos;s local
+                storage so you can reopen them on that device.
               </li>
               <li>
                 <strong>Schema analysis cache</strong>: AI-generated table descriptions keyed by a SHA-256 fingerprint
                 of your schema, so we don't spend tokens regenerating the same analysis.
               </li>
               <li>
-                <strong>Operational logs</strong>: HTTP access logs at the hosting layer (timestamp, IP, path, status,
-                user-agent), retained for 30 days. JWT-shaped substrings and Supabase keys are redacted before logs
-                are written.
+                <strong>Operational data</strong>: the application and hosting layer may process request timestamps,
+                IP addresses, paths, status codes, and user agents to operate, secure, and debug the service. The
+                application&apos;s structured logger redacts JWT-shaped values and common credential fields.
               </li>
             </ul>
 
             <h2>What we don&apos;t collect</h2>
             <ul>
               <li>
-                Row data from your Supabase project. The proxy streams it through us; we never persist it.
+                A general-purpose copy of rows you read from your Supabase project. Routine reads are streamed through
+                the proxy. When you make a change, however, the audit and undo features may store affected
+                before-and-after row snapshots.
               </li>
               <li>
                 Plaintext API keys, passwords, or Postgres URLs. The only persisted form is encrypted.
               </li>
               <li>
-                AI chat transcripts. They live in your browser tab and disappear when you close the panel.
+                Server-side AI chat transcripts. Local conversation history remains on the browser profile until you
+                delete the conversation or clear the site&apos;s local storage.
               </li>
               <li>
-                Marketing-grade analytics. No third-party trackers, no fingerprinting scripts, no behavioural
-                cookies.
+                Full payment-card details. Checkout and payment management are handled by Dodo Payments.
               </li>
             </ul>
 
@@ -90,6 +95,11 @@ export default async function PrivacyPage() {
                 The audit log exists so you can see who changed what, when, and (where captured) what changed.
               </li>
               <li>
+                AI prompts, schema context, and aggregate results are sent to OpenRouter only when you use AI
+                features. Row previews fetched by AI tools remain in the browser display and are excluded from the
+                model payload.
+              </li>
+              <li>
                 Operational logs exist so we can debug outages and detect abuse.
               </li>
             </ul>
@@ -99,28 +109,45 @@ export default async function PrivacyPage() {
             </p>
 
             <h2>Subprocessors</h2>
-            <p>On the hosted plan, three vendors process data on our behalf:</p>
+            <p>
+              The hosted service uses vendors in the following categories. Which optional vendors receive data
+              depends on the features you enable:
+            </p>
             <ul>
               <li>
-                <strong>Postgres hosting</strong>: for Suparbase&apos;s own database (sessions, connections, audit log).
+                <strong>Application and Postgres hosting</strong>: to run Suparbase and store account, workspace, and
+                audit data.
               </li>
               <li>
-                <strong>Application hosting</strong>: for the Next.js app.
+                <strong>Resend</strong>: to deliver verification, recovery, invitation, and service emails when email
+                delivery is configured.
               </li>
               <li>
-                <strong>Email</strong>: for password recovery and trial expiry notifications only. We send no
-                marketing email.
+                <strong>Dodo Payments</strong>: to provide checkout, subscriptions, invoices, and the billing portal.
+              </li>
+              <li>
+                <strong>OpenRouter</strong>: to process prompts and context when you choose to use AI features with
+                your own API key.
+              </li>
+              <li>
+                <strong>PostHog</strong>: optional product analytics, loaded only when the deployment operator
+                configures a PostHog key. The integration respects Do Not Track and Global Privacy Control signals.
+              </li>
+              <li>
+                <strong>GitHub</strong>: authentication data is exchanged with GitHub when you choose GitHub sign-in.
               </li>
             </ul>
             <p>
-              All three are GDPR-compatible and have signed our Data Processing Agreement.
+              Dedicated-deployment customers choose the infrastructure and subprocessors covered by their agreement.
+              Contact us for the current hosted-service vendor details needed for a procurement or data-processing
+              review.
             </p>
 
             <h2>Encryption</h2>
             <p>
               Supabase keys and optional Postgres URLs are encrypted with AES-256-GCM using a key from
               <code>SUPARBASE_ENCRYPTION_KEY</code>. The plaintext exists only as a request-scoped variable inside
-              the server during the few milliseconds of a proxied request, then it&apos;s discarded.
+              the server while it performs the operation you requested, then it&apos;s discarded.
             </p>
             <p>
               Passwords (for email-and-password sign-ins) are hashed with bcrypt at cost 12. We never see your
@@ -134,20 +161,24 @@ export default async function PrivacyPage() {
                 key and cascades to any audit rows referencing it.
               </li>
               <li>
-                You can export your data as JSON from your account settings (connections, audit log entries, saved
-                views) before deleting.
+                You can export your account, workspace configuration, audit history, and other associated records as
+                JSON from account settings before deleting. Credentials, secret values, invitation tokens, and raw
+                billing webhook payloads are excluded for security.
               </li>
               <li>
-                On cancellation of a hosted plan, your account is soft-deleted immediately and hard-deleted 30 days
-                later, at which point all rows are removed from our database.
+                Cancelling a hosted subscription does not delete your account. You may separately schedule account
+                deletion in settings. That action signs you out and starts a 30-day grace period before permanent
+                deletion; the UI provides a way to cancel the deletion during the grace period.
               </li>
             </ul>
 
             <h2>Cookies</h2>
             <p>
-              We use one cookie: a signed, HTTP-only session cookie issued by NextAuth so you stay logged in. We do
-              not use analytics or advertising cookies. We do not need a cookie banner because we do not need
-              consent for the strictly-necessary session cookie.
+              We use strictly necessary authentication cookies to keep you signed in and, when enabled, remember a
+              completed two-factor challenge for the current login session. If the deployment operator enables
+              PostHog, it may use local storage and an analytics cookie; that integration is disabled for Do Not
+              Track or Global Privacy Control signals. Hosted deployments must present any consent controls required
+              by the law that applies to the visitor.
             </p>
 
             <h2>Children</h2>

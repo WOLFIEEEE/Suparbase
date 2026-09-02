@@ -17,7 +17,7 @@ import {
 import { useRows, useRowCount, useSchema } from "@/lib/api/hooks";
 import { useAnalysis, analysisOrNull } from "@/hooks/useAnalysis";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { useCurrentConnectionId } from "@/lib/contexts/CurrentConnection";
+import { useCurrentConnection } from "@/lib/contexts/CurrentConnection";
 import { findAnalysis } from "@/lib/presets/pick";
 import type { ListParams } from "@/lib/pgrest/rows";
 import type { Row, Table } from "@/lib/types/schema";
@@ -37,6 +37,7 @@ import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { EmptyState } from "@/components/workspace/EmptyState";
 import { PageHeader, StatTile } from "@/components/workspace/PageHeader";
 import { PinTableButton } from "@/components/workspace/PinTableButton";
+import { NotesPanel } from "@/components/workspace/NotesPanel";
 import { PresetSwitcher } from "@/components/workspace/PresetSwitcher";
 import { PaginationBar } from "@/components/data/PaginationBar";
 import { SelectionProvider, useSelection } from "@/components/data/SelectionContext";
@@ -74,7 +75,8 @@ interface RouterProps {
  * detail page (no drawer).
  */
 export function TableListView({ tableName }: RouterProps) {
-  const connectionId = useCurrentConnectionId();
+  const connection = useCurrentConnection();
+  const connectionId = connection.id;
   const { data: schema, isLoading: schemaLoading } = useSchema(connectionId);
   const { data: cachedAnalysis } = useAnalysis(connectionId);
 
@@ -110,7 +112,12 @@ export function TableListView({ tableName }: RouterProps) {
 
   return (
     <SelectionProvider>
-      <Body connectionId={connectionId} table={table} analysis={analysis} />
+      <Body
+        connectionId={connectionId}
+        table={table}
+        analysis={analysis}
+        canEdit={connection.myRole !== "viewer"}
+      />
     </SelectionProvider>
   );
 }
@@ -119,9 +126,10 @@ interface BodyProps {
   connectionId: string;
   table: Table;
   analysis: ReturnType<typeof findAnalysis>;
+  canEdit: boolean;
 }
 
-function Body({ connectionId, table, analysis }: BodyProps) {
+function Body({ connectionId, table, analysis, canEdit }: BodyProps) {
   const router = useRouter();
   const sp = useSearchParams();
   const qc = useQueryClient();
@@ -178,12 +186,14 @@ function Body({ connectionId, table, analysis }: BodyProps) {
 
   const headerActions = (
     <>
-      <ActionRunner
-        connectionId={connectionId}
-        surface="table"
-        tableSchema={table.schema}
-        tableName={table.name}
-      />
+      {canEdit && (
+        <ActionRunner
+          connectionId={connectionId}
+          surface="table"
+          tableSchema={table.schema}
+          tableName={table.name}
+        />
+      )}
       <PresetSwitcher active="generic" />
       <ExportMenu
         connectionId={connectionId}
@@ -191,7 +201,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         visibleColumns={visibleCols}
         hiddenColumns={analysis?.hiddenColumns ?? []}
       />
-      {table.kind === "table" && table.primaryKey.length > 0 && (
+      {canEdit && table.kind === "table" && table.primaryKey.length > 0 && (
         <Button variant="secondary" size="md" onClick={() => setOpenImport(true)}>
           <Upload className="h-3.5 w-3.5" aria-hidden />
           <span className="hidden sm:inline">Import</span>
@@ -210,7 +220,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} aria-hidden />
         <span className="hidden sm:inline">Refresh</span>
       </Button>
-      {table.kind === "table" && table.primaryKey.length > 0 && (
+      {canEdit && table.kind === "table" && table.primaryKey.length > 0 && (
         <Button asChild>
           <Link href={`${tableHref}/new`}>
             <Plus className="h-3.5 w-3.5" aria-hidden />
@@ -293,6 +303,8 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         />
       </div>
 
+      <NotesPanel connectionId={connectionId} tableName={table.name} primaryKey={null} collapsible />
+
       <div className="flex flex-wrap items-center gap-2">
         <label className="inline-flex items-center gap-2 rounded border hairline bg-bg-raised px-3 py-2 text-xs text-fg-muted">
           <input
@@ -367,6 +379,7 @@ function Body({ connectionId, table, analysis }: BodyProps) {
                 pkSegment={pkSegment}
                 isSelected={pkSegment ? selection.isSelected(pkSegment) : false}
                 onSelectionToggle={pkSegment ? () => selection.toggle(pkSegment) : undefined}
+                canEdit={canEdit}
               />
             );
           })
@@ -393,14 +406,17 @@ function Body({ connectionId, table, analysis }: BodyProps) {
         table={table}
         visibleColumns={visibleCols}
         hiddenColumns={analysis?.hiddenColumns ?? []}
+        canEdit={canEdit}
       />
 
-      <ImportPanel
-        open={openImport}
-        onClose={() => setOpenImport(false)}
-        connectionId={connectionId}
-        table={table}
-      />
+      {canEdit && (
+        <ImportPanel
+          open={openImport}
+          onClose={() => setOpenImport(false)}
+          connectionId={connectionId}
+          table={table}
+        />
+      )}
     </div>
   );
 }
@@ -413,6 +429,7 @@ interface GenericRowProps {
   pkSegment: string | null;
   isSelected: boolean;
   onSelectionToggle?: () => void;
+  canEdit: boolean;
 }
 
 function GenericRow({
@@ -423,6 +440,7 @@ function GenericRow({
   pkSegment,
   isSelected,
   onSelectionToggle,
+  canEdit,
 }: GenericRowProps) {
   const detailHref = pkSegment
     ? `/c/${connectionId}/tables/${encodeURIComponent(table.name)}/${pkSegment}`
@@ -520,7 +538,7 @@ function GenericRow({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              {detailHref && (
+              {canEdit && detailHref && (
                 <DropdownMenuItem asChild>
                   <Link href={detailHref}>
                     <ArrowRight className="mr-2 h-3.5 w-3.5" aria-hidden /> Open

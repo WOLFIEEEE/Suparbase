@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { AuthAdminError, generateRecoveryLink, getUser } from "@/server/proxy/auth-admin";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export async function POST(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id, uid } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "owner");
   if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
   try {
     const user = await getUser(conn, uid);

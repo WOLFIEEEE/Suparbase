@@ -32,6 +32,12 @@ export const auditLog = pgTable(
       t.connectionId,
       t.createdAt.desc(),
     ),
+    // Team workspaces read the complete connection timeline after the route
+    // authorizes membership, regardless of which member performed the write.
+    byWorkspaceRecent: index("audit_workspace_recent_idx").on(
+      t.connectionId,
+      t.createdAt.desc(),
+    ),
     // Per-session view (Sentry / "what did this Cursor session do?").
     bySessionRecent: index("audit_session_created_idx").on(
       t.sessionId,

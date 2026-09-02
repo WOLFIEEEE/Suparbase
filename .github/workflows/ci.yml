@@ -41,10 +41,15 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit tests
-        # Pure-function unit tests under tests/. The real-DB integration
-        # tests are gated by the separate migrate-smoke job below.
-        run: pnpm test
+      - name: Unit tests + coverage floor
+        # Keep the all-server/lib floor explicit so importing fewer modules
+        # cannot make the percentage look healthier by accident.
+        run: pnpm test:coverage
+
+      - name: Generated migration drift
+        run: |
+          pnpm db:generate
+          git diff --exit-code -- drizzle
 
       - name: Build
         # `next build` collects page metadata at compile time, which means
@@ -80,7 +85,7 @@ jobs:
     # Validates every drizzle/00*.sql applies cleanly against an empty
     # Postgres 16. Catches schema-drift mistakes (typo in a new migration,
     # missing dependency on an existing column) before they reach Coolify's
-    # pre-`next start` migrator and brick a deploy.
+    # pre-start migrator and brick a deploy.
 
     services:
       postgres:
@@ -129,3 +134,17 @@ jobs:
         run: node dist/migrator.mjs
         env:
           DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Public browser smoke
+        run: pnpm test:e2e
+        env:
+          CI: "true"
+          NEXT_TELEMETRY_DISABLED: "1"
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+          AUTH_SECRET: ci-only-not-a-real-secret-ci-only-not-a-real
+          AUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          SUPARBASE_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=

@@ -22,6 +22,8 @@ import { getToken } from "next-auth/jwt";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const MFA_COOKIE_NAME = "suparbase-mfa-ok";
 const IS_PROD = process.env.NODE_ENV === "production";
+const API_RATE_WINDOW_MS = 60_000;
+const apiRateBuckets = new Map<string, { count: number; resetAt: number }>();
 
 function generateNonce(): string {
   const bytes = new Uint8Array(16);
@@ -45,9 +47,16 @@ function generateNonce(): string {
  * worst case is a CSS-keyed exfil, not arbitrary code execution.
  */
 function buildCsp(nonce: string): string {
+  const analyticsOrigin = safeConfiguredOrigin(process.env.NEXT_PUBLIC_POSTHOG_HOST);
+  const connectSources = [
+    "'self'",
+    "https://*.supabase.co",
+    "https://*.supabase.in",
+    ...(analyticsOrigin ? [analyticsOrigin] : []),
+  ];
   const directives = [
     "default-src 'self'",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.in",
+    `connect-src ${connectSources.join(" ")}`,
     "img-src 'self' data: blob: https://avatars.githubusercontent.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
@@ -61,6 +70,16 @@ function buildCsp(nonce: string): string {
     "form-action 'self' https://github.com",
   ];
   return directives.join("; ");
+}
+
+function safeConfiguredOrigin(raw: string | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.origin : null;
+  } catch {
+    return null;
+  }
 }
 
 const STATIC_SECURITY_HEADERS: Array<[string, string]> = [
@@ -97,25 +116,37 @@ export async function middleware(req: NextRequest) {
             process.env.NEXT_PUBLIC_SITE_URL ??
             process.env.AUTH_URL ??
             `https://${req.headers.get("host") ?? ""}`;
-          allowedHost = new URL(siteUrl).host.toLowerCase();
+          allowedHost = new URL(siteUrl).origin.toLowerCase();
         } catch {
-          return applySecurityHeaders(NextResponse.next(), generateNonce());
+          return NextResponse.json(
+            { category: "server", message: "Canonical site URL is not configured correctly." },
+            { status: 500 },
+          );
         }
         let originHost: string;
         try {
-          originHost = new URL(origin).host.toLowerCase();
+          originHost = new URL(origin).origin.toLowerCase();
         } catch {
           return NextResponse.json(
             { category: "forbidden", message: "Invalid Origin header." },
             { status: 403 },
           );
         }
-        if (originHost !== allowedHost) {
+        // Local development often keeps the production canonical URL in
+        // .env.local. Accept the actual dev-server origin as well, while
+        // production remains pinned to the configured canonical origin.
+        const devRequestOrigin = !IS_PROD ? req.nextUrl.origin.toLowerCase() : null;
+        if (originHost !== allowedHost && originHost !== devRequestOrigin) {
           return NextResponse.json(
             { category: "forbidden", message: "Cross-site request rejected." },
             { status: 403 },
           );
         }
+      } else if (req.headers.has("cookie")) {
+        return NextResponse.json(
+          { category: "forbidden", message: "Origin header is required for authenticated writes." },
+          { status: 403 },
+        );
       }
     }
   }
@@ -129,11 +160,34 @@ export async function middleware(req: NextRequest) {
         process.env.NODE_ENV === "production"
           ? "__Secure-authjs.session-token"
           : "authjs.session-token",
-    })) as { id?: string; requires2FA?: boolean } | null;
+    })) as { id?: string; requires2FA?: boolean; authAt?: number } | null;
+    if (path.startsWith("/api/") && token?.id) {
+      const rate = checkApiRate(token.id, req.method);
+      if (!rate.allowed) {
+        return NextResponse.json(
+          { category: "rate_limited", message: "Too many API requests. Try again shortly." },
+          {
+            status: 429,
+            headers: { "Retry-After": String(rate.retryAfterSeconds) },
+          },
+        );
+      }
+    }
     if (token?.requires2FA && token.id) {
       const cookie = req.cookies.get(MFA_COOKIE_NAME)?.value;
-      const ok = await verifyMfaCookieEdge(cookie, token.id, process.env.AUTH_SECRET ?? "");
+      const ok = await verifyMfaCookieEdge(
+        cookie,
+        token.id,
+        token.authAt ?? 0,
+        process.env.AUTH_SECRET ?? "",
+      );
       if (!ok) {
+        if (path.startsWith("/api/")) {
+          return NextResponse.json(
+            { category: "mfa_required", message: "Complete two-factor authentication first." },
+            { status: 403 },
+          );
+        }
         const url = req.nextUrl.clone();
         url.pathname = "/signin/2fa";
         url.searchParams.set("next", path);
@@ -157,6 +211,32 @@ export async function middleware(req: NextRequest) {
   return applySecurityHeaders(response, nonce);
 }
 
+function checkApiRate(
+  userId: string,
+  method: string,
+): { allowed: boolean; retryAfterSeconds: number } {
+  const kind = method === "GET" || method === "HEAD" ? "read" : "write";
+  const budget = kind === "read" ? 300 : 90;
+  const key = `${kind}:${userId}`;
+  const now = Date.now();
+  const existing = apiRateBuckets.get(key);
+  if (!existing || existing.resetAt <= now) {
+    if (apiRateBuckets.size > 4_096) {
+      for (const [entryKey, bucket] of apiRateBuckets) {
+        if (bucket.resetAt <= now) apiRateBuckets.delete(entryKey);
+      }
+    }
+    apiRateBuckets.set(key, { count: 1, resetAt: now + API_RATE_WINDOW_MS });
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+  existing.count += 1;
+  if (existing.count <= budget) return { allowed: true, retryAfterSeconds: 0 };
+  return {
+    allowed: false,
+    retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+  };
+}
+
 function applySecurityHeaders(
   response: NextResponse,
   nonce: string,
@@ -169,19 +249,17 @@ function applySecurityHeaders(
 }
 
 /**
- * True when the path is a customer-facing protected page that
- * should be gated behind 2FA. API routes are intentionally NOT in
- * this list - the verify endpoints (`/api/account/2fa/verify`) need
- * to be reachable WHILE the user is in the pending-2FA state.
- *
- * The page-level gate is sufficient: the only way to do anything
- * in the app is via the UI, which goes through these paths.
+ * True when the path can access authenticated customer data. The TOTP
+ * verification endpoint must remain reachable while the session is in
+ * its pending-MFA state; all other authenticated APIs are protected.
  */
 function isMfaProtectedPath(path: string): boolean {
   if (path === "/signin/2fa") return false;
-  if (path.startsWith("/api/")) return false;
+  if (path.startsWith("/api/auth/")) return false;
+  if (path === "/api/account/2fa/verify") return false;
   if (path.startsWith("/_next/")) return false;
   return (
+    path.startsWith("/api/") ||
     path.startsWith("/c/") ||
     path.startsWith("/connections") ||
     path.startsWith("/settings") ||
@@ -198,13 +276,15 @@ function isMfaProtectedPath(path: string): boolean {
 async function verifyMfaCookieEdge(
   value: string | undefined,
   userId: string,
+  authAt: number,
   secret: string,
 ): Promise<boolean> {
   if (!value || !secret) return false;
   const parts = value.split(".");
-  if (parts.length !== 3) return false;
-  const [cookieUserId, expiresAtStr, sig] = parts;
+  if (parts.length !== 4) return false;
+  const [cookieUserId, cookieAuthAtStr, expiresAtStr, sig] = parts;
   if (cookieUserId !== userId) return false;
+  if (Number(cookieAuthAtStr) !== authAt) return false;
   const expiresAt = Number(expiresAtStr);
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return false;
   if (!sig) return false;
@@ -220,7 +300,7 @@ async function verifyMfaCookieEdge(
   const expectedBuf = await crypto.subtle.sign(
     "HMAC",
     key,
-    enc.encode(`${cookieUserId}.${expiresAtStr}`),
+    enc.encode(`${cookieUserId}.${cookieAuthAtStr}.${expiresAtStr}`),
   );
   const expected = base64UrlEncode(new Uint8Array(expectedBuf));
   return constantTimeEquals(sig, expected);

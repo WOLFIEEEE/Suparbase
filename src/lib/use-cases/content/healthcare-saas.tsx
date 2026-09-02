@@ -12,7 +12,7 @@ export const meta = {
     "AES-256-GCM credential vault; keys never reach a browser",
     "Per-row audit log with before/after snapshots for every write",
     "RLS-as-authz, with a debugger that proves the isolation works",
-    "Self-host on infrastructure you control",
+    "Dedicated single-tenant deployment available on Team",
   ],
 } as const;
 
@@ -59,7 +59,7 @@ export function Page() {
             <Need
               icon={Lock}
               title="Credentials at rest"
-              body="AES-256-GCM encryption; key from your own environment variable; never written to a log or returned over the wire. Self-host means the key lives on your infrastructure."
+              body="AES-256-GCM encryption; the vault key comes from the deployment environment and is never written to a log or returned over the wire. Dedicated deployments keep that boundary on isolated infrastructure."
             />
             <Need
               icon={History}
@@ -84,7 +84,7 @@ export function Page() {
             <Need
               icon={FileText}
               title="Dedicated deployments"
-              body="Team plans include single-tenant deployment with custom data retention and a DPA. Your data, your retention policy."
+              body="A Team agreement can include a single-tenant deployment, custom data retention, and procurement documentation tailored to your requirements."
             />
           </ul>
         </div>
@@ -108,10 +108,10 @@ export function Page() {
             </p>
             <p>
               For teams with a strict compliance posture, the recommended
-              shape is: self-host Suparbase inside your VPC, use a
-              service-role Supabase key, keep the audit log in a Postgres
-              instance you back up nightly, and run the RLS debugger
-              quarterly against your tenants.
+              shape is a dedicated single-tenant deployment under a Team
+              agreement, a narrowly controlled service-role Supabase key,
+              nightly database backups, and a recurring RLS review against
+              your tenant model.
             </p>
           </div>
         </div>

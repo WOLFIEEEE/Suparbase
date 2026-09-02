@@ -71,8 +71,8 @@ export async function executeSyncRun(params: RunParams): Promise<RunResult> {
 
   assertDistinctDatabases(base, target);
 
-  const baseSql = openBaseClient(base);
-  const targetSql = openTargetClient(target);
+  const baseSql = await openBaseClient(base);
+  const targetSql = await openTargetClient(target);
 
   const stats: SyncRunStats = { tables: [], warnings: [] };
 

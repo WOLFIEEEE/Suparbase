@@ -6,9 +6,10 @@ import { PageHeader, PageShell, Prose } from "@/components/public/sections";
 export const metadata: Metadata = {
   title: "Terms · Suparbase",
   description: "The terms of service for Suparbase's hosted plan.",
+  alternates: { canonical: "/terms" },
 };
 
-const LAST_UPDATED = "2026-05-14";
+const LAST_UPDATED = "2026-07-16";
 
 export default async function TermsPage() {
   return (
@@ -55,27 +56,30 @@ export default async function TermsPage() {
 
             <h3>4. Payment and refunds</h3>
             <p>
-              The hosted plan is monthly, per active user, billed at the start of each cycle. You can downgrade or
-              cancel at any time from your account settings; cancellation is prorated for the rest of the month and
-              refunded.
+              Hosted plans are billed in advance through Dodo Payments at the cadence and price shown during
+              checkout. Dodo securely collects and manages payment details; Suparbase does not store full card
+              numbers. You can manage the subscription, payment method, and invoices through the customer portal.
             </p>
             <p>
-              The 14-day free trial does not require a credit card. After the trial expires we&apos;ll email you; if
-              no card is on file the account moves to a read-only state for 30 days, then we hard-delete it.
+              The Hosted plan currently includes a seven-day trial. Unless the checkout page says otherwise, a
+              payment method is required and billing begins when the trial ends. You may cancel before renewal;
+              cancellation does not itself delete your account. Refunds are provided where required by law or where
+              the checkout or customer portal expressly states that one applies.
             </p>
 
             <h3>5. Your data is yours</h3>
             <p>
-              Your Supabase data is not our data: we never persist row contents, only proxy them. The data that is
-              ours-but-yours (account, connections, audit log) is exportable as JSON from your account page at any
-              time. On cancellation we hard-delete it after 30 days.
+              Routine reads from your Supabase project are proxied and are not stored as a separate copy by
+              Suparbase. When you perform a write, the audit and undo features may retain the affected row&apos;s
+              before-and-after snapshots. Account metadata, connection metadata, workspace configuration, and audit
+              history are exportable as JSON from account settings. Secrets are deliberately excluded from exports.
             </p>
 
             <h3>6. Service availability</h3>
             <p>
-              We aim for 99.5% monthly uptime on the hosted plan. If we miss that in any given calendar month and
-              you ask, we&apos;ll credit the next month proportionally. Outages caused by Supabase, OpenRouter, or
-              your own infrastructure are not counted.
+              We monitor the hosted service and work to restore incidents promptly, but no uptime service-level
+              agreement or automatic service credit applies unless it is included in a separate written agreement.
+              Availability can also depend on Supabase, OpenRouter, Dodo Payments, and infrastructure you control.
             </p>
 
             <h3>7. Warranties</h3>
@@ -95,7 +99,9 @@ export default async function TermsPage() {
             <h3>9. Termination</h3>
             <p>
               You may cancel at any time. We may suspend or terminate accounts that violate the acceptable-use rules
-              above, with email notice except in cases of imminent security harm.
+              above, with email notice except in cases of imminent security harm. Billing cancellation returns the
+              account to the applicable free entitlement after the paid period. Account deletion is a separate action
+              in settings and uses the grace period shown there before permanent deletion.
             </p>
 
             <h3>10. Changes</h3>

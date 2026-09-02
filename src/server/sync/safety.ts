@@ -4,6 +4,7 @@ import postgres from "postgres";
 import type { ConnectionRow } from "@/server/schema/connections";
 import { decryptKey } from "@/server/crypto/vault";
 import { NoPostgresUrlError } from "@/server/proxy/postgres";
+import { assertSafePostgresConnectionString } from "@/server/security/egress";
 
 export class SyncSafetyError extends Error {
   constructor(message: string) {
@@ -26,9 +27,11 @@ export class SyncBusyError extends Error {
  * is the structural guarantee that sync can never write to the base: there
  * is no code path that hands out a writable base handle.
  */
-export function openBaseClient(conn: ConnectionRow): postgres.Sql<Record<string, never>> {
+export async function openBaseClient(
+  conn: ConnectionRow,
+): Promise<postgres.Sql<Record<string, never>>> {
   if (!conn.encryptedPostgresUrl) throw new NoPostgresUrlError();
-  const url = decryptKey(conn.encryptedPostgresUrl);
+  const url = await assertSafePostgresConnectionString(decryptKey(conn.encryptedPostgresUrl));
   return postgres(url, {
     max: 1,
     idle_timeout: 20,
@@ -46,9 +49,11 @@ export function openBaseClient(conn: ConnectionRow): postgres.Sql<Record<string,
 }
 
 /** Open the **target** connection (writable). Caller owns the transaction. */
-export function openTargetClient(conn: ConnectionRow): postgres.Sql<Record<string, never>> {
+export async function openTargetClient(
+  conn: ConnectionRow,
+): Promise<postgres.Sql<Record<string, never>>> {
   if (!conn.encryptedPostgresUrl) throw new NoPostgresUrlError();
-  const url = decryptKey(conn.encryptedPostgresUrl);
+  const url = await assertSafePostgresConnectionString(decryptKey(conn.encryptedPostgresUrl));
   return postgres(url, {
     max: 1,
     idle_timeout: 20,

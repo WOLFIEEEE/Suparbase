@@ -27,6 +27,7 @@ import { BarChart, DataList, KpiTile, LineChart } from "./charts";
 
 interface Props {
   connectionId: string;
+  canEdit?: boolean;
 }
 
 async function fetchWidgets(connectionId: string): Promise<WidgetSummary[]> {
@@ -36,7 +37,7 @@ async function fetchWidgets(connectionId: string): Promise<WidgetSummary[]> {
   return j.widgets;
 }
 
-export function DashboardWidgets({ connectionId }: Props) {
+export function DashboardWidgets({ connectionId, canEdit = true }: Props) {
   const { data: widgets = [], isLoading } = useQuery({
     queryKey: ["widgets", connectionId],
     queryFn: () => fetchWidgets(connectionId),
@@ -51,16 +52,18 @@ export function DashboardWidgets({ connectionId }: Props) {
         <h2 className="text-[10px] uppercase tracking-[0.18em] text-fg-faint">
           Dashboard widgets
         </h2>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/c/${connectionId}/dashboard/edit`}>
-            <Pencil className="h-3 w-3" aria-hidden />
-            {widgets.length === 0 ? "Add widgets" : "Edit dashboard"}
-          </Link>
-        </Button>
+        {canEdit && (
+          <Button asChild variant="ghost" size="sm">
+            <Link href={`/c/${connectionId}/dashboard/edit`}>
+              <Pencil className="h-3 w-3" aria-hidden />
+              {widgets.length === 0 ? "Add widgets" : "Edit dashboard"}
+            </Link>
+          </Button>
+        )}
       </header>
 
       {widgets.length === 0 ? (
-        <EmptyWidgets connectionId={connectionId} />
+        <EmptyWidgets connectionId={connectionId} canEdit={canEdit} />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {widgets.map((w) => (
@@ -197,23 +200,28 @@ function WidgetCard({
   );
 }
 
-function EmptyWidgets({ connectionId }: { connectionId: string }) {
+function EmptyWidgets({ connectionId, canEdit }: { connectionId: string; canEdit: boolean }) {
   return (
-    <div className="rounded-lg border hairline bg-bg-raised px-6 py-8 text-center">
-      <div className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-accent/10">
+    <div className="surface flex flex-col gap-4 rounded-lg px-5 py-4 sm:flex-row sm:items-center">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent/10">
         <BarChart3 className="h-4 w-4 text-accent" aria-hidden />
       </div>
-      <h3 className="mt-3 font-display text-base">No widgets yet</h3>
-      <p className="mx-auto mt-1 max-w-md text-xs text-fg-muted">
-        Pin SQL queries as charts and KPI tiles so this dashboard shows
-        the numbers your team actually checks every morning.
-      </p>
-      <Button asChild className="mt-4" size="sm">
-        <Link href={`/c/${connectionId}/dashboard/edit`}>
-          <Pencil className="h-3 w-3" aria-hidden />
-          Create your first widget
-        </Link>
-      </Button>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-display text-sm">Your operational view</h3>
+        <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-fg-muted">
+          {canEdit
+            ? "Pin SQL queries as charts, lists, and KPI tiles for the numbers your team checks most."
+            : "No dashboard widgets have been configured for this workspace yet."}
+        </p>
+      </div>
+      {canEdit && (
+        <Button asChild size="sm" variant="secondary" className="shrink-0">
+          <Link href={`/c/${connectionId}/dashboard/edit`}>
+            <Pencil className="h-3 w-3" aria-hidden />
+            Create widget
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   Database,
   FileText,
   FolderOpen,
+  Gauge,
   Home,
   Kanban,
   Loader2,
@@ -98,23 +99,32 @@ async function fetchRecents(connectionId: string): Promise<RecentEntry[]> {
   return ((await res.json()) as { recents: RecentEntry[] }).recents ?? [];
 }
 
+type WorkspaceRole = NonNullable<ConnectionSummary["myRole"]>;
+const ROLE_RANK: Record<WorkspaceRole, number> = { viewer: 0, editor: 1, owner: 2 };
+
 /** All workspace destinations, mirrored from the sidebar. */
-const DESTINATIONS: Array<{ sub: string; label: string; icon: typeof Home }> = [
+const DESTINATIONS: Array<{
+  sub: string;
+  label: string;
+  icon: typeof Home;
+  minRole?: WorkspaceRole;
+}> = [
   { sub: "", label: "Dashboard", icon: Home },
   { sub: "tables", label: "All tables", icon: Table2 },
   { sub: "schema", label: "Schema", icon: Database },
   { sub: "sql", label: "SQL playground", icon: SquareCode },
   { sub: "storage", label: "Storage", icon: FolderOpen },
   { sub: "auth-users", label: "Auth users", icon: UserCog },
+  { sub: "performance", label: "Performance", icon: Gauge },
   { sub: "actions", label: "Actions", icon: Zap },
   { sub: "activity", label: "Activity", icon: Activity },
-  { sub: "reports", label: "Reports", icon: CalendarClock },
-  { sub: "watches", label: "Watches", icon: Bell },
+  { sub: "reports", label: "Reports", icon: CalendarClock, minRole: "editor" },
+  { sub: "watches", label: "Watches", icon: Bell, minRole: "editor" },
   { sub: "agents", label: "Agents", icon: Bot },
-  { sub: "sync", label: "Sync", icon: ArrowLeftRight },
+  { sub: "sync", label: "Sync", icon: ArrowLeftRight, minRole: "owner" },
   { sub: "sentry", label: "Sentry", icon: ShieldAlert },
   { sub: "rls", label: "RLS", icon: ShieldCheck },
-  { sub: "settings", label: "Connection settings", icon: SettingsIcon },
+  { sub: "settings", label: "Connection settings", icon: SettingsIcon, minRole: "owner" },
 ];
 
 interface SearchHit {
@@ -164,6 +174,7 @@ export function CommandPalette() {
   const connection = useCurrentConnection();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const role = connection.myRole ?? "owner";
 
   // Global hotkey: Cmd/Ctrl+K toggles the palette. The Topbar search button
   // dispatches the same open via a custom "suparbase:command" event.
@@ -271,7 +282,9 @@ export function CommandPalette() {
             <CommandEmpty>No results.</CommandEmpty>
 
             <CommandGroup heading="Go to">
-              {DESTINATIONS.map((d) => (
+              {DESTINATIONS.filter(
+                (d) => !d.minRole || ROLE_RANK[role] >= ROLE_RANK[d.minRole],
+              ).map((d) => (
                 <CommandItem
                   key={d.sub || "dashboard"}
                   value={`go ${d.label} ${d.sub}`}
@@ -453,13 +466,15 @@ export function CommandPalette() {
             </CommandGroup>
 
             <CommandGroup heading="Settings">
-              <CommandItem
-                value="connection settings"
-                onSelect={() => navigate(`/c/${connection.id}/settings`)}
-              >
-                <SettingsIcon className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
-                Connection settings
-              </CommandItem>
+              {role === "owner" && (
+                <CommandItem
+                  value="connection settings"
+                  onSelect={() => navigate(`/c/${connection.id}/settings`)}
+                >
+                  <SettingsIcon className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
+                  Connection settings
+                </CommandItem>
+              )}
               <CommandItem
                 value="ai assistance"
                 onSelect={() => navigate("/settings/ai")}
@@ -480,7 +495,7 @@ export function CommandPalette() {
                 <SunMoon className="mr-2 h-4 w-4 text-fg-muted" aria-hidden />
                 Toggle theme
               </CommandItem>
-              {aiSettings?.hasKey && (
+              {role !== "viewer" && aiSettings?.hasKey && (
                 <CommandItem
                   value="run ai analysis"
                   onSelect={() => navigate("/settings/ai")}

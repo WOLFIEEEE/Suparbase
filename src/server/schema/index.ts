@@ -16,4 +16,8 @@ export * from "./sql-snippets";
 export * from "./scheduled-reports";
 export * from "./data-watches";
 export * from "./workspace-prefs";
+export * from "./schema-snapshots";
+export * from "./notes";
+export * from "./notifications";
+export * from "./api-tokens";
 export * from "../views/schema";

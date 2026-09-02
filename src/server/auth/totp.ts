@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { TOTP, Secret } from "otpauth";
 import QRCode from "qrcode";
 import { db } from "@/server/db";
@@ -146,21 +146,20 @@ export async function consumeRecoveryCode(userId: string, code: string): Promise
   const normalised = normalizeRecoveryCode(code);
   if (!normalised) return false;
   const hash = hashRecoveryCode(normalised);
-  // SELECT ... FOR UPDATE would be safer under concurrency, but
-  // we're inside a single user's session - racing yourself isn't a
-  // real concern. Just check + update.
-  const rows = await db
-    .select()
-    .from(recoveryCodes)
-    .where(eq(recoveryCodes.codeHash, hash))
-    .limit(1);
-  const row = rows[0];
-  if (!row || row.userId !== userId || row.consumedAt) return false;
-  await db
+  // Claim the code atomically. The consumed_at predicate prevents two
+  // concurrent requests from redeeming the same recovery code.
+  const claimed = await db
     .update(recoveryCodes)
     .set({ consumedAt: new Date() })
-    .where(eq(recoveryCodes.id, row.id));
-  return true;
+    .where(
+      and(
+        eq(recoveryCodes.userId, userId),
+        eq(recoveryCodes.codeHash, hash),
+        isNull(recoveryCodes.consumedAt),
+      ),
+    )
+    .returning({ id: recoveryCodes.id });
+  return claimed.length === 1;
 }
 
 /** How many recovery codes the user has left (unconsumed). */
@@ -245,28 +244,30 @@ const MFA_COOKIE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
 export interface MfaCookiePayload {
   userId: string;
+  authAt: number;
   expiresAt: number;
 }
 
-export function signMfaCookie(userId: string): string {
+export function signMfaCookie(userId: string, authAt = 0): string {
   const expiresAt = Date.now() + MFA_COOKIE_TTL_MS;
-  const payload = `${userId}.${expiresAt}`;
+  const payload = `${userId}.${authAt}.${expiresAt}`;
   const sig = createHmac("sha256", getAuthSecret())
     .update(payload)
     .digest("base64url");
   return `${payload}.${sig}`;
 }
 
-export function verifyMfaCookie(value: string | undefined, userId: string): boolean {
+export function verifyMfaCookie(value: string | undefined, userId: string, authAt = 0): boolean {
   if (!value) return false;
   const parts = value.split(".");
-  if (parts.length !== 3) return false;
-  const [cookieUserId, expiresAtStr, sig] = parts;
+  if (parts.length !== 4) return false;
+  const [cookieUserId, cookieAuthAtStr, expiresAtStr, sig] = parts;
   if (cookieUserId !== userId) return false;
+  if (Number(cookieAuthAtStr) !== authAt) return false;
   const expiresAt = Number(expiresAtStr);
   if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return false;
   const expected = createHmac("sha256", getAuthSecret())
-    .update(`${cookieUserId}.${expiresAtStr}`)
+    .update(`${cookieUserId}.${cookieAuthAtStr}.${expiresAtStr}`)
     .digest("base64url");
   const a = Buffer.from(sig ?? "", "utf8");
   const b = Buffer.from(expected, "utf8");

@@ -85,6 +85,80 @@ const PATTERNS: Array<{
     kind: "continue_dev",
     label: () => "Continue.dev",
   },
+  // Windsurf (Codeium's agentic IDE): `Windsurf/<version>`.
+  {
+    rx: /\bWindsurf[/ ]?([0-9.]+)?/i,
+    kind: "windsurf",
+    label: (m) => (m[1] ? `Windsurf ${m[1]}` : "Windsurf"),
+  },
+  // OpenAI Codex CLI / cloud agent: `codex-cli/<v>`, `openai-codex`, `Codex/<v>`.
+  {
+    rx: /\b(?:openai[- ]?codex|codex[- ]?cli|codex)[/ ]?([0-9.]+)?/i,
+    kind: "codex",
+    label: (m) => (m[1] ? `Codex ${m[1]}` : "Codex"),
+  },
+  // GitHub Copilot coding agent / CLI. Matched before the generic
+  // `copilot` AI hint so it gets a proper bucket.
+  {
+    rx: /\b(?:github[- ]?copilot|copilot[- ]?(?:agent|cli|chat|coding-agent))[/ ]?([0-9.]+)?/i,
+    kind: "copilot",
+    label: (m) => (m[1] ? `GitHub Copilot ${m[1]}` : "GitHub Copilot"),
+  },
+  // Google Gemini CLI.
+  {
+    rx: /\bgemini[- ]?cli[/ ]?([0-9.]+)?/i,
+    kind: "gemini_cli",
+    label: (m) => (m[1] ? `Gemini CLI ${m[1]}` : "Gemini CLI"),
+  },
+  // Cognition Devin.
+  {
+    rx: /\bDevin(?:\.ai)?[/ ]?([0-9.]+)?/i,
+    kind: "devin",
+    label: (m) => (m[1] ? `Devin ${m[1]}` : "Devin"),
+  },
+  // StackBlitz Bolt (bolt.new / bolt.diy).
+  {
+    rx: /\b(?:bolt\.new|bolt\.diy|bolt[- ](?:agent|diy))\b/i,
+    kind: "bolt",
+    label: () => "Bolt",
+  },
+  // Zed editor's agent. Requires a version so the bare word "zed" in an
+  // unrelated UA doesn't get bucketed.
+  {
+    rx: /\bZed[/ ]([0-9.]+)/i,
+    kind: "zed",
+    label: (m) => `Zed ${m[1]}`,
+  },
+  // Sourcegraph Amp.
+  {
+    rx: /\b(?:sourcegraph[- ]?amp|amp[- ]?cli|ampcode)[/ ]?([0-9.]+)?/i,
+    kind: "amp",
+    label: (m) => (m[1] ? `Amp ${m[1]}` : "Amp"),
+  },
+  // AWS Kiro.
+  {
+    rx: /\bKiro(?:[- ]?(?:cli|agent|ide))?[/ ]?([0-9.]+)?/i,
+    kind: "kiro",
+    label: (m) => (m[1] ? `Kiro ${m[1]}` : "Kiro"),
+  },
+  // OpenCode (opencode.ai).
+  {
+    rx: /\bopencode(?:\.ai)?[/ ]?([0-9.]+)?/i,
+    kind: "opencode",
+    label: (m) => (m[1] ? `OpenCode ${m[1]}` : "OpenCode"),
+  },
+  // ByteDance Trae. Versioned or the trae.ai host.
+  {
+    rx: /\b(?:trae\.ai|Trae[/ ]([0-9.]+))/i,
+    kind: "trae",
+    label: (m) => (m[1] ? `Trae ${m[1]}` : "Trae"),
+  },
+  // JetBrains Junie.
+  {
+    rx: /\b(?:jetbrains[- ]?junie|junie)[/ ]?([0-9.]+)?/i,
+    kind: "junie",
+    label: (m) => (m[1] ? `JetBrains Junie ${m[1]}` : "JetBrains Junie"),
+  },
 ];
 
 /** Tag a request as `ai_unknown` if the UA mentions any of these but
@@ -124,19 +198,9 @@ export function fingerprintRequest(userAgent: string | null | undefined): AgentF
   return { kind: "unknown", label: "unknown" };
 }
 
+const HUMAN_KINDS: ReadonlySet<AgentKind> = new Set(["browser", "cli", "unknown"]);
+
 /** Heuristic: which kinds should we surface as "AI agent" in the UI? */
 export function isAiAgent(kind: AgentKind): boolean {
-  return (
-    kind === "cursor" ||
-    kind === "claude_code" ||
-    kind === "replit_agent" ||
-    kind === "lovable" ||
-    kind === "v0" ||
-    kind === "vercel_ai_sdk" ||
-    kind === "openrouter" ||
-    kind === "aider" ||
-    kind === "cline" ||
-    kind === "continue_dev" ||
-    kind === "ai_unknown"
-  );
+  return !HUMAN_KINDS.has(kind);
 }

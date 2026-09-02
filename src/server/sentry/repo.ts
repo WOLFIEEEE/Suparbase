@@ -65,12 +65,10 @@ export function scanToSummary(row: SentryScanRow): ScanSummary {
 }
 
 export async function listFindings(
-  userId: string,
   connectionId: string,
   opts: { status?: FindingStatus } = {},
 ): Promise<FindingSummary[]> {
   const filters = [
-    eq(sentryFindings.userId, userId),
     eq(sentryFindings.connectionId, connectionId),
   ];
   if (opts.status) filters.push(eq(sentryFindings.status, opts.status));
@@ -83,7 +81,6 @@ export async function listFindings(
 }
 
 export async function listRecentScans(
-  userId: string,
   connectionId: string,
   limit = 10,
 ): Promise<ScanSummary[]> {
@@ -92,7 +89,6 @@ export async function listRecentScans(
     .from(sentryScans)
     .where(
       and(
-        eq(sentryScans.userId, userId),
         eq(sentryScans.connectionId, connectionId),
       ),
     )
@@ -102,7 +98,6 @@ export async function listRecentScans(
 }
 
 export async function getFinding(
-  userId: string,
   connectionId: string,
   findingId: string,
 ): Promise<FindingSummary | null> {
@@ -112,7 +107,6 @@ export async function getFinding(
     .where(
       and(
         eq(sentryFindings.id, findingId),
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, connectionId),
       ),
     )
@@ -121,7 +115,6 @@ export async function getFinding(
 }
 
 export async function setFindingStatus(
-  userId: string,
   connectionId: string,
   findingId: string,
   status: FindingStatus,
@@ -139,7 +132,6 @@ export async function setFindingStatus(
     .where(
       and(
         eq(sentryFindings.id, findingId),
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, connectionId),
       ),
     )
@@ -148,7 +140,6 @@ export async function setFindingStatus(
 }
 
 export async function dismissResolvedFindings(
-  userId: string,
   connectionId: string,
   ids: string[],
 ): Promise<number> {
@@ -157,7 +148,6 @@ export async function dismissResolvedFindings(
     .delete(sentryFindings)
     .where(
       and(
-        eq(sentryFindings.userId, userId),
         eq(sentryFindings.connectionId, connectionId),
         inArray(sentryFindings.id, ids),
       ),

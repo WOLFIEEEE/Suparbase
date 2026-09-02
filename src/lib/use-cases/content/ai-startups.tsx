@@ -102,7 +102,7 @@ export function Page() {
 
       <CTABand
         title="The admin tool for the AI-native era."
-        body="14-day free trial on hosted. Free forever to self-host."
+        body="Use the Free plan for solo projects, or try the Hosted team plan for seven days."
         primary={{ href: "/signup", label: "Start free" }}
         secondary={{ href: "/features", label: "See features" }}
       />

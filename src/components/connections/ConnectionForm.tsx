@@ -11,7 +11,9 @@ import { ErrorBanner } from "@/components/connections/ErrorBanner";
 import { ServiceRoleWarning } from "@/components/connections/ServiceRoleWarning";
 import { PaywallCard } from "@/components/billing/PaywallCard";
 import { AppError } from "@/lib/errors";
-import type { ConnectionSummary, KeyRole } from "@/lib/types/connection";
+import { ENVIRONMENT_META, ENVIRONMENT_ORDER } from "@/lib/ui/environment";
+import { cn } from "@/lib/ui/cn";
+import type { ConnectionEnvironment, ConnectionSummary, KeyRole } from "@/lib/types/connection";
 
 const URL_REGEX = /^https:\/\/[a-z0-9-]+\.supabase\.(co|in)\/?$/i;
 const JWT_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
@@ -40,6 +42,7 @@ async function postConnection(body: {
   url: string;
   key: string;
   postgresUrl: string | null;
+  environment: ConnectionEnvironment | null;
 }): Promise<ConnectionSummary> {
   const res = await fetch("/api/connections", {
     method: "POST",
@@ -63,6 +66,7 @@ export function ConnectionForm() {
   const [url, setUrl] = useState("");
   const [key, setKey] = useState("");
   const [postgresUrl, setPostgresUrl] = useState("");
+  const [environment, setEnvironment] = useState<ConnectionEnvironment | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [showPgUrl, setShowPgUrl] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -95,6 +99,7 @@ export function ConnectionForm() {
       url: url.trim(),
       key: key.trim(),
       postgresUrl: pgTrim.length > 0 ? pgTrim : null,
+      environment,
     });
   }
 
@@ -186,6 +191,33 @@ export function ConnectionForm() {
             </Badge>
           )}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Environment <span className="font-normal text-fg-faint">(optional)</span></Label>
+        <div role="radiogroup" aria-label="Environment" className="flex flex-wrap gap-1.5">
+          {ENVIRONMENT_ORDER.map((env) => {
+            const active = environment === env;
+            return (
+              <button
+                key={env}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setEnvironment(active ? null : env)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs transition-colors",
+                  active ? "border-accent bg-accent/10 text-fg" : "hairline text-fg-muted hover:border-line-strong hover:text-fg",
+                )}
+              >
+                {ENVIRONMENT_META[env].label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-fg-faint">
+          {environment ? ENVIRONMENT_META[environment].hint : "Production connections get a red badge and typed confirmations on destructive actions."}
+        </p>
       </div>
 
       <div className="rounded-md border hairline bg-bg-sunken/40">

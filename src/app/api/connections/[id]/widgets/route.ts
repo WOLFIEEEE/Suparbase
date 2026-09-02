@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/server/auth";
-import { getConnectionForUser, requireRole } from "@/server/connections/repo";
+import { getConnectionForRole, requireRole } from "@/server/connections/repo";
 import { createWidget, listWidgets } from "@/server/dashboards/repo";
 import { AppError } from "@/lib/errors";
 import { limitOr429 } from "@/server/security/route-guards";
@@ -40,7 +40,7 @@ export async function GET(_req: NextRequest, ctx: Params) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ category: "unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) return NextResponse.json({ category: "not_found" }, { status: 404 });
   const widgets = await listWidgets(session.user.id, id);
   return NextResponse.json({ widgets });

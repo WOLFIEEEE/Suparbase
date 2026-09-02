@@ -134,6 +134,7 @@ async function deleteUserApi(connectionId: string, uid: string): Promise<void> {
 
 export function AuthUsers({ connection }: { connection: ConnectionSummary }) {
   const isAdmin = connection.role === "service_role";
+  const canManage = connection.myRole === "owner";
 
   if (!isAdmin) {
     return (
@@ -153,19 +154,27 @@ export function AuthUsers({ connection }: { connection: ConnectionSummary }) {
           the stored key with the service_role key from Supabase Studio →
           Project Settings → API. The key never leaves the server.
         </p>
-        <div>
-          <Button asChild variant="secondary">
-            <a href={`/c/${connection.id}/settings`}>Open connection settings</a>
-          </Button>
-        </div>
+        {canManage && (
+          <div>
+            <Button asChild variant="secondary">
+              <a href={`/c/${connection.id}/settings`}>Open connection settings</a>
+            </Button>
+          </div>
+        )}
       </section>
     );
   }
 
-  return <AuthUsersAdmin connection={connection} />;
+  return <AuthUsersAdmin connection={connection} canManage={canManage} />;
 }
 
-function AuthUsersAdmin({ connection }: { connection: ConnectionSummary }) {
+function AuthUsersAdmin({
+  connection,
+  canManage,
+}: {
+  connection: ConnectionSummary;
+  canManage: boolean;
+}) {
   const connectionId = connection.id;
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -238,9 +247,11 @@ function AuthUsersAdmin({ connection }: { connection: ConnectionSummary }) {
           >
             <RefreshCw className={cn("h-3 w-3", listQuery.isFetching && "animate-spin")} aria-hidden />
           </Button>
-          <Button size="sm" onClick={() => setInviteOpen(true)}>
-            <UserPlus className="h-3 w-3" aria-hidden /> Invite
-          </Button>
+          {canManage && (
+            <Button size="sm" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="h-3 w-3" aria-hidden /> Invite
+            </Button>
+          )}
         </header>
 
         {listQuery.error ? (
@@ -308,6 +319,7 @@ function AuthUsersAdmin({ connection }: { connection: ConnectionSummary }) {
       <UserDetail
         connectionId={connectionId}
         user={selected}
+        canManage={canManage}
         onClose={() => setSelectedId(null)}
         onMutated={() => qc.invalidateQueries({ queryKey: ["authUsers", connectionId] })}
       />
@@ -410,11 +422,13 @@ function UserDetail({
   user,
   onClose,
   onMutated,
+  canManage,
 }: {
   connectionId: string;
   user: AuthUser | null;
   onClose: () => void;
   onMutated: () => void;
+  canManage: boolean;
 }) {
   const recoveryMut = useMutation({
     mutationFn: () => recover(connectionId, user!.id),
@@ -454,7 +468,10 @@ function UserDetail({
     return (
       <aside className="surface space-y-2 rounded-md p-5 text-xs text-fg-muted">
         <p className="font-display text-sm text-fg">No user selected</p>
-        <p>Click a user on the left to see their details, send a password recovery email, ban, or delete them.</p>
+        <p>
+          Click a user on the left to see their details
+          {canManage ? ", send recovery, revoke access, or delete them" : ""}.
+        </p>
       </aside>
     );
   }
@@ -527,20 +544,22 @@ function UserDetail({
       )}
 
       <div className="space-y-1.5">
-        <Button
-          size="sm"
-          variant="secondary"
-          className="w-full justify-start"
-          onClick={() => recoveryMut.mutate()}
-          disabled={recoveryMut.isPending || !user.email}
-        >
-          {recoveryMut.isPending ? (
-            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-          ) : (
-            <KeyRound className="h-3 w-3" aria-hidden />
-          )}
-          Generate recovery link
-        </Button>
+        {canManage && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="w-full justify-start"
+            onClick={() => recoveryMut.mutate()}
+            disabled={recoveryMut.isPending || !user.email}
+          >
+            {recoveryMut.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+            ) : (
+              <KeyRound className="h-3 w-3" aria-hidden />
+            )}
+            Generate recovery link
+          </Button>
+        )}
         {user.id && user.email && (
           <Button
             size="sm"
@@ -554,36 +573,40 @@ function UserDetail({
             <Copy className="h-3 w-3" aria-hidden /> Copy user id
           </Button>
         )}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="w-full justify-start"
-          onClick={() => banMut.mutate(banned ? "none" : "8760h")}
-          disabled={banMut.isPending}
-        >
-          {banMut.isPending ? (
-            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-          ) : banned ? (
-            <CheckCircle2 className="h-3 w-3" aria-hidden />
-          ) : (
-            <Ban className="h-3 w-3 text-danger" aria-hidden />
-          )}
-          {banned ? "Unban user" : "Ban user (1 year)"}
-        </Button>
-        <Button
-          size="sm"
-          variant="danger"
-          className="w-full justify-start"
-          onClick={() => confirmDelete.ask(() => deleteMut.mutate())}
-          disabled={deleteMut.isPending}
-        >
-          {deleteMut.isPending ? (
-            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-          ) : (
-            <Trash2 className="h-3 w-3" aria-hidden />
-          )}
-          Delete user
-        </Button>
+        {canManage && (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => banMut.mutate(banned ? "none" : "8760h")}
+              disabled={banMut.isPending}
+            >
+              {banMut.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              ) : banned ? (
+                <CheckCircle2 className="h-3 w-3" aria-hidden />
+              ) : (
+                <Ban className="h-3 w-3 text-danger" aria-hidden />
+              )}
+              {banned ? "Unban user" : "Ban user (1 year)"}
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              className="w-full justify-start"
+              onClick={() => confirmDelete.ask(() => deleteMut.mutate())}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              ) : (
+                <Trash2 className="h-3 w-3" aria-hidden />
+              )}
+              Delete user
+            </Button>
+          </>
+        )}
       </div>
       <ConfirmDialog
         {...confirmDelete.dialogProps}

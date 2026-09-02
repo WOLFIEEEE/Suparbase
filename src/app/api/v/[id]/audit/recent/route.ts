@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/server/auth";
-import { getConnectionForUser } from "@/server/connections/repo";
+import { getConnectionForRole } from "@/server/connections/repo";
 import { fetchRecentAudit } from "@/server/audit/recent";
 import { checkReadRate } from "@/server/proxy/ratelimit";
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, ctx: Params) {
   }
   const { id } = await ctx.params;
 
-  const conn = await getConnectionForUser(session.user.id, id);
+  const conn = await getConnectionForRole(session.user.id, id, "viewer");
   if (!conn) {
     return NextResponse.json(
       { category: "not_found", message: "Connection not found." },
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, ctx: Params) {
   const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.trunc(limitParam) : 10;
 
   try {
-    const rows = await fetchRecentAudit(session.user.id, conn.id, limit);
+    const rows = await fetchRecentAudit(conn.id, limit);
     return NextResponse.json(
       {
         entries: rows.map((r) => ({
